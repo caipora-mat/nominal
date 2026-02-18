@@ -31,7 +31,7 @@ open Equiv MulAction Set
 
 namespace Equiv.Perm
 
-variable {α : Type} (π : Perm α)
+variable {α : Type*} (π : Perm α)
 
 /-- The set of atoms moved by a permutation (support already taken by Perm.support) -/
 def movedPoints : Set α := {a | π a ≠ a}
@@ -48,7 +48,7 @@ end Equiv.Perm
 
 /-- `FinitePerm α` is the subgroup of `Equiv.Perm α` consisting of permutations
 that move only finitely many atoms. -/
-def FinitePerm (α : Type) : Subgroup (Perm α) where
+def FinitePerm (α : Type*) : Subgroup (Perm α) where
   carrier := {π | π.IsFinitePerm}
   one_mem' := by
     simp [Equiv.Perm.IsFinitePerm, Equiv.Perm.movedPoints]
@@ -78,7 +78,7 @@ namespace FinitePerm
 
 open Equiv
 
-variable {α : Type}
+variable {α : Type*}
 
 /-- Every element of `FinitePerm α` moves finitely many atoms -/
 theorem support_finite (π : FinitePerm α) : (π.val.movedPoints).Finite :=
