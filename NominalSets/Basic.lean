@@ -1,1 +1,2 @@
-def hello := "world"
+import NominalSets.Name
+import NominalSets.FinitePerm
