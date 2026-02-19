@@ -31,12 +31,12 @@ We inherit `•` from `MulAction`. Given `π : FinitePerm α` and `x : X`, write
 
 open Equiv
 
-variable {α : Type*} [Name α]
-
 /-- A **permutation type** is a type `X` equipped with an action of the group
 `FinitePerm α` of finite permutations. This is a thin wrapper around
 `MulAction (FinitePerm α) X` that gives a convenient single typeclass -/
 class PermType (α : Type*) [Name α] (X : Type*) extends MulAction (FinitePerm α) X
+
+variable {α : Type*} [Name α]
 
 namespace PermType
 
@@ -99,23 +99,22 @@ explicitly request it.
 
 The wrapper is needed because Mathlib's `Pi.instSMul` already equips the type
 `X → Y` with a *pointwise* action `(π • f) x = π • f x`, causing a diamond when
-we try to register the conjugation action directly on `X → Y`. -/
+we try to register the action directly on `X → Y`. -/
 def PFun (α : Type*) [Name α] (X Y : Type*) := X → Y
 
 namespace PFun
 
 /-- Coerce a plain function into a `PFun`. -/
-def mk {X Y : Type*} (f : X → Y) : PFun α X Y := f
+instance instCoe {X Y : Type*} : Coe (X → Y) (PFun α X Y) := ⟨id⟩
 
 /-- Apply a `PFun` to an argument. -/
 instance instFunLike {X Y : Type*} : FunLike (PFun α X Y) X Y where
   coe f := f
   coe_injective' _ _ h := h
 
-@[simp] theorem mk_apply {X Y : Type*} (f : X → Y) (x : X) : PFun.mk (α := α) f x = f x := rfl
+@[simp] theorem coe_apply {X Y : Type*} (f : X → Y) (x : X) : (f : PFun α X Y) x = f x := rfl
 
-/-- The conjugation action on `PFun α X Y`:
-`(π • f) x = π • f (π⁻¹ • x)`. -/
+/-- The action on `PFun α X Y`: `(π • f) x = π • f (π⁻¹ • x)`. -/
 instance instPermType {X Y : Type*} [PermType α X] [PermType α Y] :
     PermType α (PFun α X Y) where
   smul π f x := π • f (π⁻¹ • x)
@@ -135,25 +134,24 @@ theorem smul_apply {X Y : Type*} [PermType α X] [PermType α Y]
 
 end PFun
 
-/-! #### Legacy: conjugation action directly on `X → Y`
+/-! #### Legacy: action directly on `X → Y`
 
-The instance below equips the bare function type with the conjugation action.
+The instance below equips the bare function type with an action.
 It is **not** registered as a global `PermType` instance to avoid the diamond
-with `Pi.instSMul`; use `PFun` instead. It is kept here for use in proofs
-that need to call it explicitly. -/
+with `Pi.instSMul`; use `PFun` instead. It is kept here for documentation -/
 
-/-- Conjugation action on `X → Y` (not a global instance; see `PFun`). -/
-def funPermType {X Y : Type*} [PermType α X] [PermType α Y] :
-    PermType α (X → Y) where
-  smul π f x := π • f (π⁻¹ • x)
-  one_smul f := by
-    funext x
-    change (1 : FinitePerm α) • f (1⁻¹ • x) = f x
-    simp [one_smul]
-  mul_smul π σ f := by
-    funext x
-    change (π * σ) • f ((π * σ)⁻¹ • x) = π • σ • f (σ⁻¹ • π⁻¹ • x)
-    rw [mul_inv_rev, mul_smul, mul_smul]
+/- action on `X → Y` (not a global instance; see `PFun`). -/
+-- def funPermType {X Y : Type*} [PermType α X] [PermType α Y] :
+--     PermType α (X → Y) where
+--   smul π f x := π • f (π⁻¹ • x)
+--   one_smul f := by
+--     funext x
+--     change (1 : FinitePerm α) • f (1⁻¹ • x) = f x
+--     simp [one_smul]
+--   mul_smul π σ f := by
+--     funext x
+--     change (π * σ) • f ((π * σ)⁻¹ • x) = π • σ • f (σ⁻¹ • π⁻¹ • x)
+--     rw [mul_inv_rev, mul_smul, mul_smul]
 
 -- Note: Mathlib's `Pi.instSMul` (pointwise action) conflicts with the conjugation
 -- action defined in `instFun`. We state `fun_smul` using `@SMul.smul _ _ instFun.toSMul`
