@@ -4,24 +4,25 @@ import Mathlib.GroupTheory.GroupAction.Hom
 /-!
 # Equivariant Functions
 
-If `G` is a group and `X`, `X'` are `G`-sets (types equipped with a `MulAction` of `G`),
-then a function `f : X → X'` is **equivariant** if it commutes with the group action:
+A function `f : X → Y` between two `FinitePerm α`-sets is **equivariant** if it commutes
+with the group action:
 
-  `f (g • x) = g • (f x)`
+  `f (π • x) = π • f x`
 
-for all `g : G` and `x : X`.
+for all `π : FinitePerm α` and `x : X`.
 
 Mathlib already provides this notion via `MulActionHom`:
 
 * `MulActionHom (@id G) X Y` (notation: `X →[G] Y`) — the type of `G`-equivariant
   functions from `X` to `Y`.
 
-This file introduces an abbreviation `Equivariant` specialized to finite permutations
+This file introduces `Equivariant` as a convenient abbreviation specialised to the group
+`FinitePerm α` of finite permutations.
 
 ## Main definitions
 
-* `Equivariant α X Y` — abbreviation for `X →[FinitePerm 𝔸] Y`, the type of
-  `FinitePerm α`-equivariant functions between types with a permutation action.
+* `Equivariant α X Y` — abbreviation for `X →[FinitePerm α] Y`, the type of equivariant
+  functions between permutation types.
 
 ## References
 
