@@ -10,27 +10,31 @@ import Mathlib.Algebra.Group.Subgroup.Pointwise
 A **finite permutation** of a type `α` is a permutation `π : Equiv.Perm α` that
 moves only finitely many elements, i.e., the set `{a : α | π a ≠ a}` is finite.
 
-When `α` is infinite we cannot use Mathlib's `Equiv.Perm.support` (which requires
-`Fintype`). Instead we characterise finite permutations via `Set.Finite` on the
-complement of `MulAction.fixedBy`.
+Mathlib's `Equiv.Perm.support` requires a `Fintype` instance and is therefore not
+available for infinite types. This file works with `Set.Finite` directly, defining the
+moved-point set `Equiv.Perm.movedPoints` and the subgroup `FinitePerm α` of permutations
+with finite moved-point sets.
+
+Note: `FinitePerm α` only requires `DecidableEq α` (implicit through `Equiv.Perm`);
+the `Name α` constraint (which adds `Infinite α`) is introduced in later layers.
 
 ## Main definitions
 
-* `Equiv.Perm.movedPoints` — the set of elements moved by a permutation.
-* `Equiv.Perm.IsFinitePerm` — predicate asserting that `movedPoints` is finite.
-* `FinitePerm α` — the subgroup of `Equiv.Perm α` consisting of permutations
-  with finite support (finitely many non-fixed points).
+* `Equiv.Perm.movedPoints π` — the set `{a | π a ≠ a}` of atoms moved by `π`.
+* `Equiv.Perm.IsFinitePerm π` — predicate asserting that `π.movedPoints` is finite.
+* `FinitePerm α` — the subgroup of `Equiv.Perm α` of permutations with finite support.
 * `FinitePerm.instFunLike` — `FinitePerm α` elements can be applied directly as
   functions `α → α` via the `FunLike` interface.
 
 ## Main results
 
-* `FinitePerm.support_finite` — every member has finitely many non-fixed points.
+* `FinitePerm.support_finite` — every member of `FinitePerm α` has finitely many moved points.
 * `FinitePerm.swap_finite` — every transposition belongs to `FinitePerm α`.
-* `FinitePerm.eq_closure_isSwap` — `FinitePerm α` equals the closure of all transpositions.
+* `FinitePerm.eq_closure_isSwap` — `FinitePerm α` equals the closure of all transpositions
+  in `Equiv.Perm α`.
 * `FinitePerm.swap_factorization` — every finite permutation is a product of a finite
   list of transpositions.
-* `FinitePerm.ext` — extensionality: two finite permutations equal iff they agree pointwise.
+* `FinitePerm.ext` — extensionality: two finite permutations are equal iff they agree pointwise.
 -/
 
 open Equiv MulAction Set

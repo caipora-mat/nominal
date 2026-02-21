@@ -1,18 +1,20 @@
 import Mathlib.Data.Finite.Defs
 
 /-!
-# Nominal Sets — Basic Definitions
+# Names (Atoms)
 
-## Names (Atoms)
-
-The type of **names** (or atoms) is parametric: any type `𝔸` satisfying `Name 𝔸`
-can serve as the set of atoms. The only requirements are:
+The type of **names** (also called *atoms*) is parametric: any type `𝔸` satisfying
+`Name 𝔸` can serve as the set of atoms. The only requirements are:
 
 - `DecidableEq 𝔸` — names can be compared for equality;
 - `Infinite 𝔸` — there are infinitely many names.
 
-The concrete identity of names is irrelevant; only these two structural
-properties matter.
+The concrete identity of names is irrelevant; only these two structural properties
+matter. The canonical example is `ℕ`, but the library is parametric in the atom type.
+
+## Main definitions
+
+* `Name 𝔸` — typeclass bundling `DecidableEq 𝔸` and `Infinite 𝔸`.
 -/
 
 /-- A **name** type (also called *atoms*) is any type with decidable equality
