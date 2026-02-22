@@ -1,6 +1,6 @@
 import NominalSets.Wheels
 import NominalSets.Name
-import NominalSets.FinitePerm.Basic
+import NominalSets.FinitePerm
 
 import Mathlib.GroupTheory.GroupAction.Support
 import Mathlib.Data.Set.Finite.Basic

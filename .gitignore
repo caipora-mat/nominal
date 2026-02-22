@@ -361,3 +361,5 @@ Temporary Items
 
 # End of https://www.toptal.com/developers/gitignore/api/macos,latex,linux
 /.lake
+
+.gitignore_local

@@ -31,6 +31,8 @@ and proves the structural lemmas about the moved-point set `movedFinset` (define
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 2.
 -/
 
+namespace NominalSets
+
 open PermType
 
 variable {α : Type*} [Name α]
@@ -94,3 +96,5 @@ theorem swap_triple_factorization {a a' a'' : α}
   intro c
   simp only [swapFP_val, Subgroup.coe_mul, Equiv.Perm.mul_apply, Equiv.swap_apply_def]
   split_ifs <;> simp_all
+
+end NominalSets

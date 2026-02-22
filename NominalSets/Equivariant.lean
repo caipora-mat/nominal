@@ -1,4 +1,4 @@
-import NominalSets.FinitePerm.Basic
+import NominalSets.FinitePerm
 import Mathlib.GroupTheory.GroupAction.Hom
 
 /-!
@@ -29,6 +29,8 @@ This file introduces `Equivariant` as a convenient abbreviation specialised to t
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Definition 1.3.
 -/
 
+namespace NominalSets
+
 open Equiv
 
 /-- An **equivariant function** between two types with a `Perm α`-action is a function
@@ -51,3 +53,5 @@ def mk' (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π 
   ⟨f, hf⟩
 
 end Equivariant
+
+end NominalSets

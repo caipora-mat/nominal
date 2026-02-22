@@ -43,6 +43,8 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 2.
 -/
 
+namespace NominalSets
+
 /-- A **nominal set** is a permutation type in which every element is finitely supported.
 
 `α` is an `outParam` (as in `PermType`) so that Lean can infer the atom type from `X` alone.
@@ -197,6 +199,8 @@ theorem supp_equivariant (π : FinitePerm α) (x : X) :
     exact supp_le (π • supp x) (supports_smul π (supp_supports x))
 
 end Supp
+
+end NominalSets
 
 -- TODO: below alternative way of defining suppSet. Don't know which one is better
 -- /-! ### Support: definition and properties -/

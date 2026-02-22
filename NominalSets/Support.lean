@@ -33,6 +33,8 @@ The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` an
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 2.
 -/
 
+namespace NominalSets
+
 section Support
 
 open MulAction
@@ -183,3 +185,5 @@ theorem supports_smul (π : FinitePerm α) {s : Finset α} {x : X}
     _ = π • x                      := by rw [hx]
 
 end SwapChar
+
+end NominalSets
