@@ -26,23 +26,24 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 
 * `Nominal.instAtoms` — atoms `α` form a nominal set (atom `a` is supported by `{a}`).
 * `Nominal.instProd` — products of nominal sets are nominal (support is the union of supports).
-* `Nominal.instOption` — `Option X` is nominal (`none` has empty support; `some x` inherits
-  the support of `x`).
-* `Nominal.instUnit` — `Unit` is a nominal set (the unique element has empty support; not a
-  global `instance` because `α` cannot be inferred from `Unit`).
-* `Nominal.instFinsetNominal` — finite sets of atoms form a nominal set (each `s` is supported
-  by itself).
+* `Nominal.instOption` — `Option X` is nominal (`none` has empty support; `some x` inherits the support of `x`).
+* `Nominal.instUnit` — `Unit` is a nominal set (the unique element has empty support; not a global `instance` because `α` cannot be inferred from `Unit`).
+* `Nominal.instFinsetNominal` — finite sets of atoms form a nominal set (each `s` is supported by itself).
+* `Nominal.instConjNominal` — finite permutations form a nominal set under the conjugation action (each `σ` is supported by its moved-point set `movedFinset σ`).
 
 ## Main results
 
 * `Nominal.finset_supports_self` — every finite set of atoms `s : Finset α` supports itself.
+* `Nominal.finitePerm_supports_self` — every finite permutation `σ` is supported by its moved-point set `movedFinset σ`.
 * `mem_supp` — `a ∈ supp x ↔ ∀ s, supports s x → a ∈ s`.
-* `coe_supp` — `(supp x : Set α) = suppSet x` (the support as a set equals the intersection
-  of all finite supports).
+* `coe_supp` — `(supp x : Set α) = suppSet x` (the support as a set equals the intersection of all finite supports).
 * `supp_supports` — `supp x` is itself a support for `x`.
-* `supp_le` — `supp x` is the least finite support: every finite support `s` satisfies
-  `supp x ⊆ s`.
+* `supp_le` — `supp x` is the least finite support: every finite support `s` satisfies `supp x ⊆ s`.
 * `supp_equivariant` — `π • supp x = supp (π • x)`.
+* `supp_eq_empty_iff` — `supp x = ∅ ↔ ∀ π, π • x = x` (globally fixed elements have empty support).
+* `supp_prod` — `supp (x, y) = supp x ∪ supp y`.
+* `supp_atom` — `supp a = {a}` for any atom `a : α`.
+* `supp_finset` — `supp s = s` for any finite set of atoms `s : Finset α`.
 
 ## References
 
@@ -54,8 +55,7 @@ namespace NominalSets
 /-- A **nominal set** is a permutation type in which every element is finitely supported.
 
 `α` is an `outParam` (as in `PermType`) so that Lean can infer the atom type from `X` alone.
-This lets callers write `supp x` rather than `supp  x`. The trade-off is that each
-type `X` may have at most one `Nominal` instance (one atom type `α`) -/
+This lets callers write `supp x` rather than `supp  x`. The trade-off is that each type `X` may have at most one `Nominal` instance (one atom type `α`) -/
 class Nominal (α : outParam Type*) [Name α] (X : Type*) extends PermType α X where
   finSupp : ∀ x : X, FinSupported  x
 
@@ -87,14 +87,12 @@ instance instProd [Nominal α X] [Nominal α Y] : Nominal α (X × Y) where
 
 /-- `Unit` is a nominal set: the unique element is supported by the empty set.
 
-This is a `def` rather than a global `instance` because `α` cannot be inferred
-from `Unit` alone (same reason as `PermType.instUnit`). -/
+This is a `def` rather than a global `instance` because `α` cannot be inferred from `Unit` alone (same reason as `PermType.instUnit`). -/
 def instUnit : Nominal α Unit where
   __ := PermType.instUnit
   finSupp _ := ⟨∅, fun _ _ ↦ rfl⟩
 
-/-- `Option X` is a nominal set: `none` is supported by `∅`, and `some x` is
-supported by the support of `x`. -/
+/-- `Option X` is a nominal set: `none` is supported by `∅`, and `some x` is supported by the support of `x`. -/
 instance instOption [Nominal α X] : Nominal α (Option X) where
   __ := PermType.instOption
   finSupp o := by
@@ -105,8 +103,7 @@ instance instOption [Nominal α X] : Nominal α (Option X) where
       exact ⟨s, fun π hπ ↦ by simp [hs π hπ]⟩
 
 /-- Every finite set of atoms `s` is supported by itself: any permutation fixing `s` fixes `s` as a set element. -/
-theorem finset_supports_self (s : Finset α) :
-    supports s s := by
+theorem finset_supports_self (s : Finset α) : supports s s := by
   intro π hfix
   ext a
   simp only [PermType.finset_smul, Finset.mem_image]
@@ -123,6 +120,33 @@ instance instFinsetNominal : Nominal α (Finset α) where
   __ := PermType.instFinset
   finSupp s := ⟨s, finset_supports_self s⟩
 
+/-- Every finite permutation `σ` is supported by its moved-point set `movedFinset σ`: any swap of two fixed points of `σ` conjugates trivially. -/
+theorem finitePerm_supports_self (σ : FinitePerm α) : supports (PermType.movedFinset σ) σ := by
+  rw [supports_iff_swap]
+  intro a b ha hb
+  rw [PermType.mem_movedFinset] at ha hb
+  push_neg at ha hb
+  rw [PermType.conj_smul, swap_inv]
+  ext c
+  simp only [Subgroup.coe_mul, Equiv.Perm.mul_apply, swap_coe]
+  by_cases hca : c = a
+  · rw [hca, Equiv.swap_apply_left, show σ.val b = b from hb,
+        Equiv.swap_apply_right, show σ.val a = a from ha]
+  · by_cases hcb : c = b
+    · rw [hcb, Equiv.swap_apply_right, show σ.val a = a from ha,
+          Equiv.swap_apply_left, show σ.val b = b from hb]
+    · have hσc_ne_a : σ.val c ≠ a :=
+        fun h ↦ hca (σ.val.injective (h.trans (show σ.val a = a from ha).symm))
+      have hσc_ne_b : σ.val c ≠ b :=
+        fun h ↦ hcb (σ.val.injective (h.trans (show σ.val b = b from hb).symm))
+      rw [Equiv.swap_apply_of_ne_of_ne hca hcb,
+          Equiv.swap_apply_of_ne_of_ne hσc_ne_a hσc_ne_b]
+
+/-- Finite permutations form a nominal set: each `σ` is supported by `movedFinset σ`. -/
+instance instConjNominal : Nominal α (FinitePerm α) where
+  __ := PermType.instConjFinitePerm
+  finSupp σ := ⟨PermType.movedFinset σ, finitePerm_supports_self σ⟩
+
 end Nominal
 
 /-! ## The least support: `supp x`
@@ -138,19 +162,15 @@ open MulAction
 
 variable {α : Type*} [Name α] {X : Type*} [Nominal α X]
 
-/-- The **support** `suppSet x` is the intersection of all finite supports of `x`.
-This is a `Set α`; use `supp x` for the corresponding `Finset α`. -/
-private def suppSet (x : X) : Set α :=
-  ⋂ (s : Finset α) (_ : supports s x), (s : Set α)
+/-- The **support** `suppSet x` is the intersection of all finite supports of `x`. This is a `Set α`; use `supp x` for the corresponding `Finset α`. -/
+private def suppSet (x : X) : Set α := ⋂ (s : Finset α) (_ : supports s x), (s : Set α)
 
 /-- Membership in `suppSet x`: an atom belongs iff it belongs to every finite support of `x`. -/
-private theorem mem_suppSet {x : X} {a : α} :
-    a ∈ suppSet x ↔ ∀ (s : Finset α), supports s x → a ∈ s := by
+private theorem mem_suppSet {x : X} {a : α} : a ∈ suppSet x ↔ ∀ (s : Finset α), supports s x → a ∈ s := by
   simp only [suppSet, Set.mem_iInter, Finset.mem_coe]
 
 /-- `suppSet x` is contained in every finite support of `x`. -/
-private theorem suppSet_subset {x : X} (s : Finset α) (hs : supports s x) :
-    suppSet x ⊆ (s : Set α) := by
+private theorem suppSet_subset {x : X} (s : Finset α) (hs : supports s x) : suppSet x ⊆ (s : Set α) := by
   intro a ha
   exact Finset.mem_coe.mpr ((mem_suppSet.mp ha) s hs)
 
@@ -159,21 +179,18 @@ private theorem suppSet_finite (x : X) : (suppSet x).Finite := by
   have ⟨s, hs⟩ : FinSupported x := @Nominal.finSupp α _ X _ x
   exact Set.Finite.subset (Finset.finite_toSet s) (suppSet_subset s hs)
 
-/-- The **least support** of `x`, as a `Finset α`.
-Equal to the intersection of all finite supports. -/
+/-- The **least support** of `x`, as a `Finset α`. Equal to the intersection of all finite supports. -/
 noncomputable def supp (x : X) : Finset α :=
   (suppSet_finite x).toFinset
 
 /-- Membership in `supp x`: an atom belongs iff it belongs to every finite support of `x`. -/
 @[simp]
-theorem mem_supp {x : X} {a : α} :
-    a ∈ supp x ↔ ∀ (s : Finset α), supports s x → a ∈ s := by
+theorem mem_supp {x : X} {a : α} : a ∈ supp x ↔ ∀ (s : Finset α), supports s x → a ∈ s := by
   simp [supp, Set.Finite.mem_toFinset, mem_suppSet]
 
 /-- `supp x`, viewed as a set, equals `suppSet x`. -/
 @[simp]
-theorem coe_supp (x : X) : (supp x : Set α) = suppSet x :=
-  Set.Finite.coe_toFinset _
+theorem coe_supp (x : X) : (supp x : Set α) = suppSet x := Set.Finite.coe_toFinset _
 
 /-- `supp x` supports `x`: every permutation fixing `supp x` also fixes `x`. -/
 theorem supp_supports (x : X) : supports (supp x) x := by
@@ -193,39 +210,29 @@ theorem supp_supports (x : X) : supports (supp x) x := by
   -- By supports_iff_swap, swap a b • x = x
   exact (supports_iff_swap.mp hint) a b ha' hb'
 
-/-- `supp x` is the **least** finite support of `x`:
-every finite support `s` of `x` satisfies `supp x ⊆ s`. -/
-theorem supp_le {x : X} (s : Finset α) (hs : supports s x) :
-    supp x ⊆ s := by
+/-- `supp x` is the **least** finite support of `x`: every finite support `s` of `x` satisfies `supp x ⊆ s`. -/
+theorem supp_le {x : X} (s : Finset α) (hs : supports s x) : supp x ⊆ s := by
   intro a ha
   exact (mem_supp.mp ha) s hs
 
 /-- The support function is equivariant: `π • supp x = supp (π • x)`. -/
 @[simp]
-theorem supp_equivariant (π : FinitePerm α) (x : X) :
-    π • supp x = supp (π • x) := by
+theorem supp_equivariant (π : FinitePerm α) (x : X) : π • supp x = supp (π • x) := by
   apply le_antisymm
-  · -- Direction: π • supp x ⊆ supp (π • x)
-    -- supports_smul with π⁻¹ on (π • x): π⁻¹ • supp(π • x) supports π⁻¹ • (π • x) = x
-    have hsup : supports (π⁻¹ • supp (π • x)) x := by
+  · have hsup : supports (π⁻¹ • supp (π • x)) x := by
       have h := supports_smul π⁻¹ (supp_supports (π • x))
       rwa [PermType.inv_smul_smul] at h
-    -- supp x ⊆ π⁻¹ • supp(π • x) by minimality
     have hle : supp x ⊆ π⁻¹ • supp (π • x) := supp_le _ hsup
-    -- Apply π • (monotone) and cancel π * π⁻¹
     calc π • supp x
         ⊆ π • (π⁻¹ • supp (π • x)) := by
             simp only [PermType.finset_smul]
             exact Finset.image_subset_image hle
       _ = supp (π • x)              := by
             rw [← mul_smul, mul_inv_cancel, one_smul]
-  · -- Direction: supp (π • x) ⊆ π • supp x
-    -- π • supp x supports π • x (by supports_smul), so supp_le applies
-    exact supp_le (π • supp x) (supports_smul π (supp_supports x))
+  · exact supp_le (π • supp x) (supports_smul π (supp_supports x))
 
 /-- `supp x = ∅` if and only if every permutation fixes `x`. -/
-theorem supp_eq_empty_iff {x : X} :
-    supp x = ∅ ↔ ∀ π : FinitePerm α, π • x = x := by
+theorem supp_eq_empty_iff {x : X} : supp x = ∅ ↔ ∀ π : FinitePerm α, π • x = x := by
   constructor
   · intro h π
     have : supports ∅ x := h ▸ supp_supports x
@@ -238,8 +245,8 @@ theorem supp_eq_empty_iff {x : X} :
     exact ⟨∅, fun π _ ↦ h π, Finset.notMem_empty a⟩
 
 /-- The support of a pair is the union of the supports. -/
-theorem supp_prod {Y : Type*} [Nominal α Y] (x : X) (y : Y) :
-    supp (x, y) = supp x ∪ supp y := by
+@[simp]
+theorem supp_prod {Y : Type*} [Nominal α Y] (x : X) (y : Y) : supp (x, y) = supp x ∪ supp y := by
   apply le_antisymm
   · exact supp_le _ (fun π hπ ↦ by
       simp only [PermType.prod_smul, Prod.mk.injEq]
@@ -254,6 +261,46 @@ theorem supp_prod {Y : Type*} [Nominal α Y] (x : X) (y : Y) :
         have := hs π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.1)
     · exact (mem_supp.mp hy) s (fun π hπ ↦ by
         have := hs π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.2)
+
+/-- The least support of an atom `a` is the singleton `{a}`. -/
+@[simp]
+theorem supp_atom (a : α) : supp (α := α) a = {a} := by
+  apply le_antisymm
+  · exact supp_le {a} (fun π h ↦ by
+      simp only [PermType.atoms_smul]
+      exact h (Finset.mem_coe.mpr (Finset.mem_singleton.mpr rfl)))
+  · intro b hb
+    rw [Finset.mem_singleton] at hb
+    rw [hb, mem_supp]
+    intro s hs
+    by_contra ha
+    pick_new c (s ∪ {a})
+    simp only [Finset.mem_union, Finset.mem_singleton, not_or] at cNew
+    obtain ⟨hcs, hca⟩ := cNew
+    have hfix := (supports_iff_swap.mp hs) a c ha hcs
+    rw [swap_apply_left] at hfix
+    exact hca hfix
+
+/-- The least support of a finite set of atoms `s` is `s` itself. -/
+@[simp]
+theorem supp_finset (s : Finset α) : supp (α := α) s = s := by
+  apply le_antisymm
+  · exact supp_le s (Nominal.finset_supports_self s)
+  · intro a ha
+    rw [mem_supp]
+    intro t ht
+    by_contra hat
+    pick_new b (t ∪ s)
+    simp only [Finset.mem_union, not_or] at bNew
+    obtain ⟨hbt, hbs⟩ := bNew
+    have hfix := (supports_iff_swap.mp ht) a b hat hbt
+    -- swap a b • s = s, but a ∈ s so b = (a b) • a ∈ (a b) • s = s, contradicting b ∉ s
+    have : b ∈ s := by
+      have hmem : b ∈ swap a b • s := by
+        rw [PermType.finset_smul, Finset.mem_image]
+        exact ⟨a, ha, by simp [swap]⟩
+      rwa [hfix] at hmem
+    exact hbs this
 
 end Supp
 

@@ -7,8 +7,7 @@ import Mathlib.Data.Finset.Card
 /-!
 # Support and the Swap Characterisation
 
-This file introduces the `supports` relation and `FinSupported` predicate, and proves
-the key theorems about them.
+This file introduces the `supports` relation and `FinSupported` predicate, and proves the key theorems about them.
 
 The central result is the swap characterisation of supports (Pitts, Prop. 2.1): a finite
 set `s` supports `x` if and only if every transposition of two atoms outside `s` fixes `x`.
@@ -17,14 +16,13 @@ The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` an
 
 ## Main definitions
 
-* `supports s x` — thin abbreviation for `MulAction.Supports (FinitePerm α) ↑s x`
-  (where `s : Finset α`), specialising the acting group to `FinitePerm α`.
+* `supports s x` — thin abbreviation for `MulAction.Supports (FinitePerm α) ↑s x` (where `s : Finset α`), specialising the acting group to `FinitePerm α`.
 * `FinSupported x` — `x` is supported by some finite set of atoms.
 
 ## Main results
 
-* `supports_iff_swap` — **Pitts, Prop. 2.1**: `s` supports `x` iff every transposition
-  of two atoms outside `s` fixes `x`.
+* `supports_iff_swap` — **Pitts, Prop. 2.1**: `s` supports `x` iff every transposition of two atoms outside `s` fixes `x`.
+* `supports_mono` — if `s ⊆ t` and `s` supports `x`, then `t` supports `x`.
 * `supports_inter` — the intersection of two finite supports is again a support.
 * `supports_smul` — if `s` supports `x`, then `π • s` supports `π • x`.
 
@@ -49,8 +47,7 @@ abbrev supports {β : Type*} [MulAction (FinitePerm α) β] (s : Finset α) (b :
 
 /-- An element `x : X` is **finitely supported** if there exists a finite set of atoms
 `s : Finset α` such that every finite permutation fixing `s` pointwise also fixes `x`. -/
-def FinSupported {X : Type*} [PermType α X] (x : X) : Prop :=
-  ∃ s : Finset α, supports s x
+def FinSupported {X : Type*} [PermType α X] (x : X) : Prop := ∃ s : Finset α, supports s x
 
 /-- Monotonicity of support: if `s ⊆ t` and `s` supports `x`, then `t` supports `x`. -/
 theorem supports_mono {β : Type*} [MulAction (FinitePerm α) β] {s t : Finset α} {x : β}
@@ -67,8 +64,7 @@ open MulAction PermType
 
 variable {α : Type*} [Name α] {X : Type*} [PermType α X]
 
-/-- **Pitts, Prop. 2.1.** A finset `s` supports `x` under `FinitePerm α` if and only if
-every transposition of two atoms *outside* `s` fixes `x`. -/
+/-- **Pitts, Prop. 2.1.** A finset `s` supports `x` under `FinitePerm α` if and only if every transposition of two atoms *outside* `s` fixes `x`. -/
 theorem supports_iff_swap {s : Finset α} {x : X} :
     supports s x ↔ ∀ a₁ a₂ : α, a₁ ∉ s → a₂ ∉ s → swap a₁ a₂ • x = x := by
   constructor
@@ -142,8 +138,7 @@ theorem supports_iff_swap {s : Finset α} {x : X} :
       rw [swap_mul_cancel (σ := σ) (a := z), mul_smul, hσ'x, hswap_x]
 
 /-- If two finite sets both support `x`, then their intersection also supports `x`. -/
-theorem supports_inter (A₁ A₂ : Finset α) (x : X)
-    (h₁ : supports A₁ x) (h₂ : supports A₂ x) :
+theorem supports_inter (A₁ A₂ : Finset α) (x : X) (h₁ : supports A₁ x) (h₂ : supports A₂ x) :
     supports (A₁ ∩ A₂) x := by
   rw [supports_iff_swap]
   intro a a' ha ha'
@@ -152,8 +147,8 @@ theorem supports_inter (A₁ A₂ : Finset α) (x : X)
   · subst heq
     rw [swap_self, one_smul]
   · pick_new a'' (A₁ ∪ A₂ ∪ {a, a'})
-    simp only [Finset.mem_union, Finset.mem_insert, Finset.mem_singleton, not_or] at ha''
-    obtain ⟨⟨ha''₁, ha''₂⟩, ha''a, ha''a'⟩ := ha''
+    simp only [Finset.mem_union, Finset.mem_insert, Finset.mem_singleton, not_or] at a''New
+    obtain ⟨⟨ha''₁, ha''₂⟩, ha''a, ha''a'⟩ := a''New
     have hid : swap a a' = swap a a'' * swap a' a'' * swap a a'' :=
       swap_triple_factorization heq (Ne.symm ha''a) (Ne.symm ha''a')
     have fix_a_a'' : swap a a'' • x = x := by
@@ -167,27 +162,20 @@ theorem supports_inter (A₁ A₂ : Finset α) (x : X)
     rw [hid, mul_smul, mul_smul, fix_a_a'', fix_a'_a'', fix_a_a'']
 
 /-- If `s` supports `x`, then `π • s` supports `π • x`. -/
-theorem supports_smul (π : FinitePerm α) {s : Finset α} {x : X}
-    (hs : supports s x) :
+theorem supports_smul (π : FinitePerm α) {s : Finset α} {x : X} (hs : supports s x) :
     supports (π • s) (π • x) := by
   intro σ hσ
-  -- Key: show π⁻¹ * σ * π fixes every b ∈ s
   have hconj : ∀ b ∈ (s : Set α), (π⁻¹ * σ * π) • b = b := fun b hb ↦ by
-    -- π • b ∈ π • s (since π⁻¹ • (π • b) = b ∈ s)
     have hpib : π • b ∈ π • s := by
       simp only [PermType.mem_smul_finset_iff, PermType.inv_smul_smul]
       exact Finset.mem_coe.mp hb
-    -- σ fixes π • b
     have hfix : σ • (π • b) = π • b := hσ (Finset.mem_coe.mpr hpib)
-    -- (π⁻¹ * σ * π) • b = π⁻¹ • (σ • (π • b)) = b
     simp only [mul_smul, hfix, PermType.inv_smul_smul]
-  -- π⁻¹ * σ * π fixes x by the support condition
   have hx : (π⁻¹ * σ * π) • x = x := hs _ hconj
-  -- σ • (π • x) = π • ((π⁻¹ * σ * π) • x) = π • x
   calc σ • (π • x)
       = π • (π⁻¹ • (σ • (π • x))) := (PermType.smul_inv_smul π _).symm
     _ = π • ((π⁻¹ * σ * π) • x)   := by rw [mul_smul, mul_smul]
-    _ = π • x                      := by rw [hx]
+    _ = π • x                     := by rw [hx]
 
 end SwapChar
 
