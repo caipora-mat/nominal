@@ -3,6 +3,7 @@ import Mathlib.GroupTheory.GroupAction.Support
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.Set.Lattice
 import Mathlib.Data.Finset.Card
+import Mathlib.Data.Finset.Empty
 import Mathlib.Data.Finset.Image
 import Mathlib.Logic.Equiv.Basic
 
@@ -19,20 +20,25 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 ## Main definitions
 
 * `Nominal α X` — typeclass: a `PermType α X` in which every element is finitely supported.
-* `suppSet x` — (private) the intersection of all finite supports of `x`, as a `Set α`.
-* `supp x` — the least finite support of `x`, as a `Finset α`.
+* `supp x` — the least finite support of `x`, as a `Finset α` (intersection of all finite supports).
 
 ## Instances
 
 * `Nominal.instAtoms` — atoms `α` form a nominal set (atom `a` is supported by `{a}`).
 * `Nominal.instProd` — products of nominal sets are nominal (support is the union of supports).
+* `Nominal.instOption` — `Option X` is nominal (`none` has empty support; `some x` inherits
+  the support of `x`).
+* `Nominal.instUnit` — `Unit` is a nominal set (the unique element has empty support; not a
+  global `instance` because `α` cannot be inferred from `Unit`).
 * `Nominal.instFinsetNominal` — finite sets of atoms form a nominal set (each `s` is supported
   by itself).
 
 ## Main results
 
-* `Nominal.finset_supports_self` — every finite set of atoms `s` is supported by itself.
+* `Nominal.finset_supports_self` — every finite set of atoms `s : Finset α` supports itself.
 * `mem_supp` — `a ∈ supp x ↔ ∀ s, supports s x → a ∈ s`.
+* `coe_supp` — `(supp x : Set α) = suppSet x` (the support as a set equals the intersection
+  of all finite supports).
 * `supp_supports` — `supp x` is itself a support for `x`.
 * `supp_le` — `supp x` is the least finite support: every finite support `s` satisfies
   `supp x ⊆ s`.
@@ -78,6 +84,25 @@ instance instProd [Nominal α X] [Nominal α Y] : Nominal α (X × Y) where
       congr
       · exact hsx π (fun a ha ↦ hπ (Finset.mem_union_left _ ha))
       · exact hsy π (fun a ha ↦ hπ (Finset.mem_union_right _ ha))⟩
+
+/-- `Unit` is a nominal set: the unique element is supported by the empty set.
+
+This is a `def` rather than a global `instance` because `α` cannot be inferred
+from `Unit` alone (same reason as `PermType.instUnit`). -/
+def instUnit : Nominal α Unit where
+  __ := PermType.instUnit
+  finSupp _ := ⟨∅, fun _ _ ↦ rfl⟩
+
+/-- `Option X` is a nominal set: `none` is supported by `∅`, and `some x` is
+supported by the support of `x`. -/
+instance instOption [Nominal α X] : Nominal α (Option X) where
+  __ := PermType.instOption
+  finSupp o := by
+    cases o with
+    | none => exact ⟨∅, fun _ _ ↦ rfl⟩
+    | some x =>
+      obtain ⟨s, hs⟩ := Nominal.finSupp x
+      exact ⟨s, fun π hπ ↦ by simp [hs π hπ]⟩
 
 /-- Every finite set of atoms `s` is supported by itself: any permutation fixing `s` fixes `s` as a set element. -/
 theorem finset_supports_self (s : Finset α) :
@@ -197,6 +222,38 @@ theorem supp_equivariant (π : FinitePerm α) (x : X) :
   · -- Direction: supp (π • x) ⊆ π • supp x
     -- π • supp x supports π • x (by supports_smul), so supp_le applies
     exact supp_le (π • supp x) (supports_smul π (supp_supports x))
+
+/-- `supp x = ∅` if and only if every permutation fixes `x`. -/
+theorem supp_eq_empty_iff {x : X} :
+    supp x = ∅ ↔ ∀ π : FinitePerm α, π • x = x := by
+  constructor
+  · intro h π
+    have : supports ∅ x := h ▸ supp_supports x
+    exact this π (fun a ha ↦ by simp at ha)
+  · intro h
+    rw [Finset.eq_empty_iff_forall_notMem]
+    intro a
+    simp only [mem_supp]
+    push_neg
+    exact ⟨∅, fun π _ ↦ h π, Finset.notMem_empty a⟩
+
+/-- The support of a pair is the union of the supports. -/
+theorem supp_prod {Y : Type*} [Nominal α Y] (x : X) (y : Y) :
+    supp (x, y) = supp x ∪ supp y := by
+  apply le_antisymm
+  · exact supp_le _ (fun π hπ ↦ by
+      simp only [PermType.prod_smul, Prod.mk.injEq]
+      exact ⟨supp_supports x π (fun a ha ↦ hπ (Finset.mem_coe.mpr (Finset.mem_union_left _ ha))),
+             supp_supports y π (fun a ha ↦ hπ (Finset.mem_coe.mpr (Finset.mem_union_right _ ha)))⟩)
+  · intro a ha
+    rw [Finset.mem_union] at ha
+    rw [mem_supp]
+    intro s hs
+    rcases ha with hx | hy
+    · exact (mem_supp.mp hx) s (fun π hπ ↦ by
+        have := hs π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.1)
+    · exact (mem_supp.mp hy) s (fun π hπ ↦ by
+        have := hs π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.2)
 
 end Supp
 

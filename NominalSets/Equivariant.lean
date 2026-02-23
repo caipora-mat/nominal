@@ -17,12 +17,15 @@ Mathlib already provides this notion via `MulActionHom`:
   functions from `X` to `Y`.
 
 This file introduces `Equivariant` as a convenient abbreviation specialised to the group
-`FinitePerm α` of finite permutations.
+`FinitePerm α` of finite permutations. Note that `Equivariant` requires only `DecidableEq α`
+(the constraint inherited from `FinitePerm`), not the full `Name α` constraint.
 
 ## Main definitions
 
 * `Equivariant α X Y` — abbreviation for `X →[FinitePerm α] Y`, the type of equivariant
   functions between permutation types.
+* `Equivariant.mk'` — construct an equivariant function from a bare function and an
+  equivariance proof.
 
 ## References
 

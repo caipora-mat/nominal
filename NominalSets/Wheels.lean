@@ -9,8 +9,8 @@ Small lemmas and tactics used throughout the nominal-sets library that are not
 
 ## Main definitions
 
-* `pick_new a s` — tactic macro: picks a fresh atom `a ∉ s` from an infinite type,
-  introducing `a : α` and `ha : a ∉ s` into the local context.
+* `pick_new a s` / `pick_new a s with h` — tactic macro: picks a fresh atom `a ∉ s`
+  from an infinite type. Works with both `Finset` and finite `Set` arguments.
 
 ## Main results
 
@@ -23,16 +23,34 @@ theorem notMem_union {α : Type*} (x : α) (a b : Set α) :
 
 /-! ### `pick_new` tactic
 
-`pick_new a s` picks a fresh atom `a` not in the `Finset` `s`, introducing
+`pick_new a s` picks a fresh atom `a` not in `s`, introducing
 `a : α` and `ha : a ∉ s` into the local context.
+
+- `pick_new a s` — auto-names the hypothesis `ha` (prefixing `h` to the identifier).
+- `pick_new a s with h` — uses `h` as the explicit hypothesis name.
+
+The tactic handles both `Finset` and finite `Set` arguments:
+- If `s : Finset α`, uses `Finset.exists_notMem` directly.
+- If `s : Set α` with a `Set.Finite s` hypothesis in context, uses `Set.Finite.exists_notMem`.
+
+Requires `[Infinite α]` in the context (provided by `[Name α]`).
 
 Usage:
 ```
-pick_new a s
--- introduces: a : α, ha : a ∉ s
+pick_new a s            -- introduces: a : α, ha : a ∉ s
+pick_new a s with hab   -- introduces: a : α, hab : a ∉ s
 ```
 -/
 
-macro "pick_new" a:ident s:term : tactic =>
-  let ah := Lean.mkIdent (Lean.Name.mkSimple ("h" ++ a.getId.toString))
-  `(tactic| obtain ⟨$a, $ah⟩ := ($s : Finset _).exists_notMem)
+syntax "pick_new" ident term ("with" ident)? : tactic
+
+macro_rules
+  | `(tactic| pick_new $a $s with $h) =>
+    `(tactic| first
+      | obtain ⟨$a, $h⟩ := ($s : Finset _).exists_notMem
+      | obtain ⟨$a, $h⟩ := (show Set.Finite $s by assumption).exists_notMem)
+  | `(tactic| pick_new $a $s) =>
+    let ah := Lean.mkIdent (Lean.Name.mkSimple ("h" ++ a.getId.toString))
+    `(tactic| first
+      | obtain ⟨$a, $ah⟩ := ($s : Finset _).exists_notMem
+      | obtain ⟨$a, $ah⟩ := (show Set.Finite $s by assumption).exists_notMem)

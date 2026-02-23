@@ -52,6 +52,11 @@ abbrev supports {β : Type*} [MulAction (FinitePerm α) β] (s : Finset α) (b :
 def FinSupported {X : Type*} [PermType α X] (x : X) : Prop :=
   ∃ s : Finset α, supports s x
 
+/-- Monotonicity of support: if `s ⊆ t` and `s` supports `x`, then `t` supports `x`. -/
+theorem supports_mono {β : Type*} [MulAction (FinitePerm α) β] {s t : Finset α} {x : β}
+    (hst : s ⊆ t) (hs : supports s x) : supports t x :=
+  Supports.mono (by exact_mod_cast Finset.coe_subset.mpr hst) hs
+
 end Support
 
 /-! ## Proposition 2.1 and the intersection of supports -/

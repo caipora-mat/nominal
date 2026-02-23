@@ -19,9 +19,7 @@ matter. The canonical example is `ℕ`, but the library is parametric in the ato
 
 /-- A **name** type (also called *atoms*) is any type with decidable equality
 and infinitely many inhabitants. -/
-class Name (𝔸 : Type*) where
+class Name (𝔸 : Type*) extends Infinite 𝔸 where
   [dec : DecidableEq 𝔸]
-  [inf : Infinite 𝔸]
 
 attribute [instance] Name.dec
-attribute [instance] Name.inf

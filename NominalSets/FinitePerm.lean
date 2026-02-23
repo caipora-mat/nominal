@@ -120,31 +120,31 @@ theorem ext {π σ : FinitePerm α} (h : ∀ a, π a = σ a) : π = σ :=
 
 theorem injective : Function.Injective π := π.val.injective
 
--- /-! ### Coercion to `Equiv.Perm`
+/-! ### Coercion to `Equiv.Perm`
 
--- `FinitePerm α` coerces to `Equiv.Perm α` via the subtype projection.
--- The `@[norm_cast]` lemmas allow `norm_cast` / `push_cast` / `pull_cast`
--- to commute coercions through the group operations. -/
+`FinitePerm α` coerces to `Equiv.Perm α` via the subtype projection.
+The `@[norm_cast]` lemmas allow `norm_cast` / `push_cast` / `pull_cast`
+to commute coercions through the group operations. -/
 
--- instance instCoe : Coe (FinitePerm α) (Perm α) := ⟨Subtype.val⟩
+instance instCoe : Coe (FinitePerm α) (Perm α) := ⟨Subtype.val⟩
 
--- @[simp, grind =] theorem coe_val : (π : Perm α) = π.val := rfl
+@[simp, grind =] theorem coe_val : (π : Perm α) = π.val := rfl
 
--- @[simp, norm_cast, grind =]
--- theorem coe_toPerm_one : ((1 : FinitePerm α) : Perm α) = 1 := rfl
+@[simp, norm_cast, grind =]
+theorem coe_toPerm_one : ((1 : FinitePerm α) : Perm α) = 1 := rfl
 
--- @[simp, norm_cast, grind =]
--- theorem coe_toPerm_mul : ((π * σ : FinitePerm α) : Perm α) = (π : Perm α) * σ := rfl
+@[simp, norm_cast, grind =]
+theorem coe_toPerm_mul : ((π * σ : FinitePerm α) : Perm α) = (π : Perm α) * σ := rfl
 
--- @[simp, norm_cast, grind =]
--- theorem coe_toPerm_inv : ((π⁻¹ : FinitePerm α) : Perm α) = (π : Perm α)⁻¹ := rfl
+@[simp, norm_cast, grind =]
+theorem coe_toPerm_inv : ((π⁻¹ : FinitePerm α) : Perm α) = (π : Perm α)⁻¹ := rfl
 
--- theorem coe_injective : Function.Injective ((↑) : FinitePerm α → Perm α) :=
---   Subtype.val_injective
+theorem coe_injective : Function.Injective ((↑) : FinitePerm α → Perm α) :=
+  Subtype.val_injective
 
--- @[simp, grind =]
--- theorem coe_inj {π σ : FinitePerm α} : (π : Perm α) = σ ↔ π = σ :=
---   Subtype.val_inj
+@[simp, grind =]
+theorem coe_inj {π σ : FinitePerm α} : (π : Perm α) = σ ↔ π = σ :=
+  Subtype.val_inj
 
 end Coe
 

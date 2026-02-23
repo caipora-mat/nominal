@@ -15,25 +15,20 @@ A formalization of **nominal set theory** in Lean 4
 
 ## Toolchain
 
-| Tool    | Version |
-|---------|---------|
-| Lean    | v4.28.0 |
-| Mathlib | v4.28.0 |
-| Lake    | bundled |
+Lean v4.28.0
 
 ## Project Structure
 
 ```
-NominalSets.lean              
+NominalSets.lean
 NominalSets/
   Wheels.lean                 # Utility lemmas and the pick_new tactic
   Name.lean                   # Name typeclass: DecidableEq + Infinite
-  FinitePerm/
-    Basic.lean                # FinitePerm α subgroup of Equiv.Perm α
+  FinitePerm.lean             # FinitePerm α subgroup of Equiv.Perm α
   PermType.lean               # PermType typeclass, instances, movedFinset
   Swap.lean                   # swap (transposition), structural swap lemmas
-  Support.lean                # supports, FinSupported, Pitts Prop. 2.1
   Equivariant.lean            # Equivariant functions (MulActionHom wrapper)
+  Support.lean                # supports, FinSupported, Pitts Prop. 2.1
   Nominal.lean                # Nominal typeclass, supp (least support)
   Basic.lean                  # Aggregates all of the above
 ```
@@ -62,8 +57,12 @@ A **permutation type** (Perm-set) is a type `X` with a `FinitePerm α`-action.
 Instances:
 - `instAtoms` — atoms act on themselves: `π • a = π a`.
 - `instProd` — component-wise action on `X × Y`.
+- `instOption` — `Option X` acts fixing `none` and acting on `some x`.
 - `instFinset` — image action on `Finset α`: `π • s = s.image π`.
 - `PFun.instPermType` — conjugation action `(π • f) x = π • f (π⁻¹ • x)`.
+
+The function action is placed on the newtype `PFun α X Y` (a wrapper around `X → Y`)
+to avoid a diamond with Mathlib's pointwise `Pi.instSMul`.
 
 ### Transpositions — `swap`
 
@@ -77,9 +76,15 @@ Key lemmas:
 - `swap_triple_factorization` — `swap a a' = swap a a'' * swap a' a'' * swap a a''`
   for distinct `a`, `a'`, `a''`.
 
+### Equivariant Functions — `Equivariant α X Y`
+
+An **equivariant function** between two permutation types is one that commutes with the
+group action: `f (π • x) = π • f x`. This is an abbreviation for `MulActionHom
+(FinitePerm α) X Y`.
+
 ### Support — `supports`, `FinSupported`
 
-A set `s` **supports** `x` if every permutation fixing `s` also fixes `x`.
+A finset `s` **supports** `x` if every permutation fixing `s` pointwise also fixes `x`.
 
 Key results:
 - **Pitts, Prop. 2.1** (`supports_iff_swap`) — `s` supports `x` iff every transposition
@@ -96,8 +101,10 @@ class Nominal (α : outParam Type*) [Name α] (X : Type*) extends PermType α X 
   finSupp : ∀ x : X, FinSupported x
 ```
 
+Nominal instances: atoms, products, `Option X`, `Finset α`.
+
 The **least support** `supp x : Finset α` is the intersection of all finite supports.
-Classical logic is essential here: the intersection of all finite supports is itself a
+Classical logic is essential: the intersection of all finite supports is itself a
 support (`supp_supports`), a fact that requires `Classical.byContradiction`.
 
 Key results:
@@ -105,8 +112,8 @@ Key results:
 - `supp_supports` — `supp x` supports `x`.
 - `supp_le` — `supp x ⊆ s` for every finite support `s`.
 - `supp_equivariant` — `π • supp x = supp (π • x)`.
-
-Nominal instances: atoms, products, `Finset α`.
+- `supp_eq_empty_iff` — `supp x = ∅ ↔ ∀ π, π • x = x`.
+- `supp_prod` — `supp (x, y) = supp x ∪ supp y`.
 
 ## Build
 
