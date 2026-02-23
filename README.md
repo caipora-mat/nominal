@@ -30,7 +30,6 @@ NominalSets/
   Equivariant.lean            # Equivariant functions (MulActionHom wrapper)
   Support.lean                # supports, FinSupported, Pitts Prop. 2.1
   Nominal.lean                # Nominal typeclass, supp (least support)
-  Basic.lean                  # Aggregates all of the above
 ```
 
 ## Core Concepts
@@ -96,16 +95,9 @@ Key results:
 
 A **nominal set** is a permutation type in which every element has finite support.
 
-```lean
-class Nominal (α : outParam Type*) [Name α] (X : Type*) extends PermType α X where
-  finSupp : ∀ x : X, FinSupported x
-```
-
 Nominal instances: atoms, products, `Option X`, `Finset α`.
 
 The **least support** `supp x : Finset α` is the intersection of all finite supports.
-Classical logic is essential: the intersection of all finite supports is itself a
-support (`supp_supports`), a fact that requires `Classical.byContradiction`.
 
 Key results:
 - `mem_supp` — `a ∈ supp x ↔ ∀ s, supports s x → a ∈ s`.
