@@ -27,6 +27,7 @@ that are needed for the swap characterisation of supports (Pitts, Prop. 2.1), pr
 * `not_mem_movedFinset_swap_smul` — after left-composing `swap a (σ a)`, `a` is fixed.
 * `swap_mul_cancel` — `σ = swap a (σ a) * (swap a (σ a) * σ)`
 * `swap_triple_factorization` — `swap a a' = swap a a'' * swap a' a'' * swap a a''` for distinct `a`, `a'`, `a''`.
+* `swap_equivariant` — `π • swap a b = swap (π • a) (π • b)`.
 
 ## References
 
@@ -114,5 +115,11 @@ theorem swap_triple_factorization {a a' a'' : α} (hne_a : a ≠ a') (hne_a' : a
   intro c
   simp only [swap_coe, Subgroup.coe_mul, Equiv.Perm.mul_apply, Equiv.swap_apply_def]
   split_ifs <;> simp_all
+
+/-- The `swap` function is equivariant: `π • swap a b = swap (π • a) (π • b)` -/
+theorem swap_equivariant (π : FinitePerm α) (a b : α) : π • swap a b = swap (π • a) (π • b) := by
+  apply Subtype.ext
+  simp only [PermType.conj_smul, PermType.atoms_smul]
+  exact (Equiv.swap_apply_apply π a b).symm
 
 end NominalSets
