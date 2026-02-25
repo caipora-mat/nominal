@@ -30,6 +30,7 @@ NominalSets/
   Equivariant.lean            # Equivariant functions (MulActionHom wrapper)
   Support.lean                # supports, FinSupported, Pitts Prop. 2.1
   Nominal.lean                # Nominal typeclass, supp (least support)
+  Freshness.lean              # Fresh relation (#), choose_fresh tactic
 ```
 
 ## Core Concepts
@@ -106,15 +107,32 @@ Key results:
 - `supp_equivariant` — `π • supp x = supp (π • x)`.
 - `supp_eq_empty_iff` — `supp x = ∅ ↔ ∀ π, π • x = x`.
 - `supp_prod` — `supp (x, y) = supp x ∪ supp y`.
+- `supp_atom` — `supp a = {a}` for any atom `a`.
+- `supp_finset` — `supp s = s` for any `s : Finset α`.
+
+### Freshness — `Fresh`, `#`, `choose_fresh`
+
+**Freshness** (`x # y`) between two nominal-set elements means their least supports are disjoint:
+`Disjoint (supp x) (supp y)`.
+
+Key results:
+- `fresh_comm` — `x # y ↔ y # x`.
+- `fresh_equivariant` — freshness is preserved by permutations.
+- `fresh_atom_left` — `a # x ↔ a ∉ supp x` (and `fresh_atom_right` for the right argument).
+- `fresh_atoms` — `a # b ↔ a ≠ b` for atoms.
+- `fresh_swap` — if `a # x` and `b # x`, then `swap a b • x = x`.
+- `fresh_prod_right` — `x # (y, z) ↔ x # y ∧ x # z`.
+- `fresh_prod_left` — `(x, y) # z ↔ x # z ∧ y # z`.
+- `exists_fresh_atom` — for every `x`, there exists an atom fresh for it.
+- `fresh_atom_cofinite` — the set of atoms fresh for `x` is cofinite.
+- `fresh_atom_finset` — `a # A ↔ a ∉ A` for a finite set of atoms `A`.
+- `fresh_finset` — `A # B ↔ Disjoint A B` for finite sets of atoms.
 
 ## Build
 
 ```bash
 # Full build
 lake build
-
-# Single file
-lake build NominalSets.Nominal
 
 # Clean rebuild
 lake clean && lake build
