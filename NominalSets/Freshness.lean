@@ -273,17 +273,17 @@ elab_rules : tactic
     let baseName := match h with
       | some h => h.getId.toString
       | none   => a.getId.toString ++ "Fresh"
-    match xs with
-    | some xs => -- Explicit `from` clause (may contain types)
-      withMainContext do evalChooseFresh a (← expandFromArgs xs) baseName
-    | none => -- No `from` clause: scan the local context for nominal-set declarations.
-      withMainContext do
-        let fvarIds ← findNominalDecls
-        if fvarIds.isEmpty then
-          throwError "choose_fresh: no Nominal instance found in the local context"
-        let lctx ← getLCtx
-        let xs ← fvarIds.mapM fun fid ↦ `($(mkIdent <| lctx.get! fid |>.userName))
-        evalChooseFresh a xs baseName
+    withMainContext do
+      match xs with
+      | some xs => -- Explicit `from` clause (may contain types)
+        evalChooseFresh a (← expandFromArgs xs) baseName
+      | none => -- No `from` clause: scan the local context for nominal-set declarations.
+          let fvarIds ← findNominalDecls
+          if fvarIds.isEmpty then
+            throwError "choose_fresh: no Nominal instance found in the local context"
+          let lctx ← getLCtx
+          let xs ← fvarIds.mapM fun fid ↦ `($(mkIdent <| lctx.get! fid |>.userName))
+          evalChooseFresh a xs baseName
 
 section CHOOSE_FRESH_TEST
 set_option linter.unusedVariables false

@@ -76,14 +76,20 @@ instance instAtoms : Nominal α α where
 /-- Products of nominal sets are nominal: take the union of the respective supports. -/
 instance instProd [Nominal α X] [Nominal α Y] : Nominal α (X × Y) where
   __ := PermType.instProd
-  finSupp := fun ⟨x, y⟩ ↦ by
-    obtain ⟨sx, hsx⟩ := Nominal.finSupp  x
-    obtain ⟨sy, hsy⟩ := Nominal.finSupp  y
-    exact ⟨sx ∪ sy, fun π hπ ↦ by
-      simp only [PermType.prod_smul]
-      congr
-      · exact hsx π (fun a ha ↦ hπ (Finset.mem_union_left _ ha))
-      · exact hsy π (fun a ha ↦ hπ (Finset.mem_union_right _ ha))⟩
+  finSupp := by
+    rintro ⟨x, y⟩
+    obtain ⟨sx, hsx⟩ := Nominal.finSupp x
+    obtain ⟨sy, hsy⟩ := Nominal.finSupp y
+    refine ⟨sx ∪ sy, ?_⟩
+    intro π hπ
+    simp only [PermType.prod_smul]
+    congr
+    · apply hsx
+      intro a ha
+      exact hπ (Finset.mem_union_left _ ha)
+    · apply hsy
+      intro a ha
+      exact hπ (Finset.mem_union_right _ ha)
 
 /-- `Unit` is a nominal set: the unique element is supported by the empty set.
 
@@ -130,17 +136,14 @@ theorem finitePerm_supports_self (σ : FinitePerm α) : supports (PermType.moved
   ext c
   simp only [Subgroup.coe_mul, Equiv.Perm.mul_apply, swap_coe]
   by_cases hca : c = a
-  · rw [hca, Equiv.swap_apply_left, show σ.val b = b from hb,
-        Equiv.swap_apply_right, show σ.val a = a from ha]
+  · rw [hca, Equiv.swap_apply_left, show σ.val b = b from hb, Equiv.swap_apply_right, show σ.val a = a from ha]
   · by_cases hcb : c = b
-    · rw [hcb, Equiv.swap_apply_right, show σ.val a = a from ha,
-          Equiv.swap_apply_left, show σ.val b = b from hb]
+    · rw [hcb, Equiv.swap_apply_right, show σ.val a = a from ha, Equiv.swap_apply_left, show σ.val b = b from hb]
     · have hσc_ne_a : σ.val c ≠ a :=
         fun h ↦ hca (σ.val.injective (h.trans (show σ.val a = a from ha).symm))
       have hσc_ne_b : σ.val c ≠ b :=
         fun h ↦ hcb (σ.val.injective (h.trans (show σ.val b = b from hb).symm))
-      rw [Equiv.swap_apply_of_ne_of_ne hca hcb,
-          Equiv.swap_apply_of_ne_of_ne hσc_ne_a hσc_ne_b]
+      rw [Equiv.swap_apply_of_ne_of_ne hca hcb, Equiv.swap_apply_of_ne_of_ne hσc_ne_a hσc_ne_b]
 
 /-- Finite permutations form a nominal set: each `σ` is supported by `movedFinset σ`. -/
 instance instConjNominal : Nominal α (FinitePerm α) where
@@ -248,19 +251,31 @@ theorem supp_eq_empty_iff {x : X} : supp x = ∅ ↔ ∀ π : FinitePerm α, π 
 @[simp]
 theorem supp_prod {Y : Type*} [Nominal α Y] (x : X) (y : Y) : supp (x, y) = supp x ∪ supp y := by
   apply le_antisymm
-  · exact supp_le _ (fun π hπ ↦ by
-      simp only [PermType.prod_smul, Prod.mk.injEq]
-      exact ⟨supp_supports x π (fun a ha ↦ hπ (Finset.mem_coe.mpr (Finset.mem_union_left _ ha))),
-             supp_supports y π (fun a ha ↦ hπ (Finset.mem_coe.mpr (Finset.mem_union_right _ ha)))⟩)
+  · apply supp_le
+    intro π hπ
+    simp only [PermType.prod_smul, Prod.mk.injEq]
+    constructor
+    · apply supp_supports x π
+      intro a ha
+      exact hπ (Finset.mem_coe.mpr (Finset.mem_union_left _ ha))
+    · apply supp_supports y π
+      intro a ha
+      exact hπ (Finset.mem_coe.mpr (Finset.mem_union_right _ ha))
   · intro a ha
     rw [Finset.mem_union] at ha
     rw [mem_supp]
     intro s hs
     rcases ha with hx | hy
-    · exact (mem_supp.mp hx) s (fun π hπ ↦ by
-        have := hs π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.1)
-    · exact (mem_supp.mp hy) s (fun π hπ ↦ by
-        have := hs π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.2)
+    · apply (mem_supp.mp hx) s
+      intro π hπ
+      have := hs π hπ
+      simp only [PermType.prod_smul, Prod.mk.injEq] at this
+      exact this.1
+    · apply (mem_supp.mp hy) s
+      intro π hπ
+      have := hs π hπ
+      simp only [PermType.prod_smul, Prod.mk.injEq] at this
+      exact this.2
 
 /-- The least support of an atom `a` is the singleton `{a}`. -/
 @[simp]
