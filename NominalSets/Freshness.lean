@@ -1,6 +1,8 @@
 import NominalSets.Nominal
 
 import Mathlib.Data.Finset.Disjoint
+import Mathlib.Order.Filter.Cofinite
+import Mathlib.Data.Finite.Defs
 
 /-!
 # Freshness
@@ -31,6 +33,7 @@ When one of the arguments is an atom `a : α`, freshness reduces to non-membersh
 * `fresh_atoms` — `a # b ↔ a ≠ b` for atoms.
 * `exists_fresh_atom` — for every `x`, there exists an atom fresh for it.
 * `fresh_of_not_mem_support` — atoms outside a support are fresh.
+* `fresh_atom_compl_eq_supp` — the complement of the fresh-atom set is exactly `supp x`.
 * `fresh_atom_cofinite` — the set of atoms fresh for `x` is cofinite.
 * `fresh_of_supp_empty` — elements with empty support are fresh for every atom.
 * `fresh_atom_finset` — `a # A ↔ a ∉ A` for a finite set of atoms `A`.
@@ -59,6 +62,7 @@ def Fresh (x : X) (y : Y) : Prop := Disjoint (supp x) (supp y)
 scoped infix:50 " # " => Fresh
 
 /-- Unfold `Fresh` to disjointness of supports. -/
+@[simp]
 theorem fresh_iff {x : X} {y : Y} : x # y ↔ Disjoint (supp x) (supp y) :=
   Iff.rfl
 
@@ -98,10 +102,12 @@ theorem fresh_swap {a b : α} {x : X} (ha : a # x) (hb : b # x) : swap a b • x
   exact (supports_iff_swap.mp (supp_supports x)) a b ha hb
 
 /-- Freshness distributes over products: `x # (y, z) ↔ x # y ∧ x # z`. -/
+@[simp]
 theorem fresh_prod_right {x : X} {y : Y} {z : Z} : x # (y, z) ↔ x # y ∧ x # z := by
   simp [Fresh, supp_prod, Finset.disjoint_union_right]
 
 /-- Freshness distributes over products (left): `(x, y) # z ↔ x # z ∧ y # z`. -/
+@[simp]
 theorem fresh_prod_left {x : X} {y : Y} {z : Z} : (x, y) # z ↔ x # z ∧ y # z := by
   simp [Fresh, supp_prod, Finset.disjoint_union_left]
 
@@ -111,15 +117,8 @@ theorem exists_fresh_atom (x : X) : ∃ a : α, a # x := by
   exact ⟨a, (fresh_atom_left a x).mpr aNew⟩
 
 /-- If `s` supports `x`, any atom outside `s` is fresh for `x`. -/
-theorem fresh_of_not_mem_support {s : Finset α} {x : X} (hs : supports s x) {a : α} (ha : a ∉ s) : a # x :=
-  (fresh_atom_left a x).mpr (fun hmem ↦ ha (supp_le s hs hmem))
-
-/-- The set of atoms fresh for `x` is cofinite (its complement is `supp x`, which is finite). -/
-theorem fresh_atom_cofinite (x : X) : Set.Finite {a : α | ¬ a # x} := by
-  apply Set.Finite.subset (Finset.finite_toSet (supp x))
-  intro a ha
-  simp only [Set.mem_setOf_eq, fresh_atom_left, not_not] at ha
-  exact ha
+theorem fresh_of_not_mem_support {s : Finset α} {a : α} {x : X}
+  (hs : supports s x) (ha : a ∉ s) : a # x := (fresh_atom_left a x).mpr (fun hmem ↦ ha (supp_le s hs hmem))
 
 /-- If `x` has empty support, every atom is fresh for it. -/
 theorem fresh_of_supp_empty {x : X} (h : supp x = ∅) (a : α) : a # x := by
@@ -135,6 +134,142 @@ theorem fresh_atom_finset (a : α) (A : Finset α) : a # A ↔ a ∉ A := by
 theorem fresh_finset (A B : Finset α) : A # B ↔ Disjoint A B := by
   simp [Fresh, supp_finset]
 
+section Filter
+
+open Filter
+
+-- TODO: these lemmas can be generalized for any nominal set, not only names (α)
+
+/-- an atom belongs to `supp x` precisely when it is not fresh for `x`. -/
+theorem fresh_atom_compl_eq_supp (x : X) : supp x = {a : α | a # x}ᶜ := by
+  ext a
+  simp only [Set.mem_compl_iff, Set.mem_setOf_eq, fresh_atom_left, not_not, Finset.mem_coe]
+
+theorem fresh_cofinite (x : X) : {a : α | a # x} ∈ cofinite := by
+  rw [mem_cofinite, ←fresh_atom_compl_eq_supp]
+  exact (supp x).finite_toSet
+
+/-- The set of atoms fresh for `x` is cofinite (its complement is `supp x`, which is finite). -/
+theorem fresh_atom_cofinite (x : X) : ∀ᶠ (a : α) in cofinite, a # x := by
+  change {a : α | a # x} ∈ cofinite
+  apply fresh_cofinite
+
+theorem fresh_atom_notin_iff_in_supp (w : α) (x : X) :
+  w ∈ supp x ↔ w ∉ {a : α | a # x} := by simp
+
+end Filter
+
 end Fresh
+
+/-! ### `choose_fresh` tactic (Choose-a-Fresh-Name Principle Pitts 3.1)
+
+`choose_fresh a from x₁ x₂ … xₙ` picks a fresh atom `a` for all listed nominal-set elements,
+introducing `a : α` and individual freshness hypotheses into the local context.
+
+- `choose_fresh a from x`           — introduces: `a : α`, `ha : a # x`
+- `choose_fresh a from x with h`    — introduces: `a : α`, `h : a # x`
+- `choose_fresh a from x y`         — introduces: `a : α`, `aFresh1 : a # x`, `aFresh2 : a # y`
+- `choose_fresh a from x y with h`  — introduces: `a : α`, `h1 : a # x`, `h2 : a # y`
+- `choose_fresh a`                  — scans the local context for all declarations whose type
+                                      has a `Nominal` instance and picks `a` fresh for all of them.
+- `choose_fresh a with h`           — same, but uses `h` as the hypothesis name.
+-/
+
+syntax "choose_fresh" ident (" from " (colGt term:max)+)? (" with " ident)? : tactic
+
+open Lean Meta Elab Elab.Tactic in
+private def evalChooseFresh (a : TSyntax `ident) (xs : Array (TSyntax `term))
+    (baseName : String) : TacticM Unit := do
+  if xs.isEmpty then
+    throwError "choose_fresh: no nominal-set elements found{""
+      } (provide them explicitly with 'from' or ensure the local context contains declarations{""
+      } whose types have a Nominal instance)"
+  -- Reject if name already exists in the local context
+  let aName := a.getId
+  if (← getLCtx).findFromUserName? aName |>.isSome then
+    throwError "choose_fresh: '{aName}' is already declared in the local context"
+  let rawHId : TSyntax `ident := ⟨← withFreshMacroScope `(_pfresh)⟩
+  -- Build the union `supp x₁ ∪ supp x₂ ∪ … ∪ supp xₙ`.
+  let unionTerm ← xs[1:].foldlM (fun acc x ↦ `($acc ∪ NominalSets.supp $x)) (← `(NominalSets.supp $(xs[0]!)))
+  -- Obtain a fresh atom outside the union
+  evalTactic (← `(tactic| obtain ⟨$a, $rawHId⟩ := ($unionTerm : Finset _).exists_notMem))
+  -- For each `xᵢ`, derive `a # xᵢ` using `fresh_atom_left`
+  for h : i in [:xs.size] do
+    let x := xs[i]
+    let hi := mkIdent <| Name.mkSimple s!"{baseName}{i + 1}"
+    evalTactic (← `(tactic|
+      have $hi : $a # $x := by
+        refine (NominalSets.fresh_atom_left $a $x).mpr ?_
+        intro _hmem_i
+        exact $rawHId (by simp [Finset.mem_union, _hmem_i])))
+  -- Clean up the internal raw hypothesis
+  evalTactic (← `(tactic| clear $rawHId))
+
+open Lean Meta Elab Elab.Tactic in
+/-- Scan the local context for declarations `(x : X)` where a `Nominal α X` instance
+    already exists in the local context. Returns their `FVarId`s. -/
+private def findNominalDecls : TacticM (Array FVarId) := do
+  let lctx ← getLCtx
+  let mut nominalTypes : Array Expr := #[]
+  let mut result : Array FVarId := #[]
+  -- First pass: collect all types X for which a `Nominal α X` instance lives in the context.
+  for ldecl in lctx do
+    let ty ← instantiateMVars ldecl.type
+    -- Check if the type is an application of `Nominal`; if so, its last explicit argument is X.
+    if ty.isAppOf ``NominalSets.Nominal then
+      -- `Nominal α [Name α] X` — getAppArgs gives #[α, Name_α_inst, X]
+      let args := ty.getAppArgs
+      nominalTypes := nominalTypes.push args[2]!
+  -- Second pass: collect
+  for ldecl in lctx do
+    let ty ← instantiateMVars ldecl.type
+    let isNominal ← nominalTypes.anyM (fun nomTy ↦ isDefEq ty nomTy)
+    if isNominal then result := result.push ldecl.fvarId
+  return result
+
+open Lean Meta Elab Elab.Tactic in
+elab_rules : tactic
+  | `(tactic| choose_fresh $a $[from $xs:term*]? $[with $h]?) => do
+    let baseName := match h with
+      | some h => h.getId.toString
+      | none   => a.getId.toString ++ "Fresh"
+    match xs with
+    | some xs => evalChooseFresh a xs baseName -- Explicit `from` clause
+    | none => withMainContext do -- No `from` clause: scan the local context for nominal-set declarations.
+      let fvarIds ← findNominalDecls
+      if fvarIds.isEmpty then
+        throwError "choose_fresh: no Nominal instance found in the local context"
+      let lctx ← getLCtx
+      let xs ← fvarIds.mapM fun fid ↦ `($(mkIdent <| lctx.get! fid |>.userName))
+      evalChooseFresh a xs baseName
+
+section CHOOSE_FRESH_TEST
+set_option linter.unusedVariables false
+
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : True := by
+  choose_fresh c
+  trivial
+
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : True := by
+  choose_fresh c from x y
+  trivial
+
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : True := by
+  choose_fresh c from y x with FREEEESH
+  trivial
+
+example {α X Y Z} [Name α] [Nominal α X] [Nominal α Y] [Nominal α Z] (x : X) (y : Y) (z : Z) : True := by
+  choose_fresh c
+  trivial
+
+example {α X Y Z} [Name α] [Nominal α X] [Nominal α Y] [Nominal α Z] (x : X) (y : Y) (z : Z) : True := by
+  choose_fresh c with OI
+  trivial
+
+example {α X Y Z} [Name α] [Nominal α X] [Nominal α Y] [Nominal α Z] (x : X) (y : Y) (z : Z) : True := by
+  choose_fresh c from z
+  trivial
+
+end CHOOSE_FRESH_TEST
 
 end NominalSets
