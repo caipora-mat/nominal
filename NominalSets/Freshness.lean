@@ -173,6 +173,12 @@ introducing `a : α` and individual freshness hypotheses into the local context.
 - `choose_fresh a`                  — scans the local context for all declarations whose type
                                       has a `Nominal` instance and picks `a` fresh for all of them.
 - `choose_fresh a with h`           — same, but uses `h` as the hypothesis name.
+
+The `from` clause also accepts **types** with a `Nominal` instance. When a type `X` is given,
+it is expanded to all local declarations of type `X`:
+
+- `choose_fresh a from X`           — if `x x' : X` are in context, introduces `a # x` and `a # x'`
+- `choose_fresh a from X y`         — mix of types and terms is allowed
 -/
 
 syntax "choose_fresh" ident (" from " (colGt term:max)+)? (" with " ident)? : tactic
@@ -228,20 +234,56 @@ private def findNominalDecls : TacticM (Array FVarId) := do
   return result
 
 open Lean Meta Elab Elab.Tactic in
+/-- Find all local declarations whose type is definitionally equal to `targetTy`.
+    Skips auxiliary declarations and instance arguments. -/
+private def findDeclsOfType (targetTy : Expr) : TacticM (Array FVarId) := do
+  let lctx ← getLCtx
+  let mut result : Array FVarId := #[]
+  for ldecl in lctx do
+    if ldecl.isAuxDecl then continue
+    if ← isDefEq (← instantiateMVars ldecl.type) targetTy then
+      result := result.push ldecl.fvarId
+  return result
+
+open Lean Meta Elab Elab.Tactic in
+/-- Expand the `from` arguments: if an argument elaborates to a type (a `Sort`)
+    with a `Nominal` instance, replace it with all local declarations of that type.
+    Otherwise keep it as a plain term. -/
+private def expandFromArgs (xs : Array (TSyntax `term)) : TacticM (Array (TSyntax `term)) := do
+  pure (← xs.mapM expand).flatten
+where
+  isType x := do
+    -- Try to elaborate the term and check whether it is a type (lives in `Sort _`).
+    let e ← Term.elabTerm x none
+    let eTy ← inferType e
+    pure <| if eTy.isSort then some e else none
+  expand x := do
+    match (← isType x) with
+    | some e => -- `x` elaborated to a type `X`. Find all local decls of type `X`.
+      let fvarIds ← findDeclsOfType e
+      if fvarIds.isEmpty then
+        throwError "choose_fresh: no local declarations of type '{e}' found in context"
+      let lctx ← getLCtx
+      pure (← fvarIds.mapM fun fid ↦ `($(mkIdent <| lctx.get! fid |>.userName)))
+    | none => pure #[x]
+
+open Lean Meta Elab Elab.Tactic in
 elab_rules : tactic
   | `(tactic| choose_fresh $a $[from $xs:term*]? $[with $h]?) => do
     let baseName := match h with
       | some h => h.getId.toString
       | none   => a.getId.toString ++ "Fresh"
     match xs with
-    | some xs => evalChooseFresh a xs baseName -- Explicit `from` clause
-    | none => withMainContext do -- No `from` clause: scan the local context for nominal-set declarations.
-      let fvarIds ← findNominalDecls
-      if fvarIds.isEmpty then
-        throwError "choose_fresh: no Nominal instance found in the local context"
-      let lctx ← getLCtx
-      let xs ← fvarIds.mapM fun fid ↦ `($(mkIdent <| lctx.get! fid |>.userName))
-      evalChooseFresh a xs baseName
+    | some xs => -- Explicit `from` clause (may contain types)
+      withMainContext do evalChooseFresh a (← expandFromArgs xs) baseName
+    | none => -- No `from` clause: scan the local context for nominal-set declarations.
+      withMainContext do
+        let fvarIds ← findNominalDecls
+        if fvarIds.isEmpty then
+          throwError "choose_fresh: no Nominal instance found in the local context"
+        let lctx ← getLCtx
+        let xs ← fvarIds.mapM fun fid ↦ `($(mkIdent <| lctx.get! fid |>.userName))
+        evalChooseFresh a xs baseName
 
 section CHOOSE_FRESH_TEST
 set_option linter.unusedVariables false
@@ -268,6 +310,21 @@ example {α X Y Z} [Name α] [Nominal α X] [Nominal α Y] [Nominal α Z] (x : X
 
 example {α X Y Z} [Name α] [Nominal α X] [Nominal α Y] [Nominal α Z] (x : X) (y : Y) (z : Z) : True := by
   choose_fresh c from z
+  trivial
+
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : True := by
+  choose_fresh a from X
+  -- aFresh1 : a # x, aFresh2 : a # x'
+  trivial
+
+-- Mix types and terms in `from`
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : True := by
+  choose_fresh a from X y
+  -- aFresh1 : a # x, aFresh2 : a # x', aFresh3 : a # y
+  trivial
+
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : True := by
+  choose_fresh a from X with hf
   trivial
 
 end CHOOSE_FRESH_TEST
