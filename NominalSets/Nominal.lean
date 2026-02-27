@@ -319,6 +319,40 @@ theorem supp_finset (s : Finset α) : supp (α := α) s = s := by
 
 end Supp
 
+/-! ## Nominal functions (`PFun`) -/
+
+section PFunSupport
+
+open MulAction PermType
+
+variable {α : Type*} [Name α] {X Y : Type*} [PermType α X] [PermType α Y]
+
+/-- A finite set `s` supports `f : PFun α X Y` if and only if every permutation fixing `s`
+commutes with `f`: `f (π • x) = π • f x` for all `x`. -/
+theorem supports_pfun_iff {s : Finset α} {f : PFun α X Y} :
+    supports s f ↔ ∀ π : FinitePerm α, (∀ ⦃a⦄, a ∈ s → π a = a) → ∀ x : X, f (π • x) = π • f x := by
+  constructor
+  · intro hsup π hfix x
+    have hf : π • f = f := hsup π (fun a ha ↦ by
+      rw [PermType.atoms_smul]
+      exact hfix (Finset.mem_coe.mp ha))
+    have := congrFun (congrArg DFunLike.coe hf) (π • x)
+    simp only [PFun.smul_apply, PermType.inv_smul_smul] at this
+    exact this.symm
+  · intro hcomm π hfix
+    ext x
+    change π • f (π⁻¹ • x) = f x
+    have hfix' : ∀ ⦃a⦄, a ∈ s → π⁻¹ a = a := by
+      intro a ha
+      have := hfix (Finset.mem_coe.mpr ha)
+      rw [PermType.atoms_smul] at this
+      have := congr_arg (π⁻¹ ·) this
+      simp at this
+      exact this.symm
+    rw [hcomm π⁻¹ hfix' x, PermType.smul_inv_smul]
+
+end PFunSupport
+
 end NominalSets
 
 -- TODO: below alternative way of defining suppSet. Don't know which one is better

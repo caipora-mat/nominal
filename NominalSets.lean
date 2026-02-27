@@ -6,4 +6,5 @@ import NominalSets.PermType
 import NominalSets.Swap
 import NominalSets.Support
 import NominalSets.Nominal
+import NominalSets.NFun
 import NominalSets.Freshness
