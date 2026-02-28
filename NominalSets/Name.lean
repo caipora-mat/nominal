@@ -13,9 +13,13 @@ The concrete identity of names is irrelevant; only these two structural properti
 matter. The canonical example is `ℕ`, but the library is parametric in the atom type.
 -/
 
+namespace NominalSets
+
 /-- A **name** type (also called *atoms*) is any type with decidable equality
 and infinitely many inhabitants. -/
 class Name (𝔸 : Type*) extends Infinite 𝔸 where
   [dec : DecidableEq 𝔸]
 
-attribute [instance] Name.dec
+instance (priority := 100) Name.instDecidableEq {𝔸 : Type*} [Name 𝔸] : DecidableEq 𝔸 := Name.dec
+
+end NominalSets

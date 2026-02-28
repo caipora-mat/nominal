@@ -14,6 +14,9 @@ of finitely supported functions.
 * `NFun α X Y` — the type of finitely supported functions from `X` to `Y`.
 * `NFun.ofFun` — construct an `NFun` from a bare function and a finite-support proof.
 * `NFun.ofSupports` — construct an `NFun` from a function and an explicit support set.
+* `NFun.id` — the identity nominal function.
+* `NFun.const` — the constant nominal function.
+* `NFun.comp` — composition of nominal functions.
 
 ## Instances
 
@@ -29,6 +32,11 @@ of finitely supported functions.
 * `NFun.supports_apply` — if `s` supports `f` and `t` supports `x`, then `s ∪ t`
   supports `f x`.
 * `NFun.supp_apply_le` — `supp (f x) ⊆ supp f ∪ supp x`.
+* `NFun.fresh_apply` — if `a # f` and `a # x`, then `a # f x`.
+* `NFun.comp_assoc` — composition is associative.
+* `NFun.comp_id` / `NFun.id_comp` — identity laws for composition.
+* `NFun.smul_const` — `π • const y = const (π • y)`.
+* `NFun.supp_id` — the support of the identity is empty.
 
 ## References
 
@@ -75,6 +83,12 @@ def ofFun (f : X → Y) (hf : FinSupported (f : PFun α X Y)) : NFun α X Y :=
 def ofSupports (f : PFun α X Y) (s : Finset α) (hs : supports s f) : NFun α X Y :=
   ⟨f, ⟨s, hs⟩⟩
 
+@[simp] theorem ofFun_apply (f : X → Y) (hf : FinSupported (f : PFun α X Y)) (x : X) :
+    (ofFun f hf) x = f x := rfl
+
+@[simp] theorem ofSupports_apply (f : PFun α X Y) (s : Finset α)
+    (hs : supports s f) (x : X) : (ofSupports f s hs) x = f x := rfl
+
 /-! ### PermType and Nominal instances -/
 
 instance instPermType : PermType α (NFun α X Y) where
@@ -117,6 +131,51 @@ instance instNominal : Nominal α (NFun α X Y) where
   finSupp f := by
     obtain ⟨s, hs⟩ := f.finSupp_toPFun
     exact ⟨s, supports_iff_toPFun.mpr hs⟩
+
+/-! ### Categorical combinators -/
+
+section Combinators
+
+variable {X Y Z W : Type*} [Nominal α X] [Nominal α Y] [Nominal α Z] [Nominal α W]
+
+/-- The identity nominal function. -/
+def id : NFun α X X :=
+  ofSupports PFun.id ∅ supports_pfun_id
+
+@[simp] theorem id_apply (x : X) : (NFun.id : NFun α X X) x = x := rfl
+
+/-- The constant nominal function returning `y`. -/
+def const (y : Y) : NFun α X Y :=
+  ofSupports (PFun.const y) (supp y) (supports_pfun_const y)
+
+@[simp] theorem const_apply (y : Y) (x : X) : (NFun.const y : NFun α X Y) x = y := rfl
+
+/-- Composition of nominal functions. -/
+def comp (g : NFun α Y Z) (f : NFun α X Y) : NFun α X Z :=
+  ofSupports (g.toPFun.comp f.toPFun) (supp g ∪ supp f)
+    (supports_pfun_comp (supports_iff_toPFun.mp (supp_supports g))
+                        (supports_iff_toPFun.mp (supp_supports f)))
+
+@[simp] theorem comp_apply (g : NFun α Y Z) (f : NFun α X Y) (x : X) :
+    (g.comp f) x = g (f x) := rfl
+
+/-- Composition is associative. -/
+theorem comp_assoc (h : NFun α Z W) (g : NFun α Y Z) (f : NFun α X Y) :
+    (h.comp g).comp f = h.comp (g.comp f) := by ext; rfl
+
+@[simp] theorem comp_id (f : NFun α X Y) : f.comp NFun.id = f := by ext; rfl
+
+@[simp] theorem id_comp (f : NFun α X Y) : NFun.id.comp f = f := by ext; rfl
+
+/-- The action sends a constant function to the constant function at the acted value. -/
+@[simp] theorem smul_const (π : FinitePerm α) (y : Y) :
+    π • (NFun.const y : NFun α X Y) = NFun.const (π • y) := by ext; simp
+
+/-- The support of the identity is empty. -/
+@[simp] theorem supp_id : supp (NFun.id : NFun α X X) = ∅ :=
+  supp_eq_empty_iff.mpr (fun _ ↦ by ext; simp)
+
+end Combinators
 
 /-! ### Key theorems -/
 

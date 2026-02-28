@@ -1,5 +1,4 @@
 import NominalSets.Wheels
-import Mathlib.Data.Subtype
 import Mathlib.GroupTheory.Perm.ClosureSwap
 import Mathlib.Algebra.Group.Subgroup.Pointwise
 
@@ -47,6 +46,29 @@ theorem movedPoints_eq_compl_fixedBy : π.movedPoints = (fixedBy α π)ᶜ := by
   ext a
   simp [movedPoints, fixedBy, Perm.smul_def]
 
+@[simp]
+theorem movedPoints_one : (1 : Perm α).movedPoints = ∅ := by
+  ext a; simp [movedPoints]
+
+theorem movedPoints_mul_subset (π σ : Perm α) :
+    (π * σ).movedPoints ⊆ π.movedPoints ∪ σ.movedPoints := by
+  intro a ha
+  simp only [movedPoints, mem_setOf_eq, Perm.mul_apply, mem_union] at *
+  by_contra h
+  push_neg at h
+  exact ha (by rw [h.2, h.1])
+
+theorem movedPoints_inv : π⁻¹.movedPoints = π.movedPoints := by
+  ext a
+  simp only [movedPoints, mem_setOf_eq, ne_eq]
+  constructor
+  · intro h heq
+    exact h (by rw [Perm.inv_def, show π.symm a = π.symm (π a) from congrArg π.symm heq.symm,
+                     π.symm_apply_apply])
+  · intro h heq
+    exact h (by rw [show π a = π (π.symm a) from congrArg π heq.symm,
+                     π.apply_symm_apply])
+
 end Equiv.Perm
 
 /-- `FinitePerm α` is the subgroup of `Equiv.Perm α` consisting of permutations that move only finitely many atoms. -/
@@ -56,24 +78,11 @@ def FinitePerm (α : Type*) : Subgroup (Perm α) where
   mul_mem' := by
     intro f g hf hg
     simp only [Set.mem_setOf_eq, Equiv.Perm.IsFinitePerm] at *
-    apply Set.Finite.subset (hf.union hg)
-    intro a ha
-    simp only [Equiv.Perm.movedPoints, Set.mem_setOf_eq, Perm.mul_apply] at ha
-    by_contra h
-    push_neg at h
-    obtain ⟨h1, h2⟩ := h
-    simp only [Equiv.Perm.movedPoints, Set.mem_setOf_eq, not_not] at h1 h2
-    exact ha (by rw [h2, h1])
+    exact (hf.union hg).subset (Equiv.Perm.movedPoints_mul_subset f g)
   inv_mem' := by
     intro f hf
-    simp only [Set.mem_setOf_eq, Equiv.Perm.IsFinitePerm, Equiv.Perm.movedPoints] at *
-    apply Set.Finite.subset hf
-    intro a ha
-    simp only [Set.mem_setOf_eq] at *
-    intro heq
-    rw [← heq, Equiv.Perm.inv_def, Equiv.symm_apply_apply] at ha
-    symm at ha
-    contradiction
+    simp only [Set.mem_setOf_eq, Equiv.Perm.IsFinitePerm] at *
+    rwa [Equiv.Perm.movedPoints_inv]
 
 section Coe
 
@@ -90,6 +99,7 @@ instance instFunLike : FunLike (FinitePerm α) α α where
 
 @[simp] theorem coe_mk (π : Perm α) (h : π ∈ FinitePerm α) : (⟨π, h⟩ : FinitePerm α) = π.toFun := rfl
 
+@[ext]
 theorem ext {π σ : FinitePerm α} (h : ∀ a, π a = σ a) : π = σ := DFunLike.ext π σ h
 
 @[simp] theorem coe_one : (1 : FinitePerm α) = (id : α → α) := rfl
@@ -104,7 +114,9 @@ theorem ext {π σ : FinitePerm α} (h : ∀ a, π a = σ a) : π = σ := DFunLi
 
 @[simp, grind =] theorem apply_inv_self (a : α) : π (π⁻¹ a) = a := π.val.apply_symm_apply a
 
-theorem injective : Function.Injective π := π.val.injective
+@[grind .] theorem injective : Function.Injective π := π.val.injective
+
+theorem surjective : Function.Surjective π := π.val.surjective
 
 /-! ### Coercion to `Equiv.Perm`
 

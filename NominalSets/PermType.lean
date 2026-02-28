@@ -11,8 +11,9 @@ or a *Perm-set*) is a type `X` equipped with an action of the group `FinitePerm 
 ## Main definitions
 
 * `PermType α X` — typeclass asserting that `X` carries a `FinitePerm α`-action.
-* `PFun α X Y` — newtype wrapper for `X → Y` carrying the conjugation action `(π • f) x = π • f (π⁻¹ • x)`, avoiding a diamond with Mathlib's `Pi.instSMul`.
 * `PermType.movedFinset π` — the finite set of atoms moved by `π`, as a `Finset α`.
+
+The function-space action and its newtype wrapper `PFun α X Y` live in `NominalSets.PFun`.
 
 ## Instances
 
@@ -22,9 +23,6 @@ or a *Perm-set*) is a type `X` equipped with an action of the group `FinitePerm 
 * `PermType.instUnit` — `Unit` carries the trivial action (a `def`, not a global `instance`, because `α` cannot be inferred from `Unit` alone).
 * `PermType.instFinset` — image action on `Finset α` (`π • s = s.image π`).
 * `PermType.instConjFinitePerm` — action on `FinitePerm α` (`π • σ = π * σ * π⁻¹`).
-* `PFun.instCoe` — coercion from `X → Y` to `PFun α X Y`.
-* `PFun.instFunLike` — `PFun α X Y` elements can be applied directly as functions via `FunLike`.
-* `PFun.instPermType` — action on `PFun α X Y` (`(π • f) x = π • f (π⁻¹ • x)`).
 
 ## Main results
 
@@ -46,6 +44,8 @@ We inherit `•` from `MulAction`. Given `π : FinitePerm α` and `x : X`, write
 
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 1.
 -/
+
+namespace NominalSets
 
 /-- A **permutation type** is a type `X` equipped with an action of the group `FinitePerm α` of finite permutations -/
 class PermType (α : outParam Type*) [Name α] (X : Type*) extends MulAction (FinitePerm α) X
@@ -114,91 +114,8 @@ theorem option_smul_some {X : Type*} [PermType α X] (π : FinitePerm α) (x : X
 
 /-! ### Function space
 
-#### The diamond problem
-
-The permutation action on `X → Y` is:
-
-  `(π • f) x = π • f (π⁻¹ • x)`
-
-However, Mathlib already provides `Pi.instSMul`, which gives a *pointwise* action on any `ι → α` whenever `SMul M α`:
-
-  `(π • f) x = π • f x`   -- Pi.instSMul
-
-Because `PermType α (X → Y)` extends `MulAction (FinitePerm α) (X → Y)`, which in turn
-gives a `SMul (FinitePerm α) (X → Y)`, both instances become available for `X → Y`.
-Lean's instance search then faces a **diamond**: it may synthesise `Pi.instSMul` before
-`instFun`, yielding the wrong action.
-
-To avoid this conflict entirely, the action is wrapped in the newtype `PFun α X Y` rather than being placed on the bare function type.
-The old instance `instFun` is kept below for reference and for use in proofs that explicitly request it.
--/
-
-/-- `PFun α X Y` is a **newtype wrapper** around `X → Y` carrying the action `(π • f) x = π • f (π⁻¹ • x)` -/
-structure PFun (α : Type*) [Name α] (X Y : Type*) where
-  toFun : X → Y
-
-namespace PFun
-
-/-- Coerce a plain function into a `PFun`. -/
-instance instCoe {X Y : Type*} : Coe (X → Y) (PFun α X Y) := ⟨PFun.mk⟩
-
-/-- Apply a `PFun` to an argument. -/
-instance instFunLike {X Y : Type*} : FunLike (PFun α X Y) X Y where
-  coe f := f.toFun
-  coe_injective' f g h := by cases f; cases g; congr
-
-@[ext]
-theorem ext {X Y : Type*} {f g : PFun α X Y} (h : ∀ x, f x = g x) : f = g := DFunLike.ext f g h
-
-@[simp] theorem coe_mk {X Y : Type*} (f : X → Y) (x : X) : (PFun.mk f : PFun α X Y) x = f x := rfl
-
-@[simp] theorem coe_apply {X Y : Type*} (f : X → Y) (x : X) : (f : PFun α X Y) x = f x := rfl
-
-/-- The action on `PFun α X Y`: `(π • f) x = π • f (π⁻¹ • x)`. -/
-instance instPermType {X Y : Type*} [PermType α X] [PermType α Y] :
-    PermType α (PFun α X Y) where
-  smul π f := ⟨fun x => π • f (π⁻¹ • x)⟩
-  one_smul f := by
-    ext x
-    change (1 : FinitePerm α) • f (1⁻¹ • x) = f x
-    simp [one_smul]
-  mul_smul π σ f := by
-    ext x
-    change (π * σ) • f ((π * σ)⁻¹ • x) = π • (σ • f (σ⁻¹ • (π⁻¹ • x)))
-    rw [mul_inv_rev, mul_smul, mul_smul]
-
-@[simp, grind =]
-theorem smul_apply {X Y : Type*} [PermType α X] [PermType α Y] (π : FinitePerm α) (f : PFun α X Y) (x : X) :
-  (π • f) x = π • f (π⁻¹ • x) := rfl
-
-end PFun
-
-/-! #### PROBLEM: action directly on `X → Y`
-
-The instance below equips the bare function type with an action.
-It is **not** registered as a global `PermType` instance to avoid the diamond
-with `Pi.instSMul`; use `PFun` instead. It is kept here for documentation -/
-
-/- action on `X → Y` (not a global instance; see `PFun`). -/
--- def funPermType {X Y : Type*} [PermType α X] [PermType α Y] :
---     PermType α (X → Y) where
---   smul π f x := π • f (π⁻¹ • x)
---   one_smul f := by
---     funext x
---     change (1 : FinitePerm α) • f (1⁻¹ • x) = f x
---     simp [one_smul]
---   mul_smul π σ f := by
---     funext x
---     change (π * σ) • f ((π * σ)⁻¹ • x) = π • σ • f (σ⁻¹ • π⁻¹ • x)
---     rw [mul_inv_rev, mul_smul, mul_smul]
-
--- Note: Mathlib's `Pi.instSMul` (pointwise action) conflicts with the conjugation
--- action defined in `instFun`. We state `fun_smul` using `@SMul.smul _ _ instFun.toSMul`
--- to pin the right instance, avoiding the ambiguity.
--- @[simp]
--- theorem fun_smul {X Y : Type*} [PermType α X] [PermType α Y]
---     (π : FinitePerm α) (f : X → Y) (x : X) :
---     @SMul.smul _ _ instFun.toSMul π f x = π • f (π⁻¹ • x) := rfl
+The permutation action on functions is defined in `NominalSets.PFun` via the newtype `PFun α X Y`
+to avoid a diamond with Mathlib's `Pi.instSMul`. See that module for details. -/
 
 /-! ### Finite sets of atoms -/
 
@@ -211,15 +128,15 @@ instance instFinset : PermType α (Finset α) where
          (s.image (σ : α → α)).image (π : α → α)
     simp [coe_mul, Finset.image_image]
 
-@[simp]
+@[simp, grind =]
 theorem finset_smul (π : FinitePerm α) (s : Finset α) : π • s = s.image (π : α → α) := rfl
 
 /-- Membership in `π • s`: `a ∈ π • s ↔ ∃ b ∈ s, π • b = a`. -/
-@[simp]
+@[simp, grind =]
 theorem mem_finset_smul {π : FinitePerm α} {s : Finset α} {a : α} : a ∈ π • s ↔ ∃ b ∈ s, π • b = a := by
   simp [finset_smul, Finset.mem_image, PermType.atoms_smul]
 
-@[simp]
+@[simp, grind =]
 theorem mem_smul_finset_iff {π : FinitePerm α} {s : Finset α} {a : α} : a ∈ π • s ↔ π⁻¹ • a ∈ s := by
   simp only [finset_smul, Finset.mem_image, PermType.atoms_smul]
   constructor
@@ -227,6 +144,19 @@ theorem mem_smul_finset_iff {π : FinitePerm α} {s : Finset α} {a : α} : a �
     simpa [PermType.atoms_smul] using hb
   · intro h
     exact ⟨π⁻¹ • a, h, by simp [PermType.atoms_smul]⟩
+
+@[simp]
+theorem finset_smul_empty (π : FinitePerm α) : π • (∅ : Finset α) = ∅ := by
+  simp [finset_smul]
+
+@[simp]
+theorem finset_smul_singleton (π : FinitePerm α) (a : α) : π • ({a} : Finset α) = {π a} := by
+  simp [finset_smul]
+
+@[simp]
+theorem finset_smul_union (π : FinitePerm α) (s t : Finset α) :
+    π • (s ∪ t) = π • s ∪ π • t := by
+  simp [finset_smul, Finset.image_union]
 
 /-! ### Action on finite permutations -/
 
@@ -240,6 +170,27 @@ instance instConjFinitePerm : PermType α (FinitePerm α) where
 
 @[simp, grind =]
 theorem conj_smul (π σ : FinitePerm α) : π • σ = π * σ * π⁻¹ := rfl
+
+/-! ### Sum nominal instance (prerequisite for structural properties) -/
+
+instance instPermTypeSum {X Y : Type*} [PermType α X] [PermType α Y] : PermType α (X ⊕ Y) where
+  smul π s := s.map (π • ·) (π • ·)
+  one_smul s := by
+    cases s <;> simp only [HSMul.hSMul, SMul.smul, Sum.map, Sum.elim_inl, Sum.elim_inr,
+      Function.comp] <;> congr 1 <;> exact one_smul _ _
+  mul_smul π σ s := by
+    cases s <;> simp only [HSMul.hSMul, SMul.smul, Sum.map, Sum.elim_inl, Sum.elim_inr,
+      Function.comp] <;> congr 1 <;> exact mul_smul _ _ _
+
+@[simp, grind =]
+theorem sum_smul_inl {X Y : Type*} [PermType α X] [PermType α Y]
+    (π : FinitePerm α) (x : X) :
+    π • (Sum.inl x : X ⊕ Y) = Sum.inl (π • x) := rfl
+
+@[simp, grind =]
+theorem sum_smul_inr {X Y : Type*} [PermType α X] [PermType α Y]
+    (π : FinitePerm α) (y : Y) :
+    π • (Sum.inr y : X ⊕ Y) = Sum.inr (π • y) := rfl
 
 /-! ### Basic lemmas -/
 
@@ -279,6 +230,25 @@ theorem smul_eq_iff_eq_inv_smul (π : FinitePerm α) (x y : X) : π • x = y �
   · rintro rfl; simp
   · rintro rfl; simp
 
+@[grind .]
+theorem inv_smul_eq_iff (π : FinitePerm α) (x y : X) : π⁻¹ • x = y ↔ x = π • y := by
+  constructor
+  · rintro rfl; simp
+  · rintro rfl; simp
+
+/-- The permutation action on `X` is surjective. -/
+theorem smul_surjective (π : FinitePerm α) : Function.Surjective ((π • ·) : X → X) :=
+  fun y => ⟨π⁻¹ • y, smul_inv_smul π y⟩
+
+/-- The permutation action on `X` is bijective. -/
+theorem smul_bijective (π : FinitePerm α) : Function.Bijective ((π • ·) : X → X) :=
+  ⟨fun {_ _} h => smul_injective π h, smul_surjective π⟩
+
+theorem smul_ne_iff (π : FinitePerm α) (x y : X) : π • x ≠ π • y ↔ x ≠ y := by
+  constructor
+  · intro h heq; exact h (congrArg (π • ·) heq)
+  · intro h heq; exact h (smul_injective π heq)
+
 end
 
 /-! ### Moved-point set -/
@@ -292,6 +262,12 @@ omit [Name α] in
 theorem mem_movedFinset {π : FinitePerm α} {a : α} : a ∈ movedFinset π ↔ π a ≠ a := by
   simp only [movedFinset, Set.Finite.mem_toFinset, Equiv.Perm.movedPoints,
              Set.mem_setOf_eq, DFunLike.coe]
+
+omit [Name α] in
+/-- An atom not in `movedFinset σ` is a fixed point of `σ`. -/
+theorem fixed_of_not_mem_movedFinset {σ : FinitePerm α} {a : α}
+    (h : a ∉ movedFinset σ) : σ a = a := by
+  rwa [mem_movedFinset, not_not] at h
 
 /-- A finite permutation with no moved points is the identity. -/
 theorem movedFinset_eq_empty_iff_one {σ : FinitePerm α} : movedFinset σ = ∅ ↔ σ = 1 := by
@@ -332,6 +308,7 @@ theorem movedFinset_mul_subset (π σ : FinitePerm α) : movedFinset (π * σ) �
   obtain ⟨h₁, h₂⟩ := h
   exact ha (by rw [h₂, h₁])
 
+@[simp]
 theorem movedFinset_conj_smul (π σ : FinitePerm α) : movedFinset (π • σ) = π • movedFinset σ := by
   ext a
   simp only [conj_smul, mem_movedFinset, mul_apply, finset_smul, Finset.mem_image]
@@ -346,3 +323,5 @@ theorem movedFinset_conj_smul (π σ : FinitePerm α) : movedFinset (π • σ) 
     exact this
 
 end PermType
+
+end NominalSets

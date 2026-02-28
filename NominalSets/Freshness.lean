@@ -26,18 +26,26 @@ When one of the arguments is an atom `a : α`, freshness reduces to non-membersh
 
 * `fresh_comm` — freshness is symmetric.
 * `fresh_equivariant` — freshness is preserved by the permutation action.
+* `fresh_equivariant_iff` — `(π • x) # (π • y) ↔ x # y`.
 * `fresh_swap` — swapping two atoms that are both fresh for `x` fixes `x`.
 * `fresh_prod_right` — freshness distributes over products on the right.
 * `fresh_prod_left` — freshness distributes over products on the left.
 * `fresh_atom_left` — `a # x ↔ a ∉ supp x`.
 * `fresh_atoms` — `a # b ↔ a ≠ b` for atoms.
+* `fresh_finitePerm` — `a # σ ↔ σ a = a` for finite permutations.
 * `exists_fresh_atom` — for every `x`, there exists an atom fresh for it.
 * `fresh_of_not_mem_support` — atoms outside a support are fresh.
+* `fresh_of_supp_empty` — elements with empty support are fresh for every atom.
+* `fresh_of_supp_empty_left` — elements with empty support are fresh for any nominal element.
+* `fresh_of_supp_empty_right` — any nominal element is fresh for elements with empty support.
 * `fresh_atom_compl_eq_supp` — the complement of the fresh-atom set is exactly `supp x`.
 * `fresh_atom_cofinite` — the set of atoms fresh for `x` is cofinite.
-* `fresh_of_supp_empty` — elements with empty support are fresh for every atom.
 * `fresh_atom_finset` — `a # A ↔ a ∉ A` for a finite set of atoms `A`.
 * `fresh_finset` — `A # B ↔ Disjoint A B` for finite sets of atoms.
+* `fresh_none` — every atom is fresh for `none`.
+* `fresh_some` — `a # some y ↔ a # y`.
+* `fresh_inl` — `a # Sum.inl x ↔ a # x`.
+* `fresh_inr` — `a # Sum.inr y ↔ a # y`.
 
 ## References
 
@@ -79,6 +87,12 @@ theorem fresh_equivariant (π : FinitePerm α) {x : X} {y : Y}
   intro a ha hy
   rw [PermType.mem_smul_finset_iff] at ha hy
   exact h ha hy
+
+/-- Freshness is invariant under the permutation action. -/
+@[simp]
+theorem fresh_equivariant_iff (π : FinitePerm α) {x : X} {y : Y} :
+    (π • x) # (π • y) ↔ x # y :=
+  ⟨fun h ↦ by simpa using fresh_equivariant π⁻¹ h, fresh_equivariant π⟩
 
 /-- An atom `a` is fresh for `x` if and only if `a ∉ supp x`. -/
 @[simp]
@@ -124,6 +138,14 @@ theorem fresh_of_not_mem_support {s : Finset α} {a : α} {x : X}
 theorem fresh_of_supp_empty {x : X} (h : supp x = ∅) (a : α) : a # x := by
   simp [Fresh, h]
 
+/-- If `x` has empty support, it is fresh for every element of any nominal set. -/
+theorem fresh_of_supp_empty_left {x : X} (h : supp x = ∅) (y : Y) : x # y := by
+  simp [Fresh, h]
+
+/-- If `y` has empty support, every element of any nominal set is fresh for it. -/
+theorem fresh_of_supp_empty_right {y : Y} (h : supp y = ∅) (x : X) : x # y := by
+  simp [Fresh, h]
+
 /-- An atom `a` is fresh for a finite set of atoms `A` if and only if `a ∉ A`. -/
 @[simp]
 theorem fresh_atom_finset (a : α) (A : Finset α) : a # A ↔ a ∉ A := by
@@ -134,6 +156,33 @@ theorem fresh_atom_finset (a : α) (A : Finset α) : a # A ↔ a ∉ A := by
 theorem fresh_finset (A B : Finset α) : A # B ↔ Disjoint A B := by
   simp [Fresh, supp_finset]
 
+/-- An atom `a` is fresh for a permutation `σ` if and only if `σ` fixes `a`. -/
+@[simp]
+theorem fresh_finitePerm (a : α) (σ : FinitePerm α) : a # σ ↔ σ a = a := by
+  rw [fresh_atom_left, supp_finitePerm, PermType.mem_movedFinset, not_not]
+
+/-- Every atom is fresh for `none`. -/
+@[simp]
+theorem fresh_none (a : α) {X : Type*} [Nominal α X] : a # (none : Option X) := by
+  simp [supp_none]
+
+/-- `a # some y ↔ a # y`. -/
+@[simp]
+theorem fresh_some (a : α) {X : Type*} [Nominal α X] (y : X) : a # (some y) ↔ a # y := by
+  simp [supp_some]
+
+/-- `a # Sum.inl x ↔ a # x`. -/
+@[simp]
+theorem fresh_inl (a : α) {X Y : Type*} [Nominal α X] [Nominal α Y] (x : X) :
+    a # (Sum.inl x : X ⊕ Y) ↔ a # x := by
+  simp [supp_inl]
+
+/-- `a # Sum.inr y ↔ a # y`. -/
+@[simp]
+theorem fresh_inr (a : α) {X Y : Type*} [Nominal α X] [Nominal α Y] (y : Y) :
+    a # (Sum.inr y : X ⊕ Y) ↔ a # y := by
+  simp [supp_inr]
+
 section Filter
 
 open Filter
@@ -141,6 +190,7 @@ open Filter
 -- TODO: these lemmas can be generalized for any nominal set, not only names (α)
 
 /-- an atom belongs to `supp x` precisely when it is not fresh for `x`. -/
+@[grind =]
 theorem fresh_atom_compl_eq_supp (x : X) : supp x = {a : α | a # x}ᶜ := by
   ext a
   simp only [Set.mem_compl_iff, Set.mem_setOf_eq, fresh_atom_left, not_not, Finset.mem_coe]
