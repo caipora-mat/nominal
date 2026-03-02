@@ -7,34 +7,56 @@ Given a name abstraction `F : NameAbs α X`, the **concretion** `F ⊙ a` attemp
 extract the body of `F` at atom `a`. It returns `some x` when `a` is the binder or
 is fresh for the body, and `none` otherwise.
 
+This file also provides the **functorial map** `liftAbs` that lifts an equivariant
+function `f : X → Y` to `NameAbs α X → NameAbs α Y`, and proves the **extensionality**
+principle for name abstractions (equation 4.16).
+
 ## Main definitions
 
-* `concreteAt F a` — concretion of `F` at `a`, as `Option X`; notation `F ⊙ a`.
+* `concreteAt F a` — concretion of `F : NameAbs α X` at atom `a`, as `Option X`.
+* `liftAbs f hf` — functorial map `⟪a⟫ x ↦ ⟪a⟫ f x` for equivariant `f : X → Y`.
+
+## Notation
+
+* `F ⊙ a` — scoped left-associative notation for `concreteAt F a`.
 
 ## Main results
 
+### Basic concretion API (Pitts, Definition 4.7 / Proposition 4.9)
 * `concreteAt_abs_self` — `(abs a x) ⊙ a = some x`.
-* `concreteAt_abs_fresh` — `a' ≠ a → a' # x → (abs a x) ⊙ a' = some (swap a a' • x)`.
-* `concreteAt_abs_not_fresh` — `a' ≠ a → a' ∈ supp x → (abs a x) ⊙ a' = none`.
-* `abs_concreteAt_eq` — `a # F → ∃ y, F ⊙ a = some y ∧ F = abs a y` (Proposition 4.9).
+* `concreteAt_abs_fresh` — if `a' ≠ a` and `a' # x`, then `(abs a x) ⊙ a' = some (swap a a' • x)`.
+* `concreteAt_abs_not_fresh` — if `a' ≠ a` and `a' ∈ supp x`, then `(abs a x) ⊙ a' = none`.
+* `concreteAt_abs_eq` — `(abs a x) ⊙ a' = some x` when `a' = a`.
+* `concreteAt_eq_none_of_not_fresh` — `¬ a # F → F ⊙ a = none`.
 * `concreteAt_none_iff` — `F ⊙ a = none ↔ ¬ a # F`.
+* `concreteAt_isSome_iff` — `(F ⊙ a).isSome = true ↔ a # F`.
+* `concreteAt_injective` — `F ⊙ a = some y` and `F ⊙ a = some z` imply `y = z`.
+* `abs_concreteAt_eq_forall` — `∀ a, a # F → ∃ y, F ⊙ a = some y ∧ F = abs a y` (Proposition 4.9).
+* `abs_concreteAt_eq_exists` — `∃ a, a # F ∧ ∃ y, F ⊙ a = some y ∧ F = abs a y`.
+* `abs_concreteAt_eq_freshQuantifier` — `И a, ∃ y, F ⊙ a = some y ∧ F = abs a y` (equation 4.15).
 * `abs_of_concreteAt_eq_some` — `F ⊙ a = some y → F = abs a y`.
 * `concreteAt_get` — `F = abs a ((F ⊙ a).get h)` when `a # F`.
 * `concreteAt_equivariant` — `π • (F ⊙ a) = (π • F) ⊙ (π • a)`.
-* `nameAbs_ext` — extensionality via freshness quantifier (equation 4.16).
-* `liftAbs` — functorial map `⟪a⟫ x ↦ ⟪a⟫ f x` for equivariant `f`.
+
+### Extensionality (Pitts, equation 4.16)
+* `nameAbs_ext` — `F = G ↔ (И c, F ⊙ c = G ⊙ c)`.
+
+### Functorial map
+* `liftAbs` — lift an equivariant function `f : X → Y` to `NameAbs α X → NameAbs α Y`.
 * `liftAbs_abs` — `liftAbs f hf (⟪a⟫ x) = ⟪a⟫ f x`.
 * `liftAbs_equivariant` — `liftAbs f hf` is equivariant.
-* `liftAbs_unique` — universal property: uniqueness of `liftAbs`.
+* `liftAbs_unique` — any function agreeing on representatives equals `liftAbs f hf`.
 * `liftAbs_concreteAt` — `(liftAbs f hf F) ⊙ a = Option.map f (F ⊙ a)` when `a # F`.
+* `liftAbs_concreteAt_freshQuantifier` — И-version: `И a, (liftAbs f hf F) ⊙ a = Option.map f (F ⊙ a)`.
+* `supp_liftAbs_le` — `supp (liftAbs f hf F) ⊆ supp F`.
 * `liftAbs_id` — `liftAbs id _ = id`.
-* `liftAbs_comp` — `liftAbs g _ ∘ liftAbs f _ = liftAbs (g ∘ f) _`.
-* `liftAbs_injective` — injective `f` implies injective `liftAbs f`.
-* `liftAbs_surjective` — surjective `f` implies surjective `liftAbs f`.
+* `liftAbs_comp` — `liftAbs g hg ∘ liftAbs f hf = liftAbs (g ∘ f) _`.
+* `liftAbs_injective` — injective `f` implies injective `liftAbs f hf`.
+* `liftAbs_surjective` — surjective `f` implies surjective `liftAbs f hf`.
 
 ## References
 
-* [A. M. Pitts, *Nominal Sets*][Pitts2013], Definition 4.7, Proposition 4.9, equation 4.16.
+* [A. M. Pitts, *Nominal Sets*][Pitts2013], Definition 4.7, Proposition 4.9, equations 4.15–4.16.
 -/
 
 namespace NominalSets
@@ -109,22 +131,22 @@ theorem concreteAt_abs_self (a : α) (x : X) : (abs a x) ⊙ a = some x := by
 
 /-- If `a' ≠ a` and `a' # x`, then concretion at `a'` gives `some (swap a a' • x)`. -/
 @[simp]
-theorem concreteAt_abs_fresh {a a' : α} {x : X} (hne : a' ≠ a) (hfresh : a' # x) :
-    (abs a x) ⊙ a' = some (swap a a' • x) := by
+theorem concreteAt_abs_fresh {a a' : α} {x : X} (hne : a' ≠ a) (hfresh : a' # x) : (abs a x) ⊙ a' = some (swap a a' • x) := by
   unfold concreteAt abs
   simp only [Quotient.liftOn_mk, hne, ↓reduceIte, (fresh_atom_left a' x).mp hfresh, not_false_eq_true]
 
 /-- If `a' ≠ a` and `a' ∈ supp x`, then concretion at `a'` gives `none`. -/
 @[simp]
-theorem concreteAt_abs_not_fresh {a a' : α} {x : X} (hne : a' ≠ a) (hmem : a' ∈ supp x) :
-    (abs a x) ⊙ a' = none := by
+theorem concreteAt_abs_not_fresh {a a' : α} {x : X} (hne : a' ≠ a) (hmem : a' ∈ supp x) : (abs a x) ⊙ a' = none := by
   unfold concreteAt abs
   simp only [Quotient.liftOn_mk, hne, ↓reduceIte]
   exact if_neg (not_not.mpr hmem)
 
-/-- Concretion at a fresh atom: if `a # F`, then `F ⊙ a = some y` for a unique `y`, and `F = abs a y`. This is Pitts' Proposition 4.9. -/
-theorem abs_concreteAt_eq {F : NameAbs α X} {a : α} (ha : a # F) :
-    ∃ y, F ⊙ a = some y ∧ F = abs a y := by
+/-- **Proposition 4.9, universal version**: for *any* `a # F`, the concretion of `F` at `a`
+gives some `y` and `F = abs a y`. (Same conclusion as `abs_concreteAt_eq` but universally
+quantified over all fresh atoms.) -/
+theorem abs_concreteAt_eq_forall {F : NameAbs α X} : ∀ a : α, a # F → ∃ y, F ⊙ a = some y ∧ F = abs a y := by
+  intro a ha
   induction F using ind with | _ b y =>
   rw [fresh_abs] at ha
   rcases ha with rfl | hay
@@ -142,10 +164,19 @@ theorem abs_concreteAt_eq {F : NameAbs α X} {a : α} (ha : a # F) :
         fresh_prod_right.mpr ⟨(fresh_atoms b a).mpr (Ne.symm hab), hbsy⟩,
         by rw [← mul_smul, swap_mul_self, one_smul]⟩
 
-/-- If `a' ∉ supp F ∪ {a}`, concretion at `a'` gives `none` or equals concretion at `a`
-up to a swap. -/
-theorem concreteAt_eq_none_of_not_fresh {F : NameAbs α X} {a : α} (ha : ¬ a # F) :
-    F ⊙ a = none := by
+/-- There exists a fresh atom witnessing Proposition 4.9:
+`∃ a, a # F ∧ ∃ y, F ⊙ a = some y ∧ F = abs a y`. -/
+theorem abs_concreteAt_eq_exists {F : NameAbs α X} : ∃ a, a # F ∧ ∃ y, F ⊙ a = some y ∧ F = abs a y := by
+  obtain ⟨a, ha⟩ := exists_fresh_atom (α := α) F
+  exact ⟨a, ha, abs_concreteAt_eq_forall a ha⟩
+
+/-- Freshness-quantified version of Proposition 4.9 (equation 4.15):
+`И a, ∃ y, F ⊙ a = some y ∧ F = abs a y`. -/
+theorem abs_concreteAt_eq_freshQuantifier {F : NameAbs α X} : И a, ∃ y, F ⊙ a = some y ∧ F = abs a y :=
+  freshQuantifier_mono (fun a ha => abs_concreteAt_eq_forall a ha) (fresh_atom_cofinite F)
+
+/-- If `a` is not fresh for `F`, then `F ⊙ a = none`. -/
+theorem concreteAt_eq_none_of_not_fresh {F : NameAbs α X} {a : α} (ha : ¬ a # F) : F ⊙ a = none := by
   induction F using ind with | _ b y =>
   rw [fresh_abs] at ha
   push_neg at ha
@@ -155,52 +186,46 @@ theorem concreteAt_eq_none_of_not_fresh {F : NameAbs α X} {a : α} (ha : ¬ a #
 /-- Concretion is `none` iff the atom is not fresh. -/
 @[simp]
 theorem concreteAt_none_iff {F : NameAbs α X} {a : α} : F ⊙ a = none ↔ ¬ a # F :=
-  ⟨fun h ha => by obtain ⟨y, hy, _⟩ := abs_concreteAt_eq ha; simp [hy] at h,
+  ⟨fun h ha => by obtain ⟨y, hy, _⟩ := abs_concreteAt_eq_forall _ ha; simp [hy] at h,
    concreteAt_eq_none_of_not_fresh⟩
 
 /-- Concretion is `some` iff the atom is fresh. -/
 @[simp]
-theorem concreteAt_isSome_iff {F : NameAbs α X} {a : α} :
-    (F ⊙ a).isSome = true ↔ a # F := by
+theorem concreteAt_isSome_iff {F : NameAbs α X} {a : α} : (F ⊙ a).isSome = true ↔ a # F := by
   rw [Option.isSome_iff_ne_none, ne_eq, concreteAt_none_iff, not_not]
 
 /-- Variant of `concreteAt_abs_self` with an explicit equality hypothesis. -/
-theorem concreteAt_abs_eq {a a' : α} {x : X} (h : a' = a) :
-    (abs a x) ⊙ a' = some x :=
+theorem concreteAt_abs_eq {a a' : α} {x : X} (h : a' = a) : (abs a x) ⊙ a' = some x :=
   h ▸ concreteAt_abs_self a x
 
 /-- Injectivity of concretion: if two concretions at the same atom give `some`, the
 results agree. -/
-theorem concreteAt_injective {F : NameAbs α X} {a : α} {y z : X}
-    (hy : F ⊙ a = some y) (hz : F ⊙ a = some z) : y = z :=
+theorem concreteAt_injective {F : NameAbs α X} {a : α} {y z : X} (hy : F ⊙ a = some y) (hz : F ⊙ a = some z) : y = z :=
   Option.some_injective _ (hy ▸ hz)
 
 /-- If concretion at `a` returns `some y`, then `F = abs a y`. -/
-theorem abs_of_concreteAt_eq_some {F : NameAbs α X} {a : α} {y : X}
-    (h : F ⊙ a = some y) : F = abs a y := by
+theorem abs_of_concreteAt_eq_some {F : NameAbs α X} {a : α} {y : X} (h : F ⊙ a = some y) : F = abs a y := by
   have ha : a # F := concreteAt_isSome_iff.mp (by simp [h])
-  obtain ⟨y', hy', heq⟩ := abs_concreteAt_eq ha
+  obtain ⟨y', hy', heq⟩ := abs_concreteAt_eq_forall _ ha
   rw [heq]; congr 1
   exact concreteAt_injective hy' h
 
 /-- Extracting the concretion value when `a # F`: `Option.get` of `F ⊙ a` recovers the
 body witnessed by `abs_concreteAt_eq`. -/
-theorem concreteAt_get {F : NameAbs α X} {a : α} (_ha : a # F)
-    (h : (F ⊙ a).isSome := by simp [concreteAt_isSome_iff, _ha]) :
+theorem concreteAt_get {F : NameAbs α X} {a : α} (_ha : a # F) (h : (F ⊙ a).isSome := by simp [concreteAt_isSome_iff, _ha]) :
     F = abs a ((F ⊙ a).get h) :=
   abs_of_concreteAt_eq_some (Option.some_get h).symm
 
 /-- Concretion is equivariant: `π • (F ⊙ a) = (π • F) ⊙ (π • a)`. -/
 @[simp]
-theorem concreteAt_equivariant (π : FinitePerm α) (F : NameAbs α X) (a : α) :
-    π • (F ⊙ a) = (π • F) ⊙ (π • a) := by
+theorem concreteAt_equivariant (π : FinitePerm α) (F : NameAbs α X) (a : α) : π • (F ⊙ a) = (π • F) ⊙ (π • a) := by
   induction F using ind with | _ b x =>
   simp only [abs_equivariant]
   by_cases hab : a = b
   · subst hab; simp
   · by_cases hfx : a # x
     · simp only [concreteAt_abs_fresh hab hfx,
-          concreteAt_abs_fresh ((smul_ne_iff π a b).mpr hab)
+          concreteAt_abs_fresh ((smul_ne_iff π).mpr hab)
             ((fresh_equivariant_iff π).mpr hfx),
           option_smul_some]
       congr 1
@@ -210,7 +235,7 @@ theorem concreteAt_equivariant (π : FinitePerm α) (F : NameAbs α X) (a : α) 
       have hπmem : π • a ∈ supp (π • x) :=
         (mem_supp_smul π (π • a)).mpr (by simpa using hmem)
       rw [concreteAt_abs_not_fresh hab hmem, option_smul_none,
-          concreteAt_abs_not_fresh ((smul_ne_iff π a b).mpr hab) hπmem]
+          concreteAt_abs_not_fresh ((smul_ne_iff π).mpr hab) hπmem]
 
 /-! ### Extensionality (Pitts, equation 4.16) -/
 
@@ -238,8 +263,7 @@ theorem nameAbs_ext {F G : NameAbs α X} : F = G ↔ (И c, F ⊙ c = G ⊙ c) :
 
 /-- Functorial map: given an equivariant function `f : X → Y`, lift it to
 `NameAbs α X → NameAbs α Y` by `⟪a⟫ x ↦ ⟪a⟫ f x`. -/
-noncomputable def liftAbs {Y : Type u} [Nominal α Y] (f : X → Y)
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) : NameAbs α X → NameAbs α Y :=
+noncomputable def liftAbs {Y : Type u} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) : NameAbs α X → NameAbs α Y :=
   fun F ↦ Quotient.liftOn F
     (fun p ↦ abs p.1 (f p.2))
     (fun ⟨a₁, x₁⟩ ⟨a₂, x₂⟩ h ↦ by
@@ -259,34 +283,27 @@ noncomputable def liftAbs {Y : Type u} [Nominal α Y] (f : X → Y)
 
 /-- `map` commutes with `abs`: `map f (⟪a⟫ x) = ⟪a⟫ f x`. -/
 @[simp]
-theorem liftAbs_abs {Y : Type u} [Nominal α Y] (f : X → Y)
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (a : α) (x : X) : liftAbs f hf (abs a x) = abs a (f x) := by
+theorem liftAbs_abs {Y : Type u} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (a : α) (x : X) :
+  liftAbs f hf (abs a x) = abs a (f x) := by
   simp [liftAbs, abs]
 
 /-- `map` is equivariant. -/
 @[simp]
-theorem liftAbs_equivariant {Y : Type u} [Nominal α Y] (f : X → Y)
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (π : FinitePerm α) (F : NameAbs α X) :
-    liftAbs f hf (π • F) = π • liftAbs f hf F := by
+theorem liftAbs_equivariant {Y : Type u} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (π : FinitePerm α) (F : NameAbs α X) :
+  liftAbs f hf (π • F) = π • liftAbs f hf F := by
   induction F using ind with | _ a x => simp [hf]
 
 /-- Uniqueness of `liftAbs`: any function that agrees with `liftAbs f hf` on all
 representatives must equal it. -/
-theorem liftAbs_unique {Y : Type u} [Nominal α Y] (f : X → Y)
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (g : NameAbs α X → NameAbs α Y)
-    (hg : ∀ (a : α) (x : X), g (abs a x) = abs a (f x)) :
+theorem liftAbs_unique {Y : Type u} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
+    (g : NameAbs α X → NameAbs α Y) (hg : ∀ (a : α) (x : X), g (abs a x) = abs a (f x)) :
     g = liftAbs f hf := by
   funext F; induction F using ind with | _ a x =>
   rw [hg, liftAbs_abs]
 
 /-- Map–concretion interaction for fresh atoms:
 `(liftAbs f hf F) ⊙ a = Option.map f (F ⊙ a)` when `a # F`. -/
-theorem liftAbs_concreteAt {Y : Type u} [Nominal α Y] (f : X → Y)
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (F : NameAbs α X) (a : α) (ha : a # F) :
+theorem liftAbs_concreteAt {Y : Type u} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (F : NameAbs α X) (a : α) (ha : a # F) :
     (liftAbs f hf F) ⊙ a = Option.map f (F ⊙ a) := by
   induction F using ind with | _ b x =>
   rw [liftAbs_abs]
@@ -301,40 +318,33 @@ theorem liftAbs_concreteAt {Y : Type u} [Nominal α Y] (f : X → Y)
         Option.map_some, hf]
 
 /-- Support bound for `liftAbs`: `supp (liftAbs f hf F) ⊆ supp F`. -/
-theorem supp_liftAbs_le {Y : Type u} [Nominal α Y] (f : X → Y)
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (F : NameAbs α X) : supp (liftAbs f hf F) ⊆ supp F := by
+theorem supp_liftAbs_le {Y : Type u} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (F : NameAbs α X) :
+    supp (liftAbs f hf F) ⊆ supp F := by
   induction F using ind with | _ a x =>
   simp only [liftAbs_abs, supp_abs]
   exact Finset.sdiff_subset_sdiff (supp_map_le f hf x) (Finset.Subset.refl _)
 
 /-- И-quantified version of `liftAbs_concreteAt`: for cofinitely many `a`,
 `(liftAbs f hf F) ⊙ a = Option.map f (F ⊙ a)`. -/
-theorem liftAbs_concreteAt_freshQuantifier {Y : Type u} [Nominal α Y] (f : X → Y)
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (F : NameAbs α X) :
+theorem liftAbs_concreteAt_freshQuantifier {Y : Type u} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (F : NameAbs α X) :
     И a, (liftAbs f hf F) ⊙ a = Option.map f (F ⊙ a) :=
   freshQuantifier_mono (fun a ha ↦ liftAbs_concreteAt f hf F a ha) (fresh_atom_cofinite F)
 
 /-- `liftAbs id` is the identity. -/
 @[simp]
-theorem liftAbs_id :
-    liftAbs (id : X → X) (fun _ _ ↦ rfl) = id := by
+theorem liftAbs_id : liftAbs (id : X → X) (fun _ _ ↦ rfl) = id := by
   funext F; induction F using ind with | _ a x => simp
 
 /-- `liftAbs` composes: `liftAbs g hg ∘ liftAbs f hf = liftAbs (g ∘ f) _`. -/
 theorem liftAbs_comp {Y Z : Type u} [Nominal α Y] [Nominal α Z]
-    (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (g : Y → Z) (hg : ∀ (π : FinitePerm α) (y : Y), g (π • y) = π • g y)
+    (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (g : Y → Z) (hg : ∀ (π : FinitePerm α) (y : Y), g (π • y) = π • g y)
     (F : NameAbs α X) :
     liftAbs g hg (liftAbs f hf F) =
       liftAbs (g ∘ f) (fun π x ↦ by simp [Function.comp, hf, hg]) F := by
   induction F using ind with | _ a x => simp
 
 /-- If `f` is injective, then `liftAbs f hf` is injective. -/
-theorem liftAbs_injective {Y : Type u} [Nominal α Y] {f : X → Y}
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (hinj : Function.Injective f) :
+theorem liftAbs_injective {Y : Type u} [Nominal α Y] {f : X → Y} (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (hinj : Function.Injective f) :
     Function.Injective (liftAbs f hf) := by
   intro F G h
   rw [nameAbs_ext]
@@ -346,9 +356,7 @@ theorem liftAbs_injective {Y : Type u} [Nominal α Y] {f : X → Y}
   exact Option.map_injective hinj hceq
 
 /-- If `f` is surjective, then `liftAbs f hf` is surjective. -/
-theorem liftAbs_surjective {Y : Type u} [Nominal α Y] {f : X → Y}
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (hsurj : Function.Surjective f) :
+theorem liftAbs_surjective {Y : Type u} [Nominal α Y] {f : X → Y} (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (hsurj : Function.Surjective f) :
     Function.Surjective (liftAbs f hf) := by
   intro G; induction G using ind with | _ a y =>
   obtain ⟨x, rfl⟩ := hsurj y

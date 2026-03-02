@@ -39,6 +39,10 @@ than being placed on the bare function type.
 
 ## Main results
 
+* `PFun.ext` — extensionality: `PFun` equality from pointwise function equality.
+* `PFun.pfun_ext_iff` — `f = g ↔ ∀ x, f x = g x` (propositional form of extensionality).
+* `PFun.mk_injective` — `PFun.mk` is injective.
+* `PFun.coe_mk` / `PFun.coe_apply` — computation lemmas for coercions.
 * `PFun.smul_apply` — `(π • f) x = π • f (π⁻¹ • x)`.
 * `PFun.smul_apply_smul` — `(π • f) (π • x) = π • f x`.
 * `PFun.smul_id` — the identity `PFun` is a fixed point: `π • PFun.id = PFun.id`.

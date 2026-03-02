@@ -17,20 +17,52 @@ binder name is irrelevant up to consistent renaming.
 
 ## Main definitions
 
-* `AlphaEqv a₁ x₁ a₂ x₂` — the α-equivalence relation (eq. 4.7).
+* `AlphaEqv a₁ x₁ a₂ x₂` — the α-equivalence relation on `α × X` (eq. 4.7).
+* `AlphaSetoid` — the `Setoid` instance on `α × X` induced by `AlphaEqv`.
 * `NameAbs α X` — the quotient type `[A]X` (Definition 4.4).
-* `abs a x` — the canonical constructor; notation `⟪a⟫ x`.
-* `NameAbs.ind` — induction: every element is `abs a x` for some `a`, `x`.
+* `abs a x` — the canonical constructor `⟪a⟫ x : NameAbs α X`.
+* `NameAbs.ind` — induction principle: every element is `⟪a⟫ x` for some `a`, `x`.
+
+## Notation
+
+* `⟪a⟫ x` — scoped notation for `abs a x`.
+
+## Instances
+
+* `NameAbs.instSMul` — permutation action: `π • ⟪a⟫ x = ⟪π • a⟫ (π • x)`.
+* `NameAbs.instPermType` — `NameAbs α X` is a `PermType`.
+* `NameAbs.instNominal` — `NameAbs α X` is a nominal set (Proposition 4.5).
 
 ## Main results
 
-* `abs_same_name_iff` — same-binder injectivity (Lemma 4.2).
+### α-Equivalence
+* `alphaEqv_refl` — α-equivalence is reflexive.
+* `alphaEqv_symm` — α-equivalence is symmetric.
+* `alphaEqv_trans` — α-equivalence is transitive.
+* `alphaEqv_equivariant` — α-equivalence is preserved by the permutation action.
+
+### Equality characterisations (Pitts, Lemmas 4.2 and 4.3)
+* `abs_eq_iff_freshQuantifier` — `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ И c, swap a₁ c • x₁ = swap a₂ c • x₂`.
+* `abs_same_name_iff` — same-binder injectivity: `⟪a⟫ x₁ = ⟪a⟫ x₂ ↔ x₁ = x₂`.
 * `abs_eq_iff` — full equality characterisation (Lemma 4.3).
-* `abs_eq_iff_freshQuantifier` — equality via the freshness quantifier (eq. 4.7/4.8).
-* `abs_equivariant` — the permutation action on abstractions (eq. 4.10).
+* `abs_eq_iff_exists` — equality via an existential fresh witness (eq. 4.8).
+* `abs_eq_iff_forall` — equality via a universal fresh witness (eq. 4.8).
+
+### Action and support (Pitts, Definition 4.4, Proposition 4.5)
+* `abs_equivariant` — `π • ⟪a⟫ x = ⟪π • a⟫ (π • x)` (eq. 4.10).
 * `supp_abs` — `supp (⟪a⟫ x) = supp x \ {a}` (Proposition 4.5).
-* `fresh_abs` — `a' # ⟪a⟫ x ↔ a' = a ∨ a' # x` (eq. 4.11).
-* `exists_fresh_rep` — every abstraction has a representative fresh for any given `z`.
+* `supp_abs_subset` — `supp (⟪a⟫ x) ⊆ supp x`.
+* `supp_abs_ssubset` — `supp (⟪a⟫ x) ⊂ supp (a, x)`.
+* `abs_supports_sdiff` — `supp x \ {a}` supports `⟪a⟫ x`.
+* `supports_body_of_supports_abs` — if `s` supports `⟪a⟫ x`, then `s ∪ {a}` supports `x`.
+
+### Freshness (eq. 4.11)
+* `fresh_abs` — `a' # ⟪a⟫ x ↔ a' = a ∨ a' # x`.
+* `fresh_binder_abs` — the binder is always fresh for its own abstraction: `a # ⟪a⟫ x`.
+* `abs_rename` — `a # x` and `b # x` imply `⟪a⟫ x = ⟪b⟫ x`.
+
+### Fresh representatives
+* `exists_fresh_rep` — every abstraction has a representative with binder fresh for `z`.
 * `ind_someAny_forall` — induction choosing a representative fresh for a given `z`.
 
 The freshness condition for binders (Theorem 4.15, Corollary 4.17) and structural
@@ -38,7 +70,7 @@ properties of `[A]_` live in `FCB.lean`.
 
 ## References
 
-* [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 4.
+* [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 4, Sections 4.1–4.3.
 -/
 
 namespace NominalSets
@@ -53,18 +85,18 @@ variable {α : Type u} [Name α] {X : Type u} [Nominal α X]
 
 /-- **α-equivalence** on `α × X`: two pairs `(a₁, x₁)` and `(a₂, x₂)` are α-equivalent
 when, for cofinitely many atoms `c`, `swap a₁ c • x₁ = swap a₂ c • x₂`. -/
-def AlphaEqv (a₁ : α) (x₁ : X) (a₂ : α) (x₂ : X) : Prop :=
-  И c, swap a₁ c • x₁ = swap a₂ c • x₂
+def AlphaEqv (a₁ : α) (x₁ : X) (a₂ : α) (x₂ : X) : Prop := И c, swap a₁ c • x₁ = swap a₂ c • x₂
 
+/-- α-equivalence is reflexive. -/
 theorem alphaEqv_refl (a : α) (x : X) : AlphaEqv a x a x :=
   freshQuantifier_of_forall (fun _ ↦ rfl)
 
-theorem alphaEqv_symm {a₁ a₂ : α} {x₁ x₂ : X}
-    (h : AlphaEqv a₁ x₁ a₂ x₂) : AlphaEqv a₂ x₂ a₁ x₁ :=
+/-- α-equivalence is symmetric. -/
+theorem alphaEqv_symm {a₁ a₂ : α} {x₁ x₂ : X} (h : AlphaEqv a₁ x₁ a₂ x₂) : AlphaEqv a₂ x₂ a₁ x₁ :=
   freshQuantifier_mono (fun _ h ↦ h.symm) h
 
-theorem alphaEqv_trans {a₁ a₂ a₃ : α} {x₁ x₂ x₃ : X}
-    (h₁₂ : AlphaEqv a₁ x₁ a₂ x₂) (h₂₃ : AlphaEqv a₂ x₂ a₃ x₃) : AlphaEqv a₁ x₁ a₃ x₃ := by
+/-- α-equivalence is transitive. -/
+theorem alphaEqv_trans {a₁ a₂ a₃ : α} {x₁ x₂ x₃ : X} (h₁₂ : AlphaEqv a₁ x₁ a₂ x₂) (h₂₃ : AlphaEqv a₂ x₂ a₃ x₃) : AlphaEqv a₁ x₁ a₃ x₃ := by
   have h := freshQuantifier_and.mpr ⟨h₁₂, h₂₃⟩
   exact freshQuantifier_mono (fun c ⟨h1, h2⟩ ↦ h1.trans h2) h
 
@@ -81,12 +113,10 @@ instance AlphaSetoid : Setoid (α × X) where
 
 /-- **Name abstraction**: the quotient of `α × X` by α-equivalence.
 Represents "a name `a` bound in `x`", up to consistent renaming. -/
-def NameAbs (α : Type u) [Name α] (X : Type u) [Nominal α X] : Type u :=
-  Quotient (AlphaSetoid (α := α) (X := X))
+def NameAbs (α : Type u) [Name α] (X : Type u) [Nominal α X] : Type u := Quotient (AlphaSetoid (α := α) (X := X))
 
 /-- Construct a name abstraction from a binder `a` and a body `x`. -/
-def abs (a : α) (x : X) : NameAbs α X :=
-  Quotient.mk (AlphaSetoid (α := α) (X := X)) (a, x)
+def abs (a : α) (x : X) : NameAbs α X := Quotient.mk (AlphaSetoid (α := α) (X := X)) (a, x)
 
 /-- Notation: `⟪a⟫ x` for `abs a x`. -/
 scoped notation:max "⟪" a "⟫" x:arg => abs a x
@@ -95,15 +125,13 @@ namespace NameAbs
 
 /-- Every name abstraction is of the form `abs a x`. -/
 @[elab_as_elim]
-theorem ind {P : NameAbs α X → Prop} (h : ∀ a x, P ⟪a⟫x) :
-    ∀ F, P F := Quotient.ind (fun ⟨a, x⟩ ↦ h a x)
+theorem ind {P : NameAbs α X → Prop} (h : ∀ a x, P ⟪a⟫x) : ∀ F, P F := Quotient.ind (fun ⟨a, x⟩ ↦ h a x)
 
 /-! ### Equality characterisation (Pitts, Lemmas 4.2 and 4.3) -/
 
 /-- α-equivalence is equivariant: if `AlphaEqv a₁ x₁ a₂ x₂`, then
 `AlphaEqv (π • a₁) (π • x₁) (π • a₂) (π • x₂)`. -/
-theorem alphaEqv_equivariant {a₁ a₂ : α} {x₁ x₂ : X} (π : FinitePerm α) (h : AlphaEqv a₁ x₁ a₂ x₂) :
-    AlphaEqv (π • a₁) (π • x₁) (π • a₂) (π • x₂) := by
+theorem alphaEqv_equivariant {a₁ a₂ : α} {x₁ x₂ : X} (π : FinitePerm α) (h : AlphaEqv a₁ x₁ a₂ x₂) : AlphaEqv (π • a₁) (π • x₁) (π • a₂) (π • x₂) := by
   have key : ∀ (a : α) (y : X) (c : α),
       swap (π • a) (π • c) • (π • y) = π • (swap a c • y) := fun a y c ↦ by
     rw [← swap_equivariant, conj_smul, mul_smul, mul_smul, PermType.inv_smul_smul]
@@ -123,14 +151,12 @@ theorem alphaEqv_equivariant {a₁ a₂ : α} {x₁ x₂ : X} (π : FinitePerm �
 
 /-- Equality via the freshness quantifier (eq. 4.7 / 4.8):
 `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ (И c, swap a₁ c • x₁ = swap a₂ c • x₂)`. -/
-theorem abs_eq_iff_freshQuantifier {a₁ a₂ : α} {x₁ x₂ : X} :
-    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔ (И c, swap a₁ c • x₁ = swap a₂ c • x₂) :=
+theorem abs_eq_iff_freshQuantifier {a₁ a₂ : α} {x₁ x₂ : X} : ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔ (И c, swap a₁ c • x₁ = swap a₂ c • x₂) :=
 ⟨fun h ↦ Quotient.exact h, fun h ↦ Quotient.sound h⟩
 
 /-- Same-binder injectivity: `⟪a⟫ x₁ = ⟪a⟫ x₂ ↔ x₁ = x₂` (Lemma 4.2). -/
 @[simp]
-theorem abs_same_name_iff {a : α} {x₁ x₂ : X} :
-    ⟪a⟫x₁ = ⟪a⟫x₂ ↔ x₁ = x₂ := by
+theorem abs_same_name_iff {a : α} {x₁ x₂ : X} : ⟪a⟫x₁ = ⟪a⟫x₂ ↔ x₁ = x₂ := by
   simp only [abs]
   rw [Quotient.eq]
   -- goal: AlphaEqv a x₁ a x₂ ↔ x₁ = x₂
@@ -206,7 +232,7 @@ theorem abs_eq_iff {a₁ a₂ : α} {x₁ x₂ : X} :
 
 /-! ### Permutation action (Pitts, Definition 4.4, eq. 4.10) -/
 
-/-- The permutation action on name abstractions: `π • ⟪a⟫ x = ⟪π • a⟫ (π • x)`. -/
+/-- The permutation action on name abstractions: `π • ⟪a⟫ x = ⟪π • a⟫ (π • x)` (eq. 4.10). -/
 instance instSMul : SMul (FinitePerm α) (NameAbs α X) where
   smul := fun π F ↦ Quotient.liftOn F
     (fun ⟨a, x⟩ ↦ ⟪(π • a)⟫(π • x))
@@ -216,17 +242,17 @@ instance instSMul : SMul (FinitePerm α) (NameAbs α X) where
       exact alphaEqv_equivariant π h)
 
 @[simp]
-theorem abs_equivariant (π : FinitePerm α) (a : α) (x : X) :
-    π • ⟪a⟫x = ⟪(π • a)⟫(π • x) := rfl
+theorem abs_equivariant (π : FinitePerm α) (a : α) (x : X) : π • ⟪a⟫x = ⟪(π • a)⟫(π • x) := rfl
 
+/-- `NameAbs α X` is a `PermType` under the lifted permutation action. -/
 instance instPermType : PermType α (NameAbs α X) where
   one_smul F := by induction F using ind with | _ a x => simp [one_smul]
   mul_smul π σ F := by induction F using ind with | _ a x => simp [mul_smul]
 
 /-! ### Support and Nominal instance (Pitts, Proposition 4.5) -/
 
-theorem supports_body_of_supports_abs {a : α} {x : X} {s : Finset α}
-    (hs : supports s ⟪a⟫x) : supports (s ∪ {a}) x := by
+/-- If `s` supports `⟪a⟫ x`, then `s ∪ {a}` supports `x`. -/
+theorem supports_body_of_supports_abs {a : α} {x : X} {s : Finset α} (hs : supports s ⟪a⟫x) : supports (s ∪ {a}) x := by
   rw [supports_iff_swap] at hs ⊢
   intro a₁ a₂ ha₁ ha₂
   simp only [Finset.mem_union, Finset.mem_singleton, not_or] at ha₁ ha₂
@@ -236,6 +262,7 @@ theorem supports_body_of_supports_abs {a : α} {x : X} {s : Finset α}
   rw [hfix_a] at hsabs
   exact abs_same_name_iff.mp hsabs
 
+/-- `supp x \ {a}` supports `⟪a⟫ x`. -/
 theorem abs_supports_sdiff (a : α) (x : X) : supports (supp x \ {a}) ⟪a⟫x := by
   rw [supports_iff_swap]
   intro a₁ a₂ ha₁ ha₂
@@ -258,6 +285,7 @@ theorem abs_supports_sdiff (a : α) (x : X) : supports (supp x \ {a}) ⟪a⟫x :
   · -- a₁ ≠ a, a₂ ≠ a
     rw [swap_apply_of_ne (Ne.symm hne₁) (Ne.symm hne₂), fresh_swap (hfresh₁ hne₁) (hfresh₂ hne₂)]
 
+/-- `NameAbs α X` is a nominal set (Proposition 4.5). -/
 instance instNominal : Nominal α (NameAbs α X) where
   toPermType := instPermType
   finSupp := by
@@ -270,7 +298,7 @@ instance instNominal : Nominal α (NameAbs α X) where
 theorem supp_abs (a : α) (x : X) : supp ⟪a⟫x = supp x \ {a} := by
   apply Finset.Subset.antisymm
   · -- supp (abs a x) ⊆ supp x \ {a}: abs_supports_sdiff gives the support directly
-    exact supp_le _ (abs_supports_sdiff a x)
+    exact supp_le (abs_supports_sdiff a x)
   · -- supp x \ {a} ⊆ supp (abs a x): if b ≠ a and b ∈ supp x, then b ∈ every support of abs a x
     intro b hb
     simp only [Finset.mem_sdiff, Finset.mem_singleton] at hb
@@ -278,7 +306,7 @@ theorem supp_abs (a : α) (x : X) : supp ⟪a⟫x = supp x \ {a} := by
     intro s hs
     -- s ∪ {a} supports x (by supports_body_of_supports_abs), so b ∈ s ∪ {a}, so b ∈ s
     have hsa : supports (s ∪ {a}) x := supports_body_of_supports_abs hs
-    have hbsa : b ∈ s ∪ {a} := supp_le _ hsa (mem_supp.mpr (fun t ht ↦ supp_le t ht hb.1))
+    have hbsa : b ∈ s ∪ {a} := supp_le hsa (mem_supp.mpr (fun t ht ↦ supp_le ht hb.1))
     simp only [Finset.mem_union, Finset.mem_singleton] at hbsa
     exact hbsa.resolve_right hb.2
 
@@ -308,12 +336,11 @@ theorem abs_eq_iff_exists {a₁ a₂ : α} {x₁ x₂ : X} :
     rw [abs_eq_iff_freshQuantifier]
     let R : α → α × X × α × X → Prop :=
       fun d t ↦ swap t.1 d • t.2.1 = swap t.2.2.1 d • t.2.2.2
-    have hEquiv : EquivariantRel R := by
-      intro π d t
+    have hEquiv : EquivariantRel R := ⟨fun π d t ↦ by
       simp only [R, Prod.smul_fst, Prod.smul_snd]
       have key : ∀ (a : α) (y : X), swap (π • a) (π • d) • (π • y) = π • (swap a d • y) :=
         fun a y ↦ by rw [← swap_equivariant, conj_smul, mul_smul, mul_smul, PermType.inv_smul_smul]
-      rw [key t.1 t.2.1, key t.2.2.1 t.2.2.2, smul_left_cancel_iff]
+      rw [key t.1 t.2.1, key t.2.2.1 t.2.2.2, smul_left_cancel_iff]⟩
     exact someAny_freshQuantifier_of_forall (someAny_forall_of_exists hEquiv ⟨c, hcfresh, hceq⟩)
 
 /-- Equality of abstractions via ∀ (Some/Any, eq. 4.8):
@@ -323,12 +350,11 @@ theorem abs_eq_iff_forall {a₁ a₂ : α} {x₁ x₂ : X} :
       ∀ c, c # (a₁, x₁, a₂, x₂) → swap a₁ c • x₁ = swap a₂ c • x₂ := by
   let R : α → α × X × α × X → Prop :=
     fun d t ↦ swap t.1 d • t.2.1 = swap t.2.2.1 d • t.2.2.2
-  have hEquiv : EquivariantRel R := by
-    intro π d t
+  have hEquiv : EquivariantRel R := ⟨fun π d t ↦ by
     simp only [R, Prod.smul_fst, Prod.smul_snd]
     have key : ∀ (a : α) (y : X), swap (π • a) (π • d) • (π • y) = π • (swap a d • y) :=
       fun a y ↦ by rw [← swap_equivariant, conj_smul, mul_smul, mul_smul, PermType.inv_smul_smul]
-    rw [key t.1 t.2.1, key t.2.2.1 t.2.2.2, smul_left_cancel_iff]
+    rw [key t.1 t.2.1, key t.2.2.1 t.2.2.2, smul_left_cancel_iff]⟩
   constructor
   · intro h
     exact someAny_forall_of_exists hEquiv
@@ -353,8 +379,7 @@ theorem abs_rename {a b : α} {x : X} (ha : a # x) (hb : b # x) : ⟪a⟫x = ⟪
 
 /-- Support of an abstraction is strictly smaller than that of the pair,
 when `a` actually occurs in `supp x`. -/
-theorem supp_abs_ssubset {a : α} {x : X} :
-    supp ⟪a⟫x ⊂ supp (a, x) := by
+theorem supp_abs_ssubset {a : α} {x : X} : supp ⟪a⟫x ⊂ supp (a, x) := by
   simp only [supp_abs, supp_prod, supp_atom]
   constructor
   · exact Finset.sdiff_subset.trans Finset.subset_union_right
@@ -364,8 +389,7 @@ theorem supp_abs_ssubset {a : α} {x : X} :
 
 /-- Choose a representative with binder fresh for any given `z` (Lemma 4.24).
 Every abstraction `F` can be written as `⟪a⟫ x` with `a # z`. -/
-theorem exists_fresh_rep (F : NameAbs α X) {Z : Type u} [Nominal α Z] (z : Z) :
-    ∃ a x, a # z ∧ F = ⟪a⟫x := by
+theorem exists_fresh_rep (F : NameAbs α X) {Z : Type u} [Nominal α Z] (z : Z) : ∃ a x, a # z ∧ F = ⟪a⟫x := by
   induction F using ind with | _ a x =>
   -- Pick b ∉ supp z ∪ supp x ∪ {a}; so b # z, b # x, and b ≠ a
   pick_new b (supp z ∪ supp x ∪ {a})
@@ -385,8 +409,7 @@ theorem exists_fresh_rep (F : NameAbs α X) {Z : Type u} [Nominal α Z] (z : Z) 
 /-- Induction with freshness side-condition (∀ form): for any `z`, every element of
 `NameAbs α X` can be written `⟪a⟫ x` with `a # z`. -/
 @[elab_as_elim]
-theorem ind_someAny_forall {P : NameAbs α X → Prop} {Z : Type u} [Nominal α Z]
-    (z : Z) (h : ∀ a x, a # z → P ⟪a⟫x) : ∀ F, P F := by
+theorem ind_someAny_forall {P : NameAbs α X → Prop} {Z : Type u} [Nominal α Z] (z : Z) (h : ∀ a x, a # z → P ⟪a⟫x) : ∀ F, P F := by
   intro F
   obtain ⟨a, x, haz, rfl⟩ := exists_fresh_rep F z
   exact h a x haz

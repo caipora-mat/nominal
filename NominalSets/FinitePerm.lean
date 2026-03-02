@@ -16,16 +16,42 @@ with finite moved-point sets.
 ## Main definitions
 
 * `Equiv.Perm.movedPoints π` — the set `{a | π a ≠ a}` of atoms moved by `π`.
-* `Equiv.Perm.IsFinitePerm π` — predicate asserting that `π.movedPoints` is finite.
-* `FinitePerm α` — the subgroup of `Equiv.Perm α` of permutations with finite support.
+* `Equiv.Perm.IsFinitePerm π` — predicate: `π.movedPoints` is finite.
+* `FinitePerm α` — the subgroup of `Equiv.Perm α` consisting of permutations with finite
+  support.
+
+## Instances
+
+* `instFunLike` — `FinitePerm α` elements can be applied directly as functions `α → α`.
+* `instCoe` — coercion from `FinitePerm α` to `Equiv.Perm α`.
 
 ## Main results
 
-* `FinitePerm.support_finite` — every member of `FinitePerm α` has finitely many moved points.
-* `FinitePerm.swap_finite` — every transposition belongs to `FinitePerm α`.
-* `FinitePerm.eq_closure_isSwap` — `FinitePerm α` equals the closure of all transpositions in `Equiv.Perm α`.
-* `FinitePerm.swap_factorization` — every finite permutation is a product of a finite list of transpositions.
+### `Equiv.Perm` preliminaries
+* `Equiv.Perm.movedPoints_eq_compl_fixedBy` — `movedPoints π = (fixedBy α π)ᶜ`.
+* `Equiv.Perm.movedPoints_one` — the identity moves no atoms.
+* `Equiv.Perm.movedPoints_mul_subset` — `(π * σ).movedPoints ⊆ π.movedPoints ∪ σ.movedPoints`.
+* `Equiv.Perm.movedPoints_inv` — `π⁻¹.movedPoints = π.movedPoints`.
+
+### Function-like and coercion API
 * `FinitePerm.ext` — extensionality: two finite permutations are equal iff they agree pointwise.
+* `FinitePerm.coe_mk` — computation lemma for the subtype constructor.
+* `FinitePerm.coe_one` / `FinitePerm.one_apply` — the identity acts as `id`.
+* `FinitePerm.coe_mul` / `FinitePerm.mul_apply` — multiplication acts as function composition.
+* `FinitePerm.inv_apply_self` / `FinitePerm.apply_inv_self` — left and right inverse laws.
+* `FinitePerm.injective` / `FinitePerm.surjective` — every finite permutation is a bijection.
+* `FinitePerm.coe_val` — coercion to `Equiv.Perm α` is the subtype projection.
+* `FinitePerm.coe_toPerm_one` / `FinitePerm.coe_toPerm_mul` / `FinitePerm.coe_toPerm_inv` —
+  coercion commutes with group operations (for `norm_cast`).
+* `FinitePerm.coe_injective` / `FinitePerm.coe_inj` — coercion to `Equiv.Perm α` is injective.
+
+### Group structure
+* `FinitePerm.support_finite` — every element of `FinitePerm α` has finitely many moved points.
+* `FinitePerm.swap_finite` — every transposition belongs to `FinitePerm α`.
+* `FinitePerm.eq_closure_isSwap` — `FinitePerm α` equals the closure of all transpositions in
+  `Equiv.Perm α`.
+* `FinitePerm.swap_factorization` — every finite permutation is a product of a finite list of
+  transpositions.
 -/
 
 open Equiv MulAction Set
@@ -50,8 +76,7 @@ theorem movedPoints_eq_compl_fixedBy : π.movedPoints = (fixedBy α π)ᶜ := by
 theorem movedPoints_one : (1 : Perm α).movedPoints = ∅ := by
   ext a; simp [movedPoints]
 
-theorem movedPoints_mul_subset (π σ : Perm α) :
-    (π * σ).movedPoints ⊆ π.movedPoints ∪ σ.movedPoints := by
+theorem movedPoints_mul_subset (π σ : Perm α) : (π * σ).movedPoints ⊆ π.movedPoints ∪ σ.movedPoints := by
   intro a ha
   simp only [movedPoints, mem_setOf_eq, Perm.mul_apply, mem_union] at *
   by_contra h

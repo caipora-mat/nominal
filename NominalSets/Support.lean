@@ -27,6 +27,7 @@ The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` an
 * `supports_smul` — if `s` supports `x`, then `π • s` supports `π • x`.
 * `supports_empty_iff` — `∅` supports `x` iff every finite permutation fixes `x`.
 * `supports_prod` — if `s` supports `x` and `t` supports `y`, then `s ∪ t` supports `(x, y)`.
+* `supports_fst` / `supports_snd` — projections: if `s` supports a pair `(x, y)`, it supports each component.
 * `FinSupported.smul` — finite support is preserved by the action.
 * `FinSupported.prod` — products of finitely supported elements are finitely supported.
 
@@ -128,7 +129,7 @@ variable {α : Type*} [Name α] {X : Type*} [PermType α X]
       -- every atom moved by σ' = swap z (σ z) * σ is also moved by σ.
       have hsubset : movedFinset σ' ⊆ movedFinset σ := movedFinset_swap_smul_subset hmoved
       -- σ' fixes z, because σ' z = swap z (σ z) (σ z) = z (the swap sends σ z back to z).
-      have hz_not_moved' : z ∉ movedFinset σ' := not_mem_movedFinset_swap_smul
+      have hz_not_moved' : z ∉ movedFinset σ' := not_mem_movedFinset_swap_smul σ z
       have hcard' : (movedFinset σ').card < n := by
         have hlt : (movedFinset σ').card < (movedFinset σ).card :=
           Finset.card_lt_card ⟨hsubset, fun h ↦ hz_not_moved' (h hz)⟩
@@ -142,8 +143,7 @@ variable {α : Type*} [Name α] {X : Type*} [PermType α X]
       rw [swap_mul_cancel (σ := σ) (a := z), mul_smul, hσ'x, hswap_x]
 
 /-- If two finite sets both support `x`, then their intersection also supports `x`. -/
-theorem supports_inter {A₁ A₂ : Finset α} {x : X} (h₁ : supports A₁ x) (h₂ : supports A₂ x) :
-    supports (A₁ ∩ A₂) x := by
+theorem supports_inter {A₁ A₂ : Finset α} {x : X} (h₁ : supports A₁ x) (h₂ : supports A₂ x) : supports (A₁ ∩ A₂) x := by
   rw [supports_iff_swap]
   intro a a' ha ha'
   simp only [Finset.mem_inter, not_and_or] at ha ha'
@@ -166,8 +166,7 @@ theorem supports_inter {A₁ A₂ : Finset α} {x : X} (h₁ : supports A₁ x) 
     rw [hid, mul_smul, mul_smul, fix_a_a'', fix_a'_a'', fix_a_a'']
 
 /-- If `s` supports `x`, then `π • s` supports `π • x`. -/
-@[grind .] theorem supports_smul (π : FinitePerm α) {s : Finset α} {x : X} (hs : supports s x) :
-    supports (π • s) (π • x) := by
+@[grind .] theorem supports_smul (π : FinitePerm α) {s : Finset α} {x : X} (hs : supports s x) : supports (π • s) (π • x) := by
   intro σ hσ
   have hconj : ∀ b ∈ (s : Set α), (π⁻¹ * σ * π) • b = b := fun b hb ↦ by
     have hpib : π • b ∈ π • s := by
@@ -182,15 +181,14 @@ theorem supports_inter {A₁ A₂ : Finset α} {x : X} (h₁ : supports A₁ x) 
     _ = π • x                     := by rw [hx]
 
 /-- The empty set supports `x` if and only if every finite permutation fixes `x`. -/
-theorem supports_empty_iff {x : X} :
-    supports (∅ : Finset α) x ↔ ∀ π : FinitePerm α, π • x = x := by
+theorem supports_empty_iff {x : X} : supports (∅ : Finset α) x ↔ ∀ π : FinitePerm α, π • x = x := by
   constructor
   · intro hs π; exact hs π (fun _ h ↦ by simp at h)
   · intro h π _; exact h π
 
 /-- If `s` supports `x` and `t` supports `y`, then `s ∪ t` supports `(x, y)`. -/
-theorem supports_prod {Y : Type*} [PermType α Y] {s t : Finset α} {x : X} {y : Y}
-    (hs : supports s x) (ht : supports t y) : supports (s ∪ t) (x, y) := by
+theorem supports_prod {Y : Type*} [PermType α Y] {s t : Finset α} {x : X} {y : Y} (hs : supports s x) (ht : supports t y) :
+  supports (s ∪ t) (x, y) := by
   intro π hπ
   have hxs : ∀ c ∈ (s : Set α), π • c = c := fun c hc ↦
     hπ (Finset.mem_coe.mpr (Finset.mem_union_left t (Finset.mem_coe.mp hc)))
@@ -199,13 +197,11 @@ theorem supports_prod {Y : Type*} [PermType α Y] {s t : Finset α} {x : X} {y :
   simp [hs π hxs, ht π hyt]
 
 /-- If `s` supports `(x, y)`, then `s` supports `x`. -/
-theorem supports_fst {Y : Type*} [PermType α Y] {s : Finset α} {x : X} {y : Y}
-    (h : supports s (x, y)) : supports s x := fun π hπ ↦ by
+theorem supports_fst {Y : Type*} [PermType α Y] {s : Finset α} {x : X} {y : Y} (h : supports s (x, y)) : supports s x := fun π hπ ↦ by
   have := h π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.1
 
 /-- If `s` supports `(x, y)`, then `s` supports `y`. -/
-theorem supports_snd {Y : Type*} [PermType α Y] {s : Finset α} {x : X} {y : Y}
-    (h : supports s (x, y)) : supports s y := fun π hπ ↦ by
+theorem supports_snd {Y : Type*} [PermType α Y] {s : Finset α} {x : X} {y : Y} (h : supports s (x, y)) : supports s y := fun π hπ ↦ by
   have := h π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.2
 
 end SwapChar
@@ -219,13 +215,11 @@ open PermType
 variable {α : Type*} [Name α] {X : Type*} [PermType α X]
 
 /-- If `x` is finitely supported, then `π • x` is finitely supported. -/
-theorem FinSupported.smul {x : X} (h : FinSupported x) (π : FinitePerm α) :
-    FinSupported (π • x) :=
+theorem FinSupported.smul {x : X} (h : FinSupported x) (π : FinitePerm α) : FinSupported (π • x) :=
   let ⟨s, hs⟩ := h; ⟨π • s, supports_smul π hs⟩
 
 /-- If `x` and `y` are finitely supported, then `(x, y)` is finitely supported. -/
-theorem FinSupported.prod {Y : Type*} [PermType α Y] {x : X} {y : Y}
-    (hx : FinSupported x) (hy : FinSupported y) : FinSupported (x, y) :=
+theorem FinSupported.prod {Y : Type*} [PermType α Y] {x : X} {y : Y} (hx : FinSupported x) (hy : FinSupported y) : FinSupported (x, y) :=
   let ⟨s, hs⟩ := hx; let ⟨t, ht⟩ := hy; ⟨s ∪ t, supports_prod hs ht⟩
 
 end FinSupportedAPI
