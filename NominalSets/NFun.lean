@@ -148,6 +148,10 @@ theorem supports_iff_toPFun {s : Finset α} {f : NFun α X Y} : supports s f ↔
     have := congrFun (congrArg DFunLike.coe (hs π hπ)) x
     simpa using this
 
+/-- `s` supports `ofSupports f s hs`. -/
+theorem ofSupports_supports (f : PFun α X Y) (s : Finset α) (hs : supports s f) : supports s (ofSupports f s hs) :=
+  supports_iff_toPFun.mpr hs
+
 /-- `NFun α X Y` is a nominal set: each `f` is finitely supported. -/
 instance instNominal : Nominal α (NFun α X Y) where
   __ := instPermType

@@ -228,6 +228,65 @@ end Filter
 
 end Fresh
 
+/-! ### `split_fresh` tactic
+
+`split_fresh h` takes a hypothesis `h : a # (b, c, ..., d)` (or `(a, b, ...) # c`) and
+repeatedly applies `fresh_prod_right` / `fresh_prod_left` to split it into individual
+freshness hypotheses. Optionally, `split_fresh h with h₁ h₂ …` names the resulting pieces.
+
+- `split_fresh h`                — splits `h : a # (b, c)` into `h_1 : a # b`, `h_2 : a # c`
+- `split_fresh h with hb hc`    — same, but with chosen names
+- `split_fresh h`                — splits `h : (a, b) # c` into `h_1 : a # c`, `h_2 : b # c`
+
+The original hypothesis `h` is replaced by the individual pieces.
+-/
+
+syntax "split_fresh" ident (" with " (colGt ident)+)? : tactic
+
+macro_rules
+  | `(tactic| split_fresh $h with $hs:ident*) => `(tactic| (simp only [fresh_prod_right, fresh_prod_left] at $h:ident; obtain ⟨$hs,*⟩ := $h))
+  | `(tactic| split_fresh $h) => `(tactic| (simp only [fresh_prod_right, fresh_prod_left] at $h:ident; try obtain ⟨_, _⟩ := $h))
+
+section SPLIT_FRESH_TEST
+set_option linter.unusedVariables false
+
+-- Basic right split
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x : X) (y : Y)
+    (h : x # (x, y)) : True := by
+  split_fresh h
+  -- h1 : x # x, h2 : x # y
+  trivial
+
+-- Right split with custom names
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x : X) (y : Y)
+    (h : x # (x, y)) : True := by
+  split_fresh h with hx hy
+  -- hx : x # x, hy : x # y
+  trivial
+
+-- Triple tuple (right-associated)
+example {α X Y Z} [Name α] [Nominal α X] [Nominal α Y] [Nominal α Z]
+    (x : X) (y : Y) (z : Z) (h : x # (x, y, z)) : True := by
+  split_fresh h
+  -- h1 : x # x, h2 : x # y, h3 : x # z
+  trivial
+
+-- Left split
+example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x : X) (y : Y)
+    (h : (x, y) # y) : True := by
+  split_fresh h
+  -- h1 : x # y, h2 : y # y
+  trivial
+
+-- Atom freshness in tuple
+example {α X} [Name α] [Nominal α X] (a b : α) (x : X)
+    (h : a # (b, x)) : True := by
+  split_fresh h with hab hax
+  -- hab : a # b, hax : a # x
+  trivial
+
+end SPLIT_FRESH_TEST
+
 /-! ### `choose_fresh` tactic (Choose-a-Fresh-Name Principle Pitts 3.1)
 
 `choose_fresh a from x₁ x₂ … xₙ` picks a fresh atom `a` for all listed nominal-set elements,
