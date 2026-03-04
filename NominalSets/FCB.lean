@@ -267,15 +267,12 @@ is the unique finitely supported function `F̄ : [A]X →ᶠˢ Y` with `(Иa)(�
 
 **Construction:** Wraps `liftFCB_fun` (which computes `F̄(z) = freshF(liftFCB_nfun F z)`) into an `NFun` via `NFun.ofSupports` with support set `supp F`.
 
-**Proof that `supp F` supports `liftFCB_fun`:** Must show that any `π` fixing `supp F`
-satisfies `F̄(π • z) = π • F̄(z)`.
+**Proof that `supp F` supports `liftFCB_fun`:** Must show that any `π` fixing `supp F` satisfies `F̄(π • z) = π • F̄(z)`.
 1. Since `π` fixes `supp F`, we have `π • F = F`.
-2. Pick `a # F` with `z = ⟪a⟫x` via `exists_fresh_rep`. Then `π•a # F` (since
-   `π` fixes `supp F`) and `π • z = ⟪π•a⟫(π•x)`.
+2. Pick `a # F` with `z = ⟪a⟫x` via `exists_fresh_rep`. Then `π•a # F` (since `π` fixes `supp F`) and `π • z = ⟪π•a⟫(π•x)`.
 3. `liftFCB_fun_eq` gives `some(F̄(π•z)) = F(π•a, π•x)` and `some(F̄(z)) = F(a, x)`.
 4. Equivariance of `F` gives `F(π•a, π•x) = π • F(a, x)`.
-5. Chaining: `some(F̄(π•z)) = F(π•a, π•x) = π • F(a, x) = π • some(F̄(z)) = some(π • F̄(z))`,
-   and `Option.some_injective` strips the `some`. -/
+5. Chaining: `some(F̄(π•z)) = F(π•a, π•x) = π • F(a, x) = π • some(F̄(z)) = some(π • F̄(z))`, and `Option.some_injective` strips the `some`. -/
 noncomputable def liftFCB (F : NFun α (α × X) (Option Y)) (hFCB : FCB F) : NFun α (NameAbs α X) Y :=
   NFun.ofSupports ⟨liftFCB_fun F hFCB⟩ (supp F)
     (by
@@ -295,9 +292,7 @@ noncomputable def liftFCB (F : NFun α (α × X) (Option Y)) (hFCB : FCB F) : NF
       apply Option.some_injective
       calc some (liftFCB_fun F hFCB (π • z))
           = F (π • a, π • x) := hlhs
-        _ = π • F (a, x) := by
-            have := NFun.smul_apply_smul π F (a, x)
-            rw [hπF] at this; simp only [PermType.prod_smul] at this; exact this
+        _ = π • F (a, x) := by have := NFun.smul_apply_smul π F (a, x); rw [hπF] at this; simp only [PermType.prod_smul] at this; exact this
         _ = π • some (liftFCB_fun F hFCB z) := by rw [hrhs]
         _ = some (π • liftFCB_fun F hFCB z) := by simp)
 
@@ -349,10 +344,8 @@ section LiftFresh
 
 /- **Corollary 4.17 (Pitts, Section 4.5)**
 
-A simpler form of Theorem 4.15 for **equivariant** functions with a parameter.
-Given `X, Y, Z ∈ Nom` and an equivariant function `f : α → X → Y` such that
-`∀ a x, a # f a x`, there is a unique equivariant function `f̄ : [A]X → Y`
-satisfying `(Иa)(∀x) f̄(⟪a⟫x) = f a x`.
+A simpler form of Theorem 4.15 for **equivariant** functions with a parameter. Given `X, Y, Z ∈ Nom` and an equivariant function `f : α → X → Y` such that
+`∀ a x, a # f a x`, there is a unique equivariant function `f̄ : [A]X → Y` satisfying `(Иa)(∀x) f̄(⟪a⟫x) = f a x`.
 
 This is the main elimination principle for defining functions out of `NameAbs`. -/
 

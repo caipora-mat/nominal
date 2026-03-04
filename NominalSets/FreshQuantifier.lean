@@ -142,7 +142,7 @@ theorem someAny_exists_of_freshQuantifier {R : α → X → Prop} {x : X} (h : �
   exact ⟨a, (fresh_atom_left a x).mpr aNew.2, aNew.1⟩
 
 /-- **(∃ fresh → ∀ fresh)** If some fresh atom satisfies an equivariant `R`, then every fresh atom satisfies `R` -/
-theorem someAny_forall_of_exists {R : α → X → Prop} {x : X} (hEquiv : EquivariantRel R) (hEx : ∃ a, a # x ∧ R a x) : ∀ a, a # x → R a x := by
+theorem someAny_forall_of_exists {R : α → X → Prop} {x : X} (hEquiv : EquivariantRel α R) (hEx : ∃ a, a # x ∧ R a x) : ∀ a, a # x → R a x := by
   obtain ⟨a₀, ha₀fresh, ha₀R⟩ := hEx
   intro b hbfresh
   have hfix : swap a₀ b • x = x := fresh_swap ha₀fresh hbfresh
@@ -161,29 +161,27 @@ theorem someAny_freshQuantifier_of_forall {R : α → X → Prop} {x : X} (hAll 
 
 /-- **Some/Any — existential form** (Pitts, Theorem 3.9): for an equivariant relation,
 `И a, R a x` iff some fresh atom satisfies `R`. -/
-theorem someAny_exists {R : α → X → Prop} {x : X} (hEquiv : EquivariantRel R) : (И a, R a x) ↔ (∃ a, a # x ∧ R a x) :=
+theorem someAny_exists {R : α → X → Prop} {x : X} (hEquiv : EquivariantRel α R) : (И a, R a x) ↔ (∃ a, a # x ∧ R a x) :=
   ⟨someAny_exists_of_freshQuantifier,
    fun h ↦ someAny_freshQuantifier_of_forall (someAny_forall_of_exists hEquiv h)⟩
 
 /-- **Some/Any — universal form** (Pitts, Theorem 3.9): for an equivariant relation,
 `И a, R a x` iff every fresh atom satisfies `R`. -/
-theorem someAny_forall {R : α → X → Prop} {x : X} (hEquiv : EquivariantRel R) : (И a, R a x) ↔ (∀ a, a # x → R a x) :=
+theorem someAny_forall {R : α → X → Prop} {x : X} (hEquiv : EquivariantRel α R) : (И a, R a x) ↔ (∀ a, a # x → R a x) :=
   ⟨fun h ↦ someAny_forall_of_exists hEquiv (someAny_exists_of_freshQuantifier h),
    someAny_freshQuantifier_of_forall⟩
 
 /-- **Some/Any — some ↔ any** (Pitts, Theorem 3.9): under equivariance, the existential-fresh
 and universal-fresh formulations are equivalent. -/
-theorem someAny {R : α → X → Prop} {x : X} (hEquiv : EquivariantRel R) : (∀ a, a # x → R a x) ↔ (∃ a, a # x ∧ R a x) :=
+theorem someAny {R : α → X → Prop} {x : X} (hEquiv : EquivariantRel α R) : (∀ a, a # x → R a x) ↔ (∃ a, a # x ∧ R a x) :=
   (someAny_forall hEquiv).symm.trans (someAny_exists hEquiv)
 
 /-- The relation `R a (c, x) = swap c a • x = x` is equivariant. This is the
 key equivariance fact used in `fresh_iff_freshQuantifier` and `NameAbstraction`. -/
-theorem equivariantRel_swap_fix : EquivariantRel (α := α) (fun (a : α) (p : α × X) ↦ swap p.1 a • p.2 = p.2) where
+theorem equivariantRel_swap_fix : EquivariantRel α (fun (a : α) (p : α × X) ↦ swap p.1 a • p.2 = p.2) where
   smul_iff π a p := by
     simp only [Prod.smul_fst, Prod.smul_snd]
-    have key : swap (π • p.1) (π • a) • (π • p.2) = π • (swap p.1 a • p.2) := by
-      rw [← swap_equivariant, PermType.conj_smul, mul_smul, mul_smul, PermType.inv_smul_smul]
-    rw [key, smul_left_cancel_iff]
+    rw [swap_smul_equivariant, smul_left_cancel_iff]
 
 /-! ### Freshness via the freshness quantifier -/
 

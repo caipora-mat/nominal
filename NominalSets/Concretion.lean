@@ -229,8 +229,7 @@ theorem concreteAt_equivariant (π : FinitePerm α) (F : NameAbs α X) (a : α) 
             ((fresh_equivariant_iff π).mpr hfx),
           option_smul_some]
       congr 1
-      rw [← swap_equivariant π b a, conj_smul, ← mul_smul' π (swap b a) x,
-          mul_smul' (π * swap b a) π⁻¹ (π • x), PermType.inv_smul_smul]
+      rw [swap_smul_equivariant]
     · have hmem := not_not.mp ((fresh_atom_left a x).not.mp hfx)
       have hπmem : π • a ∈ supp (π • x) :=
         (mem_supp_smul π (π • a)).mpr (by simpa using hmem)

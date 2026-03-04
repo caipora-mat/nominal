@@ -1,4 +1,5 @@
 import NominalSets.Swap
+import NominalSets.Equivariant
 
 import Mathlib.GroupTheory.GroupAction.Support
 import Mathlib.Data.Set.Finite.Basic
@@ -25,11 +26,23 @@ The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` an
 * `supports_mono` — if `s ⊆ t` and `s` supports `x`, then `t` supports `x`.
 * `supports_inter` — the intersection of two finite supports is again a support.
 * `supports_smul` — if `s` supports `x`, then `π • s` supports `π • x`.
+* `supports_smul_iff` — `supports (π • s) (π • x) ↔ supports s x`.
 * `supports_empty_iff` — `∅` supports `x` iff every finite permutation fixes `x`.
 * `supports_prod` — if `s` supports `x` and `t` supports `y`, then `s ∪ t` supports `(x, y)`.
+* `supports_prod_iff` — `supports s (x, y) ↔ supports s x ∧ supports s y`.
 * `supports_fst` / `supports_snd` — projections: if `s` supports a pair `(x, y)`, it supports each component.
+* `supports_union_left` / `supports_union_right` — if `s` (resp. `t`) supports `x`, then `s ∪ t` supports `x`.
+* `swap_smul_eq_of_supports` — if `s` supports `x` and `a`, `b ∉ s`, then `swap a b • x = x`.
+* `supports_atom` — an atom `a` is supported by `{a}`.
+* `supports_swap_pair` — `swap a b` is supported by `{a, b}`.
+* `supports_inl` / `supports_inr` — injections into a sum preserve support.
+* `supports_of_inl` / `supports_of_inr` — support of a sum injection implies support of the component.
+* `supports_none` — `∅` supports `none`.
+* `supports_some` / `supports_of_some` — `some` preserves support in both directions.
 * `FinSupported.smul` — finite support is preserved by the action.
-* `FinSupported.prod` — products of finitely supported elements are finitely supported.
+* `FinSupported.prod` / `FinSupported.fst` / `FinSupported.snd` — products and projections.
+* `FinSupported.inl` / `FinSupported.inr` — sum injections preserve finite support.
+* `FinSupported.some` / `FinSupported.none` — option injections preserve finite support.
 
 ## References
 
@@ -70,8 +83,7 @@ open MulAction PermType
 variable {α : Type*} [Name α] {X : Type*} [PermType α X]
 
 /-- **Pitts, Prop. 2.1.** A finset `s` supports `x` under `FinitePerm α` if and only if every transposition of two atoms *outside* `s` fixes `x`. -/
-@[grind =] theorem supports_iff_swap {s : Finset α} {x : X} :
-    supports s x ↔ ∀ a₁ a₂ : α, a₁ ∉ s → a₂ ∉ s → swap a₁ a₂ • x = x := by
+@[grind =] theorem supports_iff_swap {s : Finset α} {x : X} : supports s x ↔ ∀ a₁ a₂ : α, a₁ ∉ s → a₂ ∉ s → swap a₁ a₂ • x = x := by
   constructor
   -- (→) if s supports x and a₁, a₂ ∉ s, then swap a₁ a₂ fixes s
   -- (it only moves a₁ and a₂, which are outside s), so the support
@@ -204,6 +216,94 @@ theorem supports_fst {Y : Type*} [PermType α Y] {s : Finset α} {x : X} {y : Y}
 theorem supports_snd {Y : Type*} [PermType α Y] {s : Finset α} {x : X} {y : Y} (h : supports s (x, y)) : supports s y := fun π hπ ↦ by
   have := h π hπ; simp only [PermType.prod_smul, Prod.mk.injEq] at this; exact this.2
 
+/-- If `s` supports `x` and `a`, `b` are both outside `s`, then `swap a b` fixes `x`.
+This is the Finset-membership version of `swap_smul_eq_of_not_mem`. -/
+@[simp]
+theorem swap_smul_eq_of_supports {s : Finset α} {x : X} (hs : supports s x) {a b : α} (ha : a ∉ s) (hb : b ∉ s) : swap a b • x = x :=
+  (supports_iff_swap.mp hs) a b ha hb
+
+/-- If `s` supports `x`, then so does `s ∪ t`. -/
+theorem supports_union_left {s t : Finset α} {x : X} (hs : supports s x) : supports (s ∪ t) x :=
+  supports_mono Finset.subset_union_left hs
+
+/-- If `t` supports `x`, then so does `s ∪ t`. -/
+theorem supports_union_right {s t : Finset α} {x : X} (ht : supports t x) : supports (s ∪ t) x :=
+  supports_mono Finset.subset_union_right ht
+
+/-- `supports s (x, y)` is equivalent to `supports s x ∧ supports s y`. -/
+theorem supports_prod_iff {Y : Type*} [PermType α Y] {s : Finset α} {x : X} {y : Y} : supports s (x, y) ↔ supports s x ∧ supports s y :=
+  ⟨fun h ↦ ⟨supports_fst h, supports_snd h⟩,
+   fun ⟨hx, hy⟩ ↦ Finset.union_self s ▸ supports_prod hx hy⟩
+
+/-- Equivariance iff: `s` supports `x` iff `π • s` supports `π • x`. -/
+theorem supports_smul_iff (π : FinitePerm α) {s : Finset α} {x : X} : supports (π • s) (π • x) ↔ supports s x := by
+  constructor
+  · intro h
+    have := supports_smul π⁻¹ h
+    rwa [PermType.inv_smul_smul, PermType.inv_smul_smul] at this
+  · exact supports_smul π
+
+/-- An atom `a` is supported by the singleton `{a}`. -/
+theorem supports_atom (a : α) : supports ({a} : Finset α) (a : α) := fun π h ↦ by
+  simp only [atoms_smul]
+  exact h (Finset.mem_coe.mpr (Finset.mem_singleton.mpr rfl))
+
+/-- A swap `swap a b` is supported by `{a, b}`. -/
+theorem supports_swap_pair (a b : α) : supports ({a, b} : Finset α) (swap a b) := by
+  rw [supports_iff_swap]
+  intro c d hc hd
+  rw [conj_smul, swap_inv]
+  simp only [Finset.mem_insert, Finset.mem_singleton, not_or] at hc hd
+  exact swap_conj_eq_of_fixed
+    (by simp [swap_apply_of_ne' hc.1 hc.2])
+    (by simp [swap_apply_of_ne' hd.1 hd.2])
+
+/-! ### Sum support lemmas -/
+
+/-- If `s` supports `x`, then `s` supports `Sum.inl x`. -/
+theorem supports_inl {Y : Type*} [PermType α Y] {s : Finset α} {x : X} (hs : supports s x) : supports s (Sum.inl x : X ⊕ Y) := fun π hπ ↦ by
+  simp [sum_smul_inl, hs π hπ]
+
+/-- If `s` supports `y`, then `s` supports `Sum.inr y`. -/
+theorem supports_inr {Y : Type*} [PermType α Y] {s : Finset α} {y : Y} (hs : supports s y) : supports s (Sum.inr y : X ⊕ Y) := fun π hπ ↦ by
+  simp [sum_smul_inr, hs π hπ]
+
+/-- If `s` supports `Sum.inl x`, then `s` supports `x`. -/
+theorem supports_of_inl {Y : Type*} [PermType α Y] {s : Finset α} {x : X} (h : supports s (Sum.inl x : X ⊕ Y)) : supports s x := fun π hπ ↦ by
+  have := h π hπ; simp only [sum_smul_inl, Sum.inl.injEq] at this; exact this
+
+/-- If `s` supports `Sum.inr y`, then `s` supports `y`. -/
+theorem supports_of_inr {Y : Type*} [PermType α Y] {s : Finset α} {y : Y} (h : supports s (Sum.inr y : X ⊕ Y)) : supports s y := fun π hπ ↦ by
+  have := h π hπ; simp only [sum_smul_inr, Sum.inr.injEq] at this; exact this
+
+/-! ### Option support lemmas -/
+
+/-- The empty set supports `none`. -/
+theorem supports_none : supports (∅ : Finset α) (none : Option X) :=
+  fun _ _ ↦ rfl
+
+/-- If `s` supports `x`, then `s` supports `some x`. -/
+theorem supports_some {s : Finset α} {x : X} (hs : supports s x) : supports s (some x : Option X) := fun π hπ ↦ by
+  simp [option_smul_some, hs π hπ]
+
+/-- If `s` supports `some x`, then `s` supports `x`. -/
+theorem supports_of_some {s : Finset α} {x : X} (h : supports s (some x : Option X)) : supports s x := fun π hπ ↦ by
+  have := h π hπ; simp only [option_smul_some, Option.some.injEq] at this; exact this
+
+/-! ### Equivariant functions and support -/
+
+/-- An equivariant function preserves supports: if `s` supports `x`, then `s` supports `f x`. -/
+theorem IsEquivariant.supports_image {Y : Type*} [PermType α Y] {f : X → Y}
+    (hf : IsEquivariant α f) {s : Finset α} {x : X}
+    (hs : supports s x) : supports s (f x) := fun π hπ ↦ by
+  rw [← hf.map_smul, hs π hπ]
+
+/-- An injective equivariant function reflects supports: if `s` supports `f x`, then `s` supports `x`. -/
+theorem IsEquivariant.supports_of_image {Y : Type*} [PermType α Y] {f : X → Y}
+    (hf : IsEquivariant α f) (hinj : Function.Injective f) {s : Finset α} {x : X}
+    (hs : supports s (f x)) : supports s x := fun π hπ ↦
+  hinj (by rw [hf.map_smul]; exact hs π hπ)
+
 end SwapChar
 
 /-! ## FinSupported API -/
@@ -221,6 +321,41 @@ theorem FinSupported.smul {x : X} (h : FinSupported x) (π : FinitePerm α) : Fi
 /-- If `x` and `y` are finitely supported, then `(x, y)` is finitely supported. -/
 theorem FinSupported.prod {Y : Type*} [PermType α Y] {x : X} {y : Y} (hx : FinSupported x) (hy : FinSupported y) : FinSupported (x, y) :=
   let ⟨s, hs⟩ := hx; let ⟨t, ht⟩ := hy; ⟨s ∪ t, supports_prod hs ht⟩
+
+/-- If `(x, y)` is finitely supported, then `x` is finitely supported. -/
+theorem FinSupported.fst {Y : Type*} [PermType α Y] {x : X} {y : Y} (h : FinSupported (x, y)) : FinSupported x :=
+  let ⟨s, hs⟩ := h; ⟨s, supports_fst hs⟩
+
+/-- If `(x, y)` is finitely supported, then `y` is finitely supported. -/
+theorem FinSupported.snd {Y : Type*} [PermType α Y] {x : X} {y : Y} (h : FinSupported (x, y)) : FinSupported y :=
+  let ⟨s, hs⟩ := h; ⟨s, supports_snd hs⟩
+
+/-- If `x` is finitely supported, then `Sum.inl x` is finitely supported. -/
+theorem FinSupported.inl {Y : Type*} [PermType α Y] {x : X} (h : FinSupported x) : FinSupported (Sum.inl x : X ⊕ Y) :=
+  let ⟨s, hs⟩ := h; ⟨s, supports_inl hs⟩
+
+/-- If `y` is finitely supported, then `Sum.inr y` is finitely supported. -/
+theorem FinSupported.inr {Y : Type*} [PermType α Y] {y : Y} (h : FinSupported y) : FinSupported (Sum.inr y : X ⊕ Y) :=
+  let ⟨s, hs⟩ := h; ⟨s, supports_inr hs⟩
+
+/-- `some x` is finitely supported if `x` is. -/
+theorem FinSupported.some {x : X} (h : FinSupported x) : FinSupported (some x : Option X) :=
+  let ⟨s, hs⟩ := h; ⟨s, supports_some hs⟩
+
+/-- `none` is finitely supported. -/
+theorem FinSupported.none : FinSupported (none : Option X) := ⟨∅, supports_none⟩
+
+/-- An equivariant image of a finitely supported element is finitely supported. -/
+theorem IsEquivariant.finSupported {Y : Type*} [PermType α Y] {f : X → Y} (hf : IsEquivariant α f) {x : X} (h : FinSupported x) : FinSupported (f x) :=
+  let ⟨s, hs⟩ := h; ⟨s, hf.supports_image hs⟩
+
+/-- `FinSupported` is an equivariant predicate. -/
+theorem equivariantPred_finSupported : EquivariantPred α (FinSupported (α := α) (X := X)) := by
+  intros π x
+  exact
+    ⟨fun ⟨s, hs⟩ ↦ by
+      rw [← PermType.inv_smul_smul π x]
+      exact ⟨π⁻¹ • s, supports_smul π⁻¹ hs⟩, fun h ↦ h.smul π⟩
 
 end FinSupportedAPI
 

@@ -1,4 +1,5 @@
 import NominalSets.PermType
+import NominalSets.Equivariant
 
 import Mathlib.Logic.Equiv.Basic
 
@@ -38,12 +39,19 @@ that are needed for the swap characterisation of supports (Pitts, Prop. 2.1), pr
 ### Conjugation and factorisation
 
 * `swap_conj_eq_of_fixed` — conjugating a permutation by a swap that fixes both arguments is a no-op.
+* `swap_conj_mul` — multiplicative form: `π * swap a b = swap (π • a) (π • b) * π`.
 * `swap_mul_swap_comm` — commutativity lemma for products of swaps sharing one argument.
 * `swap_triple_factorization` — `swap a a' = swap a a'' * swap a' a'' * swap a a''` for distinct `a`, `a'`, `a''`.
 * `swap_equivariant` — `π • swap a b = swap (π • a) (π • b)`.
+* `isEquivariant₂_swap` — `swap` is an equivariant binary function (`IsEquivariant₂` packaging).
+* `swap_smul_equivariant` — `swap (π • a) (π • b) • (π • x) = π • (swap a b • x)`.
+* `swap_eq_swap_iff` — `swap a b = swap c d ↔ (a = c ∧ b = d) ∨ (a = d ∧ b = c) ∨ (a = b ∧ c = d)`.
+* `swap_smul_prod` — the swap action distributes over pairs: `swap a b • (x, y) = (swap a b • x, swap a b • y)`.
+* `swap_mul_eq_self_iff` — `swap a b * σ = σ ↔ a = b`.
 
 ### movedFinset lemmas
 
+* `movedFinset_swap_subset` — `movedFinset (swap a b) ⊆ {a, b}` (without requiring `a ≠ b`).
 * `movedFinset_swap` — `movedFinset (swap a b) = {a, b}` when `a ≠ b`.
 * `movedFinset_swap_self` — `movedFinset (swap a a) = ∅`.
 * `movedFinset_swap_smul_subset` — left-composing `swap a (σ a)` strictly shrinks the moved-point set of `σ`.
@@ -77,7 +85,7 @@ theorem swap_smul_eq_of_not_mem {s : Set α} {a b : α} (ha : a ∉ s) (hb : b �
 
 /-- Swapping an atom with itself is the identity: `swap a a = 1`. -/
 @[simp]
-theorem swap_self (a : α) : swap a a = (1 : FinitePerm α) := Subtype.ext (by simp [Equiv.swap_self]; rfl)
+theorem swap_self (a : α) : swap a a = (1 : FinitePerm α) := by ext c; simp [swap]
 
 /-- `swap a b = 1` if and only if `a = b`. -/
 @[simp]
@@ -109,7 +117,7 @@ theorem swap_smul_swap_smul {X : Type*} [PermType α X] (a b : α) (x : X) : (sw
 
 /-- Swaps are symmetric: `swap a b = swap b a`. -/
 @[grind =]
-theorem swap_comm (a b : α) : swap a b = swap b a := Subtype.ext (by simp [Equiv.swap_comm])
+theorem swap_comm (a b : α) : swap a b = swap b a := by ext c; simp [swap, Equiv.swap_comm]
 
 /-- A swap sends `a` to `b`. -/
 @[simp]
@@ -152,7 +160,7 @@ theorem swap_apply_of_ne' {a b c : α} (ha : c ≠ a) (hb : c ≠ b) : (swap a b
 @[grind =]
 theorem swap_conj_eq_of_fixed {σ : FinitePerm α} {a b : α} (ha : σ a = a) (hb : σ b = b) : swap a b * σ * swap a b = σ := by
   ext c
-  simp only [mul_apply]
+  simp only [FinitePerm.mul_apply]
   by_cases hca : c = a
   · rw [hca, swap_apply_left', hb, swap_apply_right', ha]
   · by_cases hcb : c = b
@@ -160,6 +168,15 @@ theorem swap_conj_eq_of_fixed {σ : FinitePerm α} {a b : α} (ha : σ a = a) (h
     · have hσc_ne_a : σ c ≠ a := fun h ↦ hca (σ.val.injective (h.trans ha.symm))
       have hσc_ne_b : σ c ≠ b := fun h ↦ hcb (σ.val.injective (h.trans hb.symm))
       rw [swap_apply_of_ne' hca hcb, swap_apply_of_ne' hσc_ne_a hσc_ne_b]
+
+/-- The moved-point set of `swap a b` is contained in `{a, b}`, without requiring `a ≠ b`. -/
+theorem movedFinset_swap_subset (a b : α) : movedFinset (swap a b) ⊆ {a, b} := by
+  intro c hc
+  simp only [mem_movedFinset] at hc
+  simp only [Finset.mem_insert, Finset.mem_singleton]
+  by_contra habs
+  push_neg at habs
+  exact hc (swap_apply_of_ne' habs.1 habs.2)
 
 /-- The moved-point set of `swap a b` is `{a, b}` when `a ≠ b`. -/
 @[simp]
@@ -196,9 +213,7 @@ theorem not_mem_movedFinset_swap_smul (σ : FinitePerm α) (a : α) : a ∉ move
 
 /-- A permutation equals `swap a (σ a)` composed with `swap a (σ a) * σ`, because `swap` is its own inverse. -/
 theorem swap_mul_cancel (σ : FinitePerm α) (a : α) : σ = swap a (σ a) * (swap a (σ a) * σ) := by
-  apply Subtype.ext
-  ext c
-  simp [swap_coe]
+  apply Subtype.ext; ext c; simp [swap_coe]
 
 /-- **Swap factorization.** The transposition of `a` and `a'` can be written as a
 product of three transpositions through a fresh atom `a''`:
@@ -218,6 +233,12 @@ theorem swap_equivariant (π : FinitePerm α) (a b : α) : π • swap a b = swa
   simp only [PermType.conj_smul, PermType.atoms_smul]
   exact (Equiv.swap_apply_apply π a b).symm
 
+/-- The `swap` function is equivariant as a binary function:
+`swap (π • a) (π • b) = π • swap a b`. This is the `IsEquivariant₂` packaging of
+`swap_equivariant`. -/
+theorem isEquivariant₂_swap : IsEquivariant₂ α (swap : α → α → FinitePerm α) where
+  map_smul π a b := (swap_equivariant π a b).symm
+
 /-- Swap permutation identity: `swap a₁ a' * swap a₁ a₂ = swap a₂ a' * swap a₁ a'`
 when `a' ≠ a₁` and `a' ≠ a₂`. Used in the well-definedness proof of concretion. -/
 theorem swap_mul_swap_comm {a₁ a₂ a' : α} (hne : a₁ ≠ a₂) (ha₁ : a' ≠ a₁) (ha₂ : a' ≠ a₂) :
@@ -225,5 +246,67 @@ theorem swap_mul_swap_comm {a₁ a₂ a' : α} (hne : a₁ ≠ a₂) (ha₁ : a'
   apply Subtype.ext; apply Equiv.Perm.ext; intro d
   simp only [swap_coe, Subgroup.coe_mul, Equiv.Perm.mul_apply, Equiv.swap_apply_def]
   split_ifs <;> simp_all
+
+/-- Multiplicative form of swap equivariance (Pitts Prop. 1.16):
+    `π * swap a b = swap (π • a) (π • b) * π`. -/
+theorem swap_conj_mul (π : FinitePerm α) (a b : α) : π * swap a b = swap (π • a) (π • b) * π := by
+  have h : π * swap a b * π⁻¹ = swap (π • a) (π • b) := by
+    rw [← conj_smul]; exact swap_equivariant π a b
+  calc π * swap a b
+      = π * swap a b * π⁻¹ * π := by rw [mul_assoc, inv_mul_cancel, mul_one]
+    _ = swap (π • a) (π • b) * π := by rw [h]
+
+/-- Applying a swap to a perm-set element is equivariant: `swap (π • a) (π • b) • (π • x) = π • (swap a b • x)`. -/
+@[simp]
+theorem swap_smul_equivariant {X : Type*} [PermType α X] (π : FinitePerm α) (a b : α) (x : X) :
+    swap (π • a) (π • b) • (π • x) = π • (swap a b • x) := by
+  rw [← swap_equivariant, conj_smul, mul_smul', mul_smul', PermType.inv_smul_smul]
+
+/-- The map `(a, b, x) ↦ swap a b • x` is equivariant as a function `α × α × X → X`. -/
+theorem isEquivariant_swap_smul {X : Type*} [PermType α X] : IsEquivariant α (fun (p : α × α × X) ↦ swap p.1 p.2.1 • p.2.2) where
+  map_smul π p := by
+    simp only [Prod.smul_fst, Prod.smul_snd]
+    exact swap_smul_equivariant π p.1 p.2.1 p.2.2
+
+/-- Two swaps are equal iff they swap the same unordered pair of atoms (or both arguments coincide). -/
+theorem swap_eq_swap_iff {a b c d : α} :
+    swap a b = swap c d ↔ (a = c ∧ b = d) ∨ (a = d ∧ b = c) ∨ (a = b ∧ c = d) := by
+  constructor
+  · intro h
+    -- Both sides are `FinitePerm`, evaluate at `a` and `b` via `DFunLike.congr_fun`
+    have hfa : (swap a b) a = (swap c d) a := DFunLike.congr_fun h a
+    have hfb : (swap a b) b = (swap c d) b := DFunLike.congr_fun h b
+    simp only [swap_apply_left', swap_apply_right'] at hfa hfb
+    -- hfa : b = (swap c d) a,   hfb : a = (swap c d) b
+    by_cases hac : a = c
+    · -- (swap c d) a = (swap a d) a = d, so b = d
+      left; exact ⟨hac, by rw [hac, swap_apply_left'] at hfa; exact hfa⟩
+    · by_cases had : a = d
+      · -- (swap c d) a = (swap c a) a = c, so b = c
+        right; left; exact ⟨had, by rw [had, swap_apply_right'] at hfa; exact hfa⟩
+      · -- (swap c d) fixes a, so b = a
+        have hfix : (swap c d) a = a := swap_apply_of_ne' hac had
+        have hba : b = a := hfa.trans hfix
+        right; right; refine ⟨hba.symm, ?_⟩
+        have hab : a = b := hba.symm
+        have : swap a b = 1 := hab ▸ swap_self a
+        exact swap_eq_one_iff.mp (h ▸ this)
+  · rintro (⟨rfl, rfl⟩ | ⟨rfl, rfl⟩ | ⟨rfl, h⟩)
+    · rfl
+    · exact swap_comm a b
+    · simp [h]
+
+/-- The swap action distributes over pairs (specialisation of `prod_smul` to swaps). -/
+@[simp]
+theorem swap_smul_prod {X Y : Type*} [PermType α X] [PermType α Y] (a b : α) (x : X) (y : Y) :
+    swap a b • (x, y) = (swap a b • x, swap a b • y) := prod_smul (swap a b) x y
+
+/-- Left-multiplying by `swap a b` is the identity on `σ` iff `a = b`. -/
+theorem swap_mul_eq_self_iff {a b : α} {σ : FinitePerm α} : swap a b * σ = σ ↔ a = b := by
+  constructor
+  · intro h
+    have : swap a b = 1 := mul_right_cancel (b := σ) (by rwa [one_mul])
+    exact swap_eq_one_iff.mp this
+  · rintro rfl; simp
 
 end NominalSets

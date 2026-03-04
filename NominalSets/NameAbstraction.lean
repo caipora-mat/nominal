@@ -132,9 +132,6 @@ theorem ind {P : NameAbs α X → Prop} (h : ∀ a x, P ⟪a⟫x) : ∀ F, P F :
 /-- α-equivalence is equivariant: if `AlphaEqv a₁ x₁ a₂ x₂`, then
 `AlphaEqv (π • a₁) (π • x₁) (π • a₂) (π • x₂)`. -/
 theorem alphaEqv_equivariant {a₁ a₂ : α} {x₁ x₂ : X} (π : FinitePerm α) (h : AlphaEqv a₁ x₁ a₂ x₂) : AlphaEqv (π • a₁) (π • x₁) (π • a₂) (π • x₂) := by
-  have key : ∀ (a : α) (y : X) (c : α),
-      swap (π • a) (π • c) • (π • y) = π • (swap a c • y) := fun a y c ↦ by
-    rw [← swap_equivariant, conj_smul, mul_smul, mul_smul, PermType.inv_smul_smul]
   simp only [AlphaEqv, freshQuantifier_iff] at h ⊢
   -- The bad set for π maps to bad set: {d | ¬…} ⊆ π '' {c | ¬…}
   apply Set.Finite.subset (h.image (π : α → α))
@@ -146,7 +143,7 @@ theorem alphaEqv_equivariant {a₁ a₂ : α} {x₁ x₂ : X} (π : FinitePerm �
   apply hd
   conv_lhs => rw [show d = π • (π⁻¹ • d) from (PermType.smul_inv_smul π d).symm]
   conv_rhs => rw [show d = π • (π⁻¹ • d) from (PermType.smul_inv_smul π d).symm]
-  rw [key a₁ x₁ (π⁻¹ • d), key a₂ x₂ (π⁻¹ • d)]
+  rw [swap_smul_equivariant, swap_smul_equivariant]
   exact congrArg (π • ·) heq
 
 /-- Equality via the freshness quantifier (eq. 4.7 / 4.8):
@@ -336,11 +333,9 @@ theorem abs_eq_iff_exists {a₁ a₂ : α} {x₁ x₂ : X} :
     rw [abs_eq_iff_freshQuantifier]
     let R : α → α × X × α × X → Prop :=
       fun d t ↦ swap t.1 d • t.2.1 = swap t.2.2.1 d • t.2.2.2
-    have hEquiv : EquivariantRel R := ⟨fun π d t ↦ by
+    have hEquiv : EquivariantRel α R := ⟨fun π d t ↦ by
       simp only [R, Prod.smul_fst, Prod.smul_snd]
-      have key : ∀ (a : α) (y : X), swap (π • a) (π • d) • (π • y) = π • (swap a d • y) :=
-        fun a y ↦ by rw [← swap_equivariant, conj_smul, mul_smul, mul_smul, PermType.inv_smul_smul]
-      rw [key t.1 t.2.1, key t.2.2.1 t.2.2.2, smul_left_cancel_iff]⟩
+      rw [swap_smul_equivariant, swap_smul_equivariant, smul_left_cancel_iff]⟩
     exact someAny_freshQuantifier_of_forall (someAny_forall_of_exists hEquiv ⟨c, hcfresh, hceq⟩)
 
 /-- Equality of abstractions via ∀ (Some/Any, eq. 4.8):
@@ -350,11 +345,9 @@ theorem abs_eq_iff_forall {a₁ a₂ : α} {x₁ x₂ : X} :
       ∀ c, c # (a₁, x₁, a₂, x₂) → swap a₁ c • x₁ = swap a₂ c • x₂ := by
   let R : α → α × X × α × X → Prop :=
     fun d t ↦ swap t.1 d • t.2.1 = swap t.2.2.1 d • t.2.2.2
-  have hEquiv : EquivariantRel R := ⟨fun π d t ↦ by
+  have hEquiv : EquivariantRel α R := ⟨fun π d t ↦ by
     simp only [R, Prod.smul_fst, Prod.smul_snd]
-    have key : ∀ (a : α) (y : X), swap (π • a) (π • d) • (π • y) = π • (swap a d • y) :=
-      fun a y ↦ by rw [← swap_equivariant, conj_smul, mul_smul, mul_smul, PermType.inv_smul_smul]
-    rw [key t.1 t.2.1, key t.2.2.1 t.2.2.2, smul_left_cancel_iff]⟩
+    rw [swap_smul_equivariant, swap_smul_equivariant, smul_left_cancel_iff]⟩
   constructor
   · intro h
     exact someAny_forall_of_exists hEquiv

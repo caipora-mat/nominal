@@ -46,7 +46,7 @@ of finitely supported functions.
 
 * `NFun.supports_iff_toPFun` — support for an `NFun` is equivalent to support for its underlying `PFun`.
 * `NFun.supp_eq_empty_iff'` — `supp f = ∅` iff `f (π • x) = π • f x` for all `π, x`.
-* `NFun.supp_eq_empty_iff_isEquivariant` — `supp f = ∅` iff `IsEquivariant f`.
+* `NFun.supp_eq_empty_iff_isEquivariant` — `supp f = ∅` iff `IsEquivariant α f`.
 * `NFun.supports_apply` — if `s` supports `f` and `t` supports `x`, then `s ∪ t` supports `f x`.
 * `NFun.supp_apply_le` — `supp (f x) ⊆ supp f ∪ supp x`.
 * `NFun.fresh_apply` — if `a # f` and `a # x`, then `a # f x`.
@@ -225,7 +225,7 @@ theorem supp_eq_empty_iff' {f : NFun α X Y} : supp f = ∅ ↔ ∀ (π : Finite
     simpa [PermType.smul_inv_smul] using this.symm
 
 /-- `supp f = ∅` if and only if `f` is equivariant in the sense of `IsEquivariant`. -/
-theorem supp_eq_empty_iff_isEquivariant {f : NFun α X Y} : supp f = ∅ ↔ IsEquivariant (α := α) (f : X → Y) :=
+theorem supp_eq_empty_iff_isEquivariant {f : NFun α X Y} : supp f = ∅ ↔ IsEquivariant α (f : X → Y) :=
   supp_eq_empty_iff'.trans ⟨fun h ↦ ⟨h⟩, fun h ↦ h.map_smul⟩
 
 /-- If `s` supports `f` and `t` supports `x`, then `s ∪ t` supports `f x`. -/

@@ -44,6 +44,7 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 * `supp_supports` — `supp x` is itself a support for `x`.
 * `supp_le` — `supp x` is the least finite support: every finite support `s` satisfies `supp x ⊆ s`.
 * `supp_le_iff` — `supp x ⊆ s ↔ supports s x` (biconditional form of `supp_le`).
+* `swap_smul_eq_of_support` — if `a ∉ supp x` and `b ∉ supp x`, then `swap a b • x = x`.
 * `supp_eq_empty_iff` — `supp x = ∅ ↔ ∀ π, π • x = x` (globally fixed elements have empty support).
 
 ### Equivariance and monotonicity
@@ -259,6 +260,11 @@ theorem supp_le {x : X} {s : Finset α} (hs : supports s x) : supp x ⊆ s := by
 theorem supp_le_iff {x : X} {s : Finset α} : supp x ⊆ s ↔ supports s x :=
   ⟨fun h ↦ supports_mono h (supp_supports x), fun h ↦ supp_le h⟩
 
+/-- If `a` and `b` are both outside the support of `x`, then `swap a b` fixes `x`. -/
+theorem swap_smul_eq_of_support {x : X} {a b : α} (ha : a ∉ supp x) (hb : b ∉ supp x) :
+    swap a b • x = x :=
+  swap_smul_eq_of_supports (supp_supports x) ha hb
+
 /-- If `f` is equivariant (`f (π • x) = π • f x` for all `π`), then `supp (f x) ⊆ supp x`. -/
 theorem supp_map_le {Y : Type*} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (x : X) :
     supp (f x) ⊆ supp x := by
@@ -278,13 +284,13 @@ theorem supp_map_injective {Y : Type*} [Nominal α Y] {f : X → Y} (hf : ∀ (�
     exact hinj ((hf π x).symm ▸ supp_supports (f x) π hπ)
 
 /-- Dot-notation bridge: if `hf : IsEquivariant f` then `supp (f x) ⊆ supp x`. -/
-theorem IsEquivariant.supp_image_le {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant (α := α) f) (x : X) :
+theorem IsEquivariant.supp_image_le {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant α f) (x : X) :
   supp (f x) ⊆ supp x :=
   supp_map_le f hf.map_smul x
 
 /-- Dot-notation bridge: if `hf : IsEquivariant f` and `f` is injective then
 `supp (f x) = supp x`. -/
-theorem IsEquivariant.supp_image_injective {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant (α := α) f) (hinj : Function.Injective f) (x : X) :
+theorem IsEquivariant.supp_image_injective {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant α f) (hinj : Function.Injective f) (x : X) :
   supp (f x) = supp x :=
   supp_map_injective hf.map_smul hinj x
 
