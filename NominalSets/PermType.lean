@@ -111,6 +111,19 @@ def instUnit : PermType α Unit where
 /-- Every permutation acts trivially on `Unit`. -/
 theorem unit_smul (π : FinitePerm α) (u : Unit) : letI : PermType α Unit := instUnit; π • u = () := rfl
 
+/-! ### Bool -/
+
+/-- `Bool` carries the trivial (discrete) permutation action.
+
+This is a `def` rather than a global `instance` because `α` cannot be inferred from `Bool` alone (same reason as `instUnit`). Use `letI := instBool` at call sites where `α` is already known. -/
+def instBool : PermType α Bool where
+  smul _ b := b
+  one_smul _ := rfl
+  mul_smul _ _ _ := rfl
+
+/-- Every permutation acts trivially on `Bool`. -/
+theorem bool_smul (π : FinitePerm α) (b : Bool) : letI : PermType α Bool := instBool; π • b = b := rfl
+
 /-! ### Option -/
 
 /-- `Option X` carries the permutation action that fixes `none` and acts on `some x` by `π • some x = some (π • x)`. -/

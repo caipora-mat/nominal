@@ -243,6 +243,10 @@ theorem supports_smul_iff (π : FinitePerm α) {s : Finset α} {x : X} : support
     rwa [PermType.inv_smul_smul, PermType.inv_smul_smul] at this
   · exact supports_smul π
 
+/-- `supports` is an equivariant relation: `supports (π • s) (π • x) ↔ supports s x`. -/
+theorem equivariantRel_supports : EquivariantRel α (supports : Finset α → X → Prop) where
+  smul_iff π _ _ := supports_smul_iff π
+
 /-- An atom `a` is supported by the singleton `{a}`. -/
 theorem supports_atom (a : α) : supports ({a} : Finset α) (a : α) := fun π h ↦ by
   simp only [atoms_smul]
@@ -304,6 +308,19 @@ theorem IsEquivariant.supports_of_image {Y : Type*} [PermType α Y] {f : X → Y
     (hs : supports s (f x)) : supports s x := fun π hπ ↦
   hinj (by rw [hf.map_smul]; exact hs π hπ)
 
+/-- For an injective equivariant function, `s` supports `f x` iff `s` supports `x`. -/
+theorem IsEquivariant.supports_image_iff {Y : Type*} [PermType α Y] {f : X → Y}
+    (hf : IsEquivariant α f) (hinj : Function.Injective f) {s : Finset α} {x : X} :
+    supports s (f x) ↔ supports s x :=
+  ⟨hf.supports_of_image hinj, hf.supports_image⟩
+
+/-- A binary equivariant function preserves supports: if `s` supports `x` and `s` supports `y`,
+then `s` supports `f x y`. -/
+theorem IsEquivariant₂.supports_image {Y : Type*} [PermType α Y] {Z : Type*} [PermType α Z]
+    {f : X → Y → Z} (hf : IsEquivariant₂ α f) {s : Finset α} {x : X} {y : Y}
+    (hx : supports s x) (hy : supports s y) : supports s (f x y) :=
+  hf.curry.supports_image (supports_prod_iff.mpr ⟨hx, hy⟩)
+
 end SwapChar
 
 /-! ## FinSupported API -/
@@ -356,6 +373,14 @@ theorem equivariantPred_finSupported : EquivariantPred α (FinSupported (α := �
     ⟨fun ⟨s, hs⟩ ↦ by
       rw [← PermType.inv_smul_smul π x]
       exact ⟨π⁻¹ • s, supports_smul π⁻¹ hs⟩, fun h ↦ h.smul π⟩
+
+/-- If `π • x` is finitely supported, then `x` is finitely supported. -/
+theorem FinSupported.of_smul {x : X} {π : FinitePerm α} (h : FinSupported (π • x)) : FinSupported x :=
+  equivariantPred_finSupported.of_smul π h
+
+/-- `π • x` is finitely supported iff `x` is. -/
+theorem finSupported_smul_iff {x : X} {π : FinitePerm α} : FinSupported (π • x) ↔ FinSupported x :=
+  equivariantPred_finSupported.smul_iff' π x
 
 end FinSupportedAPI
 

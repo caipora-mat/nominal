@@ -30,6 +30,7 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 * `Nominal.instProd` — products of nominal sets are nominal (support is the union of supports).
 * `Nominal.instOption` — `Option X` is nominal (`none` has empty support; `some x` inherits the support of `x`).
 * `Nominal.instUnit` — `Unit` is a nominal set (the unique element has empty support; not a global `instance` because `α` cannot be inferred from `Unit`).
+* `Nominal.instBool` — `Bool` is a nominal set with the discrete (trivial) action (not a global `instance` because `α` cannot be inferred from `Bool`).
 * `Nominal.instFinsetNominal` — finite sets of atoms form a nominal set (each `s` is supported by itself).
 * `Nominal.instConjNominal` — finite permutations form a nominal set under the conjugation action (each `σ` is supported by its moved-point set `movedFinset σ`).
 * `Nominal.instNominalSum` — sums of nominal sets are nominal (each injection preserves the support of its argument).
@@ -52,10 +53,9 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 * `supp_equivariant` — `π • supp x = supp (π • x)`.
 * `supp_smul_eq` — `supp (π • x) = π • supp x` (symmetric form).
 * `mem_supp_smul` — `b ∈ supp (π • x) ↔ π⁻¹ • b ∈ supp x`.
-* `supp_map_le` — if `f` is equivariant then `supp (f x) ⊆ supp x`.
+* `supp_map_le` — if `f` is equivariant (`IsEquivariant α f`) then `supp (f x) ⊆ supp x`.
 * `supp_map_injective` — if `f` is equivariant and injective then `supp (f x) = supp x`.
-* `IsEquivariant.supp_image_le` — dot-notation form of `supp_map_le` for `IsEquivariant` witnesses.
-* `IsEquivariant.supp_image_injective` — dot-notation form of `supp_map_injective` for `IsEquivariant` witnesses.
+* `supp_map_le'` / `supp_map_injective'` — variants taking a raw equivariance hypothesis.
 
 ### Support computations
 
@@ -65,11 +65,23 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 * `supp_finset` — `supp s = s` for any finite set of atoms `s : Finset α`.
 * `supp_finitePerm` — `supp σ = movedFinset σ` for any finite permutation `σ` (Pitts, Prop 2.14).
 * `supp_prod` — `supp (x, y) = supp x ∪ supp y`.
+* `supp_fst_le` — `supp x ⊆ supp (x, y)`.
+* `supp_snd_le` — `supp y ⊆ supp (x, y)`.
 * `supp_none` — `supp none = ∅`.
 * `supp_some` — `supp (some x) = supp x`.
 * `supp_unit` — `supp u = ∅` for `u : Unit` (requires `letI := Nominal.instUnit`).
 * `supp_inl` — `supp (Sum.inl x) = supp x`.
 * `supp_inr` — `supp (Sum.inr y) = supp y`.
+* `supp_swap` — `supp (swap a b) = if a = b then ∅ else {a, b}`.
+* `supp_one` — `supp (1 : FinitePerm α) = ∅`.
+* `supp_inv` — `supp π⁻¹ = supp π`.
+* `supp_mul_le` — `supp (π * σ) ⊆ supp π ∪ supp σ`.
+
+### Strong support
+
+* `StrongSupports` — a finite set `s` strongly supports `x` iff permutations fixing `s` are exactly those fixing `x`.
+* `supp_eq_of_strongSupports` — if `s` strongly supports `x` then `supp x = s` (Pitts, Theorem 2.7).
+* `finSupported_of_surjective` — surjective equivariant maps preserve finite support (Pitts, Lemma 2.12(iii)).
 
 ### Nominal functions (`PFun`)
 
@@ -101,10 +113,7 @@ variable {X Y : Type*}
 /-- Atoms form a nominal set: atom `a` is supported by the singleton `{a}`. -/
 instance instAtoms : Nominal α α where
   __ := PermType.instAtoms
-  finSupp a := ⟨{a}, fun π h ↦ by
-    simp only [PermType.atoms_smul]
-    apply h
-    simp⟩
+  finSupp a := ⟨{a}, supports_atom a⟩
 
 /-- Products of nominal sets are nominal: take the union of the respective supports. -/
 instance instProd [Nominal α X] [Nominal α Y] : Nominal α (X × Y) where
@@ -127,10 +136,10 @@ instance instOption [Nominal α X] : Nominal α (Option X) where
   __ := PermType.instOption
   finSupp o := by
     cases o with
-    | none => exact ⟨∅, fun _ _ ↦ rfl⟩
+    | none => exact ⟨∅, supports_none⟩
     | some x =>
       obtain ⟨s, hs⟩ := Nominal.finSupp x
-      exact ⟨s, fun π hπ ↦ by simp [hs π hπ]⟩
+      exact ⟨s, supports_some hs⟩
 
 /-- Every finite set of atoms `s` is supported by itself: any permutation fixing `s` fixes `s` as a set element. -/
 theorem finset_supports_self (s : Finset α) : supports s s := by
@@ -177,6 +186,15 @@ instance instNominalSum {X Y : Type*} [Nominal α X] [Nominal α Y] :
     | inr y =>
       obtain ⟨sy, hsy⟩ := Nominal.finSupp y
       exact ⟨sy, fun π hπ ↦ by simp [PermType.sum_smul_inr, hsy π hπ]⟩
+
+/-! ### Bool -/
+
+/-- `Bool` is a nominal set with the discrete (trivial) action: every element has empty support.
+
+This is a `def` rather than a global `instance` because `α` cannot be inferred from `Bool` alone (same reason as `instUnit`). -/
+def instBool : Nominal α Bool where
+  __ := PermType.instBool
+  finSupp _ := ⟨∅, fun _ _ ↦ rfl⟩
 
 end Nominal
 
@@ -234,6 +252,7 @@ theorem not_mem_supp {x : X} {a : α} : a ∉ supp x ↔ ∃ s, supports s x ∧
 theorem coe_supp (x : X) : (supp x : Set α) = suppSet x := Set.Finite.coe_toFinset _
 
 /-- `supp x` supports `x`: every permutation fixing `supp x` also fixes `x`. -/
+@[grind .]
 theorem supp_supports (x : X) : supports (supp x) x := by
   rw [supports_iff_swap]
   intro a b ha hb
@@ -252,47 +271,55 @@ theorem supp_supports (x : X) : supports (supp x) x := by
   exact (supports_iff_swap.mp hint) a b ha' hb'
 
 /-- `supp x` is the **least** finite support of `x`: every finite support `s` of `x` satisfies `supp x ⊆ s`. -/
+@[grind .]
 theorem supp_le {x : X} {s : Finset α} (hs : supports s x) : supp x ⊆ s := by
   intro a ha
   exact (mem_supp.mp ha) s hs
 
 /-- `supp x ⊆ s` if and only if `s` supports `x`. -/
+@[grind =]
 theorem supp_le_iff {x : X} {s : Finset α} : supp x ⊆ s ↔ supports s x :=
   ⟨fun h ↦ supports_mono h (supp_supports x), fun h ↦ supp_le h⟩
 
 /-- If `a` and `b` are both outside the support of `x`, then `swap a b` fixes `x`. -/
+@[grind .]
 theorem swap_smul_eq_of_support {x : X} {a b : α} (ha : a ∉ supp x) (hb : b ∉ supp x) :
     swap a b • x = x :=
   swap_smul_eq_of_supports (supp_supports x) ha hb
 
-/-- If `f` is equivariant (`f (π • x) = π • f x` for all `π`), then `supp (f x) ⊆ supp x`. -/
-theorem supp_map_le {Y : Type*} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (x : X) :
+/-- If `f` is equivariant, then `supp (f x) ⊆ supp x`. -/
+theorem supp_map_le {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant α f) (x : X) :
     supp (f x) ⊆ supp x := by
   apply supp_le
   intro π hπ
-  rw [← hf]
+  rw [← hf.map_smul]
   congr 1
   exact supp_supports x π hπ
 
+/-- Variant of `supp_map_le` taking a raw equivariance hypothesis. -/
+theorem supp_map_le' {Y : Type*} [Nominal α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (x : X) :
+    supp (f x) ⊆ supp x :=
+  supp_map_le ⟨hf⟩ x
+
 /-- If `f` is equivariant and injective, then `supp (f x) = supp x`. -/
-theorem supp_map_injective {Y : Type*} [Nominal α Y] {f : X → Y} (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (hinj : Function.Injective f) (x : X) :
+theorem supp_map_injective {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant α f) (hinj : Function.Injective f) (x : X) :
     supp (f x) = supp x := by
   apply le_antisymm
-  · exact supp_map_le f hf x
+  · exact supp_map_le hf x
   · apply supp_le
     intro π hπ
-    exact hinj ((hf π x).symm ▸ supp_supports (f x) π hπ)
+    exact hinj ((hf.map_smul π x).symm ▸ supp_supports (f x) π hπ)
 
-/-- Dot-notation bridge: if `hf : IsEquivariant f` then `supp (f x) ⊆ supp x`. -/
-theorem IsEquivariant.supp_image_le {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant α f) (x : X) :
-  supp (f x) ⊆ supp x :=
-  supp_map_le f hf.map_smul x
+/-- Variant of `supp_map_injective` taking a raw equivariance hypothesis. -/
+theorem supp_map_injective' {Y : Type*} [Nominal α Y] {f : X → Y} (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) (hinj : Function.Injective f) (x : X) :
+    supp (f x) = supp x :=
+  supp_map_injective ⟨hf⟩ hinj x
 
-/-- Dot-notation bridge: if `hf : IsEquivariant f` and `f` is injective then
-`supp (f x) = supp x`. -/
-theorem IsEquivariant.supp_image_injective {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant α f) (hinj : Function.Injective f) (x : X) :
-  supp (f x) = supp x :=
-  supp_map_injective hf.map_smul hinj x
+-- /-- Alias for `supp_map_le` with dot notation on `IsEquivariant`. -/
+-- alias IsEquivariant.supp_image_le := supp_map_le
+
+-- /-- Alias for `supp_map_injective` with dot notation on `IsEquivariant`. -/
+-- alias IsEquivariant.supp_image_injective := supp_map_injective
 
 /-- The support function is equivariant: `π • supp x = supp (π • x)`. -/
 @[simp]
@@ -320,6 +347,7 @@ theorem mem_supp_smul {x : X} (π : FinitePerm α) (b : α) : b ∈ supp (π •
   rw [← supp_equivariant, PermType.mem_smul_finset_iff]
 
 /-- `supp x = ∅` if and only if every permutation fixes `x`. -/
+@[grind =]
 theorem supp_eq_empty_iff {x : X} : supp x = ∅ ↔ ∀ π : FinitePerm α, π • x = x := by
   constructor
   · intro h π
@@ -361,6 +389,14 @@ theorem supp_prod {Y : Type*} [Nominal α Y] (x : X) (y : Y) : supp (x, y) = sup
       simp only [PermType.prod_smul, Prod.mk.injEq] at this
       exact this.2
 
+/-- The support of the first component is contained in the support of the pair. -/
+theorem supp_fst_le {Y : Type*} [Nominal α Y] (x : X) (y : Y) :
+    supp x ⊆ supp (x, y) := by simp
+
+/-- The support of the second component is contained in the support of the pair. -/
+theorem supp_snd_le {Y : Type*} [Nominal α Y] (x : X) (y : Y) :
+    supp y ⊆ supp (x, y) := by simp
+
 /-- The support of `none` is empty. -/
 @[simp]
 theorem supp_none {X : Type*} [Nominal α X] : supp (none : Option X) = ∅ :=
@@ -369,7 +405,7 @@ theorem supp_none {X : Type*} [Nominal α X] : supp (none : Option X) = ∅ :=
 /-- The support of `some x` equals the support of `x`. -/
 @[simp]
 theorem supp_some {X : Type*} [Nominal α X] (x : X) : supp (some x) = supp x :=
-  supp_map_injective (fun π x ↦ by simp) (Option.some_injective X) x
+  supp_map_injective isEquivariant_some (Option.some_injective X) x
 
 /-- The least support of an atom `a` is the singleton `{a}`. -/
 @[simp]
@@ -439,18 +475,88 @@ theorem supp_finitePerm (σ : FinitePerm α) : supp σ = PermType.movedFinset σ
     -- LHS = swap a b (σ (swap a b a)) = swap a b (σ b) = swap a b b = a
     -- So σ a = a, contradicting ha.
     have := congr_arg (· a) hconj
-    simp only [mul_apply, swap_apply_left', hfixb, swap_apply_right'] at this
+    simp only [FinitePerm.mul_apply, swap_apply_left', hfixb, swap_apply_right'] at this
     exact ha this.symm
+
+/-- The support of a swap `swap a b` is `{a, b}` when `a ≠ b`, and `∅` when `a = b`. -/
+@[simp]
+theorem supp_swap {a b : α} :
+    supp (swap a b) = if a = b then ∅ else {a, b} := by
+  split
+  · next h => simp [h, swap_self, supp_finitePerm, PermType.movedFinset_one]
+  · next h => simp [supp_finitePerm, movedFinset_swap h]
+
+/-- The support of the identity permutation is empty. -/
+@[simp]
+theorem supp_one : supp (1 : FinitePerm α) = ∅ := by
+  simp [supp_finitePerm, PermType.movedFinset_one]
+
+/-- The support of the inverse permutation equals the support of the permutation. -/
+@[simp]
+theorem supp_inv (π : FinitePerm α) : supp π⁻¹ = supp π := by
+  simp [supp_finitePerm, PermType.movedFinset_inv]
+
+/-- The support of a product of permutations is contained in the union of their supports. -/
+theorem supp_mul_le (π σ : FinitePerm α) :
+    supp (π * σ) ⊆ supp π ∪ supp σ := by
+  simp only [supp_finitePerm]
+  exact PermType.movedFinset_mul_subset π σ
 
 /-- The support of `Sum.inl x` equals the support of `x`. -/
 @[simp]
 theorem supp_inl {X Y : Type*} [Nominal α X] [Nominal α Y] (x : X) : supp (Sum.inl x : X ⊕ Y) = supp x :=
-  supp_map_injective (fun π x ↦ by simp) (@Sum.inl_injective X Y) x
+  supp_map_injective isEquivariant_inl (@Sum.inl_injective X Y) x
 
 /-- The support of `Sum.inr y` equals the support of `y`. -/
 @[simp]
 theorem supp_inr {X Y : Type*} [Nominal α X] [Nominal α Y] (y : Y) : supp (Sum.inr y : X ⊕ Y) = supp y :=
-  supp_map_injective (fun π y ↦ by simp) (@Sum.inr_injective X Y) y
+  supp_map_injective isEquivariant_inr (@Sum.inr_injective X Y) y
+
+/-! ### Strong support -/
+
+/-- A finite set of atoms `s` **strongly supports** `x` if the permutations fixing `s`
+are exactly those fixing `x`. Pitts, Theorem 2.7. -/
+def StrongSupports {X : Type*} [PermType α X] (s : Finset α) (x : X) : Prop :=
+  ∀ π : FinitePerm α, (∀ a ∈ (s : Set α), π • a = a) ↔ π • x = x
+
+/-- If a finite set strongly supports `x`, then it equals `supp x`.
+Pitts, Theorem 2.7. -/
+theorem supp_eq_of_strongSupports {X : Type*} [Nominal α X]
+    {s : Finset α} {x : X} (h : StrongSupports s x) :
+    supp x = s := by
+  apply le_antisymm
+  · exact supp_le (fun π hπ ↦ (h π).mp hπ)
+  · intro a ha
+    rw [mem_supp]
+    intro t ht
+    by_contra hat
+    pick_new b (t ∪ s)
+    simp only [Finset.mem_union, not_or] at bNew
+    obtain ⟨hbt, hbs⟩ := bNew
+    have hfix := (supports_iff_swap.mp ht) a b hat hbt
+    have hstrong := (h (swap a b)).mpr hfix a (Finset.mem_coe.mpr ha)
+    rw [swap_apply_left] at hstrong
+    exact hbs (hstrong ▸ Finset.mem_coe.mpr ha)
+
+/-! ### Surjective equivariant maps -/
+
+/-- If `f : X → Y` is equivariant and surjective, then every element of `Y` is finitely
+supported. This is Pitts, Lemma 2.12(iii). -/
+theorem finSupported_of_surjective {Y : Type*} [PermType α Y]
+    {f : X → Y} (hf : IsEquivariant α f)
+    (hsurj : Function.Surjective f)
+    (y : Y) : FinSupported y := by
+  obtain ⟨x, rfl⟩ := hsurj y
+  obtain ⟨s, hs⟩ := Nominal.finSupp x
+  exact ⟨s, fun π hπ ↦ by rw [← hf.map_smul]; congr 1; exact hs π hπ⟩
+
+/-- Variant of `finSupported_of_surjective` taking a raw equivariance hypothesis. -/
+theorem finSupported_of_surjective' {Y : Type*} [PermType α Y]
+    (f : X → Y)
+    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
+    (hsurj : Function.Surjective f)
+    (y : Y) : FinSupported y :=
+  finSupported_of_surjective ⟨hf⟩ hsurj y
 
 end Supp
 

@@ -35,14 +35,20 @@ introduces individual freshness hypotheses into the local context.
 * `fresh_equivariant` — freshness is preserved by the permutation action.
 * `fresh_equivariant_iff` — `(π • x) # (π • y) ↔ x # y`.
 * `fresh_swap` — swapping two atoms that are both fresh for `x` fixes `x`.
+* `fresh_of_swap_eq` — if `a # x` and `swap a b • x = x`, then `b # x`.
 * `fresh_prod_right` — `x # (y, z) ↔ x # y ∧ x # z`.
 * `fresh_prod_left` — `(x, y) # z ↔ x # z ∧ y # z`.
 * `fresh_atom_left` — `a # x ↔ a ∉ supp x`.
 * `fresh_atom_right` — `x # a ↔ a ∉ supp x`.
 * `fresh_atoms` — `a # b ↔ a ≠ b` for atoms.
 * `fresh_finitePerm` — `a # σ ↔ σ a = a` for finite permutations.
+* `fresh_finitePerm_right` — `σ # a ↔ σ a = a` for finite permutations.
+* `fresh_self_iff` — `x # x ↔ supp x = ∅`.
 * `exists_fresh_atom` — for every `x`, there exists an atom fresh for it.
+* `exists_fresh_atoms` — for every `x` and `n`, there exist `n` mutually distinct fresh atoms.
 * `fresh_of_not_mem_support` — atoms outside a support are fresh.
+* `fresh_of_supp_subset` — freshness monotonicity via support containment.
+* `fresh_of_equivariant` — equivariant maps preserve freshness (Pitts 3.4(iii)).
 * `fresh_of_supp_empty` — elements with empty support are fresh for every atom.
 * `fresh_of_supp_empty_left` — elements with empty support are fresh for any nominal element.
 * `fresh_of_supp_empty_right` — any nominal element is fresh for elements with empty support.
@@ -52,6 +58,7 @@ introduces individual freshness hypotheses into the local context.
 * `fresh_some` — `a # some y ↔ a # y`.
 * `fresh_inl` — `a # Sum.inl x ↔ a # x`.
 * `fresh_inr` — `a # Sum.inr y ↔ a # y`.
+* `equivariantRel_fresh` — the freshness relation is equivariant.
 
 ### Cofinite filter API
 * `fresh_atom_compl_eq_supp` — the complement of the fresh-atom set equals `supp x`.
@@ -94,17 +101,15 @@ theorem fresh_iff {x : X} {y : Y} : x # y ↔ Disjoint (supp x) (supp y) :=
   Iff.rfl
 
 /-- Freshness is symmetric. -/
+@[grind =]
 theorem fresh_comm {x : X} {y : Y} : x # y ↔ y # x := by
   simp only [Fresh, disjoint_comm]
 
 /-- Freshness is preserved by the permutation action. -/
+@[grind .]
 theorem fresh_equivariant (π : FinitePerm α) {x : X} {y : Y} (h : x # y) : (π • x) # (π • y) := by
-  rw [Fresh, ← supp_equivariant, ← supp_equivariant]
-  rw [Fresh] at h
-  rw [Finset.disjoint_left] at h ⊢
-  intro a ha hy
-  rw [PermType.mem_smul_finset_iff] at ha hy
-  exact h ha hy
+  simp only [Fresh, ← supp_equivariant, Finset.disjoint_left, PermType.mem_smul_finset_iff] at h ⊢
+  exact fun _ ha hy ↦ h ha hy
 
 /-- Freshness is invariant under the permutation action. -/
 @[simp]
@@ -127,10 +132,21 @@ theorem fresh_atom_right (x : X) (a : α) : x # a ↔ a ∉ supp x := by
 theorem fresh_atoms (a b : α) : a # b ↔ a ≠ b := by
   simp [Fresh, supp_atom, Finset.disjoint_singleton_left, Finset.mem_singleton]
 
+/-- An element is fresh for itself if and only if it has empty support. -/
+theorem fresh_self_iff {x : X} : x # x ↔ supp x = ∅ := by
+  simp [Fresh, disjoint_self, Finset.bot_eq_empty]
+
 /-- If both `a` and `b` are fresh for `x`, then swapping them fixes `x`. -/
 theorem fresh_swap {a b : α} {x : X} (ha : a # x) (hb : b # x) : swap a b • x = x := by
   rw [fresh_atom_left] at ha hb
   exact (supports_iff_swap.mp (supp_supports x)) a b ha hb
+
+/-- If `a # x` and swapping `a` and `b` fixes `x`, then `b # x`.
+    Partial converse of `fresh_swap`, derived from equivariance of freshness. -/
+theorem fresh_of_swap_eq {a b : α} {x : X}
+    (ha : a # x) (hswap : swap a b • x = x) : b # x := by
+  have := fresh_equivariant (swap a b) ha
+  rwa [swap_apply_left, hswap] at this
 
 /-- Freshness distributes over products: `x # (y, z) ↔ x # y ∧ x # z`. -/
 @[simp]
@@ -148,6 +164,7 @@ theorem exists_fresh_atom (x : X) : ∃ a : α, a # x := by
   exact ⟨a, (fresh_atom_left a x).mpr aNew⟩
 
 /-- If `s` supports `x`, any atom outside `s` is fresh for `x`. -/
+@[grind .]
 theorem fresh_of_not_mem_support {s : Finset α} {a : α} {x : X}
   (hs : supports s x) (ha : a ∉ s) : a # x := (fresh_atom_left a x).mpr (fun hmem ↦ ha (supp_le hs hmem))
 
@@ -163,6 +180,34 @@ theorem fresh_of_supp_empty_left {x : X} (h : supp x = ∅) (y : Y) : x # y := b
 theorem fresh_of_supp_empty_right {y : Y} (h : supp y = ∅) (x : X) : x # y := by
   simp [Fresh, h]
 
+/-- If the support of `y` is contained in the support of `x`, then freshness
+    for `x` implies freshness for `y`. -/
+theorem fresh_of_supp_subset {a : α} {x : X} {y : Y}
+    (hsub : supp y ⊆ supp x) (ha : a # x) : a # y := by
+  rw [fresh_atom_left] at ha ⊢
+  exact fun hy ↦ ha (hsub hy)
+
+/-- If `f` is equivariant and `a # x`, then `a # f x`.
+    Pitts Proposition 3.4(iii): equivariant maps preserve freshness. -/
+theorem fresh_of_equivariant {Y : Type*} [Nominal α Y] {f : X → Y}
+    (hf : IsEquivariant α f) {a : α} {x : X} (ha : a # x) : a # f x :=
+  fresh_of_supp_subset (supp_map_le hf x) ha
+
+/-- For any `x` and any `n`, there exist `n` mutually distinct atoms all fresh for `x`. -/
+theorem exists_fresh_atoms (x : X) (n : Nat) :
+    ∃ as : Finset α, as.card = n ∧ ∀ a ∈ as, a # x := by
+  induction n with
+  | zero => exact ⟨∅, by simp⟩
+  | succ n ih =>
+    obtain ⟨as, hcard, hfresh⟩ := ih
+    obtain ⟨b, hb⟩ := (supp x ∪ as).exists_notMem
+    rw [Finset.mem_union, not_or] at hb
+    exact ⟨insert b as,
+      by rw [Finset.card_insert_of_notMem hb.2, hcard],
+      fun a ha ↦ by
+        rw [Finset.mem_insert] at ha
+        exact ha.elim (fun h ↦ h ▸ (fresh_atom_left b x).mpr hb.1) (hfresh a)⟩
+
 /-- An atom `a` is fresh for a finite set of atoms `A` if and only if `a ∉ A`. -/
 @[simp]
 theorem fresh_atom_finset {A : Finset α} {a : α} : a # A ↔ a ∉ A := by
@@ -177,6 +222,11 @@ theorem fresh_finset {A B : Finset α} : A # B ↔ Disjoint A B := by
 @[simp]
 theorem fresh_finitePerm {σ : FinitePerm α} {a : α} : a # σ ↔ σ a = a := by
   rw [fresh_atom_left, supp_finitePerm, PermType.mem_movedFinset, not_not]
+
+/-- A permutation `σ` is fresh for an atom `a` if and only if `σ` fixes `a`. -/
+@[simp]
+theorem fresh_finitePerm_right {σ : FinitePerm α} {a : α} : σ # a ↔ σ a = a := by
+  rw [fresh_comm, fresh_finitePerm]
 
 /-- Every atom is fresh for `none`. -/
 @[simp]
@@ -216,15 +266,23 @@ theorem fresh_cofinite (x : X) : {a : α | a # x} ∈ cofinite := by
   exact (supp x).finite_toSet
 
 /-- The set of atoms fresh for `x` is cofinite (its complement is `supp x`, which is finite). -/
-theorem fresh_atom_cofinite (x : X) : ∀ᶠ (a : α) in cofinite, a # x := by
-  change {a : α | a # x} ∈ cofinite
-  apply fresh_cofinite
+theorem fresh_atom_cofinite (x : X) : ∀ᶠ (a : α) in cofinite, a # x :=
+  fresh_cofinite x
 
 /-- An atom `w` belongs to `supp x` if and only if it is not fresh for `x`. -/
 theorem fresh_atom_notin_iff_in_supp (w : α) (x : X) :
   w ∈ supp x ↔ w ∉ {a : α | a # x} := by simp
 
 end Filter
+
+/-- Every element of a nominal set is fresh for `()`. -/
+theorem fresh_unit (x : X) : letI := Nominal.instUnit (α := α); x # () := by
+  letI := Nominal.instUnit (α := α)
+  simp [Fresh]
+
+/-- The freshness relation is equivariant. -/
+theorem equivariantRel_fresh : EquivariantRel α (Fresh : X → Y → Prop) :=
+  ⟨fun π _ _ ↦ fresh_equivariant_iff π⟩
 
 end Fresh
 
