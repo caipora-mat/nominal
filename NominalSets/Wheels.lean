@@ -9,8 +9,10 @@ Small lemmas and tactics used throughout the nominal-sets library that are not
 
 ## Main definitions
 
-* `pick_new a s` / `pick_new a s with h` — tactic: picks a fresh atom `a ∉ s`
-  from an infinite type. Works with both `Finset` and finite `Set` arguments.
+* `pick_new a s` / `pick_new a s with h` — tactic: introduces a fresh element `a ∉ s`
+  from an infinite type into the local context. Works with both `Finset` and finite
+  `Set` arguments; requires `[Infinite α]`. The auto-generated hypothesis name is
+  `aNew` (the identifier `a` suffixed with `New`); use `with h` to specify a custom name.
 
 ## Main results
 
