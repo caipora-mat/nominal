@@ -33,6 +33,9 @@ that are needed for the swap characterisation of supports (Pitts, Prop. 2.1), pr
 * `swap_apply_left` / `swap_apply_right` — action form: `swap a b • a = b` and `swap a b • b = a`.
 * `swap_apply_of_ne` — action form: a swap fixes atoms different from both arguments.
 * `swap_smul_def` — `swap a b • c = if c = a then b else if c = b then a else c`.
+* `swap_smul_ne_iff` — `swap a b • c ≠ c ↔ a ≠ b ∧ (c = a ∨ c = b)`.
+* `swap_smul_eq_left_iff` — `swap a b • c = a ↔ c = b ∨ (c = a ∧ a = b)`.
+* `swap_smul_eq_right_iff` — `swap a b • c = b ↔ c = a ∨ (c = b ∧ a = b)`.
 * `swap_apply_left'` / `swap_apply_right'` — function-application form of `swap_apply_left` / `swap_apply_right`.
 * `swap_apply_of_ne'` — function-application form of `swap_apply_of_ne`.
 
@@ -57,6 +60,7 @@ that are needed for the swap characterisation of supports (Pitts, Prop. 2.1), pr
 * `movedFinset_swap_smul_subset` — left-composing `swap a (σ a)` strictly shrinks the moved-point set of `σ`.
 * `not_mem_movedFinset_swap_smul` — after left-composing `swap a (σ a)`, `a` is fixed.
 * `swap_mul_cancel` — `σ = swap a (σ a) * (swap a (σ a) * σ)` (swap is its own inverse).
+* `equivariantRel_swap_smul_eq` — the relation `swap a₁ d • x₁ = swap a₂ d • x₂` is equivariant.
 
 ## References
 
@@ -136,6 +140,37 @@ theorem swap_apply_of_ne {a b c : α} (ha : c ≠ a) (hb : c ≠ b) : (swap a b)
 /-- Unfolded form of a swap on atoms: case-split on whether `c = a` or `c = b`. -/
 theorem swap_smul_def (a b c : α) : (swap a b) • c = if c = a then b else if c = b then a else c := by
   simp [PermType.atoms_smul, swap, Equiv.swap_apply_def]
+
+/-- A swap moves atom `c` iff `a ≠ b` and `c` is one of `a`, `b`.
+    PermType-level lift of `Equiv.swap_apply_ne_self_iff`. -/
+@[simp]
+theorem swap_smul_ne_iff {a b c : α} : (swap a b) • c ≠ c ↔ a ≠ b ∧ (c = a ∨ c = b) := by
+  simp only [PermType.atoms_smul, ne_eq]
+  exact Equiv.swap_apply_ne_self_iff
+
+/-- `swap a b` sends `c` to `a` iff `c = b` or (`c = a` and `a = b`). -/
+theorem swap_smul_eq_left_iff {a b c : α} : (swap a b) • c = a ↔ c = b ∨ (c = a ∧ a = b) := by
+  constructor
+  · intro h
+    by_cases hcb : c = b
+    · exact Or.inl hcb
+    · by_cases hca : c = a
+      · subst hca; rw [swap_apply_left] at h; exact Or.inr ⟨rfl, h.symm⟩
+      · rw [swap_apply_of_ne hca hcb] at h; exact absurd h.symm (Ne.symm hca)
+  · rintro (rfl | ⟨rfl, rfl⟩)
+    · exact swap_apply_right _ _
+    · simp
+
+/-- `swap a b` sends `c` to `b` iff `c = a` or (`c = b` and `a = b`). -/
+theorem swap_smul_eq_right_iff {a b c : α} : (swap a b) • c = b ↔ c = a ∨ (c = b ∧ a = b) := by
+  rw [swap_comm a b, swap_smul_eq_left_iff]
+  constructor
+  · rintro (rfl | ⟨rfl, hab⟩)
+    · exact Or.inl rfl
+    · exact Or.inr ⟨rfl, hab.symm⟩
+  · rintro (rfl | ⟨rfl, hab⟩)
+    · exact Or.inl rfl
+    · exact Or.inr ⟨rfl, hab.symm⟩
 
 /-! #### Function-application variants
 
@@ -269,8 +304,7 @@ theorem isEquivariant_swap_smul {X : Type*} [PermType α X] : IsEquivariant α (
     exact swap_smul_equivariant π p.1 p.2.1 p.2.2
 
 /-- Two swaps are equal iff they swap the same unordered pair of atoms (or both arguments coincide). -/
-theorem swap_eq_swap_iff {a b c d : α} :
-    swap a b = swap c d ↔ (a = c ∧ b = d) ∨ (a = d ∧ b = c) ∨ (a = b ∧ c = d) := by
+theorem swap_eq_swap_iff {a b c d : α} : swap a b = swap c d ↔ (a = c ∧ b = d) ∨ (a = d ∧ b = c) ∨ (a = b ∧ c = d) := by
   constructor
   · intro h
     -- Both sides are `FinitePerm`, evaluate at `a` and `b` via `DFunLike.congr_fun`
@@ -308,5 +342,39 @@ theorem swap_mul_eq_self_iff {a b : α} {σ : FinitePerm α} : swap a b * σ = �
     have : swap a b = 1 := mul_right_cancel (b := σ) (by rwa [one_mul])
     exact swap_eq_one_iff.mp this
   · rintro rfl; simp
+
+/-- Right-multiplying by `swap a b` is the identity on `σ` iff `a = b`. -/
+theorem mul_swap_eq_self_iff {a b : α} {σ : FinitePerm α} : σ * swap a b = σ ↔ a = b := by
+  constructor
+  · intro h
+    have : swap a b = 1 := mul_left_cancel (a := σ) (by rwa [mul_one])
+    exact swap_eq_one_iff.mp this
+  · rintro rfl; simp
+
+/-- A swap action can be moved to the other side: `swap a b • x = y ↔ x = swap a b • y`.
+    Consequence of swaps being involutions. -/
+theorem swap_smul_eq_iff {X : Type*} [PermType α X] {a b : α} {x y : X} : swap a b • x = y ↔ x = swap a b • y := by
+  constructor
+  · intro h; rw [← h, swap_smul_swap_smul]
+  · intro h; rw [h, swap_smul_swap_smul]
+
+/-- The moved-point set of a non-trivial swap has exactly two elements. -/
+theorem movedFinset_swap_card {a b : α} (h : a ≠ b) : (movedFinset (swap a b)).card = 2 := by
+  rw [movedFinset_swap h, Finset.card_pair h]
+
+theorem movedFinset_swap_smul_ssubset {σ : FinitePerm α} {a : α} (hmoved : σ a ≠ a) : movedFinset (swap a (σ a) * σ) ⊂ movedFinset σ := by
+  refine (movedFinset_swap_smul_subset hmoved).ssubset_of_ne fun h ↦ ?_
+  have h₁ : a ∉ movedFinset (swap a (σ a) * σ) := not_mem_movedFinset_swap_smul σ a
+  have h₂ : a ∈ movedFinset σ := mem_movedFinset.mpr hmoved
+  exact h₁ (h ▸ h₂)
+
+/-- The relation `(d, (a₁, x₁, a₂, x₂)) ↦ swap a₁ d • x₁ = swap a₂ d • x₂` is equivariant.
+Used in `abs_eq_iff_exists` and `abs_eq_iff_forall` for the Some/Any characterisation of
+abstraction equality. -/
+theorem equivariantRel_swap_smul_eq {X : Type*} [PermType α X] : EquivariantRel α (fun (d : α) (t : α × X × α × X) ↦
+    swap t.1 d • t.2.1 = swap t.2.2.1 d • t.2.2.2) where
+  smul_iff π d t := by
+    simp only [Prod.smul_fst, Prod.smul_snd]
+    rw [swap_smul_equivariant, swap_smul_equivariant, smul_left_cancel_iff]
 
 end NominalSets

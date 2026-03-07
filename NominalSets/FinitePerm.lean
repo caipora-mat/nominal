@@ -29,17 +29,21 @@ with finite moved-point sets.
 
 ### `Equiv.Perm` preliminaries
 * `Equiv.Perm.mem_movedPoints` — `a ∈ π.movedPoints ↔ π a ≠ a`.
+* `Equiv.Perm.not_mem_movedPoints` — `a ∉ π.movedPoints ↔ π a = a`.
 * `Equiv.Perm.movedPoints_eq_compl_fixedBy` — `movedPoints π = (fixedBy α π)ᶜ`.
 * `Equiv.Perm.movedPoints_one` — the identity moves no atoms.
 * `Equiv.Perm.movedPoints_mul_subset` — `(π * σ).movedPoints ⊆ π.movedPoints ∪ σ.movedPoints`.
+* `Equiv.Perm.movedPoints_mul_disjoint` — exact equality when moved-point sets are disjoint.
 * `Equiv.Perm.movedPoints_inv` — `π⁻¹.movedPoints = π.movedPoints`.
 * `Equiv.Perm.movedPoints_conj` — `(π * σ * π⁻¹).movedPoints = π '' σ.movedPoints`.
 * `Equiv.Perm.movedPoints_swap` — `(swap a b).movedPoints = {a, b}` when `a ≠ b`.
 * `Equiv.Perm.movedPoints_swap_self` — `(swap a a).movedPoints = ∅`.
+* `Equiv.Perm.movedPoints_subset_iff` — `π.movedPoints ⊆ S ↔ ∀ a ∉ S, π a = a`.
 * `Equiv.Perm.isFinitePerm_one` — the identity has finite support.
 * `Equiv.Perm.IsFinitePerm.mul` — finite support is closed under multiplication.
 * `Equiv.Perm.IsFinitePerm.inv` — finite support is closed under inversion.
 * `Equiv.Perm.IsFinitePerm.conj` — finite support is closed under conjugation.
+* `Equiv.Perm.IsFinitePerm.swap` — every transposition has finite support.
 
 ### Function-like and coercion API
 * `FinitePerm.ext` — extensionality: two finite permutations are equal iff they agree pointwise.
@@ -47,7 +51,8 @@ with finite moved-point sets.
 * `FinitePerm.coe_one` / `FinitePerm.one_apply` — the identity acts as `id`.
 * `FinitePerm.coe_mul` / `FinitePerm.mul_apply` — multiplication acts as function composition.
 * `FinitePerm.inv_apply_self` / `FinitePerm.apply_inv_self` — left and right inverse laws.
-* `FinitePerm.injective` / `FinitePerm.surjective` — every finite permutation is a bijection.
+* `FinitePerm.injective` / `FinitePerm.surjective` / `FinitePerm.bijective` — every finite permutation is a bijection.
+* `FinitePerm.apply_eq_iff_eq` — `π a = π b ↔ a = b` (injectivity in simp-normal form).
 * `FinitePerm.coe_val` — coercion to `Equiv.Perm α` is the subtype projection.
 * `FinitePerm.coe_toPerm_one` / `FinitePerm.coe_toPerm_mul` / `FinitePerm.coe_toPerm_inv` —
   coercion commutes with group operations (for `norm_cast`).
@@ -61,6 +66,7 @@ with finite moved-point sets.
   `Equiv.Perm α`.
 * `FinitePerm.swap_factorization` — every finite permutation is a product of a finite list of
   transpositions.
+* `FinitePerm.movedPoints'` — the moved-point set at the `FinitePerm` level.
 -/
 
 open Equiv MulAction Set
@@ -74,6 +80,11 @@ def movedPoints : Set α := {a | π a ≠ a}
 
 @[simp]
 theorem mem_movedPoints {a : α} : a ∈ π.movedPoints ↔ π a ≠ a := Iff.rfl
+
+/-- An atom not in the moved-point set is a fixed point of `π`. Negation of `mem_movedPoints`. -/
+@[simp]
+theorem not_mem_movedPoints {a : α} : a ∉ π.movedPoints ↔ π a = a := by
+  simp [mem_movedPoints]
 
 /-- A permutation has **finite support** if it moves only finitely many atoms -/
 @[reducible]
@@ -146,9 +157,45 @@ theorem IsFinitePerm.inv {π : Perm α} (h : π.IsFinitePerm) : π⁻¹.IsFinite
   rwa [IsFinitePerm, movedPoints_inv]
 
 /-- Finite support is closed under conjugation. -/
-theorem IsFinitePerm.conj {π σ : Perm α} (_hπ : π.IsFinitePerm) (hσ : σ.IsFinitePerm) : (π * σ * π⁻¹).IsFinitePerm := by
+theorem IsFinitePerm.conj {π σ : Perm α} (hσ : σ.IsFinitePerm) : (π * σ * π⁻¹).IsFinitePerm := by
   rw [IsFinitePerm, movedPoints_conj]
   exact hσ.image π
+
+/-- Every transposition `swap a b` is a finite permutation (it moves at most 2 atoms). -/
+theorem IsFinitePerm.swap [DecidableEq α] (a b : α) : (swap a b).IsFinitePerm := by
+  simp only [IsFinitePerm, movedPoints]
+  exact (({a, b} : Finset α).finite_toSet).subset fun x hx ↦
+    (swap_apply_ne_self_iff.mp hx).2 |>.elim
+      (fun h ↦ Finset.mem_coe.mpr (Finset.mem_insert.mpr (Or.inl h)))
+      (fun h ↦ Finset.mem_coe.mpr (Finset.mem_insert.mpr (Or.inr (Finset.mem_singleton.mpr h))))
+
+/-- The moved-point set of `π` is contained in `S` iff `π` fixes every atom outside `S`. -/
+theorem movedPoints_subset_iff {S : Set α} : π.movedPoints ⊆ S ↔ ∀ a, a ∉ S → π a = a := by
+  simp only [Set.subset_def, mem_movedPoints]
+  exact ⟨fun h a ha ↦ by_contra (fun hne ↦ ha (h a hne)), fun h a hne ↦ by_contra (fun ha ↦ hne (h a ha))⟩
+
+/-- When two permutations have disjoint moved-point sets, the moved-point set
+of their product is exactly the union. -/
+theorem movedPoints_mul_disjoint {α : Type*} {f g : Perm α} (h : f.movedPoints ∩ g.movedPoints = ∅) :
+    (f * g).movedPoints = f.movedPoints ∪ g.movedPoints := by
+  ext a
+  simp only [mem_movedPoints, Equiv.Perm.mul_apply, Set.mem_union]
+  constructor
+  · exact fun ha ↦ movedPoints_mul_subset f g ha
+  · rintro (ha | ha)
+    · have hag : g a = a := by
+        rw [← not_mem_movedPoints]
+        intro hg
+        have : a ∈ f.movedPoints ∩ g.movedPoints := Set.mem_inter ha hg
+        rw [h] at this; exact this
+      rw [hag]; exact ha
+    · have haf : f a = a := by
+        rw [← not_mem_movedPoints]
+        intro hf
+        have : a ∈ f.movedPoints ∩ g.movedPoints := Set.mem_inter hf ha
+        rw [h] at this; exact this
+      intro heq
+      exact ha (f.injective (by rwa [haf]))
 
 end Equiv.Perm
 
@@ -208,6 +255,14 @@ theorem ext {π σ : FinitePerm α} (h : ∀ a, π a = σ a) : π = σ := DFunLi
 
 @[grind .]
 theorem surjective : Function.Surjective π := π.val.surjective
+
+/-- Every finite permutation is a bijection `α → α`. -/
+@[grind .]
+theorem bijective : Function.Bijective π := ⟨injective π, surjective π⟩
+
+/-- Injectivity of a finite permutation in simp-normal iff form. -/
+@[simp]
+theorem apply_eq_iff_eq (a b : α) : π a = π b ↔ a = b := π.val.apply_eq_iff_eq
 
 @[simp, grind =] theorem coe_val : (π : Perm α) = π.val := rfl
 
@@ -273,5 +328,8 @@ theorem swap_factorization [DecidableEq α] (π : FinitePerm α) : ∃ l : List 
     obtain ⟨x, y, hne, rfl⟩ := hσ
     exact ⟨swap x y :: l, by simpa [List.forall_mem_cons] using ⟨⟨x, y, hne, rfl⟩, hl⟩,
       by simp [Perm.inv_def, hprod]⟩
+
+/-- The set of atoms moved by a finite permutation, as a `Set α`. -/
+def movedPoints' (π : FinitePerm α) : Set α := (π : Equiv.Perm α).movedPoints
 
 end FinitePerm

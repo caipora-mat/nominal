@@ -105,16 +105,30 @@ theorem fresh_iff {x : X} {y : Y} : x # y ↔ Disjoint (supp x) (supp y) :=
 theorem fresh_comm {x : X} {y : Y} : x # y ↔ y # x := by
   simp only [Fresh, disjoint_comm]
 
+/-- The freshness relation is equivariant. -/
+theorem equivariantRel_fresh : EquivariantRel α (Fresh : X → Y → Prop) where
+  smul_iff π _ _ := by
+    simp only [Fresh, ← supp_equivariant]
+    constructor
+    · intro h
+      rw [Finset.disjoint_left] at h ⊢
+      intro a ha hy
+      exact h (Finset.mem_image_of_mem _ ha) (Finset.mem_image_of_mem _ hy)
+    · intro h
+      rw [Finset.disjoint_left] at h ⊢
+      intro a ha hy
+      rw [PermType.mem_smul_finset_iff] at ha hy
+      exact h ha hy
+
 /-- Freshness is preserved by the permutation action. -/
 @[grind .]
-theorem fresh_equivariant (π : FinitePerm α) {x : X} {y : Y} (h : x # y) : (π • x) # (π • y) := by
-  simp only [Fresh, ← supp_equivariant, Finset.disjoint_left, PermType.mem_smul_finset_iff] at h ⊢
-  exact fun _ ha hy ↦ h ha hy
+theorem fresh_equivariant (π : FinitePerm α) {x : X} {y : Y} (h : x # y) : (π • x) # (π • y) :=
+  equivariantRel_fresh.smul π h
 
 /-- Freshness is invariant under the permutation action. -/
 @[simp]
 theorem fresh_equivariant_iff (π : FinitePerm α) {x : X} {y : Y} : (π • x) # (π • y) ↔ x # y :=
-  ⟨fun h ↦ by simpa using fresh_equivariant π⁻¹ h, fresh_equivariant π⟩
+  equivariantRel_fresh.smul_iff' π x y
 
 /-- An atom `a` is fresh for `x` if and only if `a ∉ supp x`. -/
 @[simp]
@@ -279,10 +293,6 @@ end Filter
 theorem fresh_unit (x : X) : letI := Nominal.instUnit (α := α); x # () := by
   letI := Nominal.instUnit (α := α)
   simp [Fresh]
-
-/-- The freshness relation is equivariant. -/
-theorem equivariantRel_fresh : EquivariantRel α (Fresh : X → Y → Prop) :=
-  ⟨fun π _ _ ↦ fresh_equivariant_iff π⟩
 
 end Fresh
 
