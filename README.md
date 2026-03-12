@@ -9,24 +9,35 @@ Lean v4.28.0
 ## Project Structure
 
 ```
-NominalSets/
-  Wheels.lean           # utility lemmas; pick_new tactic
-  Name.lean             # Name typeclass (DecidableEq + Infinite)
-  FinitePerm.lean       # FinitePerm α ≤ Equiv.Perm α
-  PermType.lean         # PermType typeclass + instances
-  PFun.lean             # PFun newtype (conjugation action on functions)
-  Swap.lean             # swap transposition + movedFinset lemmas
-  Equivariant.lean      # Equivariant (MulActionHom wrapper)
-  Support.lean          # supports / FinSupported; Pitts Prop. 2.1
-  Nominal.lean          # Nominal typeclass; supp; all Nominal instances
-  NFun.lean             # NFun (finitely supported functions)
-  Freshness/
-    Basic.lean          # Fresh (#) relation
-    Tactic.lean         # choose_fresh tactic
-  FreshQuantifier.lean  # И quantifier; someAny (Pitts 3.9)
-  NameAbstraction.lean  # NameAbs ([A]X); abs / ⟪a⟫ x; supp_abs
-  Concretion.lean       # concreteAt (⊙); liftAbs; Prop. 4.9; ext
-  FCB.lean              # FCB / liftFCB (Thm 4.15); liftFresh (Cor 4.17)
+Nominal.lean              # top-level: imports Core + Set + Syntax
+Nominal/
+  Wheels.lean             # utility lemmas; pick_new tactic
+  Core.lean               # re-exports Core.*
+  Core/
+    Name.lean             # Name typeclass (DecidableEq + Infinite)
+    FinitePerm.lean       # FinitePerm α ≤ Equiv.Perm α
+  Set.lean                # re-exports Set.*
+  Set/
+    PermType.lean         # PermType typeclass + instances
+    PFun.lean             # PFun newtype (conjugation action on functions)
+    Equivariant.lean      # Equivariant (MulActionHom wrapper)
+    Swap.lean             # swap transposition + movedFinset lemmas
+    Support.lean          # supports / FinSupported; Pitts Prop. 2.1
+    Nominal.lean          # Nominal typeclass; supp; all Nominal instances
+    Freshness.lean        # re-exports Freshness.*
+    Freshness/
+      Basic.lean          # Fresh (#) relation
+      Tactic.lean         # choose_fresh tactic
+    NFun.lean             # NFun (finitely supported functions)
+    FreshQuantifier.lean  # И quantifier; someAny (Pitts 3.9)
+    NameAbstraction.lean  # NameAbs ([A]X); abs / ⟪a⟫ x; supp_abs
+    Concretion.lean       # concreteAt (⊙); liftAbs; Prop. 4.9; ext
+    FCB.lean              # FCB / liftFCB (Thm 4.15); liftFresh (Cor 4.17)
+    Structural.lean       # structural isos; SepProd; adjunctions (stubs)
+  Syntax.lean             # re-exports Syntax.*
+  Syntax/
+    LPerm.lean            # λ-calculus permutation syntax
+    Terms.lean            # nominal term language
 ```
 
 ## Key API

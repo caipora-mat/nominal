@@ -1,4 +1,4 @@
-import NominalSets.Nominal
+import Nominal.Set.Nominal
 
 import Mathlib.Data.Finset.Disjoint
 import Mathlib.Order.Filter.Cofinite
@@ -72,7 +72,8 @@ When one of the arguments is an atom `a : α`, freshness reduces to non-membersh
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 3.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 open MulAction
 
@@ -313,4 +314,4 @@ theorem fresh_unit (x : X) : letI := Nominal.instUnit (α := α); x # () := by
 
 end Fresh
 
-end NominalSets
+end Nominal.Set

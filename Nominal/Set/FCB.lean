@@ -1,7 +1,5 @@
-import NominalSets.NameAbstraction
-import NominalSets.Concretion
-
-import Mathlib.Tactic.Linarith.Frontend
+import Nominal.Set.NameAbstraction
+import Nominal.Set.Concretion
 
 /-!
 # Freshness Condition for Binders
@@ -69,7 +67,8 @@ the adjunctions are in `NominalSets.Structural`.
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 4, Sections 4.3–4.5.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 open MulAction PermType
 
@@ -751,4 +750,4 @@ end LiftFreshParam
 
 end NameAbs
 
-end NominalSets
+end Nominal.Set

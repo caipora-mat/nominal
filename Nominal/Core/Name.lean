@@ -23,7 +23,7 @@ The concrete identity of names is irrelevant; only these two structural properti
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Section 1.1.
 -/
 
-namespace NominalSets
+namespace Nominal.Core
 
 /-- A **name** type (also called *atoms*) is any type with decidable equality and infinitely many inhabitants. -/
 class Name (𝔸 : Type*) extends Infinite 𝔸 where
@@ -31,4 +31,4 @@ class Name (𝔸 : Type*) extends Infinite 𝔸 where
 
 instance (priority := 100) Name.instDecidableEq {𝔸 : Type*} [Name 𝔸] : DecidableEq 𝔸 := Name.dec
 
-end NominalSets
+end Nominal.Core

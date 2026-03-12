@@ -1,4 +1,4 @@
-import NominalSets.Freshness.Basic
+import Nominal.Set.Freshness.Basic
 
 /-!
 # Freshness tactics
@@ -18,7 +18,8 @@ import NominalSets.Freshness.Basic
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 3.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 open MulAction
 
@@ -118,7 +119,7 @@ private def evalChooseFresh (a : TSyntax `ident) (xs : Array (TSyntax `term))
     throwError "choose_fresh: '{aName}' is already declared in the local context"
   let rawHId : TSyntax `ident := ⟨← withFreshMacroScope `(_pfresh)⟩
   -- Build the union `supp x₁ ∪ supp x₂ ∪ … ∪ supp xₙ`.
-  let unionTerm ← xs[1:].foldlM (fun acc x ↦ `($acc ∪ NominalSets.supp $x)) (← `(NominalSets.supp $(xs[0]!)))
+  let unionTerm ← xs[1:].foldlM (fun acc x ↦ `($acc ∪ Nominal.Set.supp $x)) (← `(Nominal.Set.supp $(xs[0]!)))
   -- Obtain a fresh atom outside the union
   evalTactic (← `(tactic| obtain ⟨$a, $rawHId⟩ := ($unionTerm : Finset _).exists_notMem))
   -- For each `xᵢ`, derive `a # xᵢ` using `fresh_atom_left`
@@ -127,7 +128,7 @@ private def evalChooseFresh (a : TSyntax `ident) (xs : Array (TSyntax `term))
     let hi := mkIdent <| Name.mkSimple s!"{baseName}{i + 1}"
     evalTactic (← `(tactic|
       have $hi : $a # $x := by
-        refine (NominalSets.fresh_atom_left $a $x).mpr ?_
+        refine (Nominal.Set.fresh_atom_left $a $x).mpr ?_
         intro _hmem_i
         exact $rawHId (by simp [Finset.mem_union, _hmem_i])))
   -- Clean up the internal raw hypothesis
@@ -144,7 +145,7 @@ private def findNominalDecls : TacticM (Array FVarId) := do
   for ldecl in lctx do
     let ty ← instantiateMVars ldecl.type
     -- Check if the type is an application of `Nominal`; if so, its last explicit argument is X.
-    if ty.isAppOf ``NominalSets.Nominal then
+    if ty.isAppOf ``Nominal.Set.Nominal then
       -- `Nominal α [Name α] X` — getAppArgs gives #[α, Name_α_inst, X]
       let args := ty.getAppArgs
       nominalTypes := nominalTypes.push args[2]!
@@ -251,4 +252,4 @@ example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : Tr
 
 end CHOOSE_FRESH_TEST
 
-end NominalSets
+end Nominal.Set

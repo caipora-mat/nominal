@@ -1,5 +1,6 @@
-import NominalSets.Nominal
-import NominalSets.Freshness
+import Nominal.Set.PFun
+import Nominal.Set.Nominal
+import Nominal.Set.Freshness
 
 /-!
 # Finitely Supported Functions
@@ -96,7 +97,8 @@ of finitely supported functions.
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 2.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 open MulAction PermType
 
@@ -564,4 +566,4 @@ end CCCLaws
 
 end NFun
 
-end NominalSets
+end Nominal.Set

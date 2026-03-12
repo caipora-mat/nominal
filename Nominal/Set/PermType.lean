@@ -1,6 +1,4 @@
-import NominalSets.Wheels
-import NominalSets.Name
-import NominalSets.FinitePerm
+import Nominal.Core
 
 /-!
 # Permutation Types
@@ -97,7 +95,8 @@ The function-space action and its newtype wrapper `PFun α X Y` live in `Nominal
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 1.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 /-- A **permutation type** is a type `X` equipped with an action of the group `FinitePerm α` of finite permutations -/
 class PermType (α : outParam Type*) [Name α] (X : Type*) extends MulAction (FinitePerm α) X
@@ -532,4 +531,4 @@ theorem movedFinset_closed {π : FinitePerm α} {a : α} (h : a ∈ movedFinset 
 
 end PermType
 
-end NominalSets
+end Nominal.Set

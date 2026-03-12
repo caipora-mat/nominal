@@ -1,4 +1,4 @@
-import NominalSets.PermType
+import Nominal.Set.PermType
 
 /-!
 # Nominal Function Space (`PFun`)
@@ -62,7 +62,8 @@ To avoid this conflict entirely, the action is wrapped in the newtype `PFun α X
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 1.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 variable {α : Type*} [Name α]
 
@@ -190,4 +191,4 @@ theorem smul_const {X Y : Type*} [PermType α X] [PermType α Y] (π : FinitePer
 
 end PFun
 
-end NominalSets
+end Nominal.Set
