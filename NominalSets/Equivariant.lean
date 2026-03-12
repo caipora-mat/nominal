@@ -77,6 +77,10 @@ functions) rather than a separate `EquivariantMap` type.
 * `EquivariantPred.or` — disjunction of two equivariant predicates is equivariant.
 * `EquivariantPred.comp` — pre-composing an equivariant predicate with an equivariant function.
 
+### Finset utilities
+
+* `finset_smul_filter` — `π • (s.filter p) = (π • s).filter p` when `p` is an equivariant predicate.
+
 ## References
 
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Section 2.3.
@@ -229,8 +233,7 @@ theorem IsEquivariant₂.comp_post {W : Type*} [PermType α W] {f : X → Y → 
   map_smul π x y := by rw [hf.map_smul, hg.map_smul]
 
 /-- Flipping the arguments of a binary equivariant function gives a binary equivariant function. -/
-theorem IsEquivariant₂.flip {f : X → Y → Z} (hf : IsEquivariant₂ α f) :
-    IsEquivariant₂ α (fun y x ↦ f x y) where
+theorem IsEquivariant₂.flip {f : X → Y → Z} (hf : IsEquivariant₂ α f) : IsEquivariant₂ α (fun y x ↦ f x y) where
   map_smul π y x := hf.map_smul π x y
 
 /-! ### EquivariantRel "API" -/
@@ -296,27 +299,21 @@ theorem EquivariantRel.iff {R S : X → Y → Prop} (hR : EquivariantRel α R) (
                        fun hr ↦ (hR.smul_iff' π x y).mpr (h.mpr ((hS.smul_iff' π x y).mp hr))⟩
 
 /-- Flipping the arguments of an equivariant relation gives an equivariant relation. -/
-theorem EquivariantRel.flip {R : X → Y → Prop} (hR : EquivariantRel α R) :
-    EquivariantRel α (fun y x ↦ R x y) where
+theorem EquivariantRel.flip {R : X → Y → Prop} (hR : EquivariantRel α R) : EquivariantRel α (fun y x ↦ R x y) where
   smul_iff π y x := hR.smul_iff π x y
 
 /-- The graph of an equivariant function is an equivariant relation. -/
-theorem IsEquivariant.toEquivariantRel_graph {f : X → Y} (hf : IsEquivariant α f) :
-    EquivariantRel α (fun x y ↦ f x = y) :=
+theorem IsEquivariant.toEquivariantRel_graph {f : X → Y} (hf : IsEquivariant α f) : EquivariantRel α (fun x y ↦ f x = y) :=
   equivariantRel_eq.comp_left hf
 
-/-- Universally quantifying the right argument of an equivariant relation gives an equivariant
-predicate. -/
-theorem EquivariantRel.forall_right {R : X → Y → Prop} (hR : EquivariantRel α R) :
-    EquivariantPred α (fun x ↦ ∀ y, R x y) :=
+/-- Universally quantifying the right argument of an equivariant relation gives an equivariant predicate. -/
+theorem EquivariantRel.forall_right {R : X → Y → Prop} (hR : EquivariantRel α R) : EquivariantPred α (fun x ↦ ∀ y, R x y) :=
   fun π x ↦ ⟨
     fun h y ↦ (hR.smul_iff π x y).mp (h (π • y)),
     fun h y ↦ by have := (hR.smul_iff π x (π⁻¹ • y)).mpr (h (π⁻¹ • y)); rwa [PermType.smul_inv_smul] at this⟩
 
-/-- Existentially quantifying the right argument of an equivariant relation gives an equivariant
-predicate. -/
-theorem EquivariantRel.exists_right {R : X → Y → Prop} (hR : EquivariantRel α R) :
-    EquivariantPred α (fun x ↦ ∃ y, R x y) :=
+/-- Existentially quantifying the right argument of an equivariant relation gives an equivariant predicate. -/
+theorem EquivariantRel.exists_right {R : X → Y → Prop} (hR : EquivariantRel α R) : EquivariantPred α (fun x ↦ ∃ y, R x y) :=
   fun π x ↦ ⟨
     fun ⟨y, hy⟩ ↦ ⟨π⁻¹ • y, (hR.smul_iff π x (π⁻¹ • y)).mp (by rwa [PermType.smul_inv_smul])⟩,
     fun ⟨y, hy⟩ ↦ ⟨π • y, (hR.smul_iff π x y).mpr hy⟩⟩
@@ -331,18 +328,15 @@ theorem EquivariantPred.smul_iff' {P : X → Prop} (hP : EquivariantPred α P) (
 theorem EquivariantPred.smul {P : X → Prop} (hP : EquivariantPred α P) (π : FinitePerm α) {x : X} (h : P x) : P (π • x) :=
   (hP π x).mpr h
 
-/-- Backward direction: if an equivariant predicate holds on an acted element, it holds
-on the original. -/
+/-- Backward direction: if an equivariant predicate holds on an acted element, it holds on the original. -/
 theorem EquivariantPred.of_smul {P : X → Prop} (hP : EquivariantPred α P) (π : FinitePerm α) {x : X} (h : P (π • x)) : P x :=
   (hP π x).mp h
 
-/-- An equivariant predicate on `X` lifts to an equivariant relation that ignores the
-second argument. -/
+/-- An equivariant predicate on `X` lifts to an equivariant relation that ignores the second argument. -/
 theorem EquivariantPred.toEquivariantRel {P : X → Prop} (hP : EquivariantPred α P) : EquivariantRel α (fun x (_ : Y) ↦ P x) where
   smul_iff π x _ := hP π x
 
-/-- An equivariant predicate on `Y` lifts to an equivariant relation that ignores the
-first argument. -/
+/-- An equivariant predicate on `Y` lifts to an equivariant relation that ignores the first argument. -/
 theorem EquivariantPred.toEquivariantRel_right {P : Y → Prop} (hP : EquivariantPred α P) : EquivariantRel α (fun (_ : X) y ↦ P y) where
   smul_iff π _ y := hP π y
 
@@ -362,8 +356,7 @@ theorem EquivariantPred.or {P Q : X → Prop} (hP : EquivariantPred α P) (hQ : 
   fun π x ↦ by change P (π • x) ∨ Q (π • x) ↔ P x ∨ Q x; rw [hP.smul_iff', hQ.smul_iff']
 
 /-- Pre-composing an equivariant predicate with an equivariant function. -/
-theorem EquivariantPred.comp {P : Y → Prop} {f : X → Y}
-    (hP : EquivariantPred α P) (hf : IsEquivariant α f) :
+theorem EquivariantPred.comp {P : Y → Prop} {f : X → Y} (hP : EquivariantPred α P) (hf : IsEquivariant α f) :
     EquivariantPred α (fun x ↦ P (f x)) :=
   fun π x ↦ by change P (f (π • x)) ↔ P (f x); rw [hf.map_smul, hP.smul_iff']
 
@@ -371,8 +364,7 @@ theorem EquivariantPred.comp {P : Y → Prop} {f : X → Y}
 
 /-- The permutation action on `Finset α` commutes with filtering by an equivariant predicate:
     `π • (s.filter p) = (π • s).filter p` when `p` is invariant under the action. -/
-theorem finset_smul_filter (π : FinitePerm α) (s : Finset α) (p : α → Bool)
-    (hp : EquivariantPred α (fun a : α => p a = true)) :
+theorem finset_smul_filter (π : FinitePerm α) (s : Finset α) (p : α → Bool) (hp : EquivariantPred α (fun a : α => p a = true)) :
     π • (s.filter (fun a => p a)) = (π • s).filter (fun a => p a) := by
   ext b
   simp only [PermType.mem_smul_finset_iff, Finset.mem_filter, PermType.atoms_smul]
