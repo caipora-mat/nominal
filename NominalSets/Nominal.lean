@@ -82,6 +82,7 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 * `StrongSupports` — a finite set `s` strongly supports `x` iff permutations fixing `s` are exactly those fixing `x`.
 * `supp_eq_of_strongSupports` — if `s` strongly supports `x` then `supp x = s` (Pitts, Theorem 2.7).
 * `finSupported_of_surjective` — surjective equivariant maps preserve finite support (Pitts, Lemma 2.12(iii)).
+* `finSupported_of_surjective'` — variant of `finSupported_of_surjective` taking a raw equivariance hypothesis.
 
 ### Nominal functions (`PFun`)
 
@@ -315,12 +316,6 @@ theorem supp_map_injective' {Y : Type*} [Nominal α Y] {f : X → Y} (hf : ∀ (
     supp (f x) = supp x :=
   supp_map_injective ⟨hf⟩ hinj x
 
--- /-- Alias for `supp_map_le` with dot notation on `IsEquivariant`. -/
--- alias IsEquivariant.supp_image_le := supp_map_le
-
--- /-- Alias for `supp_map_injective` with dot notation on `IsEquivariant`. -/
--- alias IsEquivariant.supp_image_injective := supp_map_injective
-
 /-- The support function is equivariant: `π • supp x = supp (π • x)`. -/
 @[simp]
 theorem supp_equivariant (π : FinitePerm α) (x : X) : π • supp x = supp (π • x) := by
@@ -390,12 +385,10 @@ theorem supp_prod {Y : Type*} [Nominal α Y] (x : X) (y : Y) : supp (x, y) = sup
       exact this.2
 
 /-- The support of the first component is contained in the support of the pair. -/
-theorem supp_fst_le {Y : Type*} [Nominal α Y] (x : X) (y : Y) :
-    supp x ⊆ supp (x, y) := by simp
+theorem supp_fst_le {Y : Type*} [Nominal α Y] (x : X) (y : Y) : supp x ⊆ supp (x, y) := by simp
 
 /-- The support of the second component is contained in the support of the pair. -/
-theorem supp_snd_le {Y : Type*} [Nominal α Y] (x : X) (y : Y) :
-    supp y ⊆ supp (x, y) := by simp
+theorem supp_snd_le {Y : Type*} [Nominal α Y] (x : X) (y : Y) : supp y ⊆ supp (x, y) := by simp
 
 /-- The support of `none` is empty. -/
 @[simp]
@@ -480,8 +473,7 @@ theorem supp_finitePerm (σ : FinitePerm α) : supp σ = PermType.movedFinset σ
 
 /-- The support of a swap `swap a b` is `{a, b}` when `a ≠ b`, and `∅` when `a = b`. -/
 @[simp]
-theorem supp_swap {a b : α} :
-    supp (swap a b) = if a = b then ∅ else {a, b} := by
+theorem supp_swap {a b : α} : supp (swap a b) = if a = b then ∅ else {a, b} := by
   split
   · next h => simp [h, swap_self, supp_finitePerm, PermType.movedFinset_one]
   · next h => simp [supp_finitePerm, movedFinset_swap h]
@@ -497,8 +489,7 @@ theorem supp_inv (π : FinitePerm α) : supp π⁻¹ = supp π := by
   simp [supp_finitePerm, PermType.movedFinset_inv]
 
 /-- The support of a product of permutations is contained in the union of their supports. -/
-theorem supp_mul_le (π σ : FinitePerm α) :
-    supp (π * σ) ⊆ supp π ∪ supp σ := by
+theorem supp_mul_le (π σ : FinitePerm α) : supp (π * σ) ⊆ supp π ∪ supp σ := by
   simp only [supp_finitePerm]
   exact PermType.movedFinset_mul_subset π σ
 
@@ -521,8 +512,7 @@ def StrongSupports {X : Type*} [PermType α X] (s : Finset α) (x : X) : Prop :=
 
 /-- If a finite set strongly supports `x`, then it equals `supp x`.
 Pitts, Theorem 2.7. -/
-theorem supp_eq_of_strongSupports {X : Type*} [Nominal α X]
-    {s : Finset α} {x : X} (h : StrongSupports s x) :
+theorem supp_eq_of_strongSupports {X : Type*} [Nominal α X] {s : Finset α} {x : X} (h : StrongSupports s x) :
     supp x = s := by
   apply le_antisymm
   · exact supp_le (fun π hπ ↦ (h π).mp hπ)
@@ -542,20 +532,15 @@ theorem supp_eq_of_strongSupports {X : Type*} [Nominal α X]
 
 /-- If `f : X → Y` is equivariant and surjective, then every element of `Y` is finitely
 supported. This is Pitts, Lemma 2.12(iii). -/
-theorem finSupported_of_surjective {Y : Type*} [PermType α Y]
-    {f : X → Y} (hf : IsEquivariant α f)
-    (hsurj : Function.Surjective f)
-    (y : Y) : FinSupported y := by
+theorem finSupported_of_surjective {Y : Type*} [PermType α Y] {f : X → Y} (hf : IsEquivariant α f)
+    (hsurj : Function.Surjective f) (y : Y) : FinSupported y := by
   obtain ⟨x, rfl⟩ := hsurj y
   obtain ⟨s, hs⟩ := Nominal.finSupp x
   exact ⟨s, fun π hπ ↦ by rw [← hf.map_smul]; congr 1; exact hs π hπ⟩
 
 /-- Variant of `finSupported_of_surjective` taking a raw equivariance hypothesis. -/
-theorem finSupported_of_surjective' {Y : Type*} [PermType α Y]
-    (f : X → Y)
-    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
-    (hsurj : Function.Surjective f)
-    (y : Y) : FinSupported y :=
+theorem finSupported_of_surjective' {Y : Type*} [PermType α Y] (f : X → Y) (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x)
+    (hsurj : Function.Surjective f) (y : Y) : FinSupported y :=
   finSupported_of_surjective ⟨hf⟩ hsurj y
 
 end Supp

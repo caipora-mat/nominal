@@ -47,17 +47,22 @@ that are needed for the swap characterisation of supports (Pitts, Prop. 2.1), pr
 * `swap_triple_factorization` — `swap a a' = swap a a'' * swap a' a'' * swap a a''` for distinct `a`, `a'`, `a''`.
 * `swap_equivariant` — `π • swap a b = swap (π • a) (π • b)`.
 * `isEquivariant₂_swap` — `swap` is an equivariant binary function (`IsEquivariant₂` packaging).
+* `isEquivariant_swap_smul` — the map `(a, b, x) ↦ swap a b • x` is equivariant as `α × α × X → X`.
 * `swap_smul_equivariant` — `swap (π • a) (π • b) • (π • x) = π • (swap a b • x)`.
 * `swap_eq_swap_iff` — `swap a b = swap c d ↔ (a = c ∧ b = d) ∨ (a = d ∧ b = c) ∨ (a = b ∧ c = d)`.
 * `swap_smul_prod` — the swap action distributes over pairs: `swap a b • (x, y) = (swap a b • x, swap a b • y)`.
 * `swap_mul_eq_self_iff` — `swap a b * σ = σ ↔ a = b`.
+* `mul_swap_eq_self_iff` — `σ * swap a b = σ ↔ a = b`.
+* `swap_smul_eq_iff` — `swap a b • x = y ↔ x = swap a b • y`.
 
 ### movedFinset lemmas
 
 * `movedFinset_swap_subset` — `movedFinset (swap a b) ⊆ {a, b}` (without requiring `a ≠ b`).
 * `movedFinset_swap` — `movedFinset (swap a b) = {a, b}` when `a ≠ b`.
 * `movedFinset_swap_self` — `movedFinset (swap a a) = ∅`.
-* `movedFinset_swap_smul_subset` — left-composing `swap a (σ a)` strictly shrinks the moved-point set of `σ`.
+* `movedFinset_swap_card` — `(movedFinset (swap a b)).card = 2` when `a ≠ b`.
+* `movedFinset_swap_smul_subset` — `movedFinset (swap a (σ a) * σ) ⊆ movedFinset σ` when `σ a ≠ a`.
+* `movedFinset_swap_smul_ssubset` — `movedFinset (swap a (σ a) * σ) ⊂ movedFinset σ` when `σ a ≠ a` (strict version).
 * `not_mem_movedFinset_swap_smul` — after left-composing `swap a (σ a)`, `a` is fixed.
 * `swap_mul_cancel` — `σ = swap a (σ a) * (swap a (σ a) * σ)` (swap is its own inverse).
 * `equivariantRel_swap_smul_eq` — the relation `swap a₁ d • x₁ = swap a₂ d • x₂` is equivariant.
@@ -103,8 +108,7 @@ theorem swap_eq_one_iff {a b : α} : swap a b = 1 ↔ a = b := by
   · rintro rfl; exact swap_self a
 
 /-- `swap a b ≠ 1` when `a ≠ b`. -/
-theorem swap_ne_one {a b : α} (h : a ≠ b) : swap a b ≠ 1 :=
-  swap_eq_one_iff.not.mpr h
+theorem swap_ne_one {a b : α} (h : a ≠ b) : swap a b ≠ 1 := swap_eq_one_iff.not.mpr h
 
 /-- Swaps are self-inverse: `swap a b * swap a b = 1`. -/
 @[simp, grind =]

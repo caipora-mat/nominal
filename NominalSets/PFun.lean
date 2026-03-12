@@ -19,8 +19,7 @@ gives a `SMul (FinitePerm α) (X → Y)`, both instances would become available 
 Lean's instance search would then face a **diamond**: it may synthesise `Pi.instSMul` before
 `instFun`, yielding the wrong action.
 
-To avoid this conflict entirely, the action is wrapped in the newtype `PFun α X Y` rather
-than being placed on the bare function type.
+To avoid this conflict entirely, the action is wrapped in the newtype `PFun α X Y` rather than being placed on the bare function type.
 
 ## Main definitions
 
@@ -43,6 +42,11 @@ than being placed on the bare function type.
 * `PFun.pfun_ext_iff` — `f = g ↔ ∀ x, f x = g x` (propositional form of extensionality).
 * `PFun.mk_injective` — `PFun.mk` is injective.
 * `PFun.coe_mk` / `PFun.coe_apply` — computation lemmas for coercions.
+* `PFun.comp_apply` — `g.comp f x = g (f x)`.
+* `PFun.id_apply` — `PFun.id x = x`.
+* `PFun.compFun_apply` — `g.compFun f x = g (f x)`.
+* `PFun.funComp_apply` — `funComp g f x = g (f x)`.
+* `PFun.const_apply` — `const y x = y`.
 * `PFun.smul_apply` — `(π • f) x = π • f (π⁻¹ • x)`.
 * `PFun.smul_apply_smul` — `(π • f) (π • x) = π • f x`.
 * `PFun.smul_id` — the identity `PFun` is a fixed point: `π • PFun.id = PFun.id`.
@@ -62,8 +66,7 @@ namespace NominalSets
 
 variable {α : Type*} [Name α]
 
-/-- `PFun α X Y` is a **newtype wrapper** around `X → Y` carrying the action
-`(π • f) x = π • f (π⁻¹ • x)`. -/
+/-- `PFun α X Y` is a **newtype wrapper** around `X → Y` carrying the action `(π • f) x = π • f (π⁻¹ • x)`. -/
 structure PFun (α : Type*) [Name α] (X Y : Type*) where
   toFun : X → Y
 
@@ -87,13 +90,11 @@ theorem pfun_ext_iff {X Y : Type*} {f g : PFun α X Y} : f = g ↔ ∀ x, f x = 
 
 @[simp] theorem coe_apply {X Y : Type*} (f : X → Y) (x : X) : (f : PFun α X Y) x = f x := rfl
 
-theorem mk_injective {X Y : Type*} {f g : X → Y}
-    (h : (PFun.mk f : PFun α X Y) = PFun.mk g) : f = g :=
+theorem mk_injective {X Y : Type*} {f g : X → Y} (h : (PFun.mk f : PFun α X Y) = PFun.mk g) : f = g :=
   congrArg PFun.toFun h
 
 /-- The action on `PFun α X Y`: `(π • f) x = π • f (π⁻¹ • x)`. -/
-instance instPermType {X Y : Type*} [PermType α X] [PermType α Y] :
-    PermType α (PFun α X Y) where
+instance instPermType {X Y : Type*} [PermType α X] [PermType α Y] : PermType α (PFun α X Y) where
   smul π f := ⟨fun x => π • f (π⁻¹ • x)⟩
   one_smul f := by
     ext x
@@ -109,8 +110,7 @@ theorem smul_apply {X Y : Type*} [PermType α X] [PermType α Y] (π : FinitePer
   (π • f) x = π • f (π⁻¹ • x) := rfl
 
 @[simp]
-theorem smul_apply_smul {X Y : Type*} [PermType α X] [PermType α Y]
-    (π : FinitePerm α) (f : PFun α X Y) (x : X) :
+theorem smul_apply_smul {X Y : Type*} [PermType α X] [PermType α Y] (π : FinitePerm α) (f : PFun α X Y) (x : X) :
     (π • f) (π • x) = π • f x := by simp
 
 /-! ### Composition -/
@@ -120,8 +120,7 @@ def comp {X Y Z : Type*} (g : PFun α Y Z) (f : PFun α X Y) : PFun α X Z :=
   ⟨fun x => g (f x)⟩
 
 @[simp]
-theorem comp_apply {X Y Z : Type*} (g : PFun α Y Z) (f : PFun α X Y) (x : X) :
-    g.comp f x = g (f x) := rfl
+theorem comp_apply {X Y Z : Type*} (g : PFun α Y Z) (f : PFun α X Y) (x : X) : g.comp f x = g (f x) := rfl
 
 /-- Composition is associative. -/
 theorem comp_assoc {W X Y Z : Type*} (h : PFun α Y Z) (g : PFun α X Y) (f : PFun α W X) :
@@ -135,8 +134,7 @@ theorem id_apply {X : Type*} (x : X) : (PFun.id : PFun α X X) x = x := rfl
 
 /-- The identity `PFun` is a fixed point of the action. -/
 @[simp]
-theorem smul_id {X : Type*} [PermType α X] (π : FinitePerm α) :
-    π • (PFun.id : PFun α X X) = PFun.id := by ext x; simp
+theorem smul_id {X : Type*} [PermType α X] (π : FinitePerm α) : π • (PFun.id : PFun α X X) = PFun.id := by ext x; simp
 
 /-- Composing with the identity on the right. -/
 @[simp]
@@ -146,42 +144,34 @@ theorem comp_id {X Y : Type*} (f : PFun α X Y) : f.comp PFun.id = f := rfl
 @[simp]
 theorem id_comp {X Y : Type*} (f : PFun α X Y) : (PFun.id).comp f = f := rfl
 
-/-- The permutation action distributes over composition:
-`π • (g ∘ f) = (π • g) ∘ (π • f)`. -/
+/-- The permutation action distributes over composition: `π • (g ∘ f) = (π • g) ∘ (π • f)`. -/
 @[simp, grind =]
-theorem smul_comp {X Y Z : Type*} [PermType α X] [PermType α Y] [PermType α Z]
-    (π : FinitePerm α) (g : PFun α Y Z) (f : PFun α X Y) :
+theorem smul_comp {X Y Z : Type*} [PermType α X] [PermType α Y] [PermType α Z] (π : FinitePerm α) (g : PFun α Y Z) (f : PFun α X Y) :
     π • g.comp f = (π • g).comp (π • f) := by
   ext x
   simp [comp_apply, smul_apply]
 
 /-- A `PFun` composed with a plain function on the right. -/
-def compFun {X Y Z : Type*} (g : PFun α Y Z) (f : X → Y) : PFun α X Z :=
-  g.comp ⟨f⟩
+def compFun {X Y Z : Type*} (g : PFun α Y Z) (f : X → Y) : PFun α X Z := g.comp ⟨f⟩
 
 @[simp]
-theorem compFun_apply {X Y Z : Type*} (g : PFun α Y Z) (f : X → Y) (x : X) :
-    g.compFun f x = g (f x) := rfl
+theorem compFun_apply {X Y Z : Type*} (g : PFun α Y Z) (f : X → Y) (x : X) : g.compFun f x = g (f x) := rfl
 
 /-- The action distributes over `compFun`: the plain function is conjugated. -/
 @[simp]
-theorem smul_compFun {X Y Z : Type*} [PermType α X] [PermType α Y] [PermType α Z]
-    (π : FinitePerm α) (g : PFun α Y Z) (f : X → Y) :
+theorem smul_compFun {X Y Z : Type*} [PermType α X] [PermType α Y] [PermType α Z] (π : FinitePerm α) (g : PFun α Y Z) (f : X → Y) :
     π • g.compFun f = (π • g).compFun (fun x => π • f (π⁻¹ • x)) := by
   ext x; simp [compFun_apply, smul_apply]
 
 /-- A plain function composed with a `PFun` on the left. -/
-def funComp {X Y Z : Type*} (g : Y → Z) (f : PFun α X Y) : PFun α X Z :=
-  (⟨g⟩ : PFun α Y Z).comp f
+def funComp {X Y Z : Type*} (g : Y → Z) (f : PFun α X Y) : PFun α X Z := (⟨g⟩ : PFun α Y Z).comp f
 
 @[simp]
-theorem funComp_apply {X Y Z : Type*} (g : Y → Z) (f : PFun α X Y) (x : X) :
-    funComp g f x = g (f x) := rfl
+theorem funComp_apply {X Y Z : Type*} (g : Y → Z) (f : PFun α X Y) (x : X) : funComp g f x = g (f x) := rfl
 
 /-- The action distributes over `funComp`: the plain function is conjugated. -/
 @[simp]
-theorem smul_funComp {X Y Z : Type*} [PermType α X] [PermType α Y] [PermType α Z]
-    (π : FinitePerm α) (g : Y → Z) (f : PFun α X Y) :
+theorem smul_funComp {X Y Z : Type*} [PermType α X] [PermType α Y] [PermType α Z] (π : FinitePerm α) (g : Y → Z) (f : PFun α X Y) :
     π • funComp g f = funComp (fun y => π • g (π⁻¹ • y)) (π • f) := by
   ext x; simp [funComp_apply, smul_apply]
 
@@ -195,8 +185,7 @@ theorem const_apply {X Y : Type*} (y : Y) (x : X) : (const y : PFun α X Y) x = 
 
 /-- The action on a constant `PFun` acts on the output value. -/
 @[simp]
-theorem smul_const {X Y : Type*} [PermType α X] [PermType α Y]
-    (π : FinitePerm α) (y : Y) :
+theorem smul_const {X Y : Type*} [PermType α X] [PermType α Y] (π : FinitePerm α) (y : Y) :
     π • (const y : PFun α X Y) = const (π • y) := by ext x; simp [const_apply]
 
 end PFun

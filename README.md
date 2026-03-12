@@ -14,12 +14,15 @@ NominalSets/
   Name.lean             # Name typeclass (DecidableEq + Infinite)
   FinitePerm.lean       # FinitePerm α ≤ Equiv.Perm α
   PermType.lean         # PermType typeclass + instances
+  PFun.lean             # PFun newtype (conjugation action on functions)
   Swap.lean             # swap transposition + movedFinset lemmas
   Equivariant.lean      # Equivariant (MulActionHom wrapper)
   Support.lean          # supports / FinSupported; Pitts Prop. 2.1
-  Nominal.lean          # Nominal typeclass; supp
-  Freshness.lean        # Fresh (#); choose_fresh tactic
+  Nominal.lean          # Nominal typeclass; supp; all Nominal instances
   NFun.lean             # NFun (finitely supported functions)
+  Freshness/
+    Basic.lean          # Fresh (#) relation
+    Tactic.lean         # choose_fresh tactic
   FreshQuantifier.lean  # И quantifier; someAny (Pitts 3.9)
   NameAbstraction.lean  # NameAbs ([A]X); abs / ⟪a⟫ x; supp_abs
   Concretion.lean       # concreteAt (⊙); liftAbs; Prop. 4.9; ext

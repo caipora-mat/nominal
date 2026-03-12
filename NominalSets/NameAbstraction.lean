@@ -22,6 +22,9 @@ binder name is irrelevant up to consistent renaming.
 * `NameAbs α X` — the quotient type `[A]X` (Definition 4.4).
 * `abs a x` — the canonical constructor `⟪a⟫ x : NameAbs α X`.
 * `NameAbs.ind` — induction principle: every element is `⟪a⟫ x` for some `a`, `x`.
+* `NameAbs.ind₂` — binary induction principle.
+* `NameAbs.instDecidableAlphaEqv` — decidability of α-equivalence (when `X` has `DecidableEq`).
+* `NameAbs.instDecidableEqNameAbs` — decidable equality on `NameAbs α X` (when `X` has `DecidableEq`).
 
 ## Notation
 
@@ -40,16 +43,20 @@ binder name is irrelevant up to consistent renaming.
 * `alphaEqv_symm` — α-equivalence is symmetric.
 * `alphaEqv_trans` — α-equivalence is transitive.
 * `alphaEqv_equivariant` — α-equivalence is preserved by the permutation action.
+* `alphaEqv_iff_abs_eq` — `AlphaEqv a₁ x₁ a₂ x₂ ↔ ⟪a₁⟫ x₁ = ⟪a₂⟫ x₂`.
 
 ### Equality characterisations (Pitts, Lemmas 4.2 and 4.3)
 * `abs_eq_iff_freshQuantifier` — `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ И c, swap a₁ c • x₁ = swap a₂ c • x₂`.
 * `abs_same_name_iff` — same-binder injectivity: `⟪a⟫ x₁ = ⟪a⟫ x₂ ↔ x₁ = x₂`.
 * `abs_eq_iff` — full equality characterisation (Lemma 4.3).
+* `abs_eq_iff_of_ne` — `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ a₁ # x₂ ∧ x₁ = swap a₁ a₂ • x₂` when `a₁ ≠ a₂`.
+* `abs_eq_iff_of_fresh` — `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ x₁ = swap a₁ a₂ • x₂` when `a₁ ≠ a₂` and `a₁ # x₂`.
 * `abs_eq_iff_exists` — equality via an existential fresh witness (eq. 4.8).
 * `abs_eq_iff_forall` — equality via a universal fresh witness (eq. 4.8).
 
 ### Action and support (Pitts, Definition 4.4, Proposition 4.5)
 * `abs_equivariant` — `π • ⟪a⟫ x = ⟪π • a⟫ (π • x)` (eq. 4.10).
+* `swap_smul_abs` — `swap a b • ⟪a⟫ x = ⟪b⟫ (swap a b • x)`.
 * `supp_abs` — `supp (⟪a⟫ x) = supp x \ {a}` (Proposition 4.5).
 * `supp_abs_subset` — `supp (⟪a⟫ x) ⊆ supp x`.
 * `supp_abs_ssubset` — `supp (⟪a⟫ x) ⊂ supp (a, x)`.
@@ -59,11 +66,18 @@ binder name is irrelevant up to consistent renaming.
 ### Freshness (eq. 4.11)
 * `fresh_abs` — `a' # ⟪a⟫ x ↔ a' = a ∨ a' # x`.
 * `fresh_binder_abs` — the binder is always fresh for its own abstraction: `a # ⟪a⟫ x`.
+* `fresh_abs_of_ne` — if `a' # ⟪a⟫ x` and `a' ≠ a`, then `a' # x`.
+* `supp_abs_eq_empty_iff` — `supp ⟪a⟫ x = ∅ ↔ supp x ⊆ {a}`.
 * `abs_rename` — `a # x` and `b # x` imply `⟪a⟫ x = ⟪b⟫ x`.
+* `abs_eq_swap` — `b # x` implies `⟪a⟫ x = ⟪b⟫ (swap a b • x)`.
 
-### Fresh representatives
+### Fresh representatives and binary induction
 * `exists_fresh_rep` — every abstraction has a representative with binder fresh for `z`.
+* `exists_fresh_rep₂` — every pair of abstractions shares a common binder fresh for `z`.
 * `ind_someAny_forall` — induction choosing a representative fresh for a given `z`.
+* `ind₂` — binary induction on two abstractions.
+* `abs_injective` — `abs a` is injective.
+* `abs_surjective` — the uncurried constructor `abs` is surjective.
 
 The freshness condition for binders (Theorem 4.15, Corollary 4.17) and structural
 properties of `[A]_` live in `FCB.lean`.
@@ -149,7 +163,12 @@ theorem alphaEqv_equivariant {a₁ a₂ : α} {x₁ x₂ : X} (π : FinitePerm �
 /-- Equality via the freshness quantifier (eq. 4.7 / 4.8):
 `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ (И c, swap a₁ c • x₁ = swap a₂ c • x₂)`. -/
 theorem abs_eq_iff_freshQuantifier {a₁ a₂ : α} {x₁ x₂ : X} : ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔ (И c, swap a₁ c • x₁ = swap a₂ c • x₂) :=
-⟨fun h ↦ Quotient.exact h, fun h ↦ Quotient.sound h⟩
+  ⟨fun h ↦ Quotient.exact h, fun h ↦ Quotient.sound h⟩
+
+/-- Bridge between `AlphaEqv` and quotient equality:
+`AlphaEqv a₁ x₁ a₂ x₂ ↔ ⟪a₁⟫ x₁ = ⟪a₂⟫ x₂`. -/
+theorem alphaEqv_iff_abs_eq {a₁ a₂ : α} {x₁ x₂ : X} : AlphaEqv a₁ x₁ a₂ x₂ ↔ ⟪a₁⟫x₁ = ⟪a₂⟫x₂ :=
+  abs_eq_iff_freshQuantifier.symm
 
 /-- Same-binder injectivity: `⟪a⟫ x₁ = ⟪a⟫ x₂ ↔ x₁ = x₂` (Lemma 4.2). -/
 @[simp]
@@ -172,8 +191,7 @@ theorem abs_same_name_iff {a : α} {x₁ x₂ : X} : ⟪a⟫x₁ = ⟪a⟫x₂ �
 `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂` iff either `a₁ = a₂ ∧ x₁ = x₂`, or `a₁ ≠ a₂` with
 `a₁ # (a₂, x₂)` and `x₁ = swap a₁ a₂ • x₂`. -/
 theorem abs_eq_iff {a₁ a₂ : α} {x₁ x₂ : X} :
-    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔
-      (a₁ = a₂ ∧ x₁ = x₂) ∨ (a₁ ≠ a₂ ∧ a₁ # (a₂, x₂) ∧ x₁ = swap a₁ a₂ • x₂) := by
+    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔ (a₁ = a₂ ∧ x₁ = x₂) ∨ (a₁ ≠ a₂ ∧ a₁ # (a₂, x₂) ∧ x₁ = swap a₁ a₂ • x₂) := by
   constructor
   · -- Forward: abs a₁ x₁ = abs a₂ x₂ → ...
     intro h
@@ -227,6 +245,22 @@ theorem abs_eq_iff {a₁ a₂ : α} {x₁ x₂ : X} :
         split_ifs <;> simp_all
       rw [← mul_smul, hperm, mul_smul, fresh_swap ha₁x₂ hcx₂]
 
+/-- When binders differ: `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ a₁ # x₂ ∧ x₁ = swap a₁ a₂ • x₂`. Simplification of `abs_eq_iff` when `a₁ ≠ a₂`. -/
+theorem abs_eq_iff_of_ne {a₁ a₂ : α} {x₁ x₂ : X} (hne : a₁ ≠ a₂) : ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔ a₁ # x₂ ∧ x₁ = swap a₁ a₂ • x₂ := by
+  rw [abs_eq_iff]
+  constructor
+  · rintro (⟨rfl, _⟩ | ⟨_, hfresh, hswap⟩)
+    · exact absurd rfl hne
+    · exact ⟨fresh_prod_right.mp hfresh |>.2, hswap⟩
+  · rintro ⟨hfresh, hswap⟩
+    exact .inr ⟨hne, fresh_prod_right.mpr ⟨(fresh_atoms a₁ a₂).mpr hne, hfresh⟩, hswap⟩
+
+/-- When `a₁ # x₂` is already known and `a₁ ≠ a₂`: `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ x₁ = swap a₁ a₂ • x₂`. -/
+theorem abs_eq_iff_of_fresh {a₁ a₂ : α} {x₁ x₂ : X} (hne : a₁ ≠ a₂) (hfresh : a₁ # x₂) :
+    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔ x₁ = swap a₁ a₂ • x₂ := by
+  rw [abs_eq_iff_of_ne hne]
+  exact ⟨And.right, fun h ↦ ⟨hfresh, h⟩⟩
+
 /-! ### Permutation action (Pitts, Definition 4.4, eq. 4.10) -/
 
 /-- The permutation action on name abstractions: `π • ⟪a⟫ x = ⟪π • a⟫ (π • x)` (eq. 4.10). -/
@@ -240,6 +274,12 @@ instance instSMul : SMul (FinitePerm α) (NameAbs α X) where
 
 @[simp]
 theorem abs_equivariant (π : FinitePerm α) (a : α) (x : X) : π • ⟪a⟫x = ⟪(π • a)⟫(π • x) := rfl
+
+/-- Swap action on abstraction specialized to the binder: `swap a b • ⟪a⟫ x = ⟪b⟫ (swap a b • x)`. -/
+@[simp]
+theorem swap_smul_abs (a b : α) (x : X) :
+    swap a b • ⟪a⟫x = ⟪b⟫(swap a b • x) := by
+  simp
 
 /-- `NameAbs α X` is a `PermType` under the lifted permutation action. -/
 instance instPermType : PermType α (NameAbs α X) where
@@ -287,8 +327,7 @@ instance instNominal : Nominal α (NameAbs α X) where
   toPermType := instPermType
   finSupp := by
     intro F
-    induction F using ind with | _ a x =>
-    exact ⟨supp x \ {a}, abs_supports_sdiff a x⟩
+    induction F using ind with | _ a x => exact ⟨supp x \ {a}, abs_supports_sdiff a x⟩
 
 /-- `supp (⟪a⟫ x) = supp x \ {a}` (Proposition 4.5, eq. 4.11). -/
 @[simp]
@@ -314,6 +353,15 @@ theorem fresh_abs {a a' : α} {x : X} : a' # ⟪a⟫x ↔ a' = a ∨ a' # x := b
     fresh_atom_left]
   tauto
 
+/-- If `a'` is fresh for `⟪a⟫ x` and `a' ≠ a`, then `a'` is fresh for `x`.
+Extraction from `fresh_abs` for the `a' ≠ a` case. -/
+theorem fresh_abs_of_ne {a a' : α} {x : X} (habs : a' # ⟪a⟫x) (hne : a' ≠ a) : a' # x :=
+  (fresh_abs.mp habs).resolve_left hne
+
+/-- The abstraction `⟪a⟫ x` has empty support iff `supp x ⊆ {a}`. -/
+theorem supp_abs_eq_empty_iff {a : α} {x : X} : supp ⟪a⟫x = ∅ ↔ supp x ⊆ {a} := by
+  simp [Finset.sdiff_eq_empty_iff_subset]
+
 /-- `supp (⟪a⟫ x) ⊆ supp x`: the support of an abstraction is contained in
 the support of the body. Weaker than `supp_abs` but sometimes more convenient. -/
 theorem supp_abs_subset (a : α) (x : X) : supp ⟪a⟫x ⊆ supp x := by simp [Finset.sdiff_subset]
@@ -323,35 +371,24 @@ theorem supp_abs_subset (a : α) (x : X) : supp ⟪a⟫x ⊆ supp x := by simp [
 /-- Equality of abstractions via ∃ (Some/Any, eq. 4.8):
 `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ ∃ c # (a₁, x₁, a₂, x₂), swap a₁ c • x₁ = swap a₂ c • x₂`. -/
 theorem abs_eq_iff_exists {a₁ a₂ : α} {x₁ x₂ : X} :
-    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔
-      ∃ c, c # (a₁, x₁, a₂, x₂) ∧ swap a₁ c • x₁ = swap a₂ c • x₂ := by
+    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔ ∃ c, c # (a₁, x₁, a₂, x₂) ∧ swap a₁ c • x₁ = swap a₂ c • x₂ := by
   constructor
   · intro h
     exact freshQuantifier_exists
       (freshQuantifier_and.mpr ⟨fresh_atom_cofinite _, abs_eq_iff_freshQuantifier.mp h⟩)
   · intro ⟨c, hcfresh, hceq⟩
     rw [abs_eq_iff_freshQuantifier]
-    let R : α → α × X × α × X → Prop :=
-      fun d t ↦ swap t.1 d • t.2.1 = swap t.2.2.1 d • t.2.2.2
-    have hEquiv : EquivariantRel α R := ⟨fun π d t ↦ by
-      simp only [R, Prod.smul_fst, Prod.smul_snd]
-      rw [swap_smul_equivariant, swap_smul_equivariant, smul_left_cancel_iff]⟩
-    exact someAny_freshQuantifier_of_forall (someAny_forall_of_exists hEquiv ⟨c, hcfresh, hceq⟩)
+    exact someAny_freshQuantifier_of_forall
+      (someAny_forall_of_exists equivariantRel_swap_smul_eq ⟨c, hcfresh, hceq⟩)
 
 /-- Equality of abstractions via ∀ (Some/Any, eq. 4.8):
 `⟪a₁⟫ x₁ = ⟪a₂⟫ x₂ ↔ ∀ c, c # (a₁, x₁, a₂, x₂) → swap a₁ c • x₁ = swap a₂ c • x₂`. -/
 theorem abs_eq_iff_forall {a₁ a₂ : α} {x₁ x₂ : X} :
-    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔
-      ∀ c, c # (a₁, x₁, a₂, x₂) → swap a₁ c • x₁ = swap a₂ c • x₂ := by
-  let R : α → α × X × α × X → Prop :=
-    fun d t ↦ swap t.1 d • t.2.1 = swap t.2.2.1 d • t.2.2.2
-  have hEquiv : EquivariantRel α R := ⟨fun π d t ↦ by
-    simp only [R, Prod.smul_fst, Prod.smul_snd]
-    rw [swap_smul_equivariant, swap_smul_equivariant, smul_left_cancel_iff]⟩
+    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ ↔ ∀ c, c # (a₁, x₁, a₂, x₂) → swap a₁ c • x₁ = swap a₂ c • x₂ := by
   constructor
   · intro h
-    exact someAny_forall_of_exists hEquiv
-      (someAny_exists_of_freshQuantifier (abs_eq_iff_freshQuantifier.mp h))
+    obtain ⟨c, hcfresh, hceq⟩ := abs_eq_iff_exists.mp h
+    exact someAny_forall_of_exists equivariantRel_swap_smul_eq ⟨c, hcfresh, hceq⟩
   · intro hAll
     obtain ⟨c, hcfresh⟩ := freshQuantifier_exists (fresh_atom_cofinite (a₁, x₁, a₂, x₂))
     exact abs_eq_iff_exists.mpr ⟨c, hcfresh, hAll c hcfresh⟩
@@ -359,10 +396,10 @@ theorem abs_eq_iff_forall {a₁ a₂ : α} {x₁ x₂ : X} :
 /-! ### Utility lemmas -/
 
 /-- The binder is always fresh for its own abstraction. -/
+@[simp]
 theorem fresh_binder_abs (a : α) (x : X) : a # ⟪a⟫x := by simp [supp_abs]
 
-/-- Two binders that are both fresh for `x` give the same abstraction:
-`⟪a⟫ x = ⟪b⟫ x` when `a # x` and `b # x`. -/
+/-- Two binders that are both fresh for `x` give the same abstraction: `⟪a⟫ x = ⟪b⟫ x` when `a # x` and `b # x`. -/
 theorem abs_rename {a b : α} {x : X} (ha : a # x) (hb : b # x) : ⟪a⟫x = ⟪b⟫x := by
   by_cases hab : a = b
   · simp [hab]
@@ -370,8 +407,16 @@ theorem abs_rename {a b : α} {x : X} (ha : a # x) (hb : b # x) : ⟪a⟫x = ⟪
     exact .inr ⟨hab, fresh_prod_right.mpr ⟨(fresh_atoms a b).mpr hab, ha⟩,
       (fresh_swap ha hb).symm⟩
 
-/-- Support of an abstraction is strictly smaller than that of the pair,
-when `a` actually occurs in `supp x`. -/
+/-- Binder renaming via swap: `⟪a⟫ x = ⟪b⟫ (swap a b • x)` when `b # x`. Directed form of one case of `abs_eq_iff`. Does not require `a # x`. -/
+theorem abs_eq_swap {a b : α} {x : X} (hb : b # x) : ⟪a⟫x = ⟪b⟫(swap a b • x) := by
+  by_cases hab : a = b
+  · simp [hab]
+  · rw [abs_eq_iff_of_ne hab]
+    refine ⟨?_, (swap_smul_swap_smul a b x).symm⟩
+    rw [fresh_smul_left, swap_inv, swap_apply_left]
+    exact hb
+
+/-- Support of an abstraction is strictly smaller than that of the pair, when `a` actually occurs in `supp x`. -/
 theorem supp_abs_ssubset {a : α} {x : X} : supp ⟪a⟫x ⊂ supp (a, x) := by
   simp only [supp_abs, supp_prod, supp_atom]
   constructor
@@ -380,8 +425,7 @@ theorem supp_abs_ssubset {a : α} {x : X} : supp ⟪a⟫x ⊂ supp (a, x) := by
     have := h (Finset.mem_union_left _ (Finset.mem_singleton_self a))
     simp at this
 
-/-- Choose a representative with binder fresh for any given `z` (Lemma 4.24).
-Every abstraction `F` can be written as `⟪a⟫ x` with `a # z`. -/
+/-- Choose a representative with binder fresh for any given `z` (Lemma 4.24). Every abstraction `F` can be written as `⟪a⟫ x` with `a # z`. -/
 theorem exists_fresh_rep (F : NameAbs α X) {Z : Type u} [Nominal α Z] (z : Z) : ∃ a x, a # z ∧ F = ⟪a⟫x := by
   induction F using ind with | _ a x =>
   -- Pick b ∉ supp z ∪ supp x ∪ {a}; so b # z, b # x, and b ≠ a
@@ -399,13 +443,57 @@ theorem exists_fresh_rep (F : NameAbs α X) {Z : Type u} [Nominal α Z] (z : Z) 
       swap_apply_left, swap_smul_swap_smul]
   exact (fresh_atom_left b x).mpr hbx
 
-/-- Induction with freshness side-condition (∀ form): for any `z`, every element of
-`NameAbs α X` can be written `⟪a⟫ x` with `a # z`. -/
+/-- Induction with freshness side-condition (∀ form): for any `z`, every element of `NameAbs α X` can be written `⟪a⟫ x` with `a # z`. -/
 @[elab_as_elim]
 theorem ind_someAny_forall {P : NameAbs α X → Prop} {Z : Type u} [Nominal α Z] (z : Z) (h : ∀ a x, a # z → P ⟪a⟫x) : ∀ F, P F := by
   intro F
   obtain ⟨a, x, haz, rfl⟩ := exists_fresh_rep F z
   exact h a x haz
+
+/-! ### Binary induction and surjectivity -/
+
+/-- Binary induction on `NameAbs`: every pair of abstractions is of the form `(⟪a⟫ x, ⟪b⟫ y)` for some `a, x, b, y`. -/
+@[elab_as_elim]
+theorem ind₂ {P : NameAbs α X → NameAbs α X → Prop} (h : ∀ a₁ x₁ a₂ x₂, P ⟪a₁⟫x₁ ⟪a₂⟫x₂) : ∀ F G, P F G :=
+  fun F G ↦ ind (fun a x ↦ ind (fun b y ↦ h a x b y) G) F
+
+/-- Every pair of abstractions `F, G` can be written `⟪a⟫ x`, `⟪a⟫ y` with a common binder `a # z`. Combines two applications of `exists_fresh_rep`. -/
+theorem exists_fresh_rep₂ (F G : NameAbs α X) {Z : Type u} [Nominal α Z] (z : Z) :
+    ∃ a x y, a # z ∧ F = ⟪a⟫x ∧ G = ⟪a⟫y := by
+  obtain ⟨a, x, haz, rfl⟩ := exists_fresh_rep F (z, G)
+  have haG : a # G := (fresh_prod_right.mp haz).2
+  have haz' : a # z := (fresh_prod_right.mp haz).1
+  induction G using ind with | _ b y =>
+  rw [fresh_abs] at haG
+  obtain rfl | hay := haG
+  · exact ⟨a, x, y, haz', rfl, rfl⟩
+  · exact ⟨a, x, swap b a • y, haz', rfl, abs_eq_swap hay⟩
+
+/-- `abs a` is injective: `⟪a⟫ x₁ = ⟪a⟫ x₂ → x₁ = x₂`. `Function.Injective` form of `abs_same_name_iff`. -/
+theorem abs_injective (a : α) : Function.Injective (abs a : X → NameAbs α X) :=
+  fun _ _ h ↦ abs_same_name_iff.mp h
+
+/-- The constructor `abs` (uncurried) is surjective. -/
+theorem abs_surjective : Function.Surjective (fun p : α × X ↦ abs p.1 p.2) :=
+  fun F ↦ ind (fun a x ↦ ⟨(a, x), rfl⟩) F
+
+/-! ### Decidability -/
+
+/-- α-equivalence is decidable when the body type has decidable equality.
+Picks a fresh witness `c` and checks `swap a₁ c • x₁ = swap a₂ c • x₂`; by Some/Any (Pitts 3.9), one fresh witness suffices. -/
+noncomputable instance instDecidableAlphaEqv [DecidableEq X] (a₁ : α) (x₁ : X) (a₂ : α) (x₂ : X) : Decidable (AlphaEqv a₁ x₁ a₂ x₂) :=
+  let c := Classical.choose (supp (a₁, x₁, a₂, x₂)).exists_notMem
+  let hc := Classical.choose_spec (supp (a₁, x₁, a₂, x₂)).exists_notMem
+  let hfresh : c # (a₁, x₁, a₂, x₂) := (fresh_atom_left c _).mpr hc
+  if h : swap a₁ c • x₁ = swap a₂ c • x₂ then
+    isTrue (abs_eq_iff_freshQuantifier.mp (abs_eq_iff_exists.mpr ⟨c, hfresh, h⟩))
+  else
+    isFalse (fun hα ↦ h (abs_eq_iff_forall.mp (abs_eq_iff_freshQuantifier.mpr hα) c hfresh))
+
+/-- `NameAbs α X` has decidable equality when `X` does. -/
+noncomputable instance instDecidableEqNameAbs [DecidableEq X] : DecidableEq (NameAbs α X) :=
+  fun F G ↦ Quotient.recOnSubsingleton₂ F G fun ⟨a₁, x₁⟩ ⟨a₂, x₂⟩ ↦
+    decidable_of_iff (AlphaEqv a₁ x₁ a₂ x₂) abs_eq_iff_freshQuantifier.symm
 
 end NameAbs
 

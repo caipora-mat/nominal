@@ -27,6 +27,7 @@ The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` an
 * `supports_inter` — the intersection of two finite supports is again a support.
 * `supports_smul` — if `s` supports `x`, then `π • s` supports `π • x`.
 * `supports_smul_iff` — `supports (π • s) (π • x) ↔ supports s x`.
+* `equivariantRel_supports` — `supports` is an equivariant relation.
 * `supports_empty_iff` — `∅` supports `x` iff every finite permutation fixes `x`.
 * `supports_prod` — if `s` supports `x` and `t` supports `y`, then `s ∪ t` supports `(x, y)`.
 * `supports_prod_iff` — `supports s (x, y) ↔ supports s x ∧ supports s y`.
@@ -45,7 +46,13 @@ The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` an
 * `supports_finset_self` — a finset `s : Finset α` is supported by itself.
 * `supports_erase_of_swap_fix` — removing an unnecessary atom from a support set.
 * `supports_smul_of_supports_both` — if `s` supports both `π` and `x`, then `s` supports `π • x`.
+* `IsEquivariant.supports_image` — an equivariant function preserves supports.
+* `IsEquivariant.supports_of_image` — an injective equivariant function reflects supports.
+* `IsEquivariant.supports_image_iff` — for injective equivariant `f`: `supports s (f x) ↔ supports s x`.
+* `IsEquivariant₂.supports_image` — a binary equivariant function preserves supports.
 * `FinSupported.smul` — finite support is preserved by the action.
+* `FinSupported.of_smul` — if `π • x` is finitely supported, then `x` is finitely supported.
+* `finSupported_smul_iff` — `FinSupported (π • x) ↔ FinSupported x`.
 * `FinSupported.prod` / `FinSupported.fst` / `FinSupported.snd` — products and projections.
 * `FinSupported.inl` / `FinSupported.inr` — sum injections preserve finite support.
 * `FinSupported.of_inl` / `FinSupported.of_inr` — sum projections reflect finite support.
@@ -53,8 +60,10 @@ The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` an
 * `FinSupported.of_some` — option projection reflects finite support.
 * `finSupported_prod_iff` / `finSupported_inl_iff` / `finSupported_inr_iff` / `finSupported_some_iff` — iff-variants.
 * `FinSupported.atom` / `FinSupported.swap` — atoms and swaps are finitely supported.
+* `IsEquivariant.finSupported` — an equivariant image of a finitely supported element is finitely supported.
 * `IsEquivariant.finSupported_of_image` / `IsEquivariant.finSupported_iff` — injective equivariant reflects/iff for finite support.
 * `IsEquivariant₂.finSupported` — binary equivariant preserves finite support.
+* `equivariantPred_finSupported` — `FinSupported` is an equivariant predicate.
 
 ## References
 
@@ -69,8 +78,7 @@ open MulAction
 
 variable {α : Type*} [Name α]
 
-/-- `s` supports `b` with respect to the group `FinitePerm α`.
-A thin abbreviation over `MulAction.Supports` that fixes the acting group to `FinitePerm α`
+/-- `s` supports `b` with respect to the group `FinitePerm α`. A thin abbreviation over `MulAction.Supports` that fixes the acting group to `FinitePerm α`
 and restricts the support set to a `Finset α`. -/
 abbrev supports {β : Type*} [MulAction (FinitePerm α) β] (s : Finset α) (b : β) : Prop :=
   Supports (FinitePerm α) (s : Set α) b
@@ -303,13 +311,11 @@ theorem supports_of_inr {s : Finset α} {y : Y} (h : supports s (Sum.inr y : X �
   isEquivariant_inr.supports_of_image Sum.inr_injective h
 
 /-- `s` supports `Sum.inl x` iff `s` supports `x`. -/
-@[simp] theorem supports_inl_iff {s : Finset α} {x : X} :
-    supports s (Sum.inl x : X ⊕ Y) ↔ supports s x :=
+@[simp] theorem supports_inl_iff {s : Finset α} {x : X} : supports s (Sum.inl x : X ⊕ Y) ↔ supports s x :=
   isEquivariant_inl.supports_image_iff Sum.inl_injective
 
 /-- `s` supports `Sum.inr y` iff `s` supports `y`. -/
-@[simp] theorem supports_inr_iff {s : Finset α} {y : Y} :
-    supports s (Sum.inr y : X ⊕ Y) ↔ supports s y :=
+@[simp] theorem supports_inr_iff {s : Finset α} {y : Y} : supports s (Sum.inr y : X ⊕ Y) ↔ supports s y :=
   isEquivariant_inr.supports_image_iff Sum.inr_injective
 
 /-! ### Option support lemmas -/
@@ -327,15 +333,13 @@ theorem supports_of_some {s : Finset α} {x : X} (h : supports s (some x : Optio
   isEquivariant_some.supports_of_image (Option.some_injective _) h
 
 /-- `s` supports `some x` iff `s` supports `x`. -/
-@[simp] theorem supports_some_iff {s : Finset α} {x : X} :
-    supports s (some x : Option X) ↔ supports s x :=
+@[simp] theorem supports_some_iff {s : Finset α} {x : X} : supports s (some x : Option X) ↔ supports s x :=
   isEquivariant_some.supports_image_iff (Option.some_injective _)
 
 /-! ### Atom support characterisation -/
 
 /-- `{a}` supports an atom `b` if and only if `b = a`. -/
-theorem supports_singleton_atom_iff {a b : α} :
-    supports ({a} : Finset α) (b : α) ↔ b = a := by
+theorem supports_singleton_atom_iff {a b : α} : supports ({a} : Finset α) (b : α) ↔ b = a := by
   constructor
   · intro h
     by_contra hab
@@ -366,8 +370,7 @@ theorem supports_finset_self (s : Finset α) : supports s s := by
 
 /-- If `s` supports `x` and every swap of `a` with an atom outside `s` fixes `x`,
 then `s.erase a` still supports `x`. -/
-theorem supports_erase_of_swap_fix {s : Finset α} {x : X} {a : α}
-    (hs : supports s x) (ha : ∀ b, b ∉ s → swap a b • x = x) :
+theorem supports_erase_of_swap_fix {s : Finset α} {x : X} {a : α} (hs : supports s x) (ha : ∀ b, b ∉ s → swap a b • x = x) :
     supports (s.erase a) x := by
   rw [supports_iff_swap]
   intro c d hc hd
@@ -381,8 +384,8 @@ theorem supports_erase_of_swap_fix {s : Finset α} {x : X} {a : α}
 /-! ### Support when both permutation and element are supported -/
 
 /-- If `s` supports both `x` and `π`, then `s` supports `π • x`. -/
-theorem supports_smul_of_supports_both {s : Finset α} {x : X} {π : FinitePerm α}
-    (hx : supports s x) (hπ : supports s π) : supports s (π • x) :=
+theorem supports_smul_of_supports_both {s : Finset α} {x : X} {π : FinitePerm α} (hx : supports s x) (hπ : supports s π) :
+    supports s (π • x) :=
   isEquivariant₂_smul.supports_image hπ hx
 
 end SwapChar
@@ -443,23 +446,19 @@ theorem FinSupported.of_some {x : X} (h : FinSupported (Option.some x : Option X
 /-! ### FinSupported iff-variants -/
 
 /-- `(x, y)` is finitely supported iff both `x` and `y` are. -/
-theorem finSupported_prod_iff {x : X} {y : Y} :
-    FinSupported (x, y) ↔ FinSupported x ∧ FinSupported y :=
+theorem finSupported_prod_iff {x : X} {y : Y} : FinSupported (x, y) ↔ FinSupported x ∧ FinSupported y :=
   ⟨fun h ↦ ⟨h.fst, h.snd⟩, fun ⟨hx, hy⟩ ↦ hx.prod hy⟩
 
 /-- `Sum.inl x` is finitely supported iff `x` is. -/
-theorem finSupported_inl_iff {x : X} :
-    FinSupported (Sum.inl x : X ⊕ Y) ↔ FinSupported x :=
+theorem finSupported_inl_iff {x : X} : FinSupported (Sum.inl x : X ⊕ Y) ↔ FinSupported x :=
   ⟨FinSupported.of_inl, FinSupported.inl⟩
 
 /-- `Sum.inr y` is finitely supported iff `y` is. -/
-theorem finSupported_inr_iff {y : Y} :
-    FinSupported (Sum.inr y : X ⊕ Y) ↔ FinSupported y :=
+theorem finSupported_inr_iff {y : Y} : FinSupported (Sum.inr y : X ⊕ Y) ↔ FinSupported y :=
   ⟨FinSupported.of_inr, FinSupported.inr⟩
 
 /-- `some x` is finitely supported iff `x` is. -/
-theorem finSupported_some_iff {x : X} :
-    FinSupported (Option.some x : Option X) ↔ FinSupported x :=
+theorem finSupported_some_iff {x : X} : FinSupported (Option.some x : Option X) ↔ FinSupported x :=
   ⟨FinSupported.of_some, FinSupported.some⟩
 
 /-! ### FinSupported for concrete values -/
@@ -479,20 +478,17 @@ theorem IsEquivariant.finSupported {f : X → Y} (hf : IsEquivariant α f) {x : 
   let ⟨s, hs⟩ := h; ⟨s, hf.supports_image hs⟩
 
 /-- An injective equivariant function reflects finite support. -/
-theorem IsEquivariant.finSupported_of_image {f : X → Y}
-    (hf : IsEquivariant α f) (hinj : Function.Injective f) {x : X}
+theorem IsEquivariant.finSupported_of_image {f : X → Y} (hf : IsEquivariant α f) (hinj : Function.Injective f) {x : X}
     (h : FinSupported (f x)) : FinSupported x :=
   let ⟨s, hs⟩ := h; ⟨s, hf.supports_of_image hinj hs⟩
 
 /-- For an injective equivariant function, `f x` is finitely supported iff `x` is. -/
-theorem IsEquivariant.finSupported_iff {f : X → Y}
-    (hf : IsEquivariant α f) (hinj : Function.Injective f) {x : X} :
+theorem IsEquivariant.finSupported_iff {f : X → Y} (hf : IsEquivariant α f) (hinj : Function.Injective f) {x : X} :
     FinSupported (f x) ↔ FinSupported x :=
   ⟨hf.finSupported_of_image hinj, hf.finSupported⟩
 
 /-- A binary equivariant function preserves finite support. -/
-theorem IsEquivariant₂.finSupported {Z : Type*} [PermType α Z]
-    {f : X → Y → Z} (hf : IsEquivariant₂ α f) {x : X} {y : Y}
+theorem IsEquivariant₂.finSupported {Z : Type*} [PermType α Z] {f : X → Y → Z} (hf : IsEquivariant₂ α f) {x : X} {y : Y}
     (hx : FinSupported x) (hy : FinSupported y) : FinSupported (f x y) :=
   hf.curry.finSupported (hx.prod hy)
 
