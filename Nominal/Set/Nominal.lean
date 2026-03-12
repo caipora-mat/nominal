@@ -1,6 +1,7 @@
-import NominalSets.Support
-import NominalSets.Equivariant
-import NominalSets.PFun
+import Nominal.Set.Support
+import Nominal.Set.Equivariant
+import Nominal.Set.PFun
+
 import Mathlib.GroupTheory.GroupAction.Support
 import Mathlib.Data.Set.Finite.Basic
 import Mathlib.Data.Set.Lattice
@@ -96,7 +97,8 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 2.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 /-- A **nominal set** is a permutation type in which every element is finitely supported.
 
@@ -609,4 +611,4 @@ theorem supports_pfun_const (y : Y) : supports (supp y) (PFun.const y : PFun α 
 
 end PFunSupportNominal
 
-end NominalSets
+end Nominal.Set

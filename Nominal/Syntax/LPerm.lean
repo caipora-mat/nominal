@@ -1,6 +1,8 @@
-import NominalSets.Name
+import Nominal.Core.Name
 
-open NominalSets
+namespace Nominal
+
+open Core
 
 def Swap (A : Type*) [Name A] := A × A
 
@@ -20,3 +22,5 @@ def LPermApply : LPerm 𝔸 -> 𝔸 -> 𝔸
   | s :: sl, c => LPermApply sl (swapApply s c)
 
 end
+
+end Nominal

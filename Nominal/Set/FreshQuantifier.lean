@@ -1,7 +1,7 @@
-import NominalSets.Nominal
-import NominalSets.Freshness
-import NominalSets.Equivariant
-import NominalSets.NFun
+import Nominal.Set.Nominal
+import Nominal.Set.Freshness
+import Nominal.Set.Equivariant
+import Nominal.Set.NFun
 
 import Mathlib.Order.Filter.Cofinite
 
@@ -23,8 +23,7 @@ This equivalence justifies reading `И a, ϕ a` as "for some/any fresh `a`, `ϕ 
 
 ## Main definitions
 
-* `FreshQuantifier p` — `∀ᶠ a in Filter.cofinite, p a`, i.e., `p` holds for all but
-  finitely many atoms.
+* `FreshQuantifier p` — `∀ᶠ a in Filter.cofinite, p a`, i.e., `p` holds for all but finitely many atoms.
 * `FC F` — freshness condition (partial): `И a, ∃ x, F a = some x ∧ a # x`.
 * `FCT F` — freshness condition (total): `И a, a # F a`.
 
@@ -100,7 +99,8 @@ This equivalence justifies reading `И a, ϕ a` as "for some/any fresh `a`, `ϕ 
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Definition 3.8, Theorem 3.9, and Theorem 3.11.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 open MulAction Filter
 
@@ -596,4 +596,4 @@ theorem freshFT_smul (π : FinitePerm α) (F : NFun α α X) (hFC : FCT F) (hFC'
 
 end FreshnessTheorem
 
-end NominalSets
+end Nominal.Set

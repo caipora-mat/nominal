@@ -1,5 +1,5 @@
-import NominalSets.Swap
-import NominalSets.Equivariant
+import Nominal.Set.Swap
+import Nominal.Set.Equivariant
 
 import Mathlib.GroupTheory.GroupAction.Support
 import Mathlib.Data.Set.Finite.Basic
@@ -70,7 +70,8 @@ The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` an
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 2.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 section Support
 
@@ -512,4 +513,4 @@ theorem finSupported_smul_iff {x : X} {π : FinitePerm α} : FinSupported (π �
 
 end FinSupportedAPI
 
-end NominalSets
+end Nominal.Set

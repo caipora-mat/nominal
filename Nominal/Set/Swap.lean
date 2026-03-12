@@ -1,5 +1,5 @@
-import NominalSets.PermType
-import NominalSets.Equivariant
+import Nominal.Set.PermType
+import Nominal.Set.Equivariant
 
 import Mathlib.Logic.Equiv.Basic
 
@@ -72,9 +72,8 @@ that are needed for the swap characterisation of supports (Pitts, Prop. 2.1), pr
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 2.
 -/
 
-namespace NominalSets
-
-open PermType
+namespace Nominal.Set
+open Core PermType
 
 variable {α : Type*} [Name α]
 
@@ -381,4 +380,4 @@ theorem equivariantRel_swap_smul_eq {X : Type*} [PermType α X] : EquivariantRel
     simp only [Prod.smul_fst, Prod.smul_snd]
     rw [swap_smul_equivariant, swap_smul_equivariant, smul_left_cancel_iff]
 
-end NominalSets
+end Nominal.Set

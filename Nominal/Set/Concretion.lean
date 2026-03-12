@@ -1,4 +1,4 @@
-import NominalSets.NameAbstraction
+import Nominal.Set.NameAbstraction
 
 /-!
 # Concretion for Name Abstractions
@@ -108,7 +108,8 @@ principle for name abstractions (equation 4.16).
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Definition 4.7, Proposition 4.9, equations 4.15–4.16.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 open MulAction PermType
 
@@ -169,7 +170,7 @@ noncomputable def concreteAt (F : NameAbs α X) (a' : α) : Option X :=
             )
 
 /-- Notation `F ⊙ a` for concretion of `F` at `a`. -/
-scoped infixl:90 " ⊙ " => NominalSets.NameAbs.concreteAt
+scoped infixl:90 " ⊙ " => Nominal.Set.NameAbs.concreteAt
 
 /-- Concretion of `⟪a⟫ x` at `a` returns `some x`. -/
 @[simp]
@@ -745,4 +746,4 @@ theorem supp_concreteAt_nfun (F : NameAbs α X) : supp (concreteAt_nfun F) = sup
 
 end NameAbs
 
-end NominalSets
+end Nominal.Set

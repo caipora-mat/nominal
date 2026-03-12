@@ -1,4 +1,4 @@
-import NominalSets.PermType
+import Nominal.Set.PermType
 
 /-!
 # Equivariant Functions and Relations
@@ -86,7 +86,8 @@ functions) rather than a separate `EquivariantMap` type.
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Section 2.3.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 variable {α : Type*} [Name α]
 
@@ -372,4 +373,4 @@ theorem finset_smul_filter (π : FinitePerm α) (s : Finset α) (p : α → Bool
 
 end API
 
-end NominalSets
+end Nominal.Set

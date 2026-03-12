@@ -1,4 +1,4 @@
-import NominalSets.Wheels
+import Nominal.Wheels
 import Mathlib.GroupTheory.Perm.ClosureSwap
 import Mathlib.Algebra.Group.Subgroup.Pointwise
 
@@ -203,7 +203,8 @@ def FinitePerm (α : Type*) : Subgroup (Perm α) where
     intro f hf
     simp only [Set.mem_setOf_eq, Equiv.Perm.IsFinitePerm] at *
     rwa [Equiv.Perm.movedPoints_inv]
-namespace FinitePerm
+
+namespace Nominal.Core.FinitePerm
 
 /-! ### Function-like coercion
 
@@ -323,4 +324,4 @@ theorem swap_factorization [DecidableEq α] (π : FinitePerm α) : ∃ l : List 
 /-- The set of atoms moved by a finite permutation, as a `Set α`. -/
 def movedPoints' (π : FinitePerm α) : Set α := (π : Equiv.Perm α).movedPoints
 
-end FinitePerm
+end Nominal.Core.FinitePerm

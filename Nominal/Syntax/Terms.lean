@@ -1,10 +1,10 @@
-import NominalSets.Name
-import NominalSets.FinitePerm
-import NominalSets.Swap
-import Syntax.LPerm
+import Nominal.Core
+import Nominal.Syntax.LPerm
 -- import Mathlib.Logic.Equiv.Basic
 
-open NominalSets
+namespace Nominal
+
+open Core
 
 section
 
@@ -21,3 +21,5 @@ inductive ntm (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] whe
 
 -- #check (inferInstance : DecidableEq (ntm F X 𝔸))
 -- #check instDecidableEqTm
+
+end Nominal

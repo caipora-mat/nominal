@@ -1,5 +1,5 @@
-import NominalSets.FreshQuantifier
-import NominalSets.NFun
+import Nominal.Set.NFun
+import Nominal.Set.FreshQuantifier
 
 import Mathlib.Data.Finset.Basic
 
@@ -87,7 +87,8 @@ properties of `[A]_` live in `FCB.lean`.
 * [A. M. Pitts, *Nominal Sets*][Pitts2013], Chapter 4, Sections 4.1–4.3.
 -/
 
-namespace NominalSets
+namespace Nominal.Set
+open Core
 
 open MulAction PermType
 
@@ -497,4 +498,4 @@ noncomputable instance instDecidableEqNameAbs [DecidableEq X] : DecidableEq (Nam
 
 end NameAbs
 
-end NominalSets
+end Nominal.Set
