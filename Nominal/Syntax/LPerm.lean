@@ -6,7 +6,7 @@ open Core
 
 def Swap (A : Type*) [Name A] := A × A
 
-def LPerm (A : Type*) [Name A] := List (Swap A)
+abbrev LPerm (A : Type*) [Name A] := List (Swap A)
 
 section
 
@@ -25,7 +25,8 @@ def LPermApply : LPerm 𝔸 -> 𝔸 -> 𝔸
 /- lemmas -/
 
 /-- Swapping (a, b) is the same as swapping (b, a). -/
-lemma swapApply_symm (a b c : 𝔸) : swapApply (a, b) c = swapApply (b, a) c := by
+lemma swapApply_symm (a b : 𝔸) : swapApply (a, b) = swapApply (b, a) := by
+  ext c
   by_cases h₁ : c = a
   · subst h₁
     simp [swapApply, eq_comm]
@@ -36,7 +37,8 @@ lemma swapApply_symm (a b c : 𝔸) : swapApply (a, b) c = swapApply (b, a) c :=
 
 /-- Applying a singleton list permutation reduces to a single swap. -/
 @[simp]
-lemma LPermApply_singleton (a : 𝔸) (s : Swap 𝔸) : LPermApply [s] a = swapApply s a := by
+lemma LPermApply_singleton (s : Swap 𝔸) : LPermApply [s] = swapApply s := by
+  ext a
   simp [LPermApply]
 
 /-- Applying a swap twice yields the original value (swaps are involutions). -/
@@ -100,7 +102,7 @@ lemma LPermApply_cons (s : Swap 𝔸) (p : LPerm 𝔸) (a : 𝔸) :
   simp [LPermApply]
 
 /-- Applying concatenated permutations is the composition of their applications. -/
-lemma LPermApply_append (p q : List (Swap 𝔸)) (a : 𝔸) :
+lemma LPermApply_append (p q : LPerm 𝔸) (a : 𝔸) :
     LPermApply (p ++ q) a = LPermApply q (LPermApply p a) := by
   induction p generalizing a with
   | nil => simp
