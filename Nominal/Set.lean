@@ -5,6 +5,7 @@ import Nominal.Set.Swap
 import Nominal.Set.Support
 import Nominal.Set.Nominal
 import Nominal.Set.Freshness
+import Nominal.Set.EquivalenceClass
 import Nominal.Set.NFun
 import Nominal.Set.FreshQuantifier
 import Nominal.Set.NameAbstraction
