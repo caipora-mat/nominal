@@ -396,6 +396,19 @@ theorem abs_eq_iff_forall {a₁ a₂ : α} {x₁ x₂ : X} :
 
 /-! ### Utility lemmas -/
 
+/-- Instantiate `abs_eq_iff_forall` at a specific fresh witness `c`.
+Extracts `swap a₁ c • x₁ = swap a₂ c • x₂` directly from `⟪a₁⟫x₁ = ⟪a₂⟫x₂`. -/
+theorem abs_eq_mp_at {a₁ a₂ : α} {x₁ x₂ : X} (h : ⟪a₁⟫x₁ = ⟪a₂⟫x₂)
+    {c : α} (hc : c # (a₁, x₁, a₂, x₂)) : swap a₁ c • x₁ = swap a₂ c • x₂ :=
+  abs_eq_iff_forall.mp h c hc
+
+/-- Introduce an abstraction equality from a swap equality at a fresh witness.
+Converse of `abs_eq_mp_at`. -/
+theorem abs_eq_of_swap {a₁ a₂ : α} {x₁ x₂ : X}
+    {c : α} (hc : c # (a₁, x₁, a₂, x₂)) (h : swap a₁ c • x₁ = swap a₂ c • x₂) :
+    ⟪a₁⟫x₁ = ⟪a₂⟫x₂ :=
+  abs_eq_iff_exists.mpr ⟨c, hc, h⟩
+
 /-- The binder is always fresh for its own abstraction. -/
 @[simp]
 theorem fresh_binder_abs (a : α) (x : X) : a # ⟪a⟫x := by simp [supp_abs]
@@ -495,6 +508,40 @@ noncomputable instance instDecidableAlphaEqv [DecidableEq X] (a₁ : α) (x₁ :
 noncomputable instance instDecidableEqNameAbs [DecidableEq X] : DecidableEq (NameAbs α X) :=
   fun F G ↦ Quotient.recOnSubsingleton₂ F G fun ⟨a₁, x₁⟩ ⟨a₂, x₂⟩ ↦
     decidable_of_iff (AlphaEqv a₁ x₁ a₂ x₂) abs_eq_iff_freshQuantifier.symm
+
+/-- Parametric abstraction uniqueness: given two derivations at alpha-equivalent
+binder-body pairs (via a relation `R` equivariant for swaps fixing `A`),
+relates their outputs via NameAbs equality.
+
+This captures the common lam-case pattern from uniqueness proofs (e.g.,
+`RecRel.unique`, `RedAllRel.unique`). The caller provides:
+- `swap_equiv`: proof that `R` is equivariant for swaps `(a, b)` with `a, b # A`
+- `ha, hb`: freshness of the two binders w.r.t. `A`
+- `habs`: the binder-body pairs are alpha-equivalent (`⟪a⟫u = ⟪b⟫w`)
+- `hw`: a derivation at the second body `w`
+- `ih`: the uniqueness IH at the first body `u` -/
+theorem abs_unique_parametric
+    {X Y : Type u} [Nominal α X] [Nominal α Y]
+    {R : Finset α → X → Y → Prop}
+    (swap_equiv : ∀ {A : Finset α} {a b : α}, a # A → b # A →
+      ∀ {t y}, R A t y → R A (swap a b • t) (swap a b • y))
+    {A : Finset α} {a b : α} {u w : X} {u' w' : Y}
+    (ha : a # A) (hb : b # A)
+    (habs : (⟪a⟫u : NameAbs α X) = ⟪b⟫w)
+    (hw : R A w w')
+    (ih : ∀ {y₂}, R A u y₂ → u' = y₂) :
+    (⟪a⟫u' : NameAbs α Y) = ⟪b⟫w' := by
+  choose_fresh c from A a u b w u' w'
+  have hc_in : c # (a, u, b, w) :=
+    fresh_prod_right.mpr ⟨cFresh2, fresh_prod_right.mpr ⟨cFresh3,
+      fresh_prod_right.mpr ⟨cFresh4, cFresh5⟩⟩⟩
+  have habs_c := abs_eq_mp_at habs hc_in
+  have hse := swap_equiv ha cFresh1 (habs_c ▸ swap_equiv hb cFresh1 hw)
+  rw [swap_smul_swap_smul] at hse
+  exact abs_eq_of_swap
+    (fresh_prod_right.mpr ⟨cFresh2, fresh_prod_right.mpr ⟨cFresh6,
+      fresh_prod_right.mpr ⟨cFresh4, cFresh7⟩⟩⟩)
+    (by rw [ih hse, swap_smul_swap_smul])
 
 end NameAbs
 

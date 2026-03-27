@@ -294,6 +294,15 @@ theorem swap_conj_mul (π : FinitePerm α) (a b : α) : π * swap a b = swap (π
       = π * swap a b * π⁻¹ * π := by rw [mul_assoc, inv_mul_cancel, mul_one]
     _ = swap (π • a) (π • b) * π := by rw [h]
 
+/-- Reverse conjugation: `swap a b * π = π * swap (π⁻¹ • a) (π⁻¹ • b)`.
+This is the reverse of `swap_conj_mul`. Useful when a swap appears on the *left*
+of a permutation product and needs to be moved to the right. -/
+theorem mul_swap_conj (π : FinitePerm α) (a b : α) :
+    swap a b * π = π * swap (π⁻¹ • a) (π⁻¹ • b) := by
+  have h := swap_conj_mul π (π⁻¹ • a) (π⁻¹ • b)
+  simp only [PermType.smul_inv_smul] at h
+  exact h.symm
+
 /-- Applying a swap to a perm-set element is equivariant: `swap (π • a) (π • b) • (π • x) = π • (swap a b • x)`. -/
 @[simp]
 theorem swap_smul_equivariant {X : Type*} [PermType α X] (π : FinitePerm α) (a b : α) (x : X) :

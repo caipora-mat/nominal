@@ -86,7 +86,7 @@ variable {Y : Type u} [Nominal α Y]
 
 /-- When `π` fixes `F`, equivariance of `NFun` application on pairs simplifies to
 `F (π • a, π • x) = π • F (a, x)`. Wraps `NFun.smul_apply_smul` + the fixpoint rewrite. -/
-private theorem smul_nfun_pair_apply {Z : Type u} [Nominal α Z]
+theorem smul_nfun_pair_apply {Z : Type u} [Nominal α Z]
     (π : FinitePerm α) (F : NFun α (α × X) Z) (hπF : π • F = F) (a : α) (x : X) :
     F (π • a, π • x) = π • F (a, x) := by
   have := NFun.smul_apply_smul π F (a, x)
@@ -127,7 +127,7 @@ of the same abstraction `z = ⟪c₁⟫y₁ = ⟪c₂⟫y₂` with `c₁ # F` an
    trivially because `c # F(c₃, y₃)` (by `supp_apply_le`) and `c₃ # F(c₃, y₃)`
    (by FCB).
 5. *Conclude:* `F(c₁, y₁) = F(c₃, y₃) = F(c₂, y₂)`. -/
-private theorem liftFCB_val_indep {F : NFun α (α × X) (Option Y)} (hFCB : FCB F) {z : NameAbs α X}
+theorem liftFCB_val_indep {F : NFun α (α × X) (Option Y)} (hFCB : FCB F) {z : NameAbs α X}
     {c₁ : α} (hc₁F : c₁ # F) {y₁ : X} (h₁ : z = abs c₁ y₁)
     {c₂ : α} (hc₂F : c₂ # F) {y₂ : X} (h₂ : z = abs c₂ y₂) :
     F (c₁, y₁) = F (c₂, y₂) := by
@@ -171,7 +171,7 @@ The support witness is `supp F ∪ supp z`. The equivariance proof proceeds by c
 - `some x`: reduces to `F(π•a, π•x) = π • F(a,x)` by `NFun.smul_apply_smul`.
 
 Applying the partial freshness theorem (`freshF`) to this `G` produces `liftFCB_fun`. -/
-private noncomputable def liftFCB_nfun (F : NFun α (α × X) (Option Y)) (z : NameAbs α X) : NFun α α (Option Y) :=
+ noncomputable def liftFCB_nfun (F : NFun α (α × X) (Option Y)) (z : NameAbs α X) : NFun α α (Option Y) :=
   NFun.ofSupports ⟨fun a ↦ z ⊙ a >>= fun x ↦ F (a, x)⟩ (supp F ∪ supp z)
     (by
       rw [supports_pfun_iff]
@@ -189,7 +189,7 @@ private noncomputable def liftFCB_nfun (F : NFun α (α × X) (Option Y)) (z : N
         change F (π • a, π • x) = π • F (a, x)
         exact smul_nfun_pair_apply π F hπF a x)
 
-@[simp] private theorem liftFCB_nfun_apply (F : NFun α (α × X) (Option Y)) (z : NameAbs α X) (a : α) :
+@[simp] theorem liftFCB_nfun_apply (F : NFun α (α × X) (Option Y)) (z : NameAbs α X) (a : α) :
     liftFCB_nfun F z a = (z ⊙ a >>= fun x ↦ F (a, x)) :=
   NFun.ofSupports_apply _ _ _ _
 
@@ -200,7 +200,7 @@ satisfies the hypothesis of the partial freshness theorem (FC), i.e., `И a, ∃
 `z ⊙ a = some x` with `z = ⟪a⟫x`. Then `G(a) = F(a, x)`, and the FCB condition on `F` gives `∃ y, F(a, x) = some y ∧ a # y`.
 
 This is the proof term that, paired with `liftFCB_nfun F z`, feeds into `freshF` to define `liftFCB_fun`. -/
-private theorem liftFCB_nfun_fc (F : NFun α (α × X) (Option Y)) (hFCB : FCB F) (z : NameAbs α X) : FC (liftFCB_nfun F z) := by
+ theorem liftFCB_nfun_fc (F : NFun α (α × X) (Option Y)) (hFCB : FCB F) (z : NameAbs α X) : FC (liftFCB_nfun F z) := by
   have hBoth : И a, a # (F, z) ∧ (∀ x : X, ∃ y : Y, F (a, x) = some y ∧ a # y) :=
     freshQuantifier_and.mpr ⟨fresh_atom_cofinite (F, z), hFCB⟩
   apply freshQuantifier_mono _ hBoth
@@ -220,7 +220,7 @@ That is, `F̄(z)` is the unique `y : Y` such that `И a, (liftFCB_nfun F z)(a) =
 obtained from the partial freshness theorem. Informally: `F̄(z) = fresh a in F(a, z@a)`.
 
 This is a bare function `[A]X → Y`; it is promoted to an `NFun` (with `supp F̄ ⊆ supp F`) in `liftFCB`. -/
-private noncomputable def liftFCB_fun (F : NFun α (α × X) (Option Y)) (hFCB : FCB F) (z : NameAbs α X) : Y :=
+ noncomputable def liftFCB_fun (F : NFun α (α × X) (Option Y)) (hFCB : FCB F) (z : NameAbs α X) : Y :=
   freshF (liftFCB_nfun F z) (liftFCB_nfun_fc F hFCB z)
 
 /-- **Computation rule for `liftFCB_fun`**: when `a # F` and `z = ⟪a⟫x`,
@@ -234,7 +234,7 @@ private noncomputable def liftFCB_fun (F : NFun α (α × X) (Option Y)) (hFCB :
 3. *Conclude:* Both `И b, G(b) = some (liftFCB_fun ...)` and `И b, G(b) = F(a, x)` hold. Picking a common witness `b` gives `some (liftFCB_fun ...) = G(b) = F(a, x)`.
 
 Note: the conclusion is `some`-wrapped because `F` returns `Option Y` while `liftFCB_fun` returns `Y` (the `some` is stripped by `freshF`). -/
-private theorem liftFCB_fun_eq {F : NFun α (α × X) (Option Y)} (hFCB : FCB F)
+ theorem liftFCB_fun_eq {F : NFun α (α × X) (Option Y)} (hFCB : FCB F)
     {z : NameAbs α X} {a : α} (haF : a # F) {x : X} (hz : z = abs a x) : some (liftFCB_fun F hFCB z) = F (a, x) := by
   have hspec := freshF_spec (liftFCB_nfun F z) (liftFCB_nfun_fc F hFCB z)
   -- Show И b, (liftFCB_nfun F z) b = F(a, x), then freshQuantifier_some_unique concludes.
@@ -472,7 +472,7 @@ variable {Y : Type u} [Nominal α Y]
 
 /-- Auxiliary: wrap an equivariant `f : α → X → Y` into an `NFun α (α × X) (Option Y)` via
 `(a, x) ↦ some (f a x)`. Equivariance of `f` gives empty support. -/
-private noncomputable def liftFresh_nfun (f : α → X → Y) (hEquiv : IsEquivariant₂ α f) : NFun α (α × X) (Option Y) :=
+ noncomputable def liftFresh_nfun (f : α → X → Y) (hEquiv : IsEquivariant₂ α f) : NFun α (α × X) (Option Y) :=
   NFun.ofSupports ⟨fun p ↦ some (f p.1 p.2)⟩ ∅
     (by
       rw [supports_pfun_iff]
@@ -480,11 +480,11 @@ private noncomputable def liftFresh_nfun (f : α → X → Y) (hEquiv : IsEquiva
       simp only [PermType.prod_smul]
       exact congrArg some (hEquiv.map_smul π a x))
 
-@[simp] private theorem liftFresh_nfun_apply (f : α → X → Y) (hEquiv : IsEquivariant₂ α f) (a : α) (x : X) :
+@[simp] theorem liftFresh_nfun_apply (f : α → X → Y) (hEquiv : IsEquivariant₂ α f) (a : α) (x : X) :
     liftFresh_nfun f hEquiv (a, x) = some (f a x) :=
   NFun.ofSupports_apply _ _ _ _
 
-private theorem liftFresh_nfun_fcb (f : α → X → Y) (hEquiv : IsEquivariant₂ α f) (hFresh : ∀ (a : α) (x : X), a # f a x) :
+theorem liftFresh_nfun_fcb (f : α → X → Y) (hEquiv : IsEquivariant₂ α f) (hFresh : ∀ (a : α) (x : X), a # f a x) :
     FCB (liftFresh_nfun f hEquiv) :=
   freshQuantifier_of_forall (fun a ↦ fun x ↦ ⟨f a x, by simp, hFresh a x⟩)
 
@@ -495,7 +495,7 @@ theorem liftFresh_nfun_supp (f : α → X → Y) (hEquiv : IsEquivariant₂ α f
   simp only [liftFresh_nfun_apply, option_smul_some]
   exact congrArg some (hEquiv.map_smul π a x)
 
-private theorem liftFresh_nfun_fresh (f : α → X → Y) (hEquiv : IsEquivariant₂ α f) (a : α) : a # liftFresh_nfun f hEquiv := by
+theorem liftFresh_nfun_fresh (f : α → X → Y) (hEquiv : IsEquivariant₂ α f) (a : α) : a # liftFresh_nfun f hEquiv := by
   rw [fresh_atom_left, liftFresh_nfun_supp]; exact Finset.notMem_empty a
 
 /-- **Corollary 4.17**: Given an equivariant binary function `f : α → X → Y` satisfying
@@ -635,6 +635,43 @@ theorem FCB_of_total (F : NFun α (α × X) Y) (hFresh : ∀ (a : α) (x : X), a
     FCB (F.map some isEquivariant_some) :=
   freshQuantifier_of_forall (fun a x ↦ ⟨F (a, x), by simp, hFresh a x⟩)
 
+/-- If `F : NFun α (α × X) Y` satisfies the pointwise freshness condition and both `a # F`
+and `b # F`, then `⟪a⟫x = ⟪b⟫y → F (a, x) = F (b, y)`.
+
+This is the "total" analogue of `liftFCB_val_indep`: it avoids the `Option` detour by
+combining `FCB_of_total` with `liftFCB_val_indep` and stripping the `some`. -/
+theorem FCB_total_val_indep (F : NFun α (α × X) Y)
+    (hFresh : ∀ (a : α) (x : X), a # F (a, x))
+    {a b : α} (haF : a # F) (hbF : b # F)
+    {x y : X} (habs : ⟪a⟫x = ⟪b⟫y) : F (a, x) = F (b, y) := by
+  have hFCB : FCB (F.map some isEquivariant_some) := FCB_of_total F hFresh
+  have ha' : a # F.map some isEquivariant_some := fresh_of_supp_subset (NFun.supp_map_le _ _ _) haF
+  have hb' : b # F.map some isEquivariant_some := fresh_of_supp_subset (NFun.supp_map_le _ _ _) hbF
+  have := liftFCB_val_indep hFCB ha' rfl hb' habs
+  simp only [NFun.map_apply] at this
+  exact Option.some_injective _ this
+
+/-- Guarded variant of `FCB_total_val_indep`: the freshness condition is gated on `a # A`
+(a finite support set), with `supp F ⊆ A`. Matches the hypothesis shape produced by `RecRel`. -/
+theorem FCB_guarded_val_indep (F : NFun α (α × X) Y)
+    (A : Finset α) (hsupp : supp F ⊆ A)
+    (hFresh : ∀ (a : α) (x : X), a # A → a # F (a, x))
+    {a b : α} (haA : a # A) (hbA : b # A)
+    {x y : X} (habs : ⟪a⟫x = ⟪b⟫y) : F (a, x) = F (b, y) := by
+  -- Build FCB for F.map some using the guarded freshness and support bound
+  have hFCB : FCB (F.map some isEquivariant_some) := by
+    rw [FCB, freshQuantifier_iff_exists_finset]
+    exact ⟨A, fun c hc z => ⟨F (c, z), by simp, hFresh c z (fresh_atom_finset.mpr hc)⟩⟩
+  have haF : a # F.map some isEquivariant_some :=
+    fresh_of_supp_subset (NFun.supp_map_le _ _ _)
+      ((fresh_atom_left a F).mpr (fun hm => (fresh_atom_finset.mp haA) (hsupp hm)))
+  have hbF : b # F.map some isEquivariant_some :=
+    fresh_of_supp_subset (NFun.supp_map_le _ _ _)
+      ((fresh_atom_left b F).mpr (fun hm => (fresh_atom_finset.mp hbA) (hsupp hm)))
+  have := liftFCB_val_indep hFCB haF rfl hbF habs
+  simp only [NFun.map_apply] at this
+  exact Option.some_injective _ this
+
 end FCBTotal
 
 /-! ### Parametric form of Corollary 4.17 (Pitts, equations 4.38–4.39) -/
@@ -648,7 +685,7 @@ variable (hEquiv : ∀ (π : FinitePerm α) (z : Z) (a : α) (x : X), f (π • 
 /-- Auxiliary: wrap a 3-argument equivariant function `f : Z → α → X → Y` into an
 `NFun α (α × (Z × X)) (Option Y)` via `(a, (z, x)) ↦ some (f z a x)`.
 The equivariance assumption ensures empty support. -/
-private noncomputable def liftFreshParam_nfun : NFun α (α × (Z × X)) (Option Y) :=
+ noncomputable def liftFreshParam_nfun : NFun α (α × (Z × X)) (Option Y) :=
   NFun.ofSupports ⟨fun p ↦ some (f p.2.1 p.1 p.2.2)⟩ ∅
     (by
       rw [supports_pfun_iff]
@@ -656,23 +693,23 @@ private noncomputable def liftFreshParam_nfun : NFun α (α × (Z × X)) (Option
       simp only [PermType.prod_smul]
       exact congrArg some (hEquiv π z a x))
 
-@[simp] private theorem liftFreshParam_nfun_apply (a : α) (z : Z) (x : X) :
+@[simp] theorem liftFreshParam_nfun_apply (a : α) (z : Z) (x : X) :
     liftFreshParam_nfun f hEquiv (a, (z, x)) = some (f z a x) :=
   NFun.ofSupports_apply _ _ _ _
 
-private theorem liftFreshParam_nfun_supp : supp (liftFreshParam_nfun f hEquiv) = ∅ := by
+theorem liftFreshParam_nfun_supp : supp (liftFreshParam_nfun f hEquiv) = ∅ := by
   rw [NFun.supp_eq_empty_iff']
   intro π ⟨a, z, x⟩
   change liftFreshParam_nfun f hEquiv (π • a, (π • z, π • x)) = π • liftFreshParam_nfun f hEquiv (a, (z, x))
   simp only [liftFreshParam_nfun_apply, option_smul_some]
   exact congrArg some (hEquiv π z a x)
 
-private theorem liftFreshParam_nfun_fresh (a : α) : a # liftFreshParam_nfun f hEquiv := by
+theorem liftFreshParam_nfun_fresh (a : α) : a # liftFreshParam_nfun f hEquiv := by
   rw [fresh_atom_left, liftFreshParam_nfun_supp]; exact Finset.notMem_empty a
 
 /-- Auxiliary: for fixed `z`, the partial function `(a, x) ↦ some (f z a x)` is finitely
 supported with support `supp z`. -/
-private noncomputable def liftFreshParam_nfun_z (z : Z) : NFun α (α × X) (Option Y) :=
+ noncomputable def liftFreshParam_nfun_z (z : Z) : NFun α (α × X) (Option Y) :=
   NFun.ofSupports ⟨fun p ↦ some (f z p.1 p.2)⟩ (supp z)
     (by
       rw [supports_pfun_iff]
@@ -682,10 +719,10 @@ private noncomputable def liftFreshParam_nfun_z (z : Z) : NFun α (α × X) (Opt
       change some (f z (π • a) (π • x)) = π • some (f z a x)
       rw [option_smul_some, ← hEquiv π z a x, hπz])
 
-@[simp] private theorem liftFreshParam_nfun_z_apply (z : Z) (a : α) (x : X) : liftFreshParam_nfun_z f hEquiv z (a, x) = some (f z a x) :=
+@[simp] theorem liftFreshParam_nfun_z_apply (z : Z) (a : α) (x : X) : liftFreshParam_nfun_z f hEquiv z (a, x) = some (f z a x) :=
   NFun.ofSupports_apply _ _ _ _
 
-private theorem liftFreshParam_nfun_z_fcb (hFresh : ∀ (z : Z), И (a : α), ∀ (x : X), a # f z a x)
+theorem liftFreshParam_nfun_z_fcb (hFresh : ∀ (z : Z), И (a : α), ∀ (x : X), a # f z a x)
     (z : Z) : FCB (liftFreshParam_nfun_z f hEquiv z) :=
   freshQuantifier_mono (fun a ha x ↦ ⟨f z a x, by simp, ha x⟩) (hFresh z)
 

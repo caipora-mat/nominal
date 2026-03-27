@@ -122,15 +122,46 @@ private def evalChooseFresh (a : TSyntax `ident) (xs : Array (TSyntax `term))
   let unionTerm ← xs[1:].foldlM (fun acc x ↦ `($acc ∪ Nominal.Set.supp $x)) (← `(Nominal.Set.supp $(xs[0]!)))
   -- Obtain a fresh atom outside the union
   evalTactic (← `(tactic| obtain ⟨$a, $rawHId⟩ := ($unionTerm : Finset _).exists_notMem))
-  -- For each `xᵢ`, derive `a # xᵢ` using `fresh_atom_left`
-  for h : i in [:xs.size] do
+  -- For each `xᵢ`, derive `a # xᵢ` using `fresh_atom_left`.
+  -- The union is left-associated: `((supp x₁ ∪ supp x₂) ∪ supp x₃) ∪ …`
+  -- For index i (0-based), we build a proof that `c ∈ supp xᵢ → c ∈ union`.
+  -- For the last element (i = n-1): use `Finset.mem_union_right`
+  -- For earlier elements: wrap with `Finset.mem_union_left` from the outside in.
+  let n := xs.size
+  for h : i in [:n] do
     let x := xs[i]
     let hi := mkIdent <| Name.mkSimple s!"{baseName}{i + 1}"
+    -- Build the embedding: start with `_hmem` and wrap with union lemmas
+    -- Union structure (for n=3): (supp x₁ ∪ supp x₂) ∪ supp x₃
+    -- i=0: mem_union_left _ (mem_union_left _ _hmem)
+    -- i=1: mem_union_left _ (mem_union_right _ _hmem)
+    -- i=2: mem_union_right _ _hmem
+    let hmemId : TSyntax `ident := ⟨← withFreshMacroScope `(_hmem_i)⟩
+    -- Build proof term: embed `_hmem_i : c ∈ supp xᵢ` into `c ∈ supp x₁ ∪ ... ∪ supp xₙ`.
+    -- The union is left-associated: ((...(supp x₁ ∪ supp x₂) ∪ supp x₃) ... ∪ supp xₙ)
+    -- Strategy: collect directions from root to leaf, then wrap from leaf outward.
+    -- At each level, if i is the rightmost element go right (done),
+    -- otherwise go left and recurse into the left sub-union.
+    -- Directions are collected root→leaf, then applied leaf→root to build correct nesting.
+    let mut directions : Array Bool := #[]  -- true = right, false = left
+    let mut remaining := n
+    while remaining > 1 do
+      if i == remaining - 1 then
+        directions := directions.push true
+        remaining := 1
+      else
+        directions := directions.push false
+        remaining := remaining - 1
+    -- Apply directions in reverse (leaf to root) to build inside-out proof
+    let mut proof : TSyntax `term ← `($hmemId)
+    for dir in directions.reverse do
+      if dir then
+        proof ← `(Finset.mem_union_right _ $proof)
+      else
+        proof ← `(Finset.mem_union_left _ $proof)
     evalTactic (← `(tactic|
-      have $hi : $a # $x := by
-        refine (Nominal.Set.fresh_atom_left $a $x).mpr ?_
-        intro _hmem_i
-        exact $rawHId (by simp [Finset.mem_union, _hmem_i])))
+      have $hi : $a # $x :=
+        (Nominal.Set.fresh_atom_left $a $x).mpr (fun $hmemId ↦ $rawHId $proof)))
   -- Clean up the internal raw hypothesis
   evalTactic (← `(tactic| clear $rawHId))
 

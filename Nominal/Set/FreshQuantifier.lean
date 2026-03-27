@@ -570,7 +570,7 @@ theorem freshQuantifier_smul_iff (π : FinitePerm α) {p : α → Prop} :
       exact ⟨π • a, by simpa using ha, by simp⟩
     exact (h.image _).subset this
 
-private theorem freshQuantifier_smul_shift {p : α → Prop} (π : FinitePerm α) (h : И a, p a) : И a, p (π⁻¹ • a) :=
+theorem freshQuantifier_smul_shift {p : α → Prop} (π : FinitePerm α) (h : И a, p a) : И a, p (π⁻¹ • a) :=
   (freshQuantifier_smul_iff π).mp h
 
 /-- Equivariance of `freshF`: `freshF (π • F) _ = π • freshF F _`. -/
