@@ -10,12 +10,13 @@ substitution `t[x := s]` on `Term α` and prove its standard properties.
 
 Substitution is `recNoContext` with:
 
-| Parameter | Value | Support |
-|---|---|---|
-| `fᵥ` | `fun a => if a = x then s else var a` | `{x} ∪ supp s` |
-| `fₐ` | `fun (r₁, r₂) => app r₁ r₂` | `∅` |
-| `f_L` | `fun (a, r) => lam a r` | `∅` |
-| `A` | `{x} ∪ supp s` | — |
+| Parameter | Value                                 | Support        |
+|-----------|---------------------------------------|----------------|
+| `fᵥ`      | `fun a => if a = x then s else var a` | `{x} ∪ supp s` |
+| `fₐ`      | `fun (r₁, r₂) => app r₁ r₂`           | `∅`            |
+| `f_L`     | `fun (a, r) => lam a r`               | `∅`            |
+| `A`       | `{x} ∪ supp s`                        | —              |
+|-----------|---------------------------------------|----------------|
 
 The app and lam constructor NFuns are fully equivariant (empty support). Only `fᵥ` has
 non-empty support, since it inspects `x` and returns `s`. The FCB condition holds because
