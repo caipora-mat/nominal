@@ -4,9 +4,10 @@ namespace Nominal
 
 open Core
 
-def Swap (A : Type*) [Name A] := A × A
+abbrev Swap (A : Type*) := A × A
+abbrev LPerm (A : Type*) := List (Swap A)
 
-abbrev LPerm (A : Type*) [Name A] := List (Swap A)
+open Equiv
 
 section
 
@@ -112,31 +113,67 @@ lemma LPermApply_append (p q : LPerm 𝔸) (a : 𝔸) :
     rw [ih]
     rw [LPermApply_cons]
 
-/-- The reverse of a permutation is its inverse. -/
-lemma LPermApply_reverse_inv (p : LPerm 𝔸) (a : 𝔸) :
+/-- Left inverse: reverse · p = id -/
+lemma LPermApply_reverse_left (p : LPerm 𝔸) (a : 𝔸) :
     LPermApply (List.reverse p) (LPermApply p a) = a := by
   induction p generalizing a with
   | nil => simp
   | cons x xs ih =>
     rw [LPermApply_cons]
-    simp [List.reverse_cons]
-    simp [LPermApply_append]
-    simp [ih]
+    simp [List.reverse_cons, LPermApply_append, ih]
+
+/-- Right inverse: p · reverse = id -/
+lemma LPermApply_reverse_right (p : LPerm 𝔸) (a : 𝔸) :
+    LPermApply p (LPermApply (List.reverse p) a) = a := by
+  have h := LPermApply_reverse_left (List.reverse p) a
+  simp only [List.reverse_reverse] at h
+  exact h
 
 /-- List permutation application is injective (follows from reverse being its inverse). -/
 lemma LPermApply_injective (p : LPerm 𝔸) : Function.Injective (LPermApply p) := by
   intro a1 a2 h
   have h' := congrArg (LPermApply p.reverse) h
-  simp [LPermApply_reverse_inv] at h'
+  simp [LPermApply_reverse_left] at h'
   trivial
 
 /-- List permutation application is surjective (the reverse provides preimages). -/
 lemma LPermApply_surjective (p : LPerm 𝔸) : Function.Surjective (LPermApply p) := by
   intro y
   use (LPermApply p.reverse y)
-  have := LPermApply_reverse_inv (p := p.reverse) (a := y)
+  have := LPermApply_reverse_left (p := p.reverse) (a := y)
   simpa [List.reverse_reverse]
 
+lemma LPermApply_eq_self_iff_eq_reverse_apply (a : 𝔸) (π : LPerm 𝔸) :
+    LPermApply π a = a ↔ a = LPermApply (List.reverse π) a := by
+  constructor
+  · intro h
+    have h := congrArg (LPermApply π.reverse) h
+    simp [LPermApply_reverse_left] at h
+    trivial
+  · intro h
+    have h := congrArg (LPermApply π) h
+    simp [LPermApply_reverse_right] at h
+    trivial
+
+/-- Swap-conjugation: applying `π` after a swap `(b, a)` is the same as applying the swap of
+    the permuted atoms `(π b, π a)` after `π`. -/
+lemma LPermApply_swap_conjugate (π : LPerm 𝔸) (a b c : 𝔸) :
+    LPermApply π (swapApply (b, a) c) =
+      swapApply (LPermApply π b, LPermApply π a) (LPermApply π c) := by
+  by_cases hcb : c = b
+  · subst hcb
+    rw [swapApply_left, swapApply_left]
+  · by_cases hca : c = a
+    · subst hca
+      rw [swapApply_right, swapApply_right]
+    · have hπcb : LPermApply π c ≠ LPermApply π b := by
+        intro heq
+        exact hcb (LPermApply_injective π heq)
+      have hπca : LPermApply π c ≠ LPermApply π a := by
+        intro heq
+        exact hca (LPermApply_injective π heq)
+      rw [swapApply_other _ _ _ hcb hca,
+          swapApply_other _ _ _ hπcb hπca]
 
 end
 
