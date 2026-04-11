@@ -219,5 +219,47 @@ lemma ds_swap_symm (a b : 𝔸) : ds [(a,b)] [(b,a)] = ∅ := by
   intro n hn
   simp [swapApply_symm]
 
+lemma Lperm_not_in_ds (a : 𝔸) (π π' : LPerm 𝔸) :
+    LPermApply π a = LPermApply π' a ↔ a ∉ ds π π' := by
+  constructor
+  · intro h
+    simp [ds]
+    intro hmem
+    exact h
+  · intro h
+    simp [ds] at h
+    by_cases ha : a ∈ π.atoms ∨ a ∈ π'.atoms
+    · exact h ha                                                                                                                                    
+    · push_neg at ha
+      rw [LPermApply_not_mem_atoms _ _ ha.1, LPermApply_not_mem_atoms _ _ ha.2]
+
+lemma ds_append_swap_sub (π π' : LPerm 𝔸) (b : 𝔸) (a : 𝔸) (hab : a ≠ b) :
+    a ∈ ds (π ++ [(LPermApply π' b, LPermApply π b)]) π' → a ∈ ds π π' := by
+  simp only [ds, LPermAtoms_append, Finset.union_assoc, Finset.mem_filter, Finset.mem_union, and_imp]
+  intro h h'
+  constructor
+  · have hmem : a ∈ (π ++ [(LPermApply π' b, LPermApply π b)]).atoms ∨ a ∈ π'.atoms := by
+      by_contra hnot
+      push_neg at hnot
+      exact h' (by rw [LPermApply_not_mem_atoms _ _ hnot.1, LPermApply_not_mem_atoms _ _ hnot.2])
+    by_contra hnot
+    push_neg at hnot
+    apply h'
+    rw [LPermApply_append, LPermApply_not_mem_atoms _ _ hnot.1, LPermApply_not_mem_atoms _ _ hnot.2]
+    simp only [LPermApply_cons, LPermApply_nil]
+    rw [swapApply_other]
+    · intro heq; exact hab (by
+        rw [← LPermApply_reverse_left π' b, ← heq,
+            LPermApply_not_mem_atoms _ _ (LPermAtoms_reverse π' ▸ hnot.2)])
+    · intro heq; exact hab (by
+        rw [← LPermApply_reverse_left π b, ← heq,
+            LPermApply_not_mem_atoms _ _ (LPermAtoms_reverse π ▸ hnot.1)]) 
+  · intro heq
+    apply h'
+    rw [LPermApply_append, heq]
+    simp only [LPermApply_cons, LPermApply_nil]
+    rw [swapApply_other]
+    · intro h; exact hab (LPermApply_injective π' h) 
+    · intro h; exact hab (LPermApply_injective π (h.symm ▸ heq))
 
 end Nominal

@@ -445,166 +445,196 @@ theorem alphaEquiv_equivariance (Γ : Context 𝔸 X) (s t : ntm F X 𝔸) (π :
   have hds : ds (π ++ π.reverse) [] = ∅ := by simp [ds_reverse_nil]
   simp [alphaEquiv_permute_right_ds_empty Γ s t (π ++ List.reverse π) [] hds]
   simp [ntm.permute_nil]
+ 
+mutual 
+  theorem alphaEquiv_invariance_mp (Γ : Context 𝔸 X) (t : ntm F X 𝔸) (π π' : LPerm 𝔸) :
+      (∀ a ∈ ds π π', (Γ ⊢ a # t) = true) ->
+        (Γ ⊢ ntm.permute π t ≈α ntm.permute π' t) = true := by
+    match t with
+    | ntm.atm b => 
+      simp [fresh, alphaEquiv, ntm.permute]
+      intro h
+      exact (Lperm_not_in_ds b π π').mpr h
     
--- (Invariance of ≈α under the action of permutations).
-mutual
-  /-- Forward direction of Lemma 5: if every atom in the difference set of `π` and `π'` is
-      fresh for `s`, then permuting `s` by `π` is α-equivalent to permuting `s` by `π'`. -/
-  theorem alphaEquiv_invariance_mp (Γ : Context 𝔸 X) (s : ntm F X 𝔸) (π π' : LPerm 𝔸)
-      (h : ∀ a ∈ ds π π', (Γ ⊢ a # s) = true) :
-      (Γ ⊢ ntm.permute π s ≈α ntm.permute π' s) = true := by
-    match s with
-    | ntm.atm c =>
-      simp only [ntm.permute, alphaEquiv, decide_eq_true_eq]
-      by_contra hne
-      have hmem : c ∈ LPerm.atoms π ∪ LPerm.atoms π' := by
-        by_contra hnot
-        simp only [Finset.mem_union] at hnot
-        push_neg at hnot
-        apply hne
-        rw [LPermApply_not_mem_atoms π c hnot.1, LPermApply_not_mem_atoms π' c hnot.2]
-      have hc_ds : c ∈ ds π π' := by
-        simp only [ds, Finset.mem_filter]
-        exact ⟨hmem, hne⟩
-      have hfresh := h c hc_ds
-      simp [fresh] at hfresh
-
     | ntm.mvar σ x =>
-      simp only [ntm.permute, alphaEquiv, true_and, decide_eq_true_eq]
-      intro n hn
-      simp only [ds, LPermApply_append, ne_eq, LPermAtoms_append, Finset.union_assoc,
-        Finset.mem_filter, Finset.mem_union] at hn
-      obtain ⟨_, hne⟩ := hn
-      set m := LPermApply σ n with hm_def
-      have hm_ds : m ∈ ds π π' := by
-        simp only [ds, Finset.mem_filter, Finset.mem_union]
-        refine ⟨?_, hne⟩
-        by_contra hnot
-        push_neg at hnot
-        apply hne
-        rw [LPermApply_not_mem_atoms π m hnot.1, LPermApply_not_mem_atoms π' m hnot.2]
-      have hfresh := h m hm_ds
-      simp only [fresh, decide_eq_true_eq] at hfresh
-      have hn_eq : LPermApply σ.reverse m = n := by
-        rw [hm_def, LPermApply_reverse_left]
-      rw [hn_eq] at hfresh
-      exact hfresh
-
+      simp [fresh, alphaEquiv, ntm.permute]
+      intro h
+      intro n hn                                                                                                                                      
+      have hne : LPermApply π (LPermApply σ n) ≠ LPermApply π' (LPermApply σ n) := by
+        simp only [ds, Finset.mem_filter, LPermApply_append] at hn                                                                                    
+        exact hn.2                            
+      have hσn_ds : LPermApply σ n ∈ ds π π' := by                                                                                                    
+        simp only [ds, Finset.mem_filter, Finset.mem_union]                                                                                           
+        exact ⟨by_contra fun h => hne (by push_neg at h; rw [LPermApply_not_mem_atoms _ _ h.1, LPermApply_not_mem_atoms _ _ h.2]), hne⟩
+      have := h _ hσn_ds 
+      rwa [LPermApply_reverse_left] at this
+    
     | ntm.fapp f ts =>
-      simp only [ntm.permute, alphaEquiv, decide_eq_true_eq, true_and]
-      apply alphaEquivList_invariance_mp Γ ts π π'
-      intro a ha
-      have := h a ha
-      simp only [fresh] at this
-      exact this
-
+      simp [fresh, alphaEquiv, ntm.permute]
+      intro h
+      exact alphaEquivList_invariance_mp Γ ts π π' h
+  
     | ntm.abs b t =>
-      simp only [ntm.permute, alphaEquiv, Bool.decide_and, Bool.decide_eq_true,
-        Bool.ite_eq_true_distrib, Bool.and_eq_true]
+      simp [fresh, alphaEquiv, ntm.permute]
+      intro h
       split_ifs with heq
-      · apply alphaEquiv_invariance_mp Γ t π π'
-        intro a ha
-        have hab : a ≠ b := by
-          intro hab
-          subst hab
-          simp only [ds, Finset.mem_filter] at ha
-          exact ha.2 heq
-        have hfresh := h a ha
-        simp only [fresh, decide_eq_true_eq] at hfresh
-        rcases hfresh with h' | h'
-        · exact absurd h' hab
-        · exact h'
+      · have hb_not_ds : b ∉ ds π π' := by
+          exact (Lperm_not_in_ds b π π').mp heq
+        exact alphaEquiv_invariance_mp Γ t π π' (fun a ha => by
+            rcases h a ha with rfl | hfresh
+            · exact absurd ha hb_not_ds
+            · exact hfresh)
       · constructor
-        · sorry
-        · have hb : b ∈ ds π π' := by
-            simp only [ds, ne_eq, Finset.mem_filter, Finset.mem_union]
-            refine ⟨?_, heq⟩
-            by_contra hnot
-            push_neg at hnot
-            apply heq
-            rw [LPermApply_not_mem_atoms π b hnot.1, LPermApply_not_mem_atoms π' b hnot.2]
-          set c := LPermApply π.reverse (LPermApply π' b) with hc_def
-          have hπc : LPermApply π c = LPermApply π' b := by
-            simp [hc_def, LPermApply_reverse_right]
-          have hcb : c ≠ b := by
-            intro hcb
-            apply heq
-            rw [← hπc, hcb]
-          have hc_ds : c ∈ ds π π' := by
-            simp only [ds, Finset.mem_filter, Finset.mem_union, ne_eq]
-            refine ⟨?_, ?_⟩
-            · by_contra hnot
-              push_neg at hnot
-              apply hcb
-              have e1 : LPermApply π c = c := LPermApply_not_mem_atoms π c hnot.1
-              have e2 : LPermApply π' c = c := LPermApply_not_mem_atoms π' c hnot.2
-              have : LPermApply π' c = LPermApply π' b := by rw [e2, ← e1, hπc]
-              exact LPermApply_injective π' this
-            · rw [hπc]
-              intro hcontra
-              exact hcb (LPermApply_injective π' hcontra.symm)
-          have hinst := h c hc_ds
-          by_cases hcb : c ≠ b
-          · rw [<- hπc]
-            simp only [fresh, Bool.decide_or, Bool.decide_eq_true, Bool.or_eq_true,
-              decide_eq_true_eq] at hinst
-            simp only [hcb, false_or] at hinst
-            rw [← fresh_equivariance Γ c t π]
-            exact hinst
-          · push_neg at hcb
-            have hc_ds : c ∈ ds π π' := by
-              simp only [ds, Finset.mem_filter, Finset.mem_union, ne_eq]
-              refine ⟨?_, ?_⟩
-              · by_contra hnot; push_neg at hnot
-                rw [hcb] at hnot
-                simp only [ds, ne_eq, Finset.mem_filter, Finset.mem_union] at hb
-                have hnot' := (not_or.mpr hnot)
-                exact hnot' hb.1
-              · rw [hπc]
-                intro h
-                rw [hcb] at hπc
-                simp only [ds, ne_eq, Finset.mem_filter, Finset.mem_union] at hb
-                exact hb.2 hπc
+        · rw [ntm.permute_append]
+          apply alphaEquiv_invariance_mp Γ t (π ++ [(LPermApply π' b, LPermApply π b)]) π'
+          intro a ha
+          by_cases hab : a = b
+          · subst hab
             exfalso
-            rw [hcb] at hπc
-            simp only [ds, ne_eq, Finset.mem_filter, Finset.mem_union] at hb
-            exact hb.2 hπc
-
-  /-- List version of Lemma 5 forward direction: element-wise invariance. -/
-  theorem alphaEquivList_invariance_mp (Γ : Context 𝔸 X) (ts : List (ntm F X 𝔸))
-      (π π' : LPerm 𝔸) (h : ∀ a ∈ ds π π', freshList Γ a ts = true) :
-      alphaEquivList Γ (ts.map (ntm.permute π)) (ts.map (ntm.permute π')) = true := by
+            have : LPermApply (π ++ [(LPermApply π' a, LPermApply π a)]) a = LPermApply π' a := by
+              simp [LPermApply_append, swapApply_right]
+            exact absurd ha ((Lperm_not_in_ds a _ π').mp this)
+          · have hads : a ∈ ds π π' := ds_append_swap_sub π π' b a hab ha
+            exact (h a hads).resolve_left hab 
+        · rw [fresh_equivariance Γ (LPermApply π' b) (ntm.permute π t) π.reverse]
+          simp [ntm.permute_append]
+          have hnil : ds (π ++ π.reverse) [] = ∅ := by
+            simp [ds_reverse_nil]
+          rw [fresh_permute_ds_empty Γ (LPermApply (List.reverse π) (LPermApply π' b)) t (π ++ π.reverse) [] hnil]
+          simp [ntm.permute_nil]
+          set c := LPermApply π.reverse (LPermApply π' b)
+          have hcb : c ≠ b := by
+            intro heq'
+            apply heq
+            have := congrArg (LPermApply π) heq'
+            rw [← this]
+            simp [c]
+            simp [LPermApply_reverse_right]
+          have hc_ds : c ∈ ds π π' := by
+            by_contra h_not
+            have heq1 : LPermApply π c = LPermApply π' b := by simp [c, LPermApply_reverse_right]
+            have heq2 : LPermApply π c = LPermApply π' c := (Lperm_not_in_ds c π π').mpr h_not
+            exact hcb (LPermApply_injective π' (heq1 ▸ heq2).symm)
+          rcases h c hc_ds with hceqb | hfresh
+          · exact absurd hceqb hcb
+          · exact hfresh
+  
+  theorem alphaEquivList_invariance_mp (Γ : Context 𝔸 X) (ts : List (ntm F X 𝔸)) (π π' : LPerm 𝔸) :
+      (∀ a ∈ ds π π', freshList Γ a ts = true) ->
+        alphaEquivList Γ (ts.map (ntm.permute π)) (ts.map (ntm.permute π')) = true := by
     match ts with
     | [] => simp [alphaEquivList]
-    | t :: tl =>
-      simp only [List.map_cons, alphaEquivList, Bool.decide_and, Bool.decide_eq_true,
-        Bool.and_eq_true]
-      refine ⟨?_, ?_⟩
-      · apply alphaEquiv_invariance_mp Γ t π π'
-        intro a ha
-        have := h a ha
-        simp only [freshList, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true] at this
-        exact this.1
-      · apply alphaEquivList_invariance_mp Γ tl π π'
-        intro a ha
-        have := h a ha
-        simp only [freshList, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true] at this
-        exact this.2
+    | t :: ts' =>
+      intro h
+      simp [freshList] at h
+      simp [alphaEquivList]
+      have h1 : ∀ a ∈ ds π π', (Γ ⊢ a # t) = true := fun a ha => (h a ha).1
+      have h2 : ∀ a ∈ ds π π', freshList Γ a ts' = true := fun a ha => (h a ha).2
+      exact ⟨alphaEquiv_invariance_mp Γ t π π' h1, alphaEquivList_invariance_mp Γ ts' π π' h2⟩ 
+
 end
 
+mutual
+  theorem alphaEquiv_invariance_mpr (Γ : Context 𝔸 X) (t : ntm F X 𝔸) (π π' : LPerm 𝔸) :
+       (Γ ⊢ ntm.permute π t ≈α ntm.permute π' t) = true ->
+        (∀ a ∈ ds π π', (Γ ⊢ a # t) = true) := by
+    match t with
+    | ntm.atm b => 
+      simp [fresh, alphaEquiv, ntm.permute]
+      intro h
+      exact (Lperm_not_in_ds b π π').mp h
+    
+    | ntm.mvar σ x => 
+      simp [fresh, alphaEquiv, ntm.permute]
+      intro h
+      intro a ha
+      have hne : LPermApply π a ≠ LPermApply π' a := by
+        simp only [ds, Finset.mem_filter] at ha; exact ha.2
+      apply h
+      simp only [ds, Finset.mem_filter, Finset.mem_union, LPermAtoms_append, LPermApply_append, ne_eq]
+      refine ⟨?_, by rw [LPermApply_reverse_right]; exact hne⟩
+      by_contra hnot
+      push_neg at hnot
+      have hσ_fix := LPermApply_not_mem_atoms σ _ hnot.1.1
+      have hπ_fix := LPermApply_not_mem_atoms π _ hnot.1.2
+      have hπ'_fix := LPermApply_not_mem_atoms π' _ hnot.2.2
+      have hrev : LPermApply σ.reverse a = a := by
+        have := LPermApply_reverse_right σ a; rw [hσ_fix] at this; exact this
+      rw [hrev] at hπ_fix hπ'_fix
+      exact hne (hπ_fix.trans hπ'_fix.symm)
+      
+    | ntm.fapp f ts => 
+      simp [fresh, alphaEquiv, ntm.permute]
+      intro h
+      exact alphaEquivList_invariance_mpr Γ ts π π' h
+  
+    | ntm.abs b t => 
+      simp [fresh, alphaEquiv, ntm.permute]
+      intro h
+      by_cases hcase : LPermApply π b = LPermApply π' b
+      · simp [hcase] at h
+        intro a
+        by_cases hab : a = b
+        · subst hab
+          simp
+        · simp [hab]
+          intro hads
+          exact alphaEquiv_invariance_mpr Γ t π π' h a hads
+      · simp [hcase] at h
+        intro a
+        by_cases hab : a = b
+        · subst hab
+          simp
+        · simp [hab]
+          intro hads
+          by_cases hpa : LPermApply π a = LPermApply π' b
+          · have key : LPermApply π.reverse (LPermApply π' b) = a := by
+              rw [← hpa, LPermApply_reverse_left]
+            rw [← key, fresh_equivariance Γ _ t π, LPermApply_reverse_right]
+            exact h.2
+          · have hpb : LPermApply π a ≠ LPermApply π b := by
+              intro h; exact hab (LPermApply_injective π h)
+            have h1 := h.1
+            rw [ntm.permute_append] at h1
+            have hmpr := alphaEquiv_invariance_mpr Γ t (π ++ [(LPermApply π' b, LPermApply π b)]) π' h1
+            apply hmpr
+            simp only [ds, Finset.mem_filter, Finset.mem_union, LPermAtoms_append,
+                     LPermApply_append, ne_eq]
+            constructor
+            · by_contra hnot
+              push_neg at hnot
+              have hne := (Finset.mem_filter.mp (show a ∈ _ from hads)).2
+              exact hne (by
+                rw [LPermApply_not_mem_atoms _ _ hnot.1.1,
+                    LPermApply_not_mem_atoms _ _ hnot.2])
+            · simp only [LPermApply_cons, LPermApply_nil]
+              rw [swapApply_other _ _ _ hpa hpb]
+              exact (Finset.mem_filter.mp (show a ∈ _ from hads)).2
+  
+  theorem alphaEquivList_invariance_mpr (Γ : Context 𝔸 X) (ts : List (ntm F X 𝔸)) (π π' : LPerm 𝔸) :
+      alphaEquivList Γ (ts.map (ntm.permute π)) (ts.map (ntm.permute π')) = true ->
+      (∀ a ∈ ds π π', freshList Γ a ts = true) := by
+    match ts with
+    | [] => simp [freshList]
+    | t :: ts' =>
+      intro h
+      simp [freshList]
+      simp [alphaEquivList] at h
+      obtain ⟨h, hlist⟩ := h 
+      simp only [imp_and, forall_and]
+      constructor
+      · exact alphaEquiv_invariance_mpr Γ t π π' h
+      · exact alphaEquivList_invariance_mpr Γ ts' π π' hlist
+end
+      
 /-- (Invariance of ≈α under the action of permutations), full iff statement. -/
 theorem alphaEquiv_invariance (Γ : Context 𝔸 X) (s : ntm F X 𝔸) (π π' : LPerm 𝔸) :
     (∀ a ∈ ds π π', (Γ ⊢ a # s) = true) ↔
       (Γ ⊢ ntm.permute π s ≈α ntm.permute π' s) = true := by
   constructor
   · exact alphaEquiv_invariance_mp Γ s π π'
-  · intro h
-    match s with
-    | .atm b => sorry
-    | ntm.mvar σ x => sorry
-    | ntm.fapp f ts => sorry
-    | ntm.abs b t => sorry
-
+  · exact alphaEquiv_invariance_mpr Γ s π π'
+  
 -- (Reflexivity of ≈α ).
 mutual
 /-- α-equivalence is reflexive: every term is α-equivalent to itself. -/
@@ -629,7 +659,7 @@ mutual
         exact ⟨alphaEquiv_refl Γ t, alphaEquivList_refl Γ tl⟩
   end
 
--- Lemma 7 (Symmetry of ≈α ).
+-- (Symmetry of ≈α ).
 mutual
   /-- α-equivalence is symmetric. -/
   theorem alphaEquiv_symm (Γ : Context 𝔸 X) (s t : ntm F X 𝔸)
@@ -731,13 +761,15 @@ mutual
       subst hfg; subst hgh
       exact ⟨rfl, alphaEquivList_trans Γ ts₁ ts₂ ts₃ hl12 hl23⟩
 
+    -- TODO: finish transitivy proving abstraction
     | ntm.abs a t₁, ntm.abs b t₂, ntm.abs c t₃ =>
       simp [alphaEquiv] at *
       sorry
 
+    -- TODO: finish remaining cases for transitivity
     | _, _, _ => sorry
-      /- (simp [alphaEquiv] at *) -/
-
+  
+  -- TODO: prove transitivity for lists 
   theorem alphaEquivList_trans (Γ : Context 𝔸 X) (ts₁ ts₂ ts₃ : List (ntm F X 𝔸))
       (h₁ : (alphaEquivList Γ ts₁ ts₂) = true) (h₂ : (alphaEquivList Γ ts₂ ts₃) = true) :
       (alphaEquivList Γ ts₁ ts₃) = true := by
