@@ -32,7 +32,45 @@ def ntmSize : ntm F X 𝔸 → ℕ
 where
   ntmSizeList : List (ntm F X 𝔸) → ℕ
     | []      => 0
-    | t :: ts => ntmSize t + ntmSizeList ts
+    | t :: ts => 1 + ntmSize t + ntmSizeList ts
+
+mutual 
+  lemma ntmPermSize (t : ntm F X 𝔸) (π : LPerm 𝔸) :
+      ntmSize (ntm.permute π t) = ntmSize t := by
+    match t with
+    | .atm a => simp [ntmSize, ntm.permute]
+    | .mvar σ x => simp [ntmSize, ntm.permute]
+    | .fapp f ts =>
+      simp only [ntm.permute, ntmSize]
+      congr 1
+      exact ntmPermListSize ts π
+  
+    | .abs a t => 
+      simp [ntmSize, ntm.permute]
+      exact ntmPermSize t π
+  
+  lemma ntmPermListSize (ts : List (ntm F X 𝔸)) (π : LPerm 𝔸) :
+      ntmSize.ntmSizeList (List.map (ntm.permute π) ts) = ntmSize.ntmSizeList ts := by
+    match ts with
+    | [] => simp
+    | t :: ts => 
+      simp [ntmSize.ntmSizeList]
+      congr 1
+      · congr 1
+        exact ntmPermSize t π
+      · exact ntmPermListSize ts π 
+end
+
+lemma ntmSize_pos (t : ntm F X 𝔸) : 0 < ntmSize t := by
+  match t with
+  | .atm _ =>
+      simp [ntmSize]
+  | .mvar _ _ =>
+      simp [ntmSize]
+  | .fapp f ts =>
+      simp [ntmSize]
+  | .abs x t =>
+      simp [ntmSize]
 
 /-- Elements of a list have size strictly less than the whole `fapp` term. -/
 lemma ntmSize_lt_of_mem (t : ntm F X 𝔸) (ts : List (ntm F X 𝔸)) (h : t ∈ ts) :
