@@ -183,8 +183,8 @@ lemma simplify_isReduced : ∀ (P : Problem F X 𝔸) {Q : Problem F X 𝔸},
 
 /-- A context entails a constraint when the constraint is satisfied. -/
 def Constraint.Entails (Γ : Context 𝔸 X) : Constraint F X 𝔸 → Bool
-  | .fresh a t => _root_.Nominal.fresh Γ a t
-  | .alpha s t => _root_.Nominal.alphaEquiv Γ s t
+  | .fresh a t => Nominal.fresh Γ a t
+  | .alpha s t => Nominal.alphaEquiv Γ s t
 
 /-- A context entails a problem when it entails every constraint. -/
 def Problem.Entails (Γ : Context 𝔸 X) (P : Problem F X 𝔸) : Prop :=
