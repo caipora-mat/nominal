@@ -1,12 +1,24 @@
+import Nominal.Syntax.Terms
+
+namespace Nominal
+
+open Core
+
+variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
+
+-- (Atoms of a permutation and difference list).
+
 /-- Computable list of atoms in a permutation. -/
-def LPerm.atomsList [Name 𝔸] : LPerm 𝔸 → List 𝔸
+def LPerm.atomsList : LPerm 𝔸 → List 𝔸
   | []           => []
   | (a, b) :: ps => a :: b :: LPerm.atomsList ps
 
 /-- Computable difference list (may contain duplicates). -/
-def dsList [Name 𝔸] (π π' : LPerm 𝔸) : List 𝔸 :=
+def dsList (π π' : LPerm 𝔸) : List 𝔸 :=
   (LPerm.atomsList π ++ LPerm.atomsList π').filter fun n =>
     LPermApply π n ≠ LPermApply π' n
+
+-- (Constraints and problems).
 
 /-- A constraint is either a freshness question `a #? t` or an alpha-equivalence question `s ≈α? t`. -/
 inductive Constraint (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] where
@@ -17,145 +29,245 @@ inductive Constraint (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name �
 abbrev Problem (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] :=
   List (Constraint F X 𝔸)
 
-/-- Single-constraint simplification.
-    Returns `none` if the constraint is already reduced,
-    or `some cs` with the list of simpler constraints. -/
-def simplifyOne : Constraint F X 𝔸 → Option (Problem F X 𝔸)
-  -- Freshness rules
-  | .fresh a (.atm b)       => if a = b then none else some []
-  | .fresh a (.fapp _ ts)   => some (ts.map (.fresh a))
-  | .fresh a (.abs b t)     => if a = b then some [] else some [.fresh a t]
-  | .fresh a (.mvar π x)    =>
-      if π = [] then none
-      else some [.fresh (LPermApply π.reverse a) (.mvar [] x)]
-      
-  -- Alpha-equivalence rules
-  | .alpha (.atm a) (.atm b)          => if a = b then some [] else none
-  | .alpha (.fapp f ls) (.fapp g ss)  =>
-      if f = g then some (List.zipWith .alpha ls ss)
-      else none
-  | .alpha (.abs a l) (.abs b s)      =>
-      if a = b then some [.alpha l s]
-      else some [.alpha (l.permute [(b, a)]) s, .fresh b l]
-  | .alpha (.mvar π x) (.mvar π' y)   =>
-      if x = y then some ((dsList π π').map fun n => .fresh n (.mvar [] x))
-      else none
-  | _ => none
+-- (Freshness simplification).
 
 mutual
-  def ntmSize : ntm F X 𝔸 → Nat
-    | .atm _      => 1
-    | .mvar _ _   => 1
-    | .fapp _ ts  => 1 + ntmSizeList ts
-    | .abs _ t    => 1 + ntmSize t
+  /-- Simplify `a # t` to a list of reduced constraints. -/
+  def simplifyFresh (a : 𝔸) : ntm F X 𝔸 → Option (Problem F X 𝔸)
+    | .atm b     => if a = b then none else some []
+    | .abs b t   => if a = b then some [] else simplifyFresh a t
+    | .mvar π x  => some [.fresh (LPermApply π.reverse a) (.mvar [] x)]
+    | .fapp _ ts => simplifyFreshList a ts
 
-  def ntmSizeList : List (ntm F X 𝔸) → Nat
-    | []      => 0
-    | t :: ts => ntmSize t + ntmSizeList ts
+  def simplifyFreshList (a : 𝔸) : List (ntm F X 𝔸) → Option (Problem F X 𝔸)
+    | []      => some []
+    | t :: ts =>
+      match simplifyFresh a t, simplifyFreshList a ts with
+      | some cs₁, some cs₂ => some (cs₁ ++ cs₂)
+      | _, _               => none
 end
 
-def constraintSize : Constraint F X 𝔸 → Nat
-  | .fresh _ t  => ntmSize t
-  | .alpha s t  => ntmSize s + ntmSize t
-
-def problemMeasure (Pr : Problem F X 𝔸) : Multiset ℕ :=
-  Multiset.ofList (Pr.map constraintSize)
+-- (Alpha-equivalence simplification).
 
 mutual
-  lemma ntmSize_permute (t : ntm F X 𝔸) (π : LPerm 𝔸) :
-      ntmSize (t.permute π) = ntmSize t := by
-    match t with
-    | .atm _      => simp [ntm.permute, ntmSize]
-    | .mvar _ _   => simp [ntm.permute, ntmSize]
-    | .abs _ t    => simp [ntm.permute, ntmSize, ntmSize_permute t π]
-    | .fapp _ ts  => simp [ntm.permute, ntmSize, ntmSizeList_permute ts π]
-  termination_by sizeOf t
+  /-- Simplify `s ≈α t` to a list of reduced constraints. -/
+  def simplifyAlpha : ntm F X 𝔸 → ntm F X 𝔸 → Option (Problem F X 𝔸)
+    | .atm a, .atm b =>
+        if a = b then some [] else none
+    | .mvar π x, .mvar π' y =>
+        if x = y then some ((dsList π π').map fun n => .fresh n (.mvar [] x))
+        else none
+    | .fapp f ls, .fapp g ss =>
+        if f = g then simplifyAlphaList ls ss else none
+    | .abs a l, .abs b s =>
+        if a = b then simplifyAlpha l s
+        else
+          match simplifyAlpha (l.permute [(b, a)]) s, simplifyFresh b l with
+          | some cs₁, some cs₂ => some (cs₁ ++ cs₂)
+          | _, _               => none
+    | _, _ => none
 
-  lemma ntmSizeList_permute (ts : List (ntm F X 𝔸)) (π : LPerm 𝔸) :
-      ntmSizeList (ts.map (ntm.permute π)) = ntmSizeList ts := by
-    match ts with
-    | []       => simp [ntmSizeList]
-    | t :: ts  => simp [ntmSizeList, ntmSize_permute t π, ntmSizeList_permute ts π]
-  termination_by sizeOf ts
+  def simplifyAlphaList : List (ntm F X 𝔸) → List (ntm F X 𝔸) → Option (Problem F X 𝔸)
+    | [], []         => some []
+    | l :: ls, s :: ss =>
+      match simplifyAlpha l s, simplifyAlphaList ls ss with
+      | some cs₁, some cs₂ => some (cs₁ ++ cs₂)
+      | _, _               => none
+    | _, _ => none
 end
 
-lemma ntmSize_le_ntmSizeList (ts : List (ntm F X 𝔸)) {t : ntm F X 𝔸} (ht : t ∈ ts) :
-    ntmSize t ≤ ntmSizeList ts := by
-  induction ts with
-  | nil  => exact absurd ht (List.not_mem_nil)
-  | cons t' ts ih =>
-    simp only [ntmSizeList]
-    rcases List.mem_cons.mp ht with rfl | hmem
-    · omega
-    · have := ih hmem; omega
+-- (Top-level simplifier).
 
--- Fresh constraints are cheap relative to their term's size
-lemma constraintSize_fresh_le (a : 𝔸) (t : ntm F X 𝔸) :
-    constraintSize (.fresh a t) ≤ ntmSize t + 1 := by
-  match t with
-  | .mvar π _ =>
-    simp only [constraintSize, ntmSize]
-    omega
-  | _ => simp [constraintSize]
+/-- Simplify each constraint to reduced form; `none` if any is inconsistent. -/
+def simplify : Problem F X 𝔸 → Option (Problem F X 𝔸)
+  | []                 => some []
+  | .fresh a t :: rest =>
+    match simplifyFresh a t, simplify rest with
+    | some cs₁, some cs₂ => some (cs₁ ++ cs₂)
+    | _, _               => none
+  | .alpha s t :: rest =>
+    match simplifyAlpha s t, simplify rest with
+    | some cs₁, some cs₂ => some (cs₁ ++ cs₂)
+    | _, _               => none
 
-lemma simplifyOne_lt (c : Constraint F X 𝔸) (cs : Problem F X 𝔸)
-    (h : simplifyOne c = some cs) (c' : Constraint F X 𝔸) (hc' : c' ∈ cs) :
-    constraintSize c' < constraintSize c := by
-  match c with
-  | .fresh a (.atm b) =>
-    simp only [simplifyOne] at h
-    split_ifs at h <;> simp_all
+-- (Reduced form).
 
-  | .fresh a (.fapp f ts) =>
-    simp only [simplifyOne, Option.some.injEq] at h; subst h
-    obtain ⟨t, ht, rfl⟩ := List.mem_map.mp hc'
-    simp only [constraintSize, ntmSize]
-    simp [Nat.add_comm]
-    apply Nat.lt_succ_iff.mpr
-    exact ntmSize_le_ntmSizeList ts ht
+/-- A constraint is *reduced* iff it has the form `a #? X` for an unconstrained metavariable. -/
+def Constraint.IsReduced : Constraint F X 𝔸 → Bool
+  | .fresh _ (.mvar [] _) => True
+  | _                     => False
 
-  | .fresh a (.abs b t) =>
-    simp only [simplifyOne] at h
-    by_cases hab : a = b
-    · simp_all
-    · simp only [hab, ite_false, Option.some.injEq] at h; subst h
-      simp only [List.mem_singleton] at hc'; subst hc'
-      simp only [constraintSize, ntmSize]; omega
+/-- A problem is reduced iff every constraint in it is reduced. -/
+def Problem.IsReduced (Q : Problem F X 𝔸) : Prop :=
+  ∀ c ∈ Q, c.IsReduced
 
-  | .fresh a (.mvar π x) =>
-    simp only [simplifyOne] at h
-    by_cases hπ : π = []
-    · simp_all
-    · simp only [hπ, ite_false, Option.some.injEq] at h; subst h
-      simp only [List.mem_singleton] at hc'; subst hc'
-      simp only [constraintSize]
-      simp only [ntmSize]
+lemma Problem.IsReduced.nil : Problem.IsReduced ([] : Problem F X 𝔸) := by
+  intro c hc; cases hc
 
-  -- .alpha (.atm a) (.atm b): cs = [] when a = b
-  | .alpha (.atm a) (.atm b) => sorry
+lemma Problem.IsReduced.append {Q₁ Q₂ : Problem F X 𝔸}
+    (h₁ : Q₁.IsReduced) (h₂ : Q₂.IsReduced) : (Q₁ ++ Q₂).IsReduced := by
+  intro c hc
+  rcases List.mem_append.mp hc with h | h
+  · exact h₁ c h
+  · exact h₂ c h
 
-  -- .alpha (.fapp f ls) (.fapp f ss): cs = zipWith .alpha ls ss
-  | .alpha (.fapp f ls) (.fapp g ss) => sorry
+-- (Normalization).
 
-  -- .alpha (.abs a l) (.abs b s): two sub-cases on a = b
-  | .alpha (.abs a l) (.abs b s) => sorry
-    
-  -- .alpha (.mvar π x) (.mvar π' y): cs = dsList ... mapped to fresh constraints
-  | .alpha (.mvar π x) (.mvar π' y) => sorry
+mutual
+  /-- `simplifyFresh` produces a reduced problem whenever it succeeds. -/
+  lemma simplifyFresh_isReduced (a : 𝔸) (t : ntm F X 𝔸) {Q : Problem F X 𝔸}
+      (h : simplifyFresh a t = some Q) : Q.IsReduced :=
+    match t, h with
+    | .atm b, h => by
+        simp only [simplifyFresh] at h
+        split_ifs at h with hab
+        injection h with heq; subst heq
+        exact Problem.IsReduced.nil
+    | .mvar π x, h => by
+        simp only [simplifyFresh] at h
+        injection h with heq; subst heq
+        intro c hc
+        simp only [List.mem_singleton] at hc
+        subst hc
+        trivial
+    | .fapp _ ts, h => by
+        simp only [simplifyFresh] at h
+        exact simplifyFreshList_isReduced a ts h
+    | .abs b t', h => by
+        simp only [simplifyFresh] at h
+        split_ifs at h with hab
+        · injection h with heq; subst heq; exact Problem.IsReduced.nil
+        · exact simplifyFresh_isReduced a t' h
 
-  -- All remaining alpha combinations: simplifyOne returns none
-  | .alpha (.atm _)  (.mvar _ _) | .alpha (.atm _)  (.fapp _ _) | .alpha (.atm _)  (.abs _ _)
-  | .alpha (.mvar _ _) (.atm _)  | .alpha (.mvar _ _) (.fapp _ _)| .alpha (.mvar _ _) (.abs _ _)
-  | .alpha (.fapp _ _) (.atm _)  | .alpha (.fapp _ _) (.mvar _ _)| .alpha (.fapp _ _) (.abs _ _)
-  | .alpha (.abs _ _)  (.atm _)  | .alpha (.abs _ _)  (.mvar _ _)| .alpha (.abs _ _)  (.fapp _ _) =>
-    simp [simplifyOne] at h
+  /-- `simplifyFreshList` produces a reduced problem whenever it succeeds. -/
+  lemma simplifyFreshList_isReduced (a : 𝔸) (ts : List (ntm F X 𝔸)) {Q : Problem F X 𝔸}
+      (h : simplifyFreshList a ts = some Q) : Q.IsReduced :=
+    match ts, h with
+    | [], h => by
+        simp only [simplifyFreshList] at h
+        injection h with heq; subst heq
+        exact Problem.IsReduced.nil
+    | t :: ts', h => by
+        simp only [simplifyFreshList] at h
+        cases hf : simplifyFresh a t with
+        | none => rw [hf] at h; cases h
+        | some cs₁ =>
+          cases hl : simplifyFreshList a ts' with
+          | none => rw [hf, hl] at h; cases h
+          | some cs₂ =>
+            rw [hf, hl] at h
+            injection h with heq; subst heq
+            exact Problem.IsReduced.append
+              (simplifyFresh_isReduced a t hf)
+              (simplifyFreshList_isReduced a ts' hl)
+end
 
-/-- Simplify all constraints in a problem until no more rules apply.
-    Returns the reduced (normal form) problem. -/
-partial def simplify : (Problem F X 𝔸) → (Problem F X 𝔸)
-  | [] => []
-  | c :: Pr =>
-    match simplifyOne c with
-    | some cs => (simplify cs) ++ (simplify Pr)
-    | none    => c :: simplify Pr
+mutual
+  /-- `simplifyAlpha` produces a reduced problem whenever it succeeds. -/
+  lemma simplifyAlpha_isReduced (s t : ntm F X 𝔸) {Q : Problem F X 𝔸}
+      (h : simplifyAlpha s t = some Q) : Q.IsReduced :=
+    match s, t, h with
+    | .atm a, .atm b, h => by
+        simp only [simplifyAlpha] at h
+        split_ifs at h with hab
+        injection h with heq; subst heq
+        exact Problem.IsReduced.nil
+    | .mvar π x, .mvar π' y, h => by
+        simp only [simplifyAlpha] at h
+        split_ifs at h with hxy
+        injection h with heq; subst heq
+        intro c hc
+        rcases List.mem_map.mp hc with ⟨n, _, rfl⟩
+        trivial
+    | .fapp f ls, .fapp g ss, h => by
+        simp only [simplifyAlpha] at h
+        split_ifs at h with hfg
+        exact simplifyAlphaList_isReduced ls ss h
+    | .abs a l, .abs b s', h => by
+        simp only [simplifyAlpha] at h
+        split_ifs at h with hab
+        · exact simplifyAlpha_isReduced l s' h
+        · cases h₁ : simplifyAlpha (l.permute [(b, a)]) s' with
+          | none => rw [h₁] at h; cases h
+          | some cs₁ =>
+            cases h₂ : simplifyFresh b l with
+            | none => rw [h₁, h₂] at h; cases h
+            | some cs₂ =>
+              rw [h₁, h₂] at h
+              injection h with heq; subst heq
+              exact Problem.IsReduced.append
+                (simplifyAlpha_isReduced _ _ h₁)
+                (simplifyFresh_isReduced b l h₂)
+    | .atm _,    .mvar _ _, h | .atm _,    .fapp _ _, h | .atm _,    .abs _ _, h
+    | .mvar _ _, .atm _,    h | .mvar _ _, .fapp _ _, h | .mvar _ _, .abs _ _, h
+    | .fapp _ _, .atm _,    h | .fapp _ _, .mvar _ _, h | .fapp _ _, .abs _ _, h
+    | .abs _ _,  .atm _,    h | .abs _ _,  .mvar _ _, h | .abs _ _,  .fapp _ _, h => by
+        simp [simplifyAlpha] at h
 
+  /-- `simplifyAlphaList` produces a reduced problem whenever it succeeds. -/
+  lemma simplifyAlphaList_isReduced (ls ss : List (ntm F X 𝔸)) {Q : Problem F X 𝔸}
+      (h : simplifyAlphaList ls ss = some Q) : Q.IsReduced :=
+    match ls, ss, h with
+    | [], [], h => by
+        simp only [simplifyAlphaList] at h
+        injection h with heq; subst heq
+        exact Problem.IsReduced.nil
+    | l :: ls', s :: ss', h => by
+        simp only [simplifyAlphaList] at h
+        cases h₁ : simplifyAlpha l s with
+        | none => rw [h₁] at h; cases h
+        | some cs₁ =>
+          cases h₂ : simplifyAlphaList ls' ss' with
+          | none => rw [h₁, h₂] at h; cases h
+          | some cs₂ =>
+            rw [h₁, h₂] at h
+            injection h with heq; subst heq
+            exact Problem.IsReduced.append
+              (simplifyAlpha_isReduced l s h₁)
+              (simplifyAlphaList_isReduced ls' ss' h₂)
+    | [], _ :: _, h => by simp [simplifyAlphaList] at h
+    | _ :: _, [], h => by simp [simplifyAlphaList] at h
+end
+
+/-- The top-level simplifier produces a reduced problem whenever it succeeds. -/
+lemma simplify_isReduced : ∀ (P : Problem F X 𝔸) {Q : Problem F X 𝔸},
+    simplify P = some Q → Q.IsReduced
+  | [], Q, h => by
+      simp only [simplify] at h
+      injection h with heq; subst heq
+      exact Problem.IsReduced.nil
+  | .fresh a t :: rest, Q, h => by
+      simp only [simplify] at h
+      cases h₁ : simplifyFresh a t with
+      | none => rw [h₁] at h; cases h
+      | some cs₁ =>
+        cases h₂ : simplify rest with
+        | none => rw [h₁, h₂] at h; cases h
+        | some cs₂ =>
+          rw [h₁, h₂] at h
+          injection h with heq; subst heq
+          exact Problem.IsReduced.append
+            (simplifyFresh_isReduced a t h₁)
+            (simplify_isReduced rest h₂)
+  | .alpha s t :: rest, Q, h => by
+      simp only [simplify] at h
+      cases h₁ : simplifyAlpha s t with
+      | none => rw [h₁] at h; cases h
+      | some cs₁ =>
+        cases h₂ : simplify rest with
+        | none => rw [h₁, h₂] at h; cases h
+        | some cs₂ =>
+          rw [h₁, h₂] at h
+          injection h with heq; subst heq
+          exact Problem.IsReduced.append
+            (simplifyAlpha_isReduced s t h₁)
+            (simplify_isReduced rest h₂)
+
+
+
+
+
+
+
+
+end Nominal
