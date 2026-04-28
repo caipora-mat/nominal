@@ -261,4 +261,6 @@ mutual
     · simp [ntmSize.ntmSizeList]
 end
 
+/- TODO: congruence -/
+
 end Nominal
