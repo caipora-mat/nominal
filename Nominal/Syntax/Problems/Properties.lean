@@ -380,8 +380,7 @@ lemma simplify_sound (Γ : Context 𝔸 X) : ∀ (P : Problem F X 𝔸) {Q : Pro
           · intro hP
             exact (simplifyFresh_sound Γ a t h₁).mp
               (by simpa [Problem.Entails, Constraint.Entails] using hP)
-          · intro hQ
-            intro c hc
+          · intro hQ c hc
             simp only [List.mem_singleton] at hc
             subst hc
             exact (simplifyFresh_sound Γ a t h₁).mpr hQ
@@ -402,8 +401,7 @@ lemma simplify_sound (Γ : Context 𝔸 X) : ∀ (P : Problem F X 𝔸) {Q : Pro
           · intro hP
             exact (simplifyAlpha_sound Γ s t h₁).mp
               (by simpa [Problem.Entails, Constraint.Entails] using hP)
-          · intro hQ
-            intro c hc
+          · intro hQ c hc
             simp only [List.mem_singleton] at hc
             subst hc
             exact (simplifyAlpha_sound Γ s t h₁).mpr hQ
