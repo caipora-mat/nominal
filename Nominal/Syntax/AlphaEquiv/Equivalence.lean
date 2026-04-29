@@ -261,6 +261,46 @@ mutual
     · simp [ntmSize.ntmSizeList]
 end
 
-/- TODO: congruence -/
+-- (Congruence of ≈α — second half of Theorem 24.)
+
+/-- Congruence under abstraction: if `s ≈α t` then `[a]s ≈α [a]t`. (≈αabsa) -/
+theorem alphaEquiv_abs_congr (Γ : Context 𝔸 X) (a : 𝔸) (s t : ntm F X 𝔸)
+    (h : (Γ ⊢ s ≈α t) = true) :
+    (Γ ⊢ ntm.abs a s ≈α ntm.abs a t) = true := by
+  simp only [alphaEquiv, if_true]
+  exact h
+
+/-- Congruence under permutation: if `s ≈α t` then `π·s ≈α π·t`. (Lemma 21) -/
+theorem alphaEquiv_permute_congr (Γ : Context 𝔸 X) (s t : ntm F X 𝔸) (π : LPerm 𝔸)
+    (h : (Γ ⊢ s ≈α t) = true) :
+    (Γ ⊢ s.permute π ≈α t.permute π) = true := by
+  rw [← alphaEquiv_equivariance]
+  exact h
+
+/-- Congruence under tuple position: replacing one position in a list of arguments by an
+    α-equivalent term preserves the list-level α-equivalence. -/
+theorem alphaEquivList_replace_congr (Γ : Context 𝔸 X)
+    (us₁ us₂ : List (ntm F X 𝔸)) (s t : ntm F X 𝔸)
+    (h : (Γ ⊢ s ≈α t) = true) :
+    alphaEquivList Γ (us₁ ++ s :: us₂) (us₁ ++ t :: us₂) = true := by
+  induction us₁ with
+  | nil =>
+    simp only [List.nil_append, alphaEquivList,
+               Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true]
+    exact ⟨h, alphaEquivList_refl Γ us₂⟩
+  | cons u us ih =>
+    simp only [List.cons_append, alphaEquivList,
+               Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true]
+    exact ⟨alphaEquiv_refl Γ u, ih⟩
+
+/-- Congruence under function application: replacing one argument by an α-equivalent term
+    preserves α-equivalence of the application. (≈αtup) -/
+theorem alphaEquiv_fapp_congr (Γ : Context 𝔸 X) (f : F)
+    (us₁ us₂ : List (ntm F X 𝔸)) (s t : ntm F X 𝔸)
+    (h : (Γ ⊢ s ≈α t) = true) :
+    (Γ ⊢ ntm.fapp f (us₁ ++ s :: us₂) ≈α ntm.fapp f (us₁ ++ t :: us₂)) = true := by
+  simp only [alphaEquiv, Bool.decide_and, Bool.decide_eq_true, Bool.and_eq_true,
+             decide_eq_true_eq]
+  exact ⟨trivial, alphaEquivList_replace_congr Γ us₁ us₂ s t h⟩
 
 end Nominal
