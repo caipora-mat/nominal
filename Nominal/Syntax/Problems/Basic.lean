@@ -1,5 +1,6 @@
 import Nominal.Syntax.Terms
 import Nominal.Syntax.AlphaEquiv
+import Nominal.Syntax.Substitution.Basic
 
 namespace Nominal
 
@@ -29,6 +30,17 @@ inductive Constraint (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name �
 /-- A constraint problem is a list of constraints. -/
 abbrev Problem (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] :=
   List (Constraint F X 𝔸)
+
+-- (Substitution on constraints).
+
+/-- Apply a single substitution binding `[Y ↦ s]` to a constraint. -/
+def Constraint.applyOne : Constraint F X 𝔸 → X → ntm F X 𝔸 → Constraint F X 𝔸
+  | .fresh a t, Y, s => .fresh a (t.applyOne Y s)
+  | .alpha u v, Y, s => .alpha (u.applyOne Y s) (v.applyOne Y s)
+
+/-- Apply a single substitution binding `[Y ↦ s]` to a problem. -/
+def Problem.applyOne (P : Problem F X 𝔸) (Y : X) (s : ntm F X 𝔸) : Problem F X 𝔸 :=
+  P.map fun c => c.applyOne Y s
 
 -- (Freshness simplification).
 
