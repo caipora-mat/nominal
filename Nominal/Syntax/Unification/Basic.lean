@@ -54,10 +54,10 @@ def Subst.IsIdempotent (σ : Subst F X 𝔸) : Prop :=
 
 -- (Context entailment under substitution).
 
-/-- A context Γ₂ entails another context Γ₁ under a substitution σ if for every freshness constraint
-    `(a, Y) ∈ Γ₁`, we have `Γ₂ ⊢ a # Yσ`. -/
-def Context.EntailsUnder (Γ₁ : Context 𝔸 X) (Γ₂ : Context 𝔸 X) (σ : Subst F X 𝔸) : Prop :=
-  ∀ (a : 𝔸) (Y : X), (a, Y) ∈ Γ₁ → fresh Γ₂ a ((ntm.mvar [] Y).subst σ) = true
+/-- Decidable check: Γ₂ entails another context Γ₁ under a substitution σ.
+    Returns true iff for every freshness constraint `(a, Y) ∈ Γ₁`, we have `Γ₂ ⊢ a # Yσ`. -/
+def Context.EntailsUnder (Γ₁ : Context 𝔸 X) (Γ₂ : Context 𝔸 X) (σ : Subst F X 𝔸) : Bool :=
+  decide (∀ p ∈ Γ₁, fresh Γ₂ p.1 ((ntm.mvar [] p.2).subst σ) = true)
 
 -- (Solution).
 
@@ -93,7 +93,7 @@ def Solution.Le (sol₁ sol₂ : Solution F X 𝔸) : Prop :=
     (∀ Y : X, alphaEquiv sol₂.ctx
         ((ntm.mvar [] Y).subst sol₁.subst |>.subst σ')
         ((ntm.mvar [] Y).subst sol₂.subst) = true)
-    ∧ sol₁.ctx.EntailsUnder sol₂.ctx σ'
+    ∧ sol₁.ctx.EntailsUnder sol₂.ctx σ' = true
 
 instance : LE (Solution F X 𝔸) := ⟨Solution.Le⟩
 
