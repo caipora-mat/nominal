@@ -109,4 +109,25 @@ lemma ntm.subst_mvar (π : LPerm 𝔸) (y : X) (σ : Subst F X 𝔸) :
 def Subst.IsIdempotent (σ : Subst F X 𝔸) : Prop :=
   ∀ x : X, (ntm.mvar (F := F) [] x).subst σ = ((ntm.mvar (F := F) [] x).subst σ).subst σ
 
+-- (Domain of a substitution).
+
+/-- The set of variables on the left-hand side of bindings in `σ`. -/
+def Subst.dom (σ : Subst F X 𝔸) : Finset X :=
+  (σ.map Prod.fst).toFinset
+
+@[simp] lemma Subst.dom_nil : Subst.dom ([] : Subst F X 𝔸) = ∅ := by
+  simp [Subst.dom]
+
+@[simp] lemma Subst.dom_cons (x : X) (s : ntm F X 𝔸) (σ : Subst F X 𝔸) :
+    Subst.dom ((x, s) :: σ) = insert x (Subst.dom σ) := by
+  simp [Subst.dom]
+
+@[simp] lemma Subst.dom_append (σ σ' : Subst F X 𝔸) :
+    Subst.dom (σ ++ σ') = Subst.dom σ ∪ Subst.dom σ' := by
+  simp [Subst.dom, List.toFinset_append]
+
+@[simp] lemma Subst.dom_singleton (x : X) (s : ntm F X 𝔸) :
+    Subst.dom ([(x, s)] : Subst F X 𝔸) = {x} := by
+  simp [Subst.dom]
+
 end Nominal

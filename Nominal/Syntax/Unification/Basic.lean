@@ -115,6 +115,30 @@ mutual
     | t :: ts => t.occursIn x || ntmList.occursIn x ts
 end
 
+-- (Permutation preserves occursIn — only renames atoms, not mvars.)
+
+mutual
+  lemma ntm.occursIn_permute (t : ntm F X 𝔸) (π : LPerm 𝔸) (x : X) :
+      (t.permute π).occursIn x = t.occursIn x := by
+    match t with
+    | .atm _ => simp [ntm.permute, ntm.occursIn]
+    | .mvar _ _ => simp [ntm.permute, ntm.occursIn]
+    | .fapp _ ts =>
+      simp only [ntm.permute, ntm.occursIn]
+      exact ntmList.occursIn_permute ts π x
+    | .abs _ t' =>
+      simp only [ntm.permute, ntm.occursIn]
+      exact ntm.occursIn_permute t' π x
+
+  lemma ntmList.occursIn_permute (ts : List (ntm F X 𝔸)) (π : LPerm 𝔸) (x : X) :
+      ntmList.occursIn x (ts.map (·.permute π)) = ntmList.occursIn x ts := by
+    match ts with
+    | [] => rfl
+    | t :: ts' =>
+      simp only [List.map_cons, ntmList.occursIn]
+      rw [ntm.occursIn_permute t π x, ntmList.occursIn_permute ts' π x]
+end
+
 -- (Lemmas relating `occursIn` and substitution.)
 
 mutual
@@ -160,6 +184,143 @@ lemma Subst.IsIdempotent.singleton_of_not_occursIn {x : X} {u : ntm F X 𝔸}
   · subst hxy
     rw [if_pos rfl, ntm.permute_nil, ntm.applyOne_of_not_occursIn u y u h]
   · simp [if_neg hxy, ntm.applyOne]
+
+/-- If `t` references no variable in `σ.dom`, then `σ` acts as identity on `t`. -/
+lemma ntm.subst_of_disjoint_dom (t : ntm F X 𝔸) (σ : Subst F X 𝔸)
+    (h : ∀ x ∈ Subst.dom σ, t.occursIn x = false) :
+    t.subst σ = t := by
+  induction σ generalizing t with
+  | nil => rfl
+  | cons p σ ih =>
+    obtain ⟨y, s⟩ := p
+    have hy : t.occursIn y = false := h y (by simp)
+    simp only [ntm.subst_cons, ntm.applyOne_of_not_occursIn t y s hy]
+    exact ih t (fun x hx => h x (by simp [hx]))
+
+/-- Corollary: if `x ∉ Subst.dom σ`, then `σ` fixes the bare metavariable `(mvar [] x)`. -/
+lemma ntm.subst_mvar_nil_of_not_mem_dom {x : X} {σ : Subst F X 𝔸}
+    (h : x ∉ Subst.dom σ) :
+    (ntm.mvar (F := F) [] x).subst σ = ntm.mvar [] x := by
+  apply ntm.subst_of_disjoint_dom
+  intro z hz
+  simp only [ntm.occursIn]
+  by_contra hzx
+  simp only [ne_eq, Bool.not_eq_false, beq_iff_eq] at hzx
+  subst hzx
+  exact h hz
+
+-- (Commutation of `applyOne` and `subst`).
+
+mutual
+  /-- `applyOne x u` commutes with `subst σ` when `x ∉ Subst.dom σ`, `u` is fixed by `σ`,
+      and `x` doesn't appear in any image of `σ` (i.e., the new variable `x` is fresh
+      with respect to the existing substitution). -/
+  lemma ntm.applyOne_subst_comm (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸) (σ : Subst F X 𝔸)
+      (hx_dom : x ∉ Subst.dom σ)
+      (hu_fixed : u.subst σ = u)
+      (hx_img : ∀ y, ((ntm.mvar (F := F) [] y).subst σ).occursIn x = false) :
+      (t.applyOne x u).subst σ = (t.subst σ).applyOne x u := by
+    match t with
+    | .atm a => simp [ntm.applyOne]
+    | .mvar π z =>
+      by_cases hz : z = x
+      · obtain rfl := hz.symm
+        have hap : (ntm.mvar π x : ntm F X 𝔸).applyOne x u = u.permute π := by
+          simp [ntm.applyOne]
+        have h1 : ((ntm.mvar π x : ntm F X 𝔸).applyOne x u).subst σ = u.permute π := by
+          rw [hap, ntm.subst_permute, hu_fixed]
+        have h2 : ((ntm.mvar π x : ntm F X 𝔸).subst σ).applyOne x u = u.permute π := by
+          rw [ntm.subst_mvar, ntm.subst_mvar_nil_of_not_mem_dom hx_dom]
+          simp [ntm.permute, ntm.applyOne]
+        rw [h1, h2]
+      · simp only [ntm.applyOne, if_neg hz]
+        have hocc : ((ntm.mvar π z : ntm F X 𝔸).subst σ).occursIn x = false := by
+          rw [ntm.subst_mvar, ntm.occursIn_permute]
+          exact hx_img z
+        rw [ntm.applyOne_of_not_occursIn _ x u hocc]
+    | .fapp f ts =>
+      simp only [ntm.applyOne, ntm.subst_fapp]
+      congr 1
+      exact ntmList.applyOne_subst_comm ts x u σ hx_dom hu_fixed hx_img
+    | .abs a t' =>
+      simp only [ntm.applyOne, ntm.subst_abs]
+      rw [ntm.applyOne_subst_comm t' x u σ hx_dom hu_fixed hx_img]
+
+  /-- List version of `applyOne_subst_comm`. -/
+  lemma ntmList.applyOne_subst_comm (ts : List (ntm F X 𝔸)) (x : X) (u : ntm F X 𝔸)
+      (σ : Subst F X 𝔸)
+      (hx_dom : x ∉ Subst.dom σ)
+      (hu_fixed : u.subst σ = u)
+      (hx_img : ∀ y, ((ntm.mvar (F := F) [] y).subst σ).occursIn x = false) :
+      (ts.map (·.applyOne x u)).map (·.subst σ) =
+      (ts.map (·.subst σ)).map (·.applyOne x u) := by
+    match ts with
+    | [] => rfl
+    | t :: ts' =>
+      simp only [List.map_cons]
+      rw [ntm.applyOne_subst_comm t x u σ hx_dom hu_fixed hx_img,
+          ntmList.applyOne_subst_comm ts' x u σ hx_dom hu_fixed hx_img]
+end
+
+-- (`applyOne x u` removes all occurrences of `x` when `x ∉ u`.)
+
+mutual
+  lemma ntm.occursIn_applyOne_self (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸)
+      (hu : u.occursIn x = false) :
+      (t.applyOne x u).occursIn x = false := by
+    match t with
+    | .atm _ => simp [ntm.applyOne, ntm.occursIn]
+    | .mvar π z =>
+      by_cases hz : z = x
+      · obtain rfl := hz.symm
+        simp [ntm.applyOne, ntm.occursIn_permute, hu]
+      · simp only [ntm.applyOne, if_neg hz, ntm.occursIn, beq_eq_false_iff_ne]
+        exact fun heq => hz heq.symm
+    | .fapp _ ts =>
+      simp only [ntm.applyOne, ntm.occursIn]
+      exact ntmList.occursIn_applyOne_self ts x u hu
+    | .abs _ t' =>
+      simp only [ntm.applyOne, ntm.occursIn]
+      exact ntm.occursIn_applyOne_self t' x u hu
+
+  lemma ntmList.occursIn_applyOne_self (ts : List (ntm F X 𝔸)) (x : X) (u : ntm F X 𝔸)
+      (hu : u.occursIn x = false) :
+      ntmList.occursIn x (ts.map (·.applyOne x u)) = false := by
+    match ts with
+    | [] => rfl
+    | t :: ts' =>
+      simp only [List.map_cons, ntmList.occursIn]
+      rw [ntm.occursIn_applyOne_self t x u hu,
+          ntmList.occursIn_applyOne_self ts' x u hu]
+      rfl
+end
+
+-- (Extension: appending a fresh, occurs-check-passing binding preserves idempotence.)
+
+/-- If `σ` is idempotent, `x` is fresh w.r.t. `σ` (not in domain, not in any image),
+    `u` is fixed by `σ`, and `x` doesn't occur in `u` (occurs-check), then the
+    extended substitution `σ ++ [(x, u)]` is idempotent. -/
+lemma Subst.IsIdempotent.append_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
+    (hσ : σ.IsIdempotent)
+    (hx_dom : x ∉ Subst.dom σ)
+    (hu_fixed : u.subst σ = u)
+    (hxu : u.occursIn x = false)
+    (hx_img : ∀ y, ((ntm.mvar (F := F) [] y).subst σ).occursIn x = false) :
+    Subst.IsIdempotent (σ ++ [(x, u)]) := by
+  intro y
+  set r := (ntm.mvar (F := F) [] y).subst σ with hr
+  have hLHS : (ntm.mvar (F := F) [] y).subst (σ ++ [(x, u)]) = r.applyOne x u := by
+    rw [ntm.subst_append]; rfl
+  rw [hLHS, ntm.subst_append]
+  have hStep1 : (r.applyOne x u).subst σ = r.applyOne x u := by
+    rw [ntm.applyOne_subst_comm r x u σ hx_dom hu_fixed hx_img]
+    congr 1
+    rw [hr]
+    exact ntm.subst_idempotent hσ _
+  rw [hStep1]
+  change r.applyOne x u = ((r.applyOne x u).applyOne x u).subst []
+  rw [ntm.subst_nil]
+  exact (ntm.applyOne_of_not_occursIn _ x u (ntm.occursIn_applyOne_self r x u hxu)).symm
 
 -- (Definition 31: Reduced / inconsistent unification constraints).
 -- A unification constraint u ≈? v is reduced when one of the following holds:
