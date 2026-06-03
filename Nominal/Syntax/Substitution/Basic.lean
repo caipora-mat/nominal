@@ -103,4 +103,10 @@ lemma ntm.subst_mvar (π : LPerm 𝔸) (y : X) (σ : Subst F X 𝔸) :
   rw [this]
   exact ntm.subst_permute _ _ _
 
+-- (Idempotence — condition (2) of Definition 27).
+
+/-- A substitution is idempotent: `Xσ ≡ Xσσ` for all `X`. -/
+def Subst.IsIdempotent (σ : Subst F X 𝔸) : Prop :=
+  ∀ x : X, (ntm.mvar (F := F) [] x).subst σ = ((ntm.mvar (F := F) [] x).subst σ).subst σ
+
 end Nominal

@@ -1,6 +1,7 @@
 import Nominal.Syntax.Problems.Basic
 import Nominal.Syntax.Problems.Properties
 import Nominal.Syntax.Substitution.Basic
+import Nominal.Syntax.Substitution.Properties
 import Nominal.Syntax.AlphaEquiv
 
 namespace Nominal
@@ -35,6 +36,24 @@ def UnifConstraint.applySubst (c : UnifConstraint F X 𝔸) (σ : Subst F X 𝔸
 def UnifProblem.applySubst (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) : UnifProblem F X 𝔸 :=
   Pr.map (·.applySubst σ)
 
+@[simp] lemma UnifConstraint.applySubst_append (c : UnifConstraint F X 𝔸) (σ σ' : Subst F X 𝔸) :
+    c.applySubst (σ ++ σ') = (c.applySubst σ).applySubst σ' := by
+  cases c with
+  | fresh a t => simp [UnifConstraint.applySubst]
+  | unif s t  => simp [UnifConstraint.applySubst]
+
+@[simp] lemma UnifProblem.applySubst_append (Pr : UnifProblem F X 𝔸) (σ σ' : Subst F X 𝔸) :
+    Pr.applySubst (σ ++ σ') = (Pr.applySubst σ).applySubst σ' := by
+  simp [UnifProblem.applySubst, List.map_map, Function.comp_def]
+
+@[simp] lemma UnifConstraint.applySubst_nil (c : UnifConstraint F X 𝔸) :
+    c.applySubst [] = c := by
+  cases c <;> simp [UnifConstraint.applySubst]
+
+@[simp] lemma UnifProblem.applySubst_nil (Pr : UnifProblem F X 𝔸) :
+    Pr.applySubst [] = Pr := by
+  simp [UnifProblem.applySubst]
+
 -- (Conversion to regular problem: replace ≈? by ≈α).
 
 /-- Convert a unification constraint to a regular constraint. -/
@@ -47,10 +66,6 @@ def UnifProblem.toConstraint (Pr : UnifProblem F X 𝔸) : Problem F X 𝔸 :=
   Pr.map UnifConstraint.toConstraint
 
 -- (Definition 27: Solution).
-
-/-- A substitution is idempotent: Xσ ≡ Xσσ for all X (condition 2 of Definition 27). -/
-def Subst.IsIdempotent (σ : Subst F X 𝔸) : Prop :=
-  ∀ x : X, (ntm.mvar (F := F) [] x).subst σ = ((ntm.mvar (F := F) [] x).subst σ).subst σ
 
 /-- A solution to a unification problem Pr is a pair (Γ, σ) satisfying (Definition 27):
     (1) Γ ⊢ Pr'σ, where Pr' replaces ≈? by ≈α, and Pr'σ applies σ to all terms;
@@ -99,6 +114,52 @@ mutual
     | []      => false
     | t :: ts => t.occursIn x || ntmList.occursIn x ts
 end
+
+-- (Lemmas relating `occursIn` and substitution.)
+
+mutual
+  /-- If `x` doesn't occur in `t`, then substituting `s` for `x` is a no-op. -/
+  lemma ntm.applyOne_of_not_occursIn (t : ntm F X 𝔸) (x : X) (s : ntm F X 𝔸)
+      (h : t.occursIn x = false) : t.applyOne x s = t := by
+    match t with
+    | .atm _ => simp [ntm.applyOne]
+    | .mvar π y =>
+      simp only [ntm.applyOne]
+      split_ifs with hxy
+      · subst hxy; simp [ntm.occursIn] at h
+      · rfl
+    | .fapp f ts =>
+      simp only [ntm.occursIn] at h
+      simp only [ntm.applyOne]
+      congr 1
+      exact ntmList.applyOne_of_not_occursIn ts x s h
+    | .abs a t' =>
+      simp only [ntm.occursIn] at h
+      simp only [ntm.applyOne, ntm.applyOne_of_not_occursIn t' x s h]
+
+  /-- List version. -/
+  lemma ntmList.applyOne_of_not_occursIn (ts : List (ntm F X 𝔸)) (x : X) (s : ntm F X 𝔸)
+      (h : ntmList.occursIn x ts = false) :
+      ts.map (·.applyOne x s) = ts := by
+    match ts with
+    | [] => rfl
+    | t :: ts' =>
+      simp only [ntmList.occursIn, Bool.or_eq_false_iff] at h
+      simp only [List.map_cons]
+      rw [ntm.applyOne_of_not_occursIn t x s h.1,
+          ntmList.applyOne_of_not_occursIn ts' x s h.2]
+end
+
+/-- If `x` doesn't occur in `u`, the singleton substitution `[(x, u)]` is idempotent. -/
+lemma Subst.IsIdempotent.singleton_of_not_occursIn {x : X} {u : ntm F X 𝔸}
+    (h : u.occursIn x = false) :
+    Subst.IsIdempotent ([(x, u)] : Subst F X 𝔸) := by
+  intro y
+  simp only [ntm.subst_cons, ntm.subst_nil, ntm.applyOne]
+  by_cases hxy : y = x
+  · subst hxy
+    rw [if_pos rfl, ntm.permute_nil, ntm.applyOne_of_not_occursIn u y u h]
+  · simp [if_neg hxy, ntm.applyOne]
 
 -- (Definition 31: Reduced / inconsistent unification constraints).
 -- A unification constraint u ≈? v is reduced when one of the following holds:

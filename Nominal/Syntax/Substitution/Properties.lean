@@ -8,6 +8,35 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
+-- (Composition of substitutions: subst is functorial wrt list concatenation).
+
+/-- `t.subst (σ ++ σ') = (t.subst σ).subst σ'`: substitution lists compose by append. -/
+@[simp] lemma ntm.subst_append (t : ntm F X 𝔸) (σ σ' : Subst F X 𝔸) :
+    t.subst (σ ++ σ') = (t.subst σ).subst σ' := by
+  induction σ generalizing t with
+  | nil => rfl
+  | cons p σ ih =>
+    obtain ⟨Y, s⟩ := p
+    simp only [List.cons_append, ntm.subst_cons]
+    exact ih _
+
+/-- An idempotent substitution is idempotent on all terms, not just on bare metavariables. -/
+lemma ntm.subst_idempotent {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent) (t : ntm F X 𝔸) :
+    (t.subst σ).subst σ = t.subst σ := by
+  match t with
+  | .atm a => simp
+  | .mvar π x =>
+    rw [ntm.subst_mvar, ntm.subst_permute, ← hσ x]
+  | .fapp f ts =>
+    simp only [ntm.subst_fapp, List.map_map]
+    congr 1
+    apply List.map_congr_left
+    intro u _
+    exact ntm.subst_idempotent hσ u
+  | .abs b t' =>
+    simp only [ntm.subst_abs]
+    rw [ntm.subst_idempotent hσ t']
+
 -- (Applying a full substitution to constraints and problems).
 
 def Constraint.applySubst (c : Constraint F X 𝔸) (σ : Subst F X 𝔸) : Constraint F X 𝔸 :=
@@ -65,7 +94,8 @@ mutual
       simp [List.map_cons, freshList] at h ⊢
       obtain ⟨hhd, htl⟩ := h
       exact ⟨ntm.fresh_subst Γ Γ' σ a hd hctx hhd,
-             ntm.freshList_subst Γ Γ' σ a tl hctx htl⟩end
+             ntm.freshList_subst Γ Γ' σ a tl hctx htl⟩
+end
 
 /-- If every atom where π and π' differ is fresh for t, then π·t ≈α π'·t. -/
 lemma ntm.alphaEquiv_of_perm_fresh (Γ : Context 𝔸 X) (π π' : LPerm 𝔸) (t : ntm F X 𝔸)
