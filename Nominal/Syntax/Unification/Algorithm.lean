@@ -162,7 +162,7 @@ private lemma unifStep_next_decreasing
     | mvar π x =>
       cases t with
       | atm a =>
-        simp [unifStep, ntm.occursIn, ↓reduceIte, StepResult.next.injEq] at h
+        simp [unifStep, ntm.occursIn, reduceIte, StepResult.next.injEq] at h
         -- depth 0: reuse Prod.Lex.right' path (same as atm-mvar case)
         apply Prod.Lex.right'
         · obtain ⟨rfl, rfl⟩ := h
@@ -274,7 +274,7 @@ private lemma unifStep_next_decreasing
       cases t with
       | fapp g ts =>
         simp only [unifStep] at h
-        split_ifs at h with hfg hlen
+        split_ifs at h with hfg
         · obtain ⟨rfl, rfl⟩ := h
           apply Prod.Lex.right'
           · apply Finset.card_le_card
@@ -399,7 +399,7 @@ private lemma unifStep_next_decreasing
                          (UnifConstraint.unif (ntm.abs a s') (ntm.mvar π' y) :: rest) := by
               simp only [UnifProblem.unifVars, List.foldl_cons, ntm.metavars, Finset.union_assoc]
               exact le_unifVars_foldl rest _ (by
-                simp [Finset.empty_union, Finset.mem_union, Finset.mem_singleton])
+                simp [Finset.empty_union])
             exact not_mem_unifVars_applySubst_self rest y _
               (by rw [ntm.permute_metavars]
                   exact (ntm.occursIn_false_iff_not_mem_metavars y _).mp hocc)

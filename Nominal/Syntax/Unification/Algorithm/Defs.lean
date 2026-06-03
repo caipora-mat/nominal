@@ -53,10 +53,8 @@ def unifStep (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : S
             let binding := (x, u.permute π.reverse)
             .next (rest.applySubst [binding]) (σ ++ [binding])
       | .fapp f ss, .fapp g ts =>
-          if f = g then
-            if ss.length = ts.length then
+          if f = g ∧ ss.length = ts.length then
               .next ((ss.zip ts).map (fun (s, t) => .unif s t) ++ rest) σ
-            else .fail
           else .fail
       | .abs a s', .abs b t' =>
           if a = b then
