@@ -50,6 +50,26 @@ lemma Problem.Entails_cons {Γ : Context 𝔸 X} {c : Constraint F X 𝔸}
     · exact hc
     · exact hP c' hc'
 
+/-- Pairwise entailment on `ss.zip ts` (substituted form) gives `alphaEquivList`
+    on the substituted lists. -/
+lemma alphaEquivList_of_zip_subst_entails (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) :
+    ∀ (ss ts : List (ntm F X 𝔸)),
+      ss.length = ts.length →
+      Problem.Entails Γ
+        ((ss.zip ts).map (fun p => Constraint.alpha (p.1.subst σ) (p.2.subst σ))) →
+      alphaEquivList Γ (ss.map (·.subst σ)) (ts.map (·.subst σ)) = true
+  | [], [], _, _ => by simp [alphaEquivList]
+  | [], _ :: _, hlen, _ => by simp at hlen
+  | _ :: _, [], hlen, _ => by simp at hlen
+  | s :: ss', t :: ts', hlen, hzip => by
+    simp only [List.zip_cons_cons, List.map_cons, Problem.Entails_cons] at hzip
+    obtain ⟨hst, htail⟩ := hzip
+    simp only [Constraint.Entails] at hst
+    simp only [List.map_cons, alphaEquivList, Bool.and_eq_true, hst, true_and,
+               decide_eq_true_eq]
+    simp only [List.length_cons, Nat.add_right_cancel_iff] at hlen
+    exact alphaEquivList_of_zip_subst_entails Γ σ ss' ts' hlen htail
+
 /-- Soundness of `.next` outcomes: if `Γ` entails `Pr'.applySubst σ'` (the next
     problem under the next σ), then `Γ` entails `(c :: rest).applySubst σ'` —
     so an entailed next-state corresponds to an entailed original state. -/
@@ -117,7 +137,7 @@ lemma unifStep_next_sound
         simp only [unifStep] at h
         by_cases hxy : x = y
         · subst hxy
-          simp only [if_pos rfl, StepResult.next.injEq] at h
+          simp at h
           obtain ⟨rfl, rfl⟩ := h
           simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
                      Problem.Entails_cons]
@@ -131,7 +151,7 @@ lemma unifStep_next_sound
           refine ⟨?_, hrest⟩
           -- Goal: alphaEquiv ((mvar π x).subst σ') ((mvar π' x).subst σ')
           simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                     Constraint.Entails, alphaEquiv, decide_eq_true_eq]
+                     Constraint.Entails]
           have heq1 : (ntm.mvar π x : ntm F X 𝔸).subst σ =
               ((ntm.mvar (F := F) [] x : ntm F X 𝔸).subst σ).permute π :=
             ntm.subst_mvar π x σ
@@ -158,7 +178,29 @@ lemma unifStep_next_sound
       | abs b t => sorry
     | fapp f ss =>
       cases t with
-      | fapp g ts => sorry
+      | fapp g ts =>
+        simp only [unifStep] at h
+        split_ifs at h with hfg
+        · obtain ⟨rfl, rfl⟩ := h
+          obtain ⟨rfl, hlen⟩ := hfg
+          rw [UnifProblem.applySubst, List.map_append, ← UnifProblem.applySubst,
+              ← UnifProblem.applySubst,
+              UnifProblem.toConstraint, List.map_append, ← UnifProblem.toConstraint,
+              ← UnifProblem.toConstraint,
+              Problem.Entails_append_iff] at hΓ
+          obtain ⟨hzip, hrest⟩ := hΓ
+          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+                     Problem.Entails_cons]
+          refine ⟨?_, hrest⟩
+          simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                     Constraint.Entails, ntm.subst_fapp, alphaEquiv,
+                     Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq]
+          refine ⟨trivial, ?_⟩
+          apply alphaEquivList_of_zip_subst_entails Γ σ ss ts hlen
+          simp only [UnifProblem.applySubst, UnifProblem.toConstraint,
+                     List.map_map, Function.comp_def,
+                     UnifConstraint.applySubst, UnifConstraint.toConstraint] at hzip
+          exact hzip
       | mvar π' y => sorry
       | atm _ | abs _ _ => simp [unifStep] at h
     | abs a s' =>
