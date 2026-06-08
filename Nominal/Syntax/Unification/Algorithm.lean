@@ -406,22 +406,25 @@ private lemma unifStep_next_decreasing
               (hsub hyc)
       | atm _ | fapp _ _ => simp [unifStep] at h
 
-def unify (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (Γ : Context 𝔸 X) :
-    Option (Context 𝔸 X × Subst F X 𝔸) :=
+-- Main loop: collect freshness facts deferred during reduction into a list of
+-- pairs (a, x).  These are NOT committed to Γ during reduction — instead they
+-- stay independent of σ until the main loop finishes, then `finalizeDeferred`
+-- substitutes each `x` by `x.subst σ` and re-simplifies the freshness check.
+-- This matches Maribel's algorithm (Theorem 35), where the substitution θ from
+-- instantiation acts uniformly on all constraints, freshness included.
+
+def unify (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (deferred : List (𝔸 × X)) :
+    Option (List (𝔸 × X) × Subst F X 𝔸) :=
   match Pr with
-  | []        => some (Γ, σ)
+  | []        => some (deferred, σ)
   | c :: rest =>
     match h : unifStep c rest σ with
     | .fail        => none
-    | .ctx a x     => unify rest σ (insert (a, x) Γ)
-    | .next Pr' σ' => unify Pr' σ' Γ
+    | .ctx a x     => unify rest σ ((a, x) :: deferred)
+    | .next Pr' σ' => unify Pr' σ' deferred
 termination_by (Pr.unifVars.card, Pr.unifDepthMs)
--- The WellFoundedRelation for (ℕ × Multiset ℕ) is Prod.Lex Nat.lt IsDershowitzMannaLT,
--- using Multiset.instWellFoundedIsDershowitzMannaLT for the second component.
 decreasing_by
-  -- .ctx case: c = .fresh b (.mvar π x), recursive call on `rest`.
-  --   · unifVars.card ≤ old (adding c can only grow unifVars).
-  --   · unifDepthMs loses one element — any removal is a DM decrease.
+  -- .ctx case: recurse on `rest`.
   · apply Prod.Lex.right'
     · exact Finset.card_le_card (UnifProblem.unifVars_subset_cons c rest)
     · cases c with
@@ -433,15 +436,34 @@ decreasing_by
         rw [UnifProblem.unifDepthMs_cons]
         exact ⟨UnifProblem.unifDepthMs rest, ∅, {max s.depth t.depth + 2},
                by simp, by simp, by rw [add_comm], by simp⟩
-  -- .next case: unifStep (c :: rest) = .next Pr' σ'.
-  --   Sub-cases by the rule that fired:
-  --   · atm-atm, mvar-mvar-same, abs-abs, fapp-fapp, fresh-simplifyFresh:
-  --       unifVars.card ≤ old; unifDepthMs strictly decreases (DM ordering).
-  --   · mvar-mvar-diff, mvar-u, u-mvar:
-  --       unifVars.card strictly decreases (variable x is eliminated).
+  -- .next case: existing structural argument.
   · exact unifStep_next_decreasing c rest σ Pr' σ' h
 
+-- After `unify` finishes, each deferred entry (a, x) is interpreted under the
+-- final σ as `a # (x.subst σ)`.  We simplify each such constraint; the result
+-- is a list of bare-mvar freshness pairs (the reduced leaves of `simplifyFresh`)
+-- which become Γ entries directly.  Assuming σ is idempotent (an algorithm
+-- invariant), these leaves have variables outside `dom σ`, so no further
+-- expansion is needed.
+def finalizeDeferred : List (𝔸 × X) → Subst F X 𝔸 → Context 𝔸 X →
+    Option (Context 𝔸 X)
+  | [],            _, Γ => some Γ
+  | (a, x) :: tl, σ, Γ =>
+    match simplifyFresh a ((ntm.mvar (F := F) [] x).subst σ) with
+    | none    => none
+    | some cs =>
+      let Γ' := cs.foldl (fun g c =>
+        match c with
+        | .fresh a' (.mvar [] x') => insert (a', x') g
+        | _                       => g) Γ
+      finalizeDeferred tl σ Γ'
+
 def UnifProblem.solve (Pr : UnifProblem F X 𝔸) : Option (Context 𝔸 X × Subst F X 𝔸) :=
-  unify Pr [] ∅
+  match unify Pr [] [] with
+  | none => none
+  | some (deferred, σ) =>
+    match finalizeDeferred deferred σ ∅ with
+    | none   => none
+    | some Γ => some (Γ, σ)
 
 end Nominal
