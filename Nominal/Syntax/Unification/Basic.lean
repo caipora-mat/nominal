@@ -295,28 +295,72 @@ mutual
       rfl
 end
 
+-- (Commutation of `applyOne` and `subst` for σ-stable terms.)
+
+mutual
+  /-- If `t` and `u` are σ-stable (fixed by σ), then `(t.applyOne x u).subst σ = t.applyOne x u`.
+      Unlike `applyOne_subst_comm`, this version does NOT require `x ∉ image σ`. -/
+  lemma ntm.applyOne_subst_of_stable (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸)
+      (σ : Subst F X 𝔸) (ht : t.subst σ = t) (hu : u.subst σ = u) :
+      (t.applyOne x u).subst σ = t.applyOne x u := by
+    match t with
+    | .atm b => simp [ntm.applyOne]
+    | .mvar π y =>
+      simp only [ntm.applyOne]
+      by_cases hy : y = x
+      · rw [if_pos hy, ntm.subst_permute, hu]
+      · rw [if_neg hy]; exact ht
+    | .fapp f ts =>
+      simp only [ntm.applyOne, ntm.subst_fapp]
+      have hts : ts.map (·.subst σ) = ts := by
+        have htmp := ht
+        simp [ntm.subst_fapp] at htmp
+        exact htmp
+      congr 1
+      exact ntmList.applyOne_subst_of_stable ts x u σ hts hu
+    | .abs b t' =>
+      simp only [ntm.applyOne, ntm.subst_abs]
+      have ht' : t'.subst σ = t' := by
+        have htmp := ht
+        simp [ntm.subst_abs] at htmp
+        exact htmp
+      congr 1
+      exact ntm.applyOne_subst_of_stable t' x u σ ht' hu
+
+  lemma ntmList.applyOne_subst_of_stable (ts : List (ntm F X 𝔸)) (x : X) (u : ntm F X 𝔸)
+      (σ : Subst F X 𝔸) (hts : ts.map (·.subst σ) = ts) (hu : u.subst σ = u) :
+      (ts.map (·.applyOne x u)).map (·.subst σ) = ts.map (·.applyOne x u) := by
+    match ts with
+    | [] => rfl
+    | t :: ts' =>
+      simp only [List.map_cons] at hts
+      injection hts with ht hts'
+      simp only [List.map_cons]
+      rw [ntm.applyOne_subst_of_stable t x u σ ht hu,
+          ntmList.applyOne_subst_of_stable ts' x u σ hts' hu]
+end
+
 -- (Extension: appending a fresh, occurs-check-passing binding preserves idempotence.)
 
-/-- If `σ` is idempotent, `x` is fresh w.r.t. `σ` (not in domain, not in any image),
-    `u` is fixed by `σ`, and `x` doesn't occur in `u` (occurs-check), then the
-    extended substitution `σ ++ [(x, u)]` is idempotent. -/
+/-- If `σ` is idempotent, `x` is fresh w.r.t. `σ` (not in domain), `u` is fixed
+    by `σ`, and `x` doesn't occur in `u`, then `σ ++ [(x, u)]` is idempotent.
+    Does NOT require `x ∉ image σ`. -/
 lemma Subst.IsIdempotent.append_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
     (hσ : σ.IsIdempotent)
     (hx_dom : x ∉ Subst.dom σ)
     (hu_fixed : u.subst σ = u)
-    (hxu : u.occursIn x = false)
-    (hx_img : ∀ y, ((ntm.mvar (F := F) [] y).subst σ).occursIn x = false) :
+    (hxu : u.occursIn x = false) :
     Subst.IsIdempotent (σ ++ [(x, u)]) := by
   intro y
   set r := (ntm.mvar (F := F) [] y).subst σ with hr
   have hLHS : (ntm.mvar (F := F) [] y).subst (σ ++ [(x, u)]) = r.applyOne x u := by
     rw [ntm.subst_append]; rfl
   rw [hLHS, ntm.subst_append]
-  have hStep1 : (r.applyOne x u).subst σ = r.applyOne x u := by
-    rw [ntm.applyOne_subst_comm r x u σ hx_dom hu_fixed hx_img]
-    congr 1
+  have hr_stable : r.subst σ = r := by
     rw [hr]
     exact ntm.subst_idempotent hσ _
+  have hStep1 : (r.applyOne x u).subst σ = r.applyOne x u :=
+    ntm.applyOne_subst_of_stable r x u σ hr_stable hu_fixed
   rw [hStep1]
   change r.applyOne x u = ((r.applyOne x u).applyOne x u).subst []
   rw [ntm.subst_nil]
