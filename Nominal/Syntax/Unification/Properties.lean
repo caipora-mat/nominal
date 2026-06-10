@@ -777,6 +777,40 @@ mutual
             simp [ntmList.metavars]; right; exact this
 end
 
+/-- One unifStep preserves σ.IsIdempotent and σ.disjointPr (under invariant). -/
+lemma unifStep_next_idempotent_and_disjoint
+    (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
+    (Pr' : UnifProblem F X 𝔸) (σ_next : Subst F X 𝔸)
+    (h : unifStep c rest σ = .next Pr' σ_next)
+    (hσ : σ.IsIdempotent)
+    (hdisj : σ.disjointPr (c :: rest)) :
+    σ_next.IsIdempotent ∧ σ_next.disjointPr Pr' := by
+  cases c with
+  | fresh a t =>
+    cases t with
+    | mvar π x => simp [unifStep] at h  -- gives .ctx, not .next
+    | atm b =>
+      simp only [unifStep, simplifyFresh] at h
+      by_cases hab : a = b
+      · rw [if_pos hab] at h; cases h
+      · simp only [if_neg hab, List.map_nil, List.append_nil,
+                   StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
+    | fapp f ts =>
+      sorry
+    | abs b t =>
+      simp only [unifStep, simplifyFresh] at h
+      by_cases hab : a = b
+      · simp only [if_pos hab, List.map_nil, List.append_nil,
+                   StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
+      · sorry
+  | unif s t =>
+    -- All unif cases (incl. 7 instantiations) — TODO.
+    sorry
+
 /-- `unify` preserves idempotence of σ under the disjointness invariant. -/
 theorem unify_preserves_idempotent :
     ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
@@ -803,8 +837,8 @@ theorem unify_preserves_idempotent :
   | case4 σ ds c rest Pr' σ_next hnext ih =>
     intro ds' σ' h hσ hdisj
     rw [unify, hnext] at h
-    -- Need: σ_next.IsIdempotent ∧ σ_next.disjointPr Pr'.
-    -- Then apply ih.
-    sorry
+    obtain ⟨hσ_next, hdisj_next⟩ :=
+      unifStep_next_idempotent_and_disjoint c rest σ Pr' σ_next hnext hσ hdisj
+    exact ih ds' σ' h hσ_next hdisj_next
 
 end Nominal
