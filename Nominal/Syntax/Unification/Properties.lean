@@ -6,15 +6,6 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- ============================================================
--- Soundness of `unifStep`.
---
--- For each `.next Pr' σ'` outcome, a context `Γ` that entails the converted
--- (next) problem also entails the converted (original) problem.  This is the
--- "one direction" needed to argue that the algorithm only ever produces real
--- solutions.
--- ============================================================
-
 /-- Convert + applySubst commute. -/
 @[simp] lemma UnifConstraint.toConstraint_applySubst (c : UnifConstraint F X 𝔸)
     (σ : Subst F X 𝔸) :
@@ -1714,15 +1705,6 @@ theorem UnifProblem.solve_sound (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X
         intro x _; simp [Subst.dom]
       exact (unify_sound Γ_fin Pr [] [] ds σ_u hu hσ_empty hdisj_empty hfresh).1
 
---
--- Statement only — proof TODO. Path:
--- (a) Define `Pr.allMetavars` (all mvars in Pr, fresh + unif).
--- (b) Predicate `σ.disjoint Pr := ∀ x ∈ Pr.allMetavars, x ∉ dom σ`.
--- (c) Induction on `unify.induct`. For .next instantiation case, use
---     `Subst.IsIdempotent.append_singleton` (no hx_img needed).
--- (d) Preservation of disjoint for each unifStep case (16 sub-cases).
--- ============================================================
-
 /-- `unify` preserves idempotence of σ under the disjointness invariant. -/
 theorem unify_preserves_idempotent :
     ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
@@ -1778,14 +1760,12 @@ theorem UnifProblem.solve_idempotent (Pr : UnifProblem F X 𝔸) (Γ : Context �
         intro x _; simp [Subst.dom]
       exact unify_preserves_idempotent Pr [] [] ds σ_u hu hσ_empty hdisj_empty
 
-/-- Maribel Definition 27 + Theorem 35 (forward direction): if `solve Pr =
-    some (Γ, σ)`, then `(Γ, σ)` is a solution of Pr in the sense that Γ
+/-- Maribel Definition 27 + Theorem 35 : if `solve Pr = some (Γ, σ)`, then
+    `(Γ, σ)` is a solution of Pr in the sense that Γ
     entails `Pr.applySubst σ` AND σ is idempotent. -/
 theorem UnifProblem.solve_satisfies (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
     (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) :
     Solution.Satisfies Γ σ Pr :=
   ⟨UnifProblem.solve_sound Pr Γ σ h, UnifProblem.solve_idempotent Pr Γ σ h⟩
 
--- ============================================================
--- Invariant: σ idempotent throughout `unify`.
 end Nominal
