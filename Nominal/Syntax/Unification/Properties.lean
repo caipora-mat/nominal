@@ -642,15 +642,140 @@ theorem UnifProblem.solve_sound (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X
 -- (d) Preservation of disjoint for each unifStep case (16 sub-cases).
 -- ============================================================
 
+/-- Metavariables of a single unification constraint. -/
+def UnifConstraint.metavars : UnifConstraint F X 𝔸 → Finset X
+  | .fresh _ t => t.metavars
+  | .unif s t  => s.metavars ∪ t.metavars
+
 /-- All metavariables appearing in a problem (both `.unif` and `.fresh` sides). -/
-def UnifProblem.allMetavars (Pr : UnifProblem F X 𝔸) : Finset X :=
-  Pr.foldl (fun acc c => match c with
-    | .fresh _ t => acc ∪ t.metavars
-    | .unif s t  => acc ∪ s.metavars ∪ t.metavars) ∅
+def UnifProblem.allMetavars : UnifProblem F X 𝔸 → Finset X
+  | [] => ∅
+  | c :: rest => c.metavars ∪ UnifProblem.allMetavars rest
+
+@[simp] lemma UnifProblem.allMetavars_nil :
+    UnifProblem.allMetavars ([] : UnifProblem F X 𝔸) = ∅ := rfl
+
+@[simp] lemma UnifProblem.allMetavars_cons (c : UnifConstraint F X 𝔸)
+    (rest : UnifProblem F X 𝔸) :
+    UnifProblem.allMetavars (c :: rest) = c.metavars ∪ UnifProblem.allMetavars rest := rfl
+
+@[simp] lemma UnifProblem.allMetavars_append (Pr Pr' : UnifProblem F X 𝔸) :
+    UnifProblem.allMetavars (Pr ++ Pr') =
+      UnifProblem.allMetavars Pr ∪ UnifProblem.allMetavars Pr' := by
+  induction Pr with
+  | nil => simp
+  | cons c rest ih =>
+    simp [UnifProblem.allMetavars_cons, ih, Finset.union_assoc]
 
 /-- `σ` is disjoint from `Pr`'s metavariables. -/
 def Subst.disjointPr (σ : Subst F X 𝔸) (Pr : UnifProblem F X 𝔸) : Prop :=
   ∀ x ∈ UnifProblem.allMetavars Pr, x ∉ Subst.dom σ
+
+lemma Subst.disjointPr_cons {σ : Subst F X 𝔸} {c : UnifConstraint F X 𝔸}
+    {rest : UnifProblem F X 𝔸} (h : σ.disjointPr (c :: rest)) :
+    σ.disjointPr rest := by
+  intro x hx; exact h x (by simp [hx])
+
+lemma Subst.disjointPr_cons_head {σ : Subst F X 𝔸} {c : UnifConstraint F X 𝔸}
+    {rest : UnifProblem F X 𝔸} (h : σ.disjointPr (c :: rest)) :
+    ∀ x ∈ c.metavars, x ∉ Subst.dom σ := by
+  intro x hx; exact h x (by simp [hx])
+
+lemma Subst.disjointPr_append {σ : Subst F X 𝔸} {Pr Pr' : UnifProblem F X 𝔸}
+    (h : σ.disjointPr (Pr ++ Pr')) :
+    σ.disjointPr Pr ∧ σ.disjointPr Pr' := by
+  refine ⟨?_, ?_⟩ <;> intro x hx <;> exact h x (by simp [hx])
+
+lemma Subst.disjointPr_append_of {σ : Subst F X 𝔸} {Pr Pr' : UnifProblem F X 𝔸}
+    (h1 : σ.disjointPr Pr) (h2 : σ.disjointPr Pr') :
+    σ.disjointPr (Pr ++ Pr') := by
+  intro x hx
+  simp only [UnifProblem.allMetavars_append, Finset.mem_union] at hx
+  rcases hx with hx | hx
+  · exact h1 x hx
+  · exact h2 x hx
+
+lemma Subst.disjointPr_subset {σ : Subst F X 𝔸} {Pr Pr' : UnifProblem F X 𝔸}
+    (h : UnifProblem.allMetavars Pr' ⊆ UnifProblem.allMetavars Pr)
+    (hdisj : σ.disjointPr Pr) : σ.disjointPr Pr' :=
+  fun x hx => hdisj x (h hx)
+
+/-- Disjoint extends to `σ ++ [(x, u)]` if the added binding doesn't introduce
+    new dom-conflict with Pr's metavars (x ∉ allMetavars Pr). -/
+lemma Subst.disjointPr_append_singleton {σ : Subst F X 𝔸} {Pr : UnifProblem F X 𝔸}
+    {x : X} {u : ntm F X 𝔸}
+    (hdisj : σ.disjointPr Pr) (hx : x ∉ UnifProblem.allMetavars Pr) :
+    (σ ++ [(x, u)]).disjointPr Pr := by
+  intro y hy
+  have hy_dom : y ∉ Subst.dom σ := hdisj y hy
+  rw [Subst.dom_append, Subst.dom_singleton]
+  intro hmem
+  rcases Finset.mem_union.mp hmem with h | h
+  · exact hy_dom h
+  · rw [Finset.mem_singleton] at h
+    subst h
+    exact hx hy
+
+-- Helper: simplifyFresh leaves' metavars ⊆ t's metavars.
+mutual
+  lemma simplifyFresh_metavars_subset (a : 𝔸) :
+      ∀ (t : ntm F X 𝔸) (cs : Problem F X 𝔸),
+        simplifyFresh a t = some cs →
+        ∀ c ∈ cs, ∀ x ∈ c.toUnif.metavars, x ∈ t.metavars
+    | .atm b, cs, h, c, hc => by
+      simp only [simplifyFresh] at h
+      by_cases hab : a = b
+      · rw [if_pos hab] at h; cases h
+      · rw [if_neg hab] at h
+        injection h with heq; subst heq
+        nomatch hc
+    | .mvar π y, cs, h, c, hc => by
+      simp only [simplifyFresh] at h
+      injection h with heq; subst heq
+      rw [List.mem_singleton] at hc
+      subst hc
+      intro x hx
+      simp [Constraint.toUnif, UnifConstraint.metavars, ntm.metavars] at hx
+      simp [ntm.metavars, hx]
+    | .fapp _ ts, cs, h, c, hc => by
+      simp only [simplifyFresh] at h
+      exact simplifyFreshList_metavars_subset a ts cs h c hc
+    | .abs b t', cs, h, c, hc => by
+      simp only [simplifyFresh] at h
+      by_cases hab : a = b
+      · rw [if_pos hab] at h
+        injection h with heq; subst heq
+        nomatch hc
+      · rw [if_neg hab] at h
+        intro x hx
+        have := simplifyFresh_metavars_subset a t' cs h c hc x hx
+        simp [ntm.metavars]; exact this
+
+  lemma simplifyFreshList_metavars_subset (a : 𝔸) :
+      ∀ (ts : List (ntm F X 𝔸)) (cs : Problem F X 𝔸),
+        simplifyFreshList a ts = some cs →
+        ∀ c ∈ cs, ∀ x ∈ c.toUnif.metavars, x ∈ ntmList.metavars ts
+    | [], cs, h, c, hc => by
+      simp only [simplifyFreshList] at h
+      injection h with heq; subst heq; nomatch hc
+    | t :: ts', cs, h, c, hc => by
+      simp only [simplifyFreshList] at h
+      cases hf : simplifyFresh a t with
+      | none => rw [hf] at h; cases h
+      | some cs₁ =>
+        cases hg : simplifyFreshList a ts' with
+        | none => rw [hf, hg] at h; cases h
+        | some cs₂ =>
+          rw [hf, hg] at h
+          injection h with heq; subst heq
+          rcases List.mem_append.mp hc with hc | hc
+          · intro x hx
+            have := simplifyFresh_metavars_subset a t cs₁ hf c hc x hx
+            simp [ntmList.metavars]; left; exact this
+          · intro x hx
+            have := simplifyFreshList_metavars_subset a ts' cs₂ hg c hc x hx
+            simp [ntmList.metavars]; right; exact this
+end
 
 /-- `unify` preserves idempotence of σ under the disjointness invariant. -/
 theorem unify_preserves_idempotent :
@@ -660,6 +785,26 @@ theorem unify_preserves_idempotent :
       σ.IsIdempotent →
       σ.disjointPr Pr →
       σ'.IsIdempotent := by
-  sorry
+  intro Pr σ ds
+  induction Pr, σ, ds using unify.induct with
+  | case1 σ ds =>
+    intro ds' σ' h hσ _
+    simp only [unify, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨_, rfl⟩ := h
+    exact hσ
+  | case2 σ ds c rest hfail =>
+    intro ds' σ' h _ _
+    rw [unify, hfail] at h
+    cases h
+  | case3 σ ds c rest a x hctx ih =>
+    intro ds' σ' h hσ hdisj
+    rw [unify, hctx] at h
+    exact ih ds' σ' h hσ (Subst.disjointPr_cons hdisj)
+  | case4 σ ds c rest Pr' σ_next hnext ih =>
+    intro ds' σ' h hσ hdisj
+    rw [unify, hnext] at h
+    -- Need: σ_next.IsIdempotent ∧ σ_next.disjointPr Pr'.
+    -- Then apply ih.
+    sorry
 
 end Nominal
