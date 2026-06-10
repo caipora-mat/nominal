@@ -347,7 +347,6 @@ end
     Does NOT require `x ∉ image σ`. -/
 lemma Subst.IsIdempotent.append_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
     (hσ : σ.IsIdempotent)
-    (hx_dom : x ∉ Subst.dom σ)
     (hu_fixed : u.subst σ = u)
     (hxu : u.occursIn x = false) :
     Subst.IsIdempotent (σ ++ [(x, u)]) := by

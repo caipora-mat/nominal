@@ -631,4 +631,35 @@ theorem UnifProblem.solve_sound (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X
       have ⟨_, hfresh⟩ := finalizeDeferred_sound σ_u ds ∅ Γ_fin hf
       exact (unify_sound Γ_fin Pr [] [] ds σ_u hu hfresh).1
 
+-- ============================================================
+-- Invariant: σ idempotent throughout `unify`.
+--
+-- Statement only — proof TODO. Path:
+-- (a) Define `Pr.allMetavars` (all mvars in Pr, fresh + unif).
+-- (b) Predicate `σ.disjoint Pr := ∀ x ∈ Pr.allMetavars, x ∉ dom σ`.
+-- (c) Induction on `unify.induct`. For .next instantiation case, use
+--     `Subst.IsIdempotent.append_singleton` (no hx_img needed).
+-- (d) Preservation of disjoint for each unifStep case (16 sub-cases).
+-- ============================================================
+
+/-- All metavariables appearing in a problem (both `.unif` and `.fresh` sides). -/
+def UnifProblem.allMetavars (Pr : UnifProblem F X 𝔸) : Finset X :=
+  Pr.foldl (fun acc c => match c with
+    | .fresh _ t => acc ∪ t.metavars
+    | .unif s t  => acc ∪ s.metavars ∪ t.metavars) ∅
+
+/-- `σ` is disjoint from `Pr`'s metavariables. -/
+def Subst.disjointPr (σ : Subst F X 𝔸) (Pr : UnifProblem F X 𝔸) : Prop :=
+  ∀ x ∈ UnifProblem.allMetavars Pr, x ∉ Subst.dom σ
+
+/-- `unify` preserves idempotence of σ under the disjointness invariant. -/
+theorem unify_preserves_idempotent :
+    ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
+      (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸),
+      unify Pr σ ds = some (ds', σ') →
+      σ.IsIdempotent →
+      σ.disjointPr Pr →
+      σ'.IsIdempotent := by
+  sorry
+
 end Nominal
