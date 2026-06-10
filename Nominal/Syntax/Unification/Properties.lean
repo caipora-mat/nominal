@@ -152,6 +152,138 @@ mutual
           · exact freshList_subst_of_simplifyFreshList_entails Γ a τ ts' cs₂ hg hcs'.2
 end
 
+/-- `unifStep` extends σ via append: σ_next = σ ++ ε for some ε.  For
+    non-instantiation cases ε = []; for the 7 instantiation cases ε is a
+    singleton binding `[(x, u_perm)]`. -/
+lemma unifStep_σ_extends (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸)
+    (σ : Subst F X 𝔸) (Pr' : UnifProblem F X 𝔸) (σ_next : Subst F X 𝔸)
+    (h : unifStep c rest σ = .next Pr' σ_next) :
+    ∃ ε, σ_next = σ ++ ε := by
+  cases c with
+  | fresh a t =>
+    cases t with
+    | mvar _ _ => simp [unifStep] at h
+    | atm b =>
+      simp only [unifStep] at h
+      cases hcs : simplifyFresh a (ntm.atm (X := X) (F := F) b) with
+      | none => rw [hcs] at h; cases h
+      | some _ =>
+        rw [hcs] at h
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[], (List.append_nil σ).symm⟩
+    | fapp f ts =>
+      simp only [unifStep] at h
+      cases hcs : simplifyFresh a (ntm.fapp (X := X) (𝔸 := 𝔸) f ts) with
+      | none => rw [hcs] at h; cases h
+      | some _ =>
+        rw [hcs] at h
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[], (List.append_nil σ).symm⟩
+    | abs b t =>
+      simp only [unifStep] at h
+      cases hcs : simplifyFresh a (ntm.abs (X := X) (F := F) b t) with
+      | none => rw [hcs] at h; cases h
+      | some _ =>
+        rw [hcs] at h
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[], (List.append_nil σ).symm⟩
+  | unif s t =>
+    cases s with
+    | atm a => cases t with
+      | atm b =>
+        simp only [unifStep] at h
+        by_cases hab : a = b
+        · simp only [if_pos hab] at h
+          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+          exact ⟨[], (List.append_nil σ).symm⟩
+        · simp only [if_neg hab] at h; cases h
+      | mvar π x =>
+        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false] at h
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[(x, (ntm.atm (X := X) (F := F) a).permute π.reverse)], rfl⟩
+      | fapp _ _ | abs _ _ => simp [unifStep] at h
+    | mvar π x => cases t with
+      | atm a =>
+        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false] at h
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[(x, (ntm.atm (X := X) (F := F) a).permute π.reverse)], rfl⟩
+      | mvar π' y =>
+        simp only [unifStep] at h
+        by_cases hxy : x = y
+        · subst hxy
+          simp at h
+          obtain ⟨_, rfl⟩ := h
+          exact ⟨[], (List.append_nil σ).symm⟩
+        · simp only [if_neg hxy] at h
+          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+          exact ⟨[(x, (ntm.mvar (F := F) π' y).permute π.reverse)], rfl⟩
+      | fapp f ts =>
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[(x, (ntm.fapp (X := X) (𝔸 := 𝔸) f ts).permute π.reverse)], rfl⟩
+      | abs b t =>
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[(x, (ntm.abs (X := X) (F := F) b t).permute π.reverse)], rfl⟩
+    | fapp f ss => cases t with
+      | atm _ => simp [unifStep] at h
+      | mvar π' y =>
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[(y, (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse)], rfl⟩
+      | fapp g ts =>
+        simp only [unifStep] at h
+        by_cases hfg : f = g ∧ ss.length = ts.length
+        · simp only [if_pos hfg] at h
+          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+          exact ⟨[], (List.append_nil σ).symm⟩
+        · simp only [if_neg hfg] at h; cases h
+      | abs _ _ => simp [unifStep] at h
+    | abs a s' => cases t with
+      | atm _ => simp [unifStep] at h
+      | mvar π' y =>
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+        exact ⟨[(y, (ntm.abs (X := X) (F := F) a s').permute π'.reverse)], rfl⟩
+      | fapp _ _ => simp [unifStep] at h
+      | abs b t' =>
+        simp only [unifStep] at h
+        by_cases hab : a = b
+        · simp only [if_pos hab] at h
+          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+          exact ⟨[], (List.append_nil σ).symm⟩
+        · simp only [if_neg hab] at h
+          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
+          exact ⟨[], (List.append_nil σ).symm⟩
+
+/-- `unify` σ' extends σ via append. -/
+lemma unify_σ_prefix : ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X)),
+    ∀ (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸),
+      unify Pr σ ds = some (ds', σ') → ∃ τ, σ' = σ ++ τ := by
+  intro Pr σ ds
+  induction Pr, σ, ds using unify.induct with
+  | case1 σ ds =>
+    intro ds' σ' h
+    simp only [unify, Option.some.injEq, Prod.mk.injEq] at h
+    exact ⟨[], by rw [h.2, List.append_nil]⟩
+  | case2 σ ds c rest hfail =>
+    intro ds' σ' h
+    rw [unify, hfail] at h; cases h
+  | case3 σ ds c rest a x hctx ih =>
+    intro ds' σ' h
+    rw [unify, hctx] at h
+    exact ih ds' σ' h
+  | case4 σ ds c rest Pr' σ_next hnext ih =>
+    intro ds' σ' h
+    rw [unify, hnext] at h
+    obtain ⟨ε1, hε1⟩ := unifStep_σ_extends c rest σ Pr' σ_next hnext
+    obtain ⟨ε2, hε2⟩ := ih ds' σ' h
+    exact ⟨ε1 ++ ε2, by rw [hε2, hε1, List.append_assoc]⟩
+
 /-- Soundness of `.next` outcomes: if `Γ` entails `Pr'.applySubst τ` for ANY
     target substitution `τ`, then `Γ` entails `(c :: rest).applySubst τ`.
     `τ` is independent of the `.next` output `σ'` so this lemma composes with
