@@ -871,7 +871,7 @@ lemma unifStep_next_idempotent_and_disjoint
     | mvar π x =>
       cases t with
       | atm _    => sorry  -- instantiation
-      | mvar _ _ => sorry  -- same/diff
+      | mvar _ _ => sorry  -- mvar-mvar same/diff
       | fapp _ _ => sorry  -- instantiation
       | abs _ _  => sorry  -- instantiation
     | fapp f ss =>
@@ -885,7 +885,26 @@ lemma unifStep_next_idempotent_and_disjoint
       | atm _    => simp [unifStep] at h
       | fapp _ _ => simp [unifStep] at h
       | mvar _ _ => sorry  -- instantiation
-      | abs b t' => sorry  -- abs-abs
+      | abs b t' =>
+        simp only [unifStep] at h
+        by_cases hab : a = b
+        · simp only [if_pos hab, StepResult.next.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          refine ⟨hσ, ?_⟩
+          intro y hy
+          exact hdisj y (by
+            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                       ntm.metavars] at hy ⊢
+            exact hy)
+        · simp only [if_neg hab, StepResult.next.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          refine ⟨hσ, ?_⟩
+          intro y hy
+          exact hdisj y (by
+            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                       ntm.metavars, ntm.permute_metavars,
+                       Finset.mem_union] at hy ⊢
+            tauto)
 
 /-- `unify` preserves idempotence of σ under the disjointness invariant. -/
 theorem unify_preserves_idempotent :
