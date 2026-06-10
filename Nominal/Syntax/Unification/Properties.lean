@@ -791,6 +791,133 @@ lemma allMetavars_map_toUnif_subset (cs : Problem F X 𝔸) (target : Finset X)
     · exact h c List.mem_cons_self x hx
     · exact ih (fun c' hc' => h c' (List.mem_cons_of_mem _ hc')) hx
 
+-- Helper: subst by a single binding bounds metavars.
+mutual
+  lemma ntm.applyOne_metavars_subset (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸) :
+      (t.applyOne x u).metavars ⊆ (t.metavars \ {x}) ∪ u.metavars := by
+    match t with
+    | .atm _ => simp [ntm.applyOne, ntm.metavars]
+    | .mvar π y =>
+      simp only [ntm.applyOne]
+      by_cases hy : y = x
+      · rw [if_pos hy, ntm.permute_metavars]
+        intro z hz; simp [Finset.mem_union]; right; exact hz
+      · rw [if_neg hy]
+        intro z hz
+        simp only [ntm.metavars, Finset.mem_singleton] at hz
+        subst hz
+        simp [ntm.metavars, hy]
+    | .fapp f ts =>
+      simp only [ntm.applyOne, ntm.metavars]
+      exact ntmList.applyOne_metavars_subset ts x u
+    | .abs b t' =>
+      simp only [ntm.applyOne, ntm.metavars]
+      exact ntm.applyOne_metavars_subset t' x u
+
+  lemma ntmList.applyOne_metavars_subset (ts : List (ntm F X 𝔸)) (x : X)
+      (u : ntm F X 𝔸) :
+      ntmList.metavars (ts.map (·.applyOne x u)) ⊆
+        (ntmList.metavars ts \ {x}) ∪ u.metavars := by
+    match ts with
+    | [] => simp [ntmList.metavars]
+    | t :: ts' =>
+      simp only [List.map_cons, ntmList.metavars]
+      intro z hz
+      simp only [Finset.mem_union] at hz
+      rcases hz with hz | hz
+      · have := ntm.applyOne_metavars_subset t x u hz
+        simp only [Finset.mem_union, Finset.mem_sdiff,
+                   Finset.mem_singleton] at this ⊢
+        rcases this with ⟨hz1, hz2⟩ | hz
+        · left; refine ⟨?_, hz2⟩; left; exact hz1
+        · right; exact hz
+      · have := ntmList.applyOne_metavars_subset ts' x u hz
+        simp only [Finset.mem_union, Finset.mem_sdiff,
+                   Finset.mem_singleton] at this ⊢
+        rcases this with ⟨hz1, hz2⟩ | hz
+        · left; refine ⟨?_, hz2⟩; right; exact hz1
+        · right; exact hz
+end
+
+lemma ntm.subst_singleton_metavars_subset (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸) :
+    (t.subst [(x, u)]).metavars ⊆ (t.metavars \ {x}) ∪ u.metavars := by
+  rw [ntm.subst_cons, ntm.subst_nil]
+  exact ntm.applyOne_metavars_subset t x u
+
+lemma UnifConstraint.applySubst_singleton_metavars_subset (c : UnifConstraint F X 𝔸)
+    (x : X) (u : ntm F X 𝔸) :
+    (c.applySubst [(x, u)]).metavars ⊆ (c.metavars \ {x}) ∪ u.metavars := by
+  cases c with
+  | fresh a t =>
+    simp only [UnifConstraint.applySubst, UnifConstraint.metavars]
+    exact ntm.subst_singleton_metavars_subset t x u
+  | unif s t =>
+    simp only [UnifConstraint.applySubst, UnifConstraint.metavars]
+    intro z hz
+    simp only [Finset.mem_union] at hz
+    rcases hz with hz | hz
+    · have := ntm.subst_singleton_metavars_subset s x u hz
+      simp only [Finset.mem_union, Finset.mem_sdiff,
+                 Finset.mem_singleton] at this ⊢
+      rcases this with ⟨h1, h2⟩ | h
+      · left; refine ⟨?_, h2⟩; left; exact h1
+      · right; exact h
+    · have := ntm.subst_singleton_metavars_subset t x u hz
+      simp only [Finset.mem_union, Finset.mem_sdiff,
+                 Finset.mem_singleton] at this ⊢
+      rcases this with ⟨h1, h2⟩ | h
+      · left; refine ⟨?_, h2⟩; right; exact h1
+      · right; exact h
+
+lemma UnifProblem.applySubst_singleton_metavars_subset (Pr : UnifProblem F X 𝔸)
+    (x : X) (u : ntm F X 𝔸) :
+    UnifProblem.allMetavars (Pr.applySubst [(x, u)]) ⊆
+      (UnifProblem.allMetavars Pr \ {x}) ∪ u.metavars := by
+  induction Pr with
+  | nil => intro z hz; simp [UnifProblem.applySubst, UnifProblem.allMetavars] at hz
+  | cons c rest ih =>
+    intro z hz
+    simp only [UnifProblem.applySubst, List.map_cons,
+               UnifProblem.allMetavars_cons, Finset.mem_union] at hz
+    rcases hz with hz | hz
+    · have := UnifConstraint.applySubst_singleton_metavars_subset c x u hz
+      simp only [Finset.mem_union, Finset.mem_sdiff,
+                 UnifProblem.allMetavars_cons, Finset.mem_singleton] at this ⊢
+      rcases this with ⟨h1, h2⟩ | h
+      · left; refine ⟨?_, h2⟩; left; exact h1
+      · right; exact h
+    · have := ih hz
+      simp only [Finset.mem_union, Finset.mem_sdiff,
+                 UnifProblem.allMetavars_cons, Finset.mem_singleton] at this ⊢
+      rcases this with ⟨h1, h2⟩ | h
+      · left; refine ⟨?_, h2⟩; right; exact h1
+      · right; exact h
+
+/-- t.metavars ⊆ ntmList.metavars ts if t ∈ ts. -/
+lemma ntmList.mem_metavars_of_mem {t : ntm F X 𝔸} {ts : List (ntm F X 𝔸)}
+    (h : t ∈ ts) {z : X} (hz : z ∈ t.metavars) :
+    z ∈ ntmList.metavars ts := by
+  induction ts with
+  | nil => cases h
+  | cons t' ts' ih =>
+    simp only [ntmList.metavars, Finset.mem_union]
+    rcases List.mem_cons.mp h with rfl | h
+    · left; exact hz
+    · right; exact ih h
+
+/-- General: allMetavars of mapped list bounded by per-element target. -/
+lemma allMetavars_map_subset {α : Type*} (l : List α) (f : α → UnifConstraint F X 𝔸)
+    (target : Finset X) (h : ∀ a ∈ l, ∀ x ∈ (f a).metavars, x ∈ target) :
+    UnifProblem.allMetavars (l.map f) ⊆ target := by
+  induction l with
+  | nil => simp
+  | cons a l' ih =>
+    intro x hx
+    simp only [List.map_cons, UnifProblem.allMetavars_cons, Finset.mem_union] at hx
+    rcases hx with hx | hx
+    · exact h a List.mem_cons_self x hx
+    · exact ih (fun a' ha' => h a' (List.mem_cons_of_mem _ ha')) hx
+
 /-- One unifStep preserves σ.IsIdempotent and σ.disjointPr (under invariant). -/
 lemma unifStep_next_idempotent_and_disjoint
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
@@ -870,8 +997,54 @@ lemma unifStep_next_idempotent_and_disjoint
       | fapp _ _ | abs _ _ => simp [unifStep] at h
     | mvar π x =>
       cases t with
-      | atm _    => sorry  -- instantiation
-      | mvar _ _ => sorry  -- mvar-mvar same/diff
+      | atm a =>
+        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
+                   StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        have hx_c : x ∈ UnifProblem.allMetavars
+            (UnifConstraint.unif (X := X) (𝔸 := 𝔸) (ntm.mvar π x) (ntm.atm a) :: rest) := by
+          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars]
+        have hx_dom : x ∉ Subst.dom σ := hdisj x hx_c
+        have hu_fixed : ((ntm.atm (X := X) (F := F) a).permute π.reverse).subst σ =
+            (ntm.atm a).permute π.reverse := by simp [ntm.permute, ntm.subst_atm]
+        have hxu : ((ntm.atm (X := X) (F := F) a).permute π.reverse).occursIn x = false := by
+          simp [ntm.permute, ntm.occursIn]
+        refine ⟨Subst.IsIdempotent.append_singleton hσ hu_fixed hxu, ?_⟩
+        intro y hy
+        have := UnifProblem.applySubst_singleton_metavars_subset rest x
+          ((ntm.atm (X := X) (F := F) a).permute π.reverse) hy
+        simp only [Finset.mem_union, Finset.mem_sdiff, Finset.mem_singleton,
+                   ntm.permute, ntm.metavars] at this
+        rw [Subst.dom_append, Subst.dom_singleton]
+        intro hmem
+        simp only [Finset.mem_union, Finset.mem_singleton] at hmem
+        rcases this with ⟨hy_rest, hy_ne⟩ | hy_empty
+        · rcases hmem with hmem | hmem
+          · exact hdisj y (by
+              simp [UnifProblem.allMetavars_cons]; right; exact hy_rest) hmem
+          · exact hy_ne hmem
+        · simp at hy_empty
+      | mvar π' y =>
+        simp only [unifStep] at h
+        by_cases hxy : x = y
+        · subst hxy
+          simp only [if_pos rfl, StepResult.next.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          refine ⟨hσ, ?_⟩
+          apply Subst.disjointPr_append_of (Subst.disjointPr_cons hdisj)
+          apply Subst.disjointPr_subset
+            (allMetavars_map_subset (dsList π π')
+              (fun a => UnifConstraint.fresh a (ntm.mvar [] x))
+              (UnifProblem.allMetavars
+                (UnifConstraint.unif (ntm.mvar π x) (ntm.mvar (X := X) π' x) :: rest))
+              (fun a _ z hz => by
+                simp only [UnifConstraint.metavars, ntm.metavars,
+                           Finset.mem_singleton] at hz
+                subst hz
+                simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                      ntm.metavars]))
+          exact hdisj
+        · sorry  -- mvar-mvar diff (instantiation)
       | fapp _ _ => sorry  -- instantiation
       | abs _ _  => sorry  -- instantiation
     | fapp f ss =>
@@ -879,7 +1052,32 @@ lemma unifStep_next_idempotent_and_disjoint
       | atm _    => simp [unifStep] at h
       | mvar _ _ => sorry  -- instantiation
       | abs _ _  => simp [unifStep] at h
-      | fapp g ts => sorry  -- fapp-fapp
+      | fapp g ts =>
+        simp only [unifStep] at h
+        by_cases hfg : f = g ∧ ss.length = ts.length
+        · simp only [if_pos hfg, StepResult.next.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          obtain ⟨rfl, hlen⟩ := hfg
+          refine ⟨hσ, ?_⟩
+          apply Subst.disjointPr_append_of
+          · apply Subst.disjointPr_subset
+              (allMetavars_map_subset (ss.zip ts)
+                (fun p => UnifConstraint.unif p.1 p.2)
+                (UnifProblem.allMetavars
+                  (UnifConstraint.unif (ntm.fapp (X := X) (𝔸 := 𝔸) f ss)
+                                       (ntm.fapp (X := X) (𝔸 := 𝔸) f ts) :: rest))
+                (fun p hp z hz => by
+                  obtain ⟨hp1, hp2⟩ := List.of_mem_zip hp
+                  simp only [UnifConstraint.metavars, Finset.mem_union] at hz
+                  simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                             ntm.metavars, Finset.mem_union]
+                  left
+                  rcases hz with hz | hz
+                  · left; exact ntmList.mem_metavars_of_mem hp1 hz
+                  · right; exact ntmList.mem_metavars_of_mem hp2 hz))
+            exact hdisj
+          · exact Subst.disjointPr_cons hdisj
+        · simp only [if_neg hfg] at h; cases h
     | abs a s' =>
       cases t with
       | atm _    => simp [unifStep] at h
