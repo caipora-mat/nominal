@@ -893,6 +893,92 @@ lemma unifStep_next_idempotent_and_disjoint
                        Finset.mem_union] at hy ⊢
             tauto)
 
+-- ============================================================
+-- Helpers for the instantiation cases of `unifStep_next_sound`.
+-- ============================================================
+
+/-- Under the invariants of `unify`, the final substitution τ "resolves" the
+    binding `(x, u_perm)` produced by the instantiation step:
+    `(mvar [] x).subst τ = u_perm.subst τ`. -/
+lemma mvar_subst_eq_binding {σ τ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
+    {σ_extra : Subst F X 𝔸}
+    (hσ : Subst.IsIdempotent σ)
+    (hx_dom : x ∉ Subst.dom σ)
+    (hu_fixed : u.subst σ = u)
+    (hxu : u.occursIn x = false)
+    (hτ_eq : τ = σ ++ [(x, u)] ++ σ_extra) :
+    (ntm.mvar (F := F) [] x).subst τ = u.subst τ := by
+  subst hτ_eq
+  have h1 : (ntm.mvar (F := F) [] x).subst (σ ++ [(x, u)] ++ σ_extra) =
+            u.subst σ_extra := by
+    rw [ntm.subst_append, ntm.subst_append]
+    rw [ntm.subst_mvar_nil_of_not_mem_dom hx_dom]
+    simp [ntm.subst_cons, ntm.subst_nil, ntm.applyOne, ntm.permute_nil]
+  have h2 : u.subst (σ ++ [(x, u)] ++ σ_extra) = u.subst σ_extra := by
+    rw [ntm.subst_append, ntm.subst_append, hu_fixed]
+    simp [ntm.subst_cons, ntm.subst_nil,
+          ntm.applyOne_of_not_occursIn _ _ _ hxu]
+  rw [h1, h2]
+
+mutual
+  /-- If τ resolves the binding `x ↦ u`, then applyOne becomes a no-op under τ. -/
+  lemma ntm.applyOne_subst_eq (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸)
+      (τ : Subst F X 𝔸)
+      (h : (ntm.mvar (F := F) [] x).subst τ = u.subst τ) :
+      (t.applyOne x u).subst τ = t.subst τ := by
+    match t with
+    | .atm _ => simp [ntm.applyOne]
+    | .mvar π y =>
+      simp only [ntm.applyOne]
+      by_cases hy : y = x
+      · rw [if_pos hy]
+        rw [ntm.subst_permute, ntm.subst_mvar]
+        subst hy
+        rw [h]
+      · rw [if_neg hy]
+    | .fapp f ts =>
+      simp only [ntm.applyOne, ntm.subst_fapp]
+      congr 1
+      exact ntmList.applyOne_subst_eq ts x u τ h
+    | .abs b t' =>
+      simp only [ntm.applyOne, ntm.subst_abs]
+      congr 1
+      exact ntm.applyOne_subst_eq t' x u τ h
+
+  lemma ntmList.applyOne_subst_eq (ts : List (ntm F X 𝔸)) (x : X) (u : ntm F X 𝔸)
+      (τ : Subst F X 𝔸)
+      (h : (ntm.mvar (F := F) [] x).subst τ = u.subst τ) :
+      (ts.map (·.applyOne x u)).map (·.subst τ) = ts.map (·.subst τ) := by
+    match ts with
+    | [] => rfl
+    | t :: ts' =>
+      simp only [List.map_cons]
+      rw [ntm.applyOne_subst_eq t x u τ h,
+          ntmList.applyOne_subst_eq ts' x u τ h]
+end
+
+lemma UnifConstraint.applySubst_singleton_subst_eq (c : UnifConstraint F X 𝔸)
+    (x : X) (u : ntm F X 𝔸) (τ : Subst F X 𝔸)
+    (h : (ntm.mvar (F := F) [] x).subst τ = u.subst τ) :
+    (c.applySubst [(x, u)]).applySubst τ = c.applySubst τ := by
+  cases c with
+  | fresh a t =>
+    simp only [UnifConstraint.applySubst, ntm.subst_cons, ntm.subst_nil]
+    rw [ntm.applyOne_subst_eq t x u τ h]
+  | unif s t =>
+    simp only [UnifConstraint.applySubst, ntm.subst_cons, ntm.subst_nil]
+    rw [ntm.applyOne_subst_eq s x u τ h, ntm.applyOne_subst_eq t x u τ h]
+
+lemma UnifProblem.applySubst_singleton_subst_eq (Pr : UnifProblem F X 𝔸)
+    (x : X) (u : ntm F X 𝔸) (τ : Subst F X 𝔸)
+    (h : (ntm.mvar (F := F) [] x).subst τ = u.subst τ) :
+    (Pr.applySubst [(x, u)]).applySubst τ = Pr.applySubst τ := by
+  induction Pr with
+  | nil => rfl
+  | cons c rest ih =>
+    simp only [UnifProblem.applySubst_cons]
+    rw [UnifConstraint.applySubst_singleton_subst_eq c x u τ h, ih]
+
 /-- Soundness of `.next` outcomes: if `Γ` entails `Pr'.applySubst τ` for ANY
     target substitution `τ`, then `Γ` entails `(c :: rest).applySubst τ`.
     `τ` is independent of the `.next` output `σ'` so this lemma composes with
@@ -1019,7 +1105,43 @@ lemma unifStep_next_sound
                 Constraint.applySubst, Constraint.Entails, alphaEquiv]
         · simp only [if_neg hab] at h
           exact absurd h (by simp)
-      | mvar π x => sorry
+      | mvar π x =>
+        -- atm-mvar instantiation: s = atm a, t = mvar π x
+        -- σ_next = σ ++ [(x, (atm a).permute π.reverse)]
+        -- Pr' = rest.applySubst [(x, (atm a).permute π.reverse)]
+        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
+                   StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        -- Build (mvar [] x).subst τ = u_perm.subst τ via mvar_subst_eq_binding.
+        set u_perm := (ntm.atm (X := X) (F := F) a).permute π.reverse with hu_perm_def
+        have hx_dom : x ∉ Subst.dom σ := hdisj x (by
+          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                ntm.metavars])
+        have hu_fixed : u_perm.subst σ = u_perm := by
+          simp [u_perm, ntm.permute, ntm.subst_atm]
+        have hxu : u_perm.occursIn x = false := by
+          simp [u_perm, ntm.permute, ntm.occursIn]
+        have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
+          mvar_subst_eq_binding hσ hx_dom hu_fixed hxu hτ_eq
+        -- Decompose hΓ: (rest.applySubst [(x, u_perm)]).applySubst τ
+        rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
+        -- Now hΓ : Γ ⊢ (rest.applySubst τ).toConstraint
+        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+                   Problem.Entails_cons]
+        refine ⟨?_, hΓ⟩
+        -- Goal: Γ ⊢ alphaEquiv ((atm a).subst τ) ((mvar π x).subst τ)
+        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                   Constraint.Entails]
+        rw [ntm.subst_mvar, hresolve]
+        -- (atm a).subst τ ≈α (u_perm.subst τ).permute π
+        -- u_perm = (atm a).permute π.reverse
+        -- (u_perm.subst τ).permute π = ((atm a).permute π.reverse .subst τ).permute π
+        --                            = ((atm a).subst τ .permute π.reverse).permute π
+        --                            = (atm a).subst τ (since permute composes to id)
+        show alphaEquiv Γ ((ntm.atm (X := X) (F := F) a).subst τ)
+             ((u_perm.subst τ).permute π) = true
+        simp [u_perm, ntm.permute, ntm.subst_atm, alphaEquiv,
+              LPermApply, LPermApply_reverse_right]
       | fapp _ _ | abs _ _ => simp [unifStep] at h
     | mvar π x =>
       cases t with
