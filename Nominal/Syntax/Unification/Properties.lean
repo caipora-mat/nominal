@@ -1714,8 +1714,6 @@ theorem UnifProblem.solve_sound (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X
         intro x _; simp [Subst.dom]
       exact (unify_sound Γ_fin Pr [] [] ds σ_u hu hσ_empty hdisj_empty hfresh).1
 
--- ============================================================
--- Invariant: σ idempotent throughout `unify`.
 --
 -- Statement only — proof TODO. Path:
 -- (a) Define `Pr.allMetavars` (all mvars in Pr, fresh + unif).
@@ -1755,4 +1753,39 @@ theorem unify_preserves_idempotent :
       unifStep_next_idempotent_and_disjoint c rest σ Pr' σ_next hnext hσ hdisj
     exact ih ds' σ' h hσ_next hdisj_next
 
+/-- `solve Pr = some (Γ, σ)` produces an idempotent σ.  Direct corollary of
+    `unify_preserves_idempotent` with σ_initial = []. -/
+theorem UnifProblem.solve_idempotent (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
+    (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) :
+    Subst.IsIdempotent σ := by
+  simp only [UnifProblem.solve] at h
+  cases hu : unify Pr [] [] with
+  | none => rw [hu] at h; cases h
+  | some result =>
+    rw [hu] at h
+    obtain ⟨ds, σ_u⟩ := result
+    simp only at h
+    cases hf : finalizeDeferred ds σ_u ∅ with
+    | none => rw [hf] at h; cases h
+    | some Γ_fin =>
+      rw [hf] at h
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨_, hσeq⟩ := h
+      subst hσeq
+      have hσ_empty : Subst.IsIdempotent ([] : Subst F X 𝔸) := by
+        intro x; rfl
+      have hdisj_empty : Subst.disjointPr ([] : Subst F X 𝔸) Pr := by
+        intro x _; simp [Subst.dom]
+      exact unify_preserves_idempotent Pr [] [] ds σ_u hu hσ_empty hdisj_empty
+
+/-- Maribel Definition 27 + Theorem 35 (forward direction): if `solve Pr =
+    some (Γ, σ)`, then `(Γ, σ)` is a solution of Pr in the sense that Γ
+    entails `Pr.applySubst σ` AND σ is idempotent. -/
+theorem UnifProblem.solve_satisfies (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
+    (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) :
+    Solution.Satisfies Γ σ Pr :=
+  ⟨UnifProblem.solve_sound Pr Γ σ h, UnifProblem.solve_idempotent Pr Γ σ h⟩
+
+-- ============================================================
+-- Invariant: σ idempotent throughout `unify`.
 end Nominal
