@@ -777,6 +777,20 @@ mutual
             simp [ntmList.metavars]; right; exact this
 end
 
+/-- Subset bound: metavars of a mapped-toUnif problem are bounded by the
+    aggregated bound of each leaf. -/
+lemma allMetavars_map_toUnif_subset (cs : Problem F X 𝔸) (target : Finset X)
+    (h : ∀ c ∈ cs, ∀ x ∈ c.toUnif.metavars, x ∈ target) :
+    UnifProblem.allMetavars (cs.map (·.toUnif)) ⊆ target := by
+  induction cs with
+  | nil => simp
+  | cons c cs' ih =>
+    intro x hx
+    simp only [List.map_cons, UnifProblem.allMetavars_cons, Finset.mem_union] at hx
+    rcases hx with hx | hx
+    · exact h c List.mem_cons_self x hx
+    · exact ih (fun c' hc' => h c' (List.mem_cons_of_mem _ hc')) hx
+
 /-- One unifStep preserves σ.IsIdempotent and σ.disjointPr (under invariant). -/
 lemma unifStep_next_idempotent_and_disjoint
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
@@ -798,7 +812,24 @@ lemma unifStep_next_idempotent_and_disjoint
         obtain ⟨rfl, rfl⟩ := h
         exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
     | fapp f ts =>
-      sorry
+      simp only [unifStep, simplifyFresh] at h
+      cases hcs : simplifyFreshList a ts with
+      | none => rw [hcs] at h; cases h
+      | some cs =>
+        rw [hcs] at h
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        refine ⟨hσ, ?_⟩
+        apply Subst.disjointPr_append_of (Subst.disjointPr_cons hdisj)
+        apply Subst.disjointPr_subset
+          (allMetavars_map_toUnif_subset cs (UnifProblem.allMetavars
+            (UnifConstraint.fresh a (.fapp (X := X) (𝔸 := 𝔸) f ts) :: rest))
+            (fun c' hc' x hx => by
+              simp only [UnifProblem.allMetavars_cons, Finset.mem_union]
+              left
+              simp only [UnifConstraint.metavars, ntm.metavars]
+              exact simplifyFreshList_metavars_subset a ts cs hcs c' hc' x hx))
+        exact hdisj
     | abs b t =>
       simp only [unifStep, simplifyFresh] at h
       by_cases hab : a = b
@@ -806,10 +837,55 @@ lemma unifStep_next_idempotent_and_disjoint
                    StepResult.next.injEq] at h
         obtain ⟨rfl, rfl⟩ := h
         exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
-      · sorry
+      · rw [if_neg hab] at h
+        cases hcs : simplifyFresh a t with
+        | none => rw [hcs] at h; cases h
+        | some cs =>
+          rw [hcs] at h
+          simp only [StepResult.next.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          refine ⟨hσ, ?_⟩
+          apply Subst.disjointPr_append_of (Subst.disjointPr_cons hdisj)
+          apply Subst.disjointPr_subset
+            (allMetavars_map_toUnif_subset cs (UnifProblem.allMetavars
+              (UnifConstraint.fresh a (.abs (X := X) (F := F) b t) :: rest))
+              (fun c' hc' x hx => by
+                simp only [UnifProblem.allMetavars_cons, Finset.mem_union]
+                left
+                simp only [UnifConstraint.metavars, ntm.metavars]
+                exact simplifyFresh_metavars_subset a t cs hcs c' hc' x hx))
+          exact hdisj
   | unif s t =>
-    -- All unif cases (incl. 7 instantiations) — TODO.
-    sorry
+    cases s with
+    | atm a =>
+      cases t with
+      | atm b =>
+        simp only [unifStep] at h
+        by_cases hab : a = b
+        · simp only [if_pos hab, StepResult.next.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
+        · simp only [if_neg hab] at h; cases h
+      | mvar π x => sorry  -- instantiation
+      | fapp _ _ | abs _ _ => simp [unifStep] at h
+    | mvar π x =>
+      cases t with
+      | atm _    => sorry  -- instantiation
+      | mvar _ _ => sorry  -- same/diff
+      | fapp _ _ => sorry  -- instantiation
+      | abs _ _  => sorry  -- instantiation
+    | fapp f ss =>
+      cases t with
+      | atm _    => simp [unifStep] at h
+      | mvar _ _ => sorry  -- instantiation
+      | abs _ _  => simp [unifStep] at h
+      | fapp g ts => sorry  -- fapp-fapp
+    | abs a s' =>
+      cases t with
+      | atm _    => simp [unifStep] at h
+      | fapp _ _ => simp [unifStep] at h
+      | mvar _ _ => sorry  -- instantiation
+      | abs b t' => sorry  -- abs-abs
 
 /-- `unify` preserves idempotence of σ under the disjointness invariant. -/
 theorem unify_preserves_idempotent :
