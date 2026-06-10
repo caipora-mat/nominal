@@ -979,6 +979,25 @@ lemma UnifProblem.applySubst_singleton_subst_eq (Pr : UnifProblem F X 𝔸)
     simp only [UnifProblem.applySubst_cons]
     rw [UnifConstraint.applySubst_singleton_subst_eq c x u τ h, ih]
 
+/-- π.reverse ++ π acts as identity on atoms, so permuting a term by it gives
+    an α-equivalent term. -/
+lemma ntm.alphaEquiv_permute_reverse_permute_self (Γ : Context 𝔸 X)
+    (t : ntm F X 𝔸) (π : LPerm 𝔸) :
+    (Γ ⊢ (t.permute π.reverse).permute π ≈α t) = true := by
+  have h1 : (t.permute π.reverse).permute π = t.permute (π.reverse ++ π) :=
+    ntm.permute_append t π.reverse π
+  rw [h1]
+  have h2 : t = t.permute [] := (ntm.permute_nil t).symm
+  rw (config := { occs := .pos [2] }) [h2]
+  apply ntm.alphaEquiv_of_perm_fresh
+  intro n hn
+  exfalso
+  simp only [ds, Finset.mem_filter] at hn
+  obtain ⟨_, hne⟩ := hn
+  apply hne
+  rw [LPermApply_append, LPermApply_reverse_right]
+  rfl
+
 /-- Soundness of `.next` outcomes: if `Γ` entails `Pr'.applySubst τ` for ANY
     target substitution `τ`, then `Γ` entails `(c :: rest).applySubst τ`.
     `τ` is independent of the `.next` output `σ'` so this lemma composes with
@@ -1145,7 +1164,32 @@ lemma unifStep_next_sound
       | fapp _ _ | abs _ _ => simp [unifStep] at h
     | mvar π x =>
       cases t with
-      | atm a => sorry
+      | atm a =>
+        -- mvar-atm instantiation: s = mvar π x, t = atm a
+        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
+                   StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        set u_perm := (ntm.atm (X := X) (F := F) a).permute π.reverse with hu_perm_def
+        have hx_dom : x ∉ Subst.dom σ := hdisj x (by
+          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                ntm.metavars])
+        have hu_fixed : u_perm.subst σ = u_perm := by
+          simp [u_perm, ntm.permute, ntm.subst_atm]
+        have hxu : u_perm.occursIn x = false := by
+          simp [u_perm, ntm.permute, ntm.occursIn]
+        have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
+          mvar_subst_eq_binding hσ hx_dom hu_fixed hxu hτ_eq
+        rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
+        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+                   Problem.Entails_cons]
+        refine ⟨?_, hΓ⟩
+        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                   Constraint.Entails]
+        rw [ntm.subst_mvar, hresolve]
+        show alphaEquiv Γ ((u_perm.subst τ).permute π)
+             ((ntm.atm (X := X) (F := F) a).subst τ) = true
+        simp [u_perm, ntm.permute, ntm.subst_atm, alphaEquiv,
+              LPermApply, LPermApply_reverse_right]
       | mvar π' y =>
         simp only [unifStep] at h
         by_cases hxy : x = y
@@ -1186,9 +1230,107 @@ lemma unifStep_next_sound
           have := hfresh _ hcfresh
           simp only [Constraint.Entails] at this
           exact this
-        · sorry
-      | fapp f ts => sorry
-      | abs b t => sorry
+        · -- mvar-mvar diff: x ≠ y
+          simp only [if_neg hxy, StepResult.next.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          set u_perm := (ntm.mvar (F := F) π' y).permute π.reverse with hu_perm_def
+          have hx_dom : x ∉ Subst.dom σ := hdisj x (by
+            simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
+          have hu_fixed : u_perm.subst σ = u_perm := by
+            apply ntm.subst_of_disjoint_dom
+            intro z hz
+            rw [ntm.occursIn_false_iff_not_mem_metavars]
+            intro hz_in
+            have : z ∈ u_perm.metavars := hz_in
+            rw [hu_perm_def, ntm.permute_metavars] at this
+            simp [ntm.metavars] at this
+            subst this
+            exact hdisj z (by
+              simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                    ntm.metavars]) hz
+          have hxu : u_perm.occursIn x = false := by
+            rw [hu_perm_def, ntm.occursIn_permute]
+            simp only [ntm.occursIn, beq_eq_false_iff_ne]
+            exact hxy
+          have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
+            mvar_subst_eq_binding hσ hx_dom hu_fixed hxu hτ_eq
+          rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
+          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+                     Problem.Entails_cons]
+          refine ⟨?_, hΓ⟩
+          simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                     Constraint.Entails]
+          rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
+          exact ntm.alphaEquiv_permute_reverse_permute_self Γ
+            ((ntm.mvar π' y).subst τ) π
+      | fapp f ts =>
+        -- mvar-fapp instantiation
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rw [Bool.not_eq_true] at hocc
+        set u_perm := (ntm.fapp (X := X) (𝔸 := 𝔸) f ts).permute π.reverse with hu_perm_def
+        have hx_dom : x ∉ Subst.dom σ := hdisj x (by
+          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
+        have hu_fixed : u_perm.subst σ = u_perm := by
+          apply ntm.subst_of_disjoint_dom
+          intro z hz
+          rw [ntm.occursIn_false_iff_not_mem_metavars]
+          intro hz_in
+          have : z ∈ u_perm.metavars := hz_in
+          rw [hu_perm_def, ntm.permute_metavars] at this
+          exact hdisj z (by
+            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                       ntm.metavars, Finset.mem_union]
+            left; right; exact this) hz
+        have hxu : u_perm.occursIn x = false := by
+          rw [hu_perm_def, ntm.occursIn_permute]; exact hocc
+        have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
+          mvar_subst_eq_binding hσ hx_dom hu_fixed hxu hτ_eq
+        rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
+        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+                   Problem.Entails_cons]
+        refine ⟨?_, hΓ⟩
+        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                   Constraint.Entails]
+        rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
+        exact ntm.alphaEquiv_permute_reverse_permute_self Γ
+          ((ntm.fapp f ts).subst τ) π
+      | abs b t =>
+        -- mvar-abs instantiation
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rw [Bool.not_eq_true] at hocc
+        set u_perm := (ntm.abs (X := X) (F := F) b t).permute π.reverse with hu_perm_def
+        have hx_dom : x ∉ Subst.dom σ := hdisj x (by
+          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
+        have hu_fixed : u_perm.subst σ = u_perm := by
+          apply ntm.subst_of_disjoint_dom
+          intro z hz
+          rw [ntm.occursIn_false_iff_not_mem_metavars]
+          intro hz_in
+          have : z ∈ u_perm.metavars := hz_in
+          rw [hu_perm_def, ntm.permute_metavars] at this
+          exact hdisj z (by
+            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                       ntm.metavars, Finset.mem_union]
+            left; right; exact this) hz
+        have hxu : u_perm.occursIn x = false := by
+          rw [hu_perm_def, ntm.occursIn_permute]; exact hocc
+        have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
+          mvar_subst_eq_binding hσ hx_dom hu_fixed hxu hτ_eq
+        rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
+        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+                   Problem.Entails_cons]
+        refine ⟨?_, hΓ⟩
+        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                   Constraint.Entails]
+        rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
+        exact ntm.alphaEquiv_permute_reverse_permute_self Γ
+          ((ntm.abs b t).subst τ) π
     | fapp f ss =>
       cases t with
       | fapp g ts =>
@@ -1214,7 +1356,40 @@ lemma unifStep_next_sound
                      List.map_map, Function.comp_def,
                      UnifConstraint.applySubst, UnifConstraint.toConstraint] at hzip
           exact hzip
-      | mvar π' y => sorry
+      | mvar π' y =>
+        -- fapp-mvar instantiation
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rw [Bool.not_eq_true] at hocc
+        set u_perm := (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse with hu_perm_def
+        have hy_dom : y ∉ Subst.dom σ := hdisj y (by
+          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
+        have hu_fixed : u_perm.subst σ = u_perm := by
+          apply ntm.subst_of_disjoint_dom
+          intro z hz
+          rw [ntm.occursIn_false_iff_not_mem_metavars]
+          intro hz_in
+          have : z ∈ u_perm.metavars := hz_in
+          rw [hu_perm_def, ntm.permute_metavars] at this
+          exact hdisj z (by
+            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                       ntm.metavars, Finset.mem_union]
+            left; left; exact this) hz
+        have hxu : u_perm.occursIn y = false := by
+          rw [hu_perm_def, ntm.occursIn_permute]; exact hocc
+        have hresolve : (ntm.mvar (F := F) [] y).subst τ = u_perm.subst τ :=
+          mvar_subst_eq_binding hσ hy_dom hu_fixed hxu hτ_eq
+        rw [UnifProblem.applySubst_singleton_subst_eq rest y u_perm τ hresolve] at hΓ
+        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+                   Problem.Entails_cons]
+        refine ⟨?_, hΓ⟩
+        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                   Constraint.Entails]
+        rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
+        exact alphaEquiv_symm Γ _ _ (ntm.alphaEquiv_permute_reverse_permute_self Γ
+          ((ntm.fapp f ss).subst τ) π')
       | atm _ | abs _ _ => simp [unifStep] at h
     | abs a s' =>
       cases t with
@@ -1244,7 +1419,40 @@ lemma unifStep_next_sound
           refine ⟨?_, hfresh⟩
           rw [ntm.subst_permute] at hperm
           exact hperm
-      | mvar π' y => sorry
+      | mvar π' y =>
+        -- abs-mvar instantiation
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rw [Bool.not_eq_true] at hocc
+        set u_perm := (ntm.abs (X := X) (F := F) a s').permute π'.reverse with hu_perm_def
+        have hy_dom : y ∉ Subst.dom σ := hdisj y (by
+          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
+        have hu_fixed : u_perm.subst σ = u_perm := by
+          apply ntm.subst_of_disjoint_dom
+          intro z hz
+          rw [ntm.occursIn_false_iff_not_mem_metavars]
+          intro hz_in
+          have : z ∈ u_perm.metavars := hz_in
+          rw [hu_perm_def, ntm.permute_metavars] at this
+          exact hdisj z (by
+            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                       ntm.metavars, Finset.mem_union]
+            left; left; exact this) hz
+        have hxu : u_perm.occursIn y = false := by
+          rw [hu_perm_def, ntm.occursIn_permute]; exact hocc
+        have hresolve : (ntm.mvar (F := F) [] y).subst τ = u_perm.subst τ :=
+          mvar_subst_eq_binding hσ hy_dom hu_fixed hxu hτ_eq
+        rw [UnifProblem.applySubst_singleton_subst_eq rest y u_perm τ hresolve] at hΓ
+        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+                   Problem.Entails_cons]
+        refine ⟨?_, hΓ⟩
+        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                   Constraint.Entails]
+        rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
+        exact alphaEquiv_symm Γ _ _ (ntm.alphaEquiv_permute_reverse_permute_self Γ
+          ((ntm.abs a s').subst τ) π')
       | atm _ | fapp _ _ => simp [unifStep] at h
 
 -- ============================================================
