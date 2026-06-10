@@ -900,8 +900,11 @@ lemma unifStep_next_idempotent_and_disjoint
 lemma unifStep_next_sound
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
     (Pr' : UnifProblem F X 𝔸) (σ' : Subst F X 𝔸) (Γ : Context 𝔸 X)
-    (τ : Subst F X 𝔸)
+    (τ : Subst F X 𝔸) (σ_extra : Subst F X 𝔸)
     (h : unifStep c rest σ = .next Pr' σ')
+    (hσ : Subst.IsIdempotent σ)
+    (hdisj : Subst.disjointPr σ (c :: rest))
+    (hτ_eq : τ = σ' ++ σ_extra)
     (hΓ : Problem.Entails Γ (UnifProblem.toConstraint (UnifProblem.applySubst Pr' τ))) :
     Problem.Entails Γ (UnifProblem.toConstraint (UnifProblem.applySubst (c :: rest) τ)) := by
   cases c with
@@ -1301,29 +1304,30 @@ theorem unify_sound (Γ : Context 𝔸 X) :
     ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X)),
       ∀ (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸),
         unify Pr σ ds = some (ds', σ') →
+        Subst.IsIdempotent σ →
+        Subst.disjointPr σ Pr →
         (∀ p ∈ ds', (Γ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst σ') = true) →
         Problem.Entails Γ (UnifProblem.applySubst Pr σ').toConstraint ∧
         (∀ p ∈ ds, (Γ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst σ') = true) := by
   intro Pr σ ds
   induction Pr, σ, ds using unify.induct with
   | case1 σ ds =>
-    intro ds' σ' h hf
+    intro ds' σ' h _ _ hf
     simp only [unify, Option.some.injEq, Prod.mk.injEq] at h
     obtain ⟨rfl, rfl⟩ := h
     refine ⟨?_, hf⟩
     intro c hc
     simp [UnifProblem.applySubst, UnifProblem.toConstraint] at hc
   | case2 σ ds c rest hfail =>
-    intro ds' σ' h hf
+    intro ds' σ' h _ _ _
     rw [unify] at h
     rw [hfail] at h
     cases h
   | case3 σ ds c rest a x hctx ih =>
-    intro ds' σ' h hf
+    intro ds' σ' h hσ hdisj hf
     rw [unify] at h
     rw [hctx] at h
-    obtain ⟨hpr, hds_all⟩ := ih ds' σ' h hf
-    -- Get c = .fresh b (.mvar π x) and a = π⁻¹·b.
+    obtain ⟨hpr, hds_all⟩ := ih ds' σ' h hσ (Subst.disjointPr_cons hdisj) hf
     obtain ⟨b, π, rfl, rfl⟩ := unifStep_ctx_inv c rest σ a x hctx
     refine ⟨?_, ?_⟩
     · simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
@@ -1339,12 +1343,16 @@ theorem unify_sound (Γ : Context 𝔸 X) :
     · intro p hp
       exact hds_all p (List.mem_cons_of_mem _ hp)
   | case4 σ ds c rest Pr' σ_next hnext ih =>
-    intro ds' σ' h hf
+    intro ds' σ' h hσ hdisj hf
     rw [unify] at h
     rw [hnext] at h
-    obtain ⟨hpr', hds⟩ := ih ds' σ' h hf
+    obtain ⟨hσ_next, hdisj_next⟩ :=
+      unifStep_next_idempotent_and_disjoint c rest σ Pr' σ_next hnext hσ hdisj
+    obtain ⟨hpr', hds⟩ := ih ds' σ' h hσ_next hdisj_next hf
     refine ⟨?_, hds⟩
-    exact unifStep_next_sound c rest σ Pr' σ_next Γ σ' hnext hpr'
+    obtain ⟨σ_extra, hσ_ext⟩ := unify_σ_prefix Pr' σ_next ds ds' σ' h
+    exact unifStep_next_sound c rest σ Pr' σ_next Γ σ' σ_extra
+      hnext hσ hdisj hσ_ext hpr'
 
 -- ============================================================
 -- Soundness of `UnifProblem.solve`.
@@ -1370,7 +1378,11 @@ theorem UnifProblem.solve_sound (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X
       subst hΓeq
       subst hσeq
       have ⟨_, hfresh⟩ := finalizeDeferred_sound σ_u ds ∅ Γ_fin hf
-      exact (unify_sound Γ_fin Pr [] [] ds σ_u hu hfresh).1
+      have hσ_empty : Subst.IsIdempotent ([] : Subst F X 𝔸) := by
+        intro x; rfl
+      have hdisj_empty : Subst.disjointPr ([] : Subst F X 𝔸) Pr := by
+        intro x _; simp [Subst.dom]
+      exact (unify_sound Γ_fin Pr [] [] ds σ_u hu hσ_empty hdisj_empty hfresh).1
 
 -- ============================================================
 -- Invariant: σ idempotent throughout `unify`.
