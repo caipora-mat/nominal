@@ -29,6 +29,89 @@ def Subst.absorbedBy (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸) : Prop :=
   simp only [ntm.subst_nil]
   exact alphaEquiv_refl _ _
 
+-- Reverse of `fresh_subst_of_simplifyFresh_entails` from Properties.
+-- If `simplifyFresh a t = some cs` and `Γ ⊢ a # t.subst τ`, then every
+-- constraint in `cs.applySubst τ` is entailed by Γ.  Used in fresh-abs and
+-- fresh-fapp completeness cases.
+mutual
+  lemma simplifyFresh_subst_imp_entails (Γ : Context 𝔸 X) (a : 𝔸) (τ : Subst F X 𝔸) :
+      ∀ (t : ntm F X 𝔸) (cs : Problem F X 𝔸),
+        simplifyFresh a t = some cs →
+        (Γ ⊢ a # t.subst τ) = true →
+        Problem.Entails Γ (cs.applySubst τ)
+    | .atm b, cs, hs, _ => by
+        simp only [simplifyFresh] at hs
+        by_cases hab : a = b
+        · rw [if_pos hab] at hs; cases hs
+        · rw [if_neg hab] at hs
+          injection hs with hs_eq; subst hs_eq
+          exact Problem.Entails.nil
+    | .mvar π x, cs, hs, hf => by
+        simp only [simplifyFresh] at hs
+        injection hs with hs_eq; subst hs_eq
+        intro c' hc'
+        simp only [Problem.applySubst, List.map_cons, List.map_nil,
+                   List.mem_cons, List.not_mem_nil, or_false] at hc'
+        subst hc'
+        simp only [Constraint.applySubst, Constraint.Entails]
+        rw [ntm.subst_mvar] at hf
+        rw [fresh_equivariance Γ (LPermApply π.reverse a)
+              ((ntm.mvar (F := F) [] x).subst τ) π,
+            LPermApply_reverse_right]
+        exact hf
+    | .abs b t', cs, hs, hf => by
+        simp only [simplifyFresh] at hs
+        split_ifs at hs with hab
+        · cases hs
+          simp [Problem.applySubst, Problem.Entails.nil]
+        · -- a ≠ b. cs = simplifyFresh a t'.
+          -- Decompose hf: fresh Γ a (.abs b (t'.subst τ)) = (a = b ∨ fresh Γ a t'.subst τ).
+          have hft : (Γ ⊢ a # t'.subst τ) = true := by
+            simp only [ntm.subst_abs, fresh] at hf
+            -- hf : decide (a = b ∨ (Γ ⊢ a # t'.subst τ) = true) = true.
+            rw [decide_eq_true_eq] at hf
+            rcases hf with rfl | h
+            · exact absurd rfl hab
+            · exact h
+          exact simplifyFresh_subst_imp_entails Γ a τ t' cs hs hft
+    | .fapp f ts, cs, hs, hf => by
+        simp only [simplifyFresh] at hs
+        -- cs = simplifyFreshList a ts.
+        -- hf : Γ ⊢ a # (.fapp f ts).subst τ = freshList Γ a (ts.map (·.subst τ)).
+        rw [ntm.subst_fapp] at hf
+        simp only [fresh] at hf
+        exact simplifyFreshList_subst_imp_entails Γ a τ ts cs hs hf
+
+  lemma simplifyFreshList_subst_imp_entails (Γ : Context 𝔸 X) (a : 𝔸) (τ : Subst F X 𝔸) :
+      ∀ (ts : List (ntm F X 𝔸)) (cs : Problem F X 𝔸),
+        simplifyFreshList a ts = some cs →
+        freshList Γ a (ts.map (·.subst τ)) = true →
+        Problem.Entails Γ (cs.applySubst τ)
+    | [], cs, hs, _ => by
+        simp only [simplifyFreshList] at hs; cases hs
+        simp [Problem.applySubst, Problem.Entails.nil]
+    | t :: ts', cs, hs, hfl => by
+        simp only [simplifyFreshList] at hs
+        cases hsf : simplifyFresh a t with
+        | none => rw [hsf] at hs; cases hs
+        | some cs₁ =>
+          rw [hsf] at hs
+          cases hsfl : simplifyFreshList a ts' with
+          | none => rw [hsfl] at hs; cases hs
+          | some cs₂ =>
+            rw [hsfl] at hs; cases hs
+            simp only [List.map_cons, freshList, decide_eq_true_eq] at hfl
+            obtain ⟨hft, hftail⟩ := hfl
+            have ih1 := simplifyFresh_subst_imp_entails Γ a τ t cs₁ hsf hft
+            have ih2 := simplifyFreshList_subst_imp_entails Γ a τ ts' cs₂ hsfl hftail
+            -- Need: Problem.Entails Γ ((cs₁ ++ cs₂).applySubst τ).
+            intro c' hc'
+            simp only [Problem.applySubst, List.map_append, List.mem_append] at hc'
+            rcases hc' with hc'' | hc''
+            · exact ih1 c' hc''
+            · exact ih2 c' hc''
+end
+
 -- Helper (reverse of `alphaEquivList_of_zip_subst_entails` from Properties).
 -- Used in the fapp-fapp completeness case.
 private lemma alphaEquivList_imp_zip_entails {Γ : Context 𝔸 X} {σ : Subst F X 𝔸} :
@@ -102,10 +185,59 @@ lemma unifStep_next_le
         subst hPr; subst hσ
         exact ⟨⟨hrest, hidem⟩, habs⟩
     | abs b t' =>
-      -- simplifyFresh: case analysis.  If some cs, returns .next (rest ++ cs.map .toUnif) σ.
-      sorry
+      cases hsf : simplifyFresh a (ntm.abs (F := F) (X := X) b t') with
+      | none => simp [unifStep, hsf] at h
+      | some cs =>
+        have heq : unifStep (UnifConstraint.fresh (X := X) a (ntm.abs b t')) rest σ
+            = .next (rest ++ cs.map (·.toUnif)) σ := by simp [unifStep, hsf]
+        rw [heq] at h; injection h with hPr hσ
+        subst hPr; subst hσ
+        refine ⟨⟨?_, hidem⟩, habs⟩
+        have hfreshT : (Δ ⊢ a # (ntm.abs b t').subst θ) = true := by
+          simpa [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                 Constraint.Entails] using hc
+        have hcs := simplifyFresh_subst_imp_entails Δ a θ (ntm.abs b t') cs hsf hfreshT
+        intro c' hc'
+        simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_append,
+                   List.mem_append] at hc'
+        rcases hc' with hc''_rest | hc''_cs
+        · exact hrest c' hc''_rest
+        · simp only [List.map_map, List.mem_map, Function.comp] at hc''_cs
+          obtain ⟨c'', hc''_mem, rfl⟩ := hc''_cs
+          -- c'' ∈ cs.  Goal: ((c''.toUnif).applySubst θ).toConstraint entailed.
+          -- Reduce via toConstraint_applySubst + toConstraint of toUnif = id.
+          have hround : ((Constraint.toUnif c'').applySubst θ).toConstraint
+              = c''.applySubst θ := by
+            cases c'' <;> simp [Constraint.toUnif, UnifConstraint.applySubst,
+                                UnifConstraint.toConstraint, Constraint.applySubst]
+          rw [hround]
+          exact hcs (c''.applySubst θ) (List.mem_map_of_mem hc''_mem)
     | fapp f ts =>
-      sorry
+      cases hsf : simplifyFresh a (ntm.fapp (X := X) (𝔸 := 𝔸) f ts) with
+      | none => simp [unifStep, hsf] at h
+      | some cs =>
+        have heq : unifStep (UnifConstraint.fresh (X := X) a (ntm.fapp f ts)) rest σ
+            = .next (rest ++ cs.map (·.toUnif)) σ := by simp [unifStep, hsf]
+        rw [heq] at h; injection h with hPr hσ
+        subst hPr; subst hσ
+        refine ⟨⟨?_, hidem⟩, habs⟩
+        have hfreshT : (Δ ⊢ a # (ntm.fapp f ts).subst θ) = true := by
+          simpa [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                 Constraint.Entails] using hc
+        have hcs := simplifyFresh_subst_imp_entails Δ a θ (ntm.fapp f ts) cs hsf hfreshT
+        intro c' hc'
+        simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_append,
+                   List.mem_append] at hc'
+        rcases hc' with hc''_rest | hc''_cs
+        · exact hrest c' hc''_rest
+        · simp only [List.map_map, List.mem_map, Function.comp] at hc''_cs
+          obtain ⟨c'', hc''_mem, rfl⟩ := hc''_cs
+          have hround : ((Constraint.toUnif c'').applySubst θ).toConstraint
+              = c''.applySubst θ := by
+            cases c'' <;> simp [Constraint.toUnif, UnifConstraint.applySubst,
+                                UnifConstraint.toConstraint, Constraint.applySubst]
+          rw [hround]
+          exact hcs (c''.applySubst θ) (List.mem_map_of_mem hc''_mem)
   | unif s t =>
     cases s with
     | atm a =>
