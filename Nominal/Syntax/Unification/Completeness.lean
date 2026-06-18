@@ -16,26 +16,65 @@ variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 -- formalisation (`P1-from-P2-sred/cred` + `mgu` lemma), adapted to our
 -- recursive `unify` + `finalizeDeferred` (Plan A) architecture.
 
+-- The accumulated substitution σ is consistent with θ modulo Δ.
+-- This is the inductive invariant we carry through `unify_le`.  Initially
+-- (σ = []) it is trivially true; each `unifStep_next_le` step preserves it.
+def Subst.absorbedBy (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸) : Prop :=
+  ∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst θ ≈α
+               (ntm.mvar (F := F) [] x).subst θ) = true
+
+@[simp] lemma Subst.absorbedBy_nil (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) :
+    Subst.absorbedBy Δ ([] : Subst F X 𝔸) θ := by
+  intro x
+  simp only [ntm.subst_nil]
+  exact alphaEquiv_refl _ _
+
+-- Helper: from a satisfied (c :: rest), extract that c is entailed (after applySubst).
+private lemma entails_head_of_satisfies
+    (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸)
+    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
+    (hsat : Solution.Satisfies Δ θ (c :: rest)) :
+    Constraint.Entails Δ (c.applySubst θ).toConstraint = true := by
+  obtain ⟨hΓ, _⟩ := hsat
+  have hmem : (c.applySubst θ).toConstraint ∈
+      (UnifProblem.applySubst (c :: rest) θ).toConstraint := by
+    simp [UnifProblem.applySubst, UnifProblem.toConstraint]
+  exact hΓ _ hmem
+
 -- (4a) Step-level converse for the recursive case `.next Pr' σ_next`.
 -- Analogue of Isabelle's `P1-from-P2-sred`: a solution of `c::rest` carries
--- over to `Pr'` (under the same θ) AND θ is more specific than σ_next
--- through some `ρ` (which is `θ` itself in the non-instantiation cases,
--- and `θ` augmented with the bound `x ↦ u` in instantiation cases).
+-- over to `Pr'` (under the same θ), and σ_next remains absorbed by θ.
+-- The factorization `θ ≈_Δ σ_next ; ρ` of `SolutionLe` is recovered globally
+-- via the `Subst.absorbedBy` invariant with ρ = θ throughout.
 lemma unifStep_next_le
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸)
     (σ σ_next : Subst F X 𝔸) (Pr' : UnifProblem F X 𝔸)
     (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
     (h : unifStep c rest σ = .next Pr' σ_next)
-    (hθ : Solution.Satisfies Δ θ (c :: rest)) :
-    Solution.Satisfies Δ θ Pr' ∧
-    ∃ ρ : Subst F X 𝔸,
-      ∀ x : X,
-        (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ_next).subst ρ ≈α
-              (ntm.mvar (F := F) [] x).subst θ) = true := by
+    (hθ : Solution.Satisfies Δ θ (c :: rest))
+    (habs : Subst.absorbedBy Δ σ θ) :
+    Solution.Satisfies Δ θ Pr' ∧ Subst.absorbedBy Δ σ_next θ := by
+  obtain ⟨hΓ, hidem⟩ := hθ
+  -- Helper: c entailment for use in instantiation cases.
+  have hc : Constraint.Entails Δ (c.applySubst θ).toConstraint = true :=
+    entails_head_of_satisfies c rest Δ θ ⟨hΓ, hidem⟩
+  -- Helper: rest entailment (used in non-instantiation cases).
+  have hrest : Problem.Entails Δ (rest.applySubst θ).toConstraint := by
+    intro c' hc'
+    apply hΓ c'
+    rw [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons]
+    exact List.mem_cons_of_mem _ hc'
+  -- 16 sub-cases. Filled in subsequent sessions; structure mirrors
+  -- `unifStep_next_sound` from `Properties.lean`. Each case requires:
+  --  * Non-instantiation (9): σ_next = σ, so absorbedBy preserved trivially;
+  --    Pr' shape varies (rest, rest ++ dsList, .unif :: rest, etc.) and the
+  --    entailment uses `hc` decomposed through `alphaEquiv` invariants.
+  --  * Instantiation (7): σ_next = σ ++ [(x, u_perm)]; absorbedBy extension
+  --    requires showing u_perm.subst θ ≈α θ(x) via permute-equivariance of α.
   sorry
 
 -- (4a, ctx variant) Same converse for the `.ctx a x` case: the freshness
--- constraint `(a, x)` is deferred, and θ carries unchanged to `rest`.
+-- constraint `(a, x)` is deferred, σ is unchanged, and θ carries to `rest`.
 lemma unifStep_ctx_le
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
     (a : 𝔸) (x : X)
@@ -276,18 +315,6 @@ private lemma alphaEquivList_length_eq {Γ : Context 𝔸 X} :
   | _ :: ss, _ :: ts, h => by
       simp [alphaEquivList] at h
       exact congrArg (· + 1) (alphaEquivList_length_eq h.2)
-
--- Helper: from a satisfied (c :: rest), extract that c is entailed (after applySubst).
-private lemma entails_head_of_satisfies
-    (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸)
-    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
-    (hsat : Solution.Satisfies Δ θ (c :: rest)) :
-    Constraint.Entails Δ (c.applySubst θ).toConstraint = true := by
-  obtain ⟨hΓ, _⟩ := hsat
-  have hmem : (c.applySubst θ).toConstraint ∈
-      (UnifProblem.applySubst (c :: rest) θ).toConstraint := by
-    simp [UnifProblem.applySubst, UnifProblem.toConstraint]
-  exact hΓ _ hmem
 
 -- (4b) Failure implies no solution.
 -- Analogue of Maribel's claim that `.fail` is terminal: clash (atm/fapp) or
