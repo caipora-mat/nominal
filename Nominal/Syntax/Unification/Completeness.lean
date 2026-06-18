@@ -1139,35 +1139,146 @@ lemma unifStep_fail_no_solution
 -- (4c) Transitive converse: every solution of the input `Pr` factors through
 -- the substitution produced by `unify`, modulo the deferred freshness pairs.
 -- Analogue of `P1-from-P2-red-plus`.
-lemma unify_le
-    (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
-    (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸)
-    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
-    (h : unify Pr σ ds = some (ds', σ'))
-    (hθ : Solution.Satisfies Δ θ Pr) :
-    -- θ is more specific than σ' (witness ρ).
-    (∃ ρ : Subst F X 𝔸,
-      ∀ x : X,
-        (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ').subst ρ ≈α
-              (ntm.mvar (F := F) [] x).subst θ) = true) ∧
-    -- Δ already satisfies every deferred freshness pair under θ.
-    (∀ p ∈ ds', (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true) := by
-  sorry
+lemma unify_le :
+    ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
+      (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸)
+      (Δ : Context 𝔸 X) (θ : Subst F X 𝔸),
+      unify Pr σ ds = some (ds', σ') →
+      Solution.Satisfies Δ θ Pr →
+      Subst.absorbedBy Δ σ θ →
+      (∀ p ∈ ds, (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true) →
+      Subst.absorbedBy Δ σ' θ ∧
+      (∀ p ∈ ds', (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true) := by
+  intro Pr σ ds
+  induction Pr, σ, ds using unify.induct with
+  | case1 σ ds =>
+    intro ds' σ' Δ θ h hθ habs hds
+    simp only [unify, Option.some.injEq, Prod.mk.injEq] at h
+    obtain ⟨hdseq, hσeq⟩ := h
+    subst hdseq; subst hσeq
+    exact ⟨habs, hds⟩
+  | case2 σ ds c rest hfail =>
+    intro ds' σ' Δ θ h _ _ _
+    rw [unify, hfail] at h
+    cases h
+  | case3 σ ds c rest a x hctx ih =>
+    intro ds' σ' Δ θ h hθ habs hds
+    rw [unify, hctx] at h
+    obtain ⟨hθrest, hfresh⟩ := unifStep_ctx_le c rest σ a x Δ θ hctx hθ
+    -- New deferred = (a, x) :: ds.
+    have hds_new : ∀ p ∈ (a, x) :: ds,
+        (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
+      intro p hp
+      rcases List.mem_cons.mp hp with rfl | hp'
+      · exact hfresh
+      · exact hds p hp'
+    exact ih ds' σ' Δ θ h hθrest habs hds_new
+  | case4 σ ds c rest Pr' σ_next hnext ih =>
+    intro ds' σ' Δ θ h hθ habs hds
+    rw [unify, hnext] at h
+    obtain ⟨hθPr', habs_next⟩ :=
+      unifStep_next_le c rest σ σ_next Pr' Δ θ hnext hθ habs
+    exact ih ds' σ' Δ θ h hθPr' habs_next hds
 
 -- (4d) `finalizeDeferred` compatibility: if the deferred pairs are satisfied
 -- by θ in Δ, then Δ entails the resulting Γ under θ.
 -- This step has no direct Isabelle counterpart (Plan A divergence).
-lemma finalizeDeferred_le
-    (deferred : List (𝔸 × X)) (σ : Subst F X 𝔸) (Γ : Context 𝔸 X)
-    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
-    (h : finalizeDeferred deferred σ ∅ = some Γ)
-    (hθ_def : ∀ p ∈ deferred,
-        (Δ ⊢ p.1 # ((ntm.mvar (F := F) [] p.2).subst σ).subst θ) = true)
-    (hρ : ∀ x : X,
-        (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst θ ≈α
-              (ntm.mvar (F := F) [] x).subst θ) = true) :
-    Γ.EntailsUnder Δ θ = true := by
-  sorry
+lemma finalizeDeferred_le :
+    ∀ (deferred : List (𝔸 × X)) (σ : Subst F X 𝔸)
+      (Γ_init Γ : Context 𝔸 X) (Δ : Context 𝔸 X) (θ : Subst F X 𝔸),
+      finalizeDeferred deferred σ Γ_init = some Γ →
+      Subst.absorbedBy Δ σ θ →
+      (∀ p ∈ deferred, (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true) →
+      Γ_init.EntailsUnder Δ θ = true →
+      Γ.EntailsUnder Δ θ = true
+  | [], _, Γ_init, Γ, _, _, h, _, _, hinit => by
+      simp only [finalizeDeferred, Option.some.injEq] at h
+      subst h; exact hinit
+  | (a, x) :: tl, σ, Γ_init, Γ, Δ, θ, h, habs, hdef, hinit => by
+      simp only [finalizeDeferred] at h
+      cases hsf : simplifyFresh a ((ntm.mvar (F := F) [] x).subst σ) with
+      | none => rw [hsf] at h; cases h
+      | some cs =>
+        rw [hsf] at h
+        -- Inductive hypothesis to apply: need EntailsUnder for the new Γ' after foldl.
+        -- Step 1: derive Δ ⊢ a # ((mvar [] x).subst σ).subst θ from absorbedBy + hdef.
+        have hfresh_θ : (Δ ⊢ a # ((ntm.mvar (F := F) [] x).subst σ).subst θ) = true := by
+          have h_a_in : (a, x) ∈ (a, x) :: tl := List.mem_cons_self
+          have hfresh_θ_x := hdef (a, x) h_a_in
+          -- Δ ⊢ a # (mvar [] x).subst θ. Use absorbedBy + symm for substituted form.
+          have habs_x := habs x
+          -- habs_x : Δ ⊢ ((mvar [] x).subst σ).subst θ ≈α (mvar [] x).subst θ.
+          exact freshPreserves_alphaEquiv Δ a ((ntm.mvar (F := F) [] x).subst θ)
+            (((ntm.mvar (F := F) [] x).subst σ).subst θ)
+            hfresh_θ_x (alphaEquiv_symm Δ _ _ habs_x)
+        -- Step 2: apply simplifyFresh_subst_imp_entails to get Problem.Entails Δ (cs.applySubst θ).
+        have hcs := simplifyFresh_subst_imp_entails Δ a θ
+          ((ntm.mvar (F := F) [] x).subst σ) cs hsf hfresh_θ
+        -- Step 3: the foldl inserts leaves (.fresh a' (mvar [] x')) into Γ_init. Each is
+        -- entailed by Δ under θ from hcs.  Build new Γ_init' and recurse.
+        set Γ_init' : Context 𝔸 X := cs.foldl (fun g c =>
+          match c with
+          | .fresh a' (.mvar [] x') => insert (a', x') g
+          | _                       => g) Γ_init with hΓ_init'_def
+        have hinit' : Γ_init'.EntailsUnder Δ θ = true := by
+          -- Show every entry in Γ_init' is satisfied under θ.
+          simp only [Context.EntailsUnder, decide_eq_true_eq]
+          intro p hp
+          -- p ∈ Γ_init' = foldl over cs starting from Γ_init.
+          -- Either p ∈ Γ_init (use hinit) or p was inserted from a .fresh a' (mvar [] x') in cs.
+          -- Helper claim: foldl insert preserves the property.
+          have hfold_prop : ∀ (cs_pre : Problem F X 𝔸) (Γ₀ : Context 𝔸 X),
+              (∀ q ∈ Γ₀, (Δ ⊢ q.1 # (ntm.mvar (F := F) [] q.2).subst θ) = true) →
+              (∀ c' ∈ cs_pre, Constraint.Entails Δ (c'.applySubst θ) = true) →
+              ∀ q ∈ cs_pre.foldl (fun g c =>
+                match c with
+                | .fresh a' (.mvar [] x') => insert (a', x') g
+                | _                       => g) Γ₀,
+                (Δ ⊢ q.1 # (ntm.mvar (F := F) [] q.2).subst θ) = true := by
+            intro cs_pre
+            induction cs_pre with
+            | nil => intro Γ₀ hΓ₀ _ q hq; exact hΓ₀ q hq
+            | cons c0 cs_rest ih =>
+              intro Γ₀ hΓ₀ hentails q hq
+              simp only [List.foldl] at hq
+              apply ih _ ?_ ?_ q hq
+              · -- New Γ₀ after one foldl step.
+                cases c0 with
+                | fresh a' t' =>
+                  cases t' with
+                  | mvar π x' =>
+                    cases π with
+                    | nil =>
+                      -- Insert (a', x').
+                      intro q' hq'
+                      rcases Finset.mem_insert.mp hq' with rfl | hq''
+                      · -- q' = (a', x').  Use hentails on c0 = .fresh a' (.mvar [] x').
+                        have := hentails (Constraint.fresh a' (ntm.mvar [] x'))
+                          List.mem_cons_self
+                        simpa [Constraint.applySubst, Constraint.Entails] using this
+                      · exact hΓ₀ q' hq''
+                    | cons _ _ => intro q' hq'; exact hΓ₀ q' hq'
+                  | atm _   => intro q' hq'; exact hΓ₀ q' hq'
+                  | fapp _ _ => intro q' hq'; exact hΓ₀ q' hq'
+                  | abs _ _ => intro q' hq'; exact hΓ₀ q' hq'
+                | alpha _ _ => intro q' hq'; exact hΓ₀ q' hq'
+              · -- entailment hyp for rest.
+                intro c' hc'
+                exact hentails c' (List.mem_cons_of_mem _ hc')
+          have hΓ_init_prop : ∀ q ∈ Γ_init, (Δ ⊢ q.1 # (ntm.mvar (F := F) [] q.2).subst θ) = true := by
+            have hinit_decide := hinit
+            simp only [Context.EntailsUnder, decide_eq_true_eq] at hinit_decide
+            exact hinit_decide
+          have hcs_prop : ∀ c' ∈ cs, Constraint.Entails Δ (c'.applySubst θ) = true := by
+            intro c' hc'
+            apply hcs (c'.applySubst θ)
+            simp only [Problem.applySubst, List.mem_map]
+            exact ⟨c', hc', rfl⟩
+          exact hfold_prop cs Γ_init hΓ_init_prop hcs_prop p hp
+        -- Step 4: recurse.
+        have hdef_tl : ∀ p ∈ tl, (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
+          intro p hp; exact hdef p (List.mem_cons_of_mem _ hp)
+        exact finalizeDeferred_le tl σ Γ_init' Γ Δ θ h habs hdef_tl hinit'
 
 -- (Fase 5) Final theorem — Maribel Theorem 36 forward.
 -- `solve` returns the most general unifier of `Pr`.
@@ -1181,10 +1292,40 @@ theorem UnifProblem.solve_principal
   case generality =>
     intro q hq
     obtain ⟨Δ, θ⟩ := q
-    -- hq : Solution.Satisfies Δ θ Pr
-    -- target : SolutionLe (Γ, σ) (Δ, θ)
-    -- Plan: unpack solve into unify + finalizeDeferred, apply unify_le and
-    -- finalizeDeferred_le, then assemble the SolutionLe witness.
-    sorry
+    -- Unpack `solve` into `unify` + `finalizeDeferred`.
+    simp only [UnifProblem.solve] at h
+    cases hu : unify Pr [] [] with
+    | none => rw [hu] at h; cases h
+    | some result =>
+      rw [hu] at h
+      obtain ⟨ds, σ_u⟩ := result
+      simp only at h
+      cases hf : finalizeDeferred ds σ_u ∅ with
+      | none => rw [hf] at h; cases h
+      | some Γ_fin =>
+        rw [hf] at h
+        simp only [Option.some.injEq, Prod.mk.injEq] at h
+        obtain ⟨hΓeq, hσeq⟩ := h
+        subst hΓeq; subst hσeq
+        -- σ starts empty: absorbedBy trivially holds.
+        have habs0 : Subst.absorbedBy Δ ([] : Subst F X 𝔸) θ :=
+          Subst.absorbedBy_nil Δ θ
+        -- ds starts empty: deferred property trivially holds.
+        have hds0 : ∀ p ∈ ([] : List (𝔸 × X)),
+            (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
+          intros _ h; cases h
+        -- Apply unify_le.
+        obtain ⟨habs_u, hds_u⟩ :=
+          unify_le Pr [] [] ds σ_u Δ θ hu hq habs0 hds0
+        -- Apply finalizeDeferred_le.
+        have hinit_empty : (∅ : Context 𝔸 X).EntailsUnder Δ θ = true := by
+          simp [Context.EntailsUnder]
+        have hΓ_under := finalizeDeferred_le ds σ_u ∅ Γ_fin Δ θ hf habs_u hds_u hinit_empty
+        -- Assemble SolutionLe (Γ, σ) (Δ, θ) with witness σ' = θ.
+        refine ⟨θ, ?_, ?_⟩
+        · -- ∀ x, Δ ⊢ ((mvar [] x).subst σ).subst θ ≈α (mvar [] x).subst θ.
+          exact habs_u
+        · -- Γ.EntailsUnder Δ θ.
+          exact hΓ_under
 
 end Nominal
