@@ -29,6 +29,113 @@ def Subst.absorbedBy (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸) : Prop :=
   simp only [ntm.subst_nil]
   exact alphaEquiv_refl _ _
 
+-- Congruence: if `u.subst θ` is α-equivalent to `(.mvar [] x).subst θ` in Δ,
+-- then for any term `t`, applying `[(x, u)]` before `θ` gives an α-equivalent
+-- result to applying `θ` directly.  This is the key lemma for proving that
+-- `θ` "absorbs" an instantiation binding consistent with it.
+mutual
+  lemma alphaEquiv_applyOne_subst (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
+      (x : X) (u : ntm F X 𝔸)
+      (hu : (Δ ⊢ u.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true) :
+      ∀ t : ntm F X 𝔸,
+        (Δ ⊢ (t.applyOne x u).subst θ ≈α t.subst θ) = true
+    | .atm a => by
+        simp only [ntm.applyOne]; exact alphaEquiv_refl _ _
+    | .mvar π y => by
+        simp only [ntm.applyOne]
+        by_cases hxy : y = x
+        · subst hxy
+          rw [if_pos rfl, ntm.subst_permute, ntm.subst_mvar]
+          exact alphaEquiv_permute_congr Δ _ _ π hu
+        · rw [if_neg hxy]
+          exact alphaEquiv_refl _ _
+    | .fapp f ts => by
+        simp only [ntm.applyOne, ntm.subst_fapp, alphaEquiv, decide_eq_true_eq,
+                   true_and, List.map_map]
+        exact alphaEquivList_applyOne_subst Δ θ x u hu ts
+    | .abs a t' => by
+        simp only [ntm.applyOne, ntm.subst_abs, alphaEquiv, if_pos rfl]
+        exact alphaEquiv_applyOne_subst Δ θ x u hu t'
+
+  lemma alphaEquivList_applyOne_subst (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
+      (x : X) (u : ntm F X 𝔸)
+      (hu : (Δ ⊢ u.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true) :
+      ∀ ts : List (ntm F X 𝔸),
+        alphaEquivList Δ (ts.map (fun t => (t.applyOne x u).subst θ))
+                         (ts.map (·.subst θ)) = true
+    | [] => by simp [alphaEquivList]
+    | t :: ts' => by
+        simp only [List.map_cons, alphaEquivList, decide_eq_true_eq]
+        exact ⟨alphaEquiv_applyOne_subst Δ θ x u hu t,
+               alphaEquivList_applyOne_subst Δ θ x u hu ts'⟩
+end
+
+-- Variant of `ntm.alphaEquiv_permute_reverse_permute_self` for the opposite
+-- order: applying `π` then `π.reverse` is α-equivalent to identity.
+lemma ntm.alphaEquiv_permute_permute_reverse_self (Γ : Context 𝔸 X)
+    (t : ntm F X 𝔸) (π : LPerm 𝔸) :
+    (Γ ⊢ (t.permute π).permute π.reverse ≈α t) = true := by
+  have := ntm.alphaEquiv_permute_reverse_permute_self Γ t π.reverse
+  rw [List.reverse_reverse] at this
+  exact this
+
+-- absorbedBy extension by a consistent binding.
+lemma Subst.absorbedBy_append (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸)
+    (x : X) (u_perm : ntm F X 𝔸)
+    (habs : Subst.absorbedBy Δ σ θ)
+    (hu : (Δ ⊢ u_perm.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true) :
+    Subst.absorbedBy Δ (σ ++ [(x, u_perm)]) θ := by
+  intro y
+  rw [ntm.subst_append]
+  -- ((mvar [] y).subst σ).subst [(x, u_perm)] = ((mvar [] y).subst σ).applyOne x u_perm.
+  simp only [ntm.subst_cons, ntm.subst_nil]
+  -- Goal: Δ ⊢ (((mvar [] y).subst σ).applyOne x u_perm).subst θ ≈α (mvar [] y).subst θ.
+  -- Use congruence to swap to (((mvar [] y).subst σ).subst θ), then habs.
+  have hcong := alphaEquiv_applyOne_subst Δ θ x u_perm hu
+      ((ntm.mvar (F := F) [] y).subst σ)
+  exact alphaEquiv_trans Δ _ _ _ hcong (habs y)
+
+-- Constraint-level congruence: under consistency `u.subst θ ≈α θ(x)` in Δ,
+-- the binding `[(x, u)]` is invisible at the entailment level.
+lemma UnifConstraint.entails_applyOne_of_entails
+    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (x : X) (u : ntm F X 𝔸)
+    (hu : (Δ ⊢ u.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true)
+    (c : UnifConstraint F X 𝔸)
+    (h : Constraint.Entails Δ (c.applySubst θ).toConstraint = true) :
+    Constraint.Entails Δ ((c.applySubst [(x, u)]).applySubst θ).toConstraint = true := by
+  cases c with
+  | fresh a t =>
+    simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+               Constraint.Entails, ntm.subst_cons, ntm.subst_nil] at *
+    have hcong := alphaEquiv_applyOne_subst Δ θ x u hu t
+    exact freshPreserves_alphaEquiv Δ a (t.subst θ) ((t.applyOne x u).subst θ) h
+      (alphaEquiv_symm Δ _ _ hcong)
+  | unif s t =>
+    simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+               Constraint.Entails, ntm.subst_cons, ntm.subst_nil] at *
+    have hcongS := alphaEquiv_applyOne_subst Δ θ x u hu s
+    have hcongT := alphaEquiv_applyOne_subst Δ θ x u hu t
+    -- h : alphaEquiv Δ (s.subst θ) (t.subst θ).
+    -- Want: alphaEquiv Δ ((s.applyOne x u).subst θ) ((t.applyOne x u).subst θ).
+    exact alphaEquiv_trans Δ _ _ _
+      (alphaEquiv_trans Δ _ _ _ hcongS h) (alphaEquiv_symm Δ _ _ hcongT)
+
+-- Lift to UnifProblem.
+lemma UnifProblem.entails_applyOne_of_entails
+    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (x : X) (u : ntm F X 𝔸)
+    (hu : (Δ ⊢ u.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true)
+    (Pr : UnifProblem F X 𝔸)
+    (h : Problem.Entails Δ (Pr.applySubst θ).toConstraint) :
+    Problem.Entails Δ ((Pr.applySubst [(x, u)]).applySubst θ).toConstraint := by
+  intro c' hc'
+  simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_map,
+             List.mem_map, Function.comp] at hc'
+  obtain ⟨c, hc_mem, rfl⟩ := hc'
+  apply UnifConstraint.entails_applyOne_of_entails Δ θ x u hu c
+  apply h
+  simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.mem_map]
+  exact ⟨c.applySubst θ, ⟨c, hc_mem, rfl⟩, rfl⟩
+
 -- Reverse of `fresh_subst_of_simplifyFresh_entails` from Properties.
 -- If `simplifyFresh a t = some cs` and `Γ ⊢ a # t.subst τ`, then every
 -- constraint in `cs.applySubst τ` is entailed by Γ.  Used in fresh-abs and
@@ -252,15 +359,78 @@ lemma unifStep_next_le
           exact ⟨⟨hrest, hidem⟩, habs⟩
         · simp [unifStep, hab] at h
       | mvar π x =>
-        -- instantiation case.
-        sorry
+        -- atm-mvar: instantiation with u = .atm a, u_perm = .atm (π.reverse·a).
+        have heq : unifStep (UnifConstraint.unif (X := X) (ntm.atm a) (ntm.mvar π x)) rest σ
+            = .next (rest.applySubst [(x, (ntm.atm (F := F) a).permute π.reverse)])
+                    (σ ++ [(x, (ntm.atm (F := F) a).permute π.reverse)]) := by
+          simp [unifStep, ntm.occursIn]
+        rw [heq] at h; injection h with hPr hσ
+        subst hPr; subst hσ
+        -- u_perm = .atm (π.reverse·a). Establish consistency hu.
+        set u_perm : ntm F X 𝔸 := ntm.atm (LPermApply π.reverse a) with hu_perm_def
+        have hu : (Δ ⊢ u_perm.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true := by
+          -- u_perm.subst θ = u_perm (atom is fixed).
+          have hu_subst : u_perm.subst θ = u_perm := by simp [u_perm]
+          rw [hu_subst]
+          -- From hc: Δ ⊢ .atm a ≈α (mvar π x).subst θ.
+          have hc_simpl : (Δ ⊢ ntm.atm (F := F) (X := X) a ≈α
+                              (ntm.mvar (F := F) π x).subst θ) = true := by
+            simpa [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                   Constraint.Entails] using hc
+          rw [ntm.subst_mvar] at hc_simpl
+          -- Apply permute π.reverse to both sides.
+          have hperm := alphaEquiv_permute_congr Δ _ _ π.reverse hc_simpl
+          -- LHS: (.atm a).permute π.reverse = .atm (π.reverse·a) = u_perm.
+          -- RHS: ((mvar [] x).subst θ .permute π).permute π.reverse ≈α (mvar [] x).subst θ.
+          have hatm_perm : (ntm.atm (F := F) (X := X) a).permute π.reverse = u_perm := by
+            simp [ntm.permute, u_perm]
+          rw [hatm_perm] at hperm
+          have hself := ntm.alphaEquiv_permute_permute_reverse_self Δ
+            ((ntm.mvar (F := F) [] x).subst θ) π
+          exact alphaEquiv_trans Δ _ _ _ hperm hself
+        -- Goal still uses the raw permute form; convert via hu_perm_def.
+        have huperm_eq : (ntm.atm (F := F) (X := X) a).permute π.reverse = u_perm := by
+          simp [ntm.permute, u_perm]
+        rw [huperm_eq]
+        refine ⟨⟨?_, hidem⟩, ?_⟩
+        · exact UnifProblem.entails_applyOne_of_entails Δ θ x u_perm hu rest hrest
+        · exact Subst.absorbedBy_append Δ σ θ x u_perm habs hu
       | fapp _ _ => simp [unifStep] at h
       | abs _ _  => simp [unifStep] at h
     | mvar π x =>
       cases t with
-      | atm _ =>
-        -- instantiation case.
-        sorry
+      | atm a =>
+        -- mvar-atm: instantiation, arm 3 with u = .atm a.
+        have heq : unifStep (UnifConstraint.unif (X := X) (ntm.mvar π x) (ntm.atm a)) rest σ
+            = .next (rest.applySubst [(x, (ntm.atm (F := F) a).permute π.reverse)])
+                    (σ ++ [(x, (ntm.atm (F := F) a).permute π.reverse)]) := by
+          simp [unifStep, ntm.occursIn]
+        rw [heq] at h; injection h with hPr hσ
+        subst hPr; subst hσ
+        set u_perm : ntm F X 𝔸 := ntm.atm (LPermApply π.reverse a) with hu_perm_def
+        have hu : (Δ ⊢ u_perm.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true := by
+          have hu_subst : u_perm.subst θ = u_perm := by simp [u_perm]
+          rw [hu_subst]
+          -- hc: Δ ⊢ (mvar π x).subst θ ≈α .atm a.  Symm + same as atm-mvar.
+          have hc_simpl : (Δ ⊢ (ntm.mvar (F := F) π x).subst θ ≈α
+                              ntm.atm (F := F) (X := X) a) = true := by
+            simpa [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+                   Constraint.Entails] using hc
+          have hc_symm := alphaEquiv_symm Δ _ _ hc_simpl
+          rw [ntm.subst_mvar] at hc_symm
+          have hperm := alphaEquiv_permute_congr Δ _ _ π.reverse hc_symm
+          have hatm_perm : (ntm.atm (F := F) (X := X) a).permute π.reverse = u_perm := by
+            simp [ntm.permute, u_perm]
+          rw [hatm_perm] at hperm
+          have hself := ntm.alphaEquiv_permute_permute_reverse_self Δ
+            ((ntm.mvar (F := F) [] x).subst θ) π
+          exact alphaEquiv_trans Δ _ _ _ hperm hself
+        have huperm_eq : (ntm.atm (F := F) (X := X) a).permute π.reverse = u_perm := by
+          simp [ntm.permute, u_perm]
+        rw [huperm_eq]
+        refine ⟨⟨?_, hidem⟩, ?_⟩
+        · exact UnifProblem.entails_applyOne_of_entails Δ θ x u_perm hu rest hrest
+        · exact Subst.absorbedBy_append Δ σ θ x u_perm habs hu
       | mvar π' y =>
         by_cases hxy : x = y
         · -- mvar-mvar same: σ_next = σ.
