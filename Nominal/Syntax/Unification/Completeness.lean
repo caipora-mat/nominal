@@ -409,11 +409,67 @@ lemma unifStep_ctx_le
     (hθ : Solution.Satisfies Δ θ (c :: rest)) :
     Solution.Satisfies Δ θ rest ∧
     (Δ ⊢ a # (ntm.mvar (F := F) [] x).subst θ) = true := by
-  -- Will be filled in subsequent sessions.  Structure: ctx case only arises
-  -- from `c = .fresh b (.mvar π x')`, with `a = π.reverse · b` and `x = x'`.
-  -- The freshness witness comes from `fresh_equivariance` applied to the
-  -- α-equivalence solution θ provides for the constraint.
-  sorry
+  obtain ⟨hΓ, hidem⟩ := hθ
+  have hrest : Problem.Entails Δ (rest.applySubst θ).toConstraint := by
+    intro c' hc'
+    apply hΓ c'
+    rw [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons]
+    exact List.mem_cons_of_mem _ hc'
+  -- .ctx only arises from c = .fresh b (.mvar π x'), a = π.reverse · b, x = x'.
+  cases c with
+  | unif s t =>
+    exfalso
+    -- unifStep on .unif never returns .ctx.
+    cases s <;> cases t <;> simp [unifStep, ntm.occursIn] at h <;>
+      first
+        | (split_ifs at h <;> cases h)
+        | cases h
+  | fresh b t =>
+    cases t with
+    | atm _ =>
+      exfalso
+      simp [unifStep, simplifyFresh] at h
+      split_ifs at h <;> cases h
+    | abs b' t' =>
+      exfalso
+      cases hsf : simplifyFresh b (ntm.abs (F := F) (X := X) b' t') with
+      | none =>
+        have heq : unifStep (UnifConstraint.fresh (X := X) b (ntm.abs b' t')) rest σ
+            = .fail := by simp [unifStep, hsf]
+        rw [heq] at h; cases h
+      | some cs =>
+        have heq : unifStep (UnifConstraint.fresh (X := X) b (ntm.abs b' t')) rest σ
+            = .next (rest ++ cs.map (·.toUnif)) σ := by simp [unifStep, hsf]
+        rw [heq] at h; cases h
+    | fapp f ts =>
+      exfalso
+      cases hsf : simplifyFresh b (ntm.fapp (X := X) (𝔸 := 𝔸) f ts) with
+      | none =>
+        have heq : unifStep (UnifConstraint.fresh (X := X) b (ntm.fapp f ts)) rest σ
+            = .fail := by simp [unifStep, hsf]
+        rw [heq] at h; cases h
+      | some cs =>
+        have heq : unifStep (UnifConstraint.fresh (X := X) b (ntm.fapp f ts)) rest σ
+            = .next (rest ++ cs.map (·.toUnif)) σ := by simp [unifStep, hsf]
+        rw [heq] at h; cases h
+    | mvar π x' =>
+      have heq : unifStep (UnifConstraint.fresh (X := X) b (ntm.mvar π x')) rest σ
+          = .ctx (LPermApply π.reverse b) x' := by simp [unifStep]
+      rw [heq] at h
+      injection h with ha hx
+      subst ha; subst hx
+      refine ⟨⟨hrest, hidem⟩, ?_⟩
+      -- hΓ gives Δ ⊢ b # (mvar π x').subst θ; convert via fresh_equivariance.
+      have hcfresh : (Δ ⊢ b # (ntm.mvar (F := F) π x').subst θ) = true := by
+        have hcent := entails_head_of_satisfies
+            (UnifConstraint.fresh (X := X) b (ntm.mvar π x')) rest Δ θ ⟨hΓ, hidem⟩
+        simpa [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+               Constraint.Entails] using hcent
+      rw [ntm.subst_mvar] at hcfresh
+      rw [fresh_equivariance Δ (LPermApply π.reverse b)
+            ((ntm.mvar (F := F) [] x').subst θ) π,
+          LPermApply_reverse_right]
+      exact hcfresh
 
 -- Term size (counts every node, including leaves).  Used for the occurs-check
 -- completeness argument: if `x` occurs strictly inside `u`, then `u.subst θ`
