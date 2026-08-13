@@ -365,30 +365,4 @@ lemma Subst.IsIdempotent.append_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm
   rw [ntm.subst_nil]
   exact (ntm.applyOne_of_not_occursIn _ x u (ntm.occursIn_applyOne_self r x u hxu)).symm
 
--- (Definition 31: Reduced / inconsistent unification constraints).
--- A unification constraint u ≈? v is reduced when one of the following holds:
--- (1) u and v are distinct atoms.
--- (2) Exactly one of u, v is a moderated variable and the other mentions that variable.
--- (3) u and v are applications with different term-formers.
--- (4) Different root constructors, and neither is a moderated variable.
-
-/-- A unification constraint is reduced (inconsistent) if no rule can simplify it further. -/
-def UnifConstraint.IsInconsistent : UnifConstraint F X 𝔸 → Bool
-  | .fresh _ _ => false
-  | .unif s t  =>
-    match s, t with
-    | .atm a,    .atm b    => decide (a ≠ b)                     -- (1)
-    | .mvar _ x, .fapp _ _ => t.occursIn x                       -- (2a)
-    | .mvar _ x, .abs _ _  => t.occursIn x                       -- (2a)
-    | .fapp _ _, .mvar _ x => s.occursIn x                       -- (2b)
-    | .abs _ _,  .mvar _ x => s.occursIn x                       -- (2b)
-    | .fapp f _, .fapp g _ => decide (f ≠ g)                     -- (3)
-    | .atm _,    .fapp _ _ => true                               -- (4)
-    | .atm _,    .abs _ _  => true                               -- (4)
-    | .fapp _ _, .atm _    => true                               -- (4)
-    | .fapp _ _, .abs _ _  => true                               -- (4)
-    | .abs _ _,  .atm _    => true                               -- (4)
-    | .abs _ _,  .fapp _ _ => true                               -- (4)
-    | _,         _         => false
-
 end Nominal

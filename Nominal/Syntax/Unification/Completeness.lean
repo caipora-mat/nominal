@@ -7,7 +7,7 @@ open Core
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
 -- Completeness of the nominal unification algorithm.
--- Goal: `UnifProblem.solve_principal` — Maribel Theorem 36.
+-- Goal: `UnifProblem.solve_principal` — Maribel Theorem 35.
 -- The result produced by `solve` is the most general unifier (mgu) in the
 -- sense of `UnifProblem.IsPrincipalSolution` (Definition 30).
 --
@@ -1280,7 +1280,7 @@ lemma finalizeDeferred_le :
           intro p hp; exact hdef p (List.mem_cons_of_mem _ hp)
         exact finalizeDeferred_le tl σ Γ_init' Γ Δ θ h habs hdef_tl hinit'
 
--- (Fase 5) Final theorem — Maribel Theorem 36 forward.
+-- (Fase 5) Final theorem — Maribel Theorem 35 forward.
 -- `solve` returns the most general unifier of `Pr`.
 theorem UnifProblem.solve_principal
     (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X) (σ : Subst F X 𝔸)

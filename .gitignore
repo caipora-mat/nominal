@@ -369,3 +369,6 @@ Temporary Items
 /.lake
 
 .gitignore_local
+
+# Template LaTeX auxiliar (não faz parte da formalização)
+/tex/
