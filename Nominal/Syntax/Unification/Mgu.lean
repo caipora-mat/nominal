@@ -248,4 +248,335 @@ theorem Subst.solvedForm_normalize {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent)
       = (ntm.mvar (F := F) [] q.1).subst σ := ntm.subst_idempotent hσ _
   exact hmove z hz (ntm.subst_fixed_of_occurs hfix hocc)
 
+-- ===========================================================================
+-- The algorithm's output moves every domain variable (`MovesDom`), so its
+-- `normalize` is in solved form (via `solvedForm_normalize`).
+--
+-- `MovesDom σ` = every `z ∈ dom σ` is genuinely changed by `σ` (`z.subst σ ≠ z`).
+-- The occurs-check guarantees this for each binding; we thread it through the
+-- recursion `unify`, mirroring `unify_preserves_idempotent`.
+-- ===========================================================================
+
+/-- `σ` moves every variable of its domain. -/
+def Subst.MovesDom (σ : Subst F X 𝔸) : Prop :=
+  ∀ z ∈ σ.dom, (ntm.mvar (F := F) [] z).subst σ ≠ ntm.mvar [] z
+
+/-- Appending an occurs-check-passing, `σ`-fixed binding preserves `MovesDom`.
+    For the new variable `x`, the value `u` avoids `x` (occurs-check), so
+    `x.subst = u ≠ x`.  For an old `z ∈ dom σ`, apply `subst σ` to a would-be
+    equation `(z.subst σ).applyOne x u = z`: the left side is `σ`-stable, so it
+    collapses to `z.subst σ = z`, contradicting `MovesDom σ`. -/
+lemma Subst.MovesDom.append_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
+    (hmove : σ.MovesDom) (hσ : σ.IsIdempotent) (hx : x ∉ σ.dom)
+    (hu_fixed : u.subst σ = u) (hxu : u.occursIn x = false) :
+    (σ ++ [(x, u)]).MovesDom := by
+  intro z hz
+  have hexp : (ntm.mvar (F := F) [] z).subst (σ ++ [(x, u)])
+      = ((ntm.mvar (F := F) [] z).subst σ).applyOne x u := by
+    rw [ntm.subst_append, ntm.subst_cons, ntm.subst_nil]
+  rw [hexp, Subst.dom_append, Subst.dom_singleton, Finset.mem_union,
+      Finset.mem_singleton] at *
+  rcases hz with hz | rfl
+  · intro heq
+    have hr_fixed := ntm.subst_idempotent hσ (ntm.mvar (F := F) [] z)
+    have hstable := ntm.applyOne_subst_of_stable
+      ((ntm.mvar (F := F) [] z).subst σ) x u σ hr_fixed hu_fixed
+    rw [heq] at hstable
+    exact hmove z hz hstable
+  · rw [ntm.subst_mvar_nil_of_not_mem_dom hx]
+    simp only [ntm.applyOne, beq_self_eq_true, if_true, ntm.permute_nil]
+    intro heq
+    rw [heq] at hxu
+    simp [ntm.occursIn] at hxu
+
+/-- For an instantiation step, the three side-conditions on the new binding:
+    the variable is outside `dom σ`, the value is `σ`-fixed, and passes the
+    occurs-check.  Extracted uniformly from the invariants (mirrors the setup
+    inside `instantiation_invariant`). -/
+lemma instantiation_binding_props
+    (σ : Subst F X 𝔸) (rest : UnifProblem F X 𝔸) (c : UnifConstraint F X 𝔸)
+    (x : X) (u_perm : ntm F X 𝔸)
+    (hdisj : σ.disjointPr (c :: rest))
+    (hx_in_c : x ∈ c.metavars)
+    (hu_perm_in_c : ∀ z ∈ u_perm.metavars, z ∈ c.metavars)
+    (hocc : u_perm.occursIn x = false) :
+    x ∉ σ.dom ∧ u_perm.subst σ = u_perm ∧ u_perm.occursIn x = false := by
+  refine ⟨?_, ?_, hocc⟩
+  · apply hdisj; simp [UnifProblem.allMetavars_cons]; left; exact hx_in_c
+  · apply ntm.subst_of_disjoint_dom
+    intro y hy
+    rw [ntm.occursIn_false_iff_not_mem_metavars]
+    intro hy_in
+    have hy_all : y ∈ UnifProblem.allMetavars (c :: rest) := by
+      simp only [UnifProblem.allMetavars_cons, Finset.mem_union]
+      left; exact hu_perm_in_c y hy_in
+    exact hdisj y hy_all hy
+
+/-- Every `.next` step either leaves `σ` unchanged (non-instantiation steps) or
+    appends a single binding satisfying the three side-conditions.  This is the
+    uniform classifier used to thread `MovesDom` (and reusable for any other
+    binding-level invariant), mirroring the case split of
+    `unifStep_next_idempotent_and_disjoint`. -/
+lemma unifStep_next_binding_props
+    (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
+    (Pr' : UnifProblem F X 𝔸) (σ_next : Subst F X 𝔸)
+    (h : unifStep c rest σ = .next Pr' σ_next)
+    (hdisj : σ.disjointPr (c :: rest)) :
+    σ_next = σ ∨ ∃ (x : X) (u : ntm F X 𝔸), σ_next = σ ++ [(x, u)] ∧
+      x ∉ σ.dom ∧ u.subst σ = u ∧ u.occursIn x = false := by
+  cases c with
+  | fresh a t =>
+    cases t with
+    | mvar π x => simp [unifStep] at h
+    | atm b =>
+      simp only [unifStep, simplifyFresh] at h
+      by_cases hab : a = b
+      · rw [if_pos hab] at h; cases h
+      · simp only [if_neg hab, List.map_nil, List.append_nil,
+                   StepResult.next.injEq] at h
+        obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+    | fapp f ts =>
+      simp only [unifStep, simplifyFresh] at h
+      cases hcs : simplifyFreshList a ts with
+      | none => rw [hcs] at h; cases h
+      | some cs =>
+        rw [hcs] at h; simp only [StepResult.next.injEq] at h
+        obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+    | abs b t =>
+      simp only [unifStep, simplifyFresh] at h
+      by_cases hab : a = b
+      · simp only [if_pos hab, List.map_nil, List.append_nil,
+                   StepResult.next.injEq] at h
+        obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+      · rw [if_neg hab] at h
+        cases hcs : simplifyFresh a t with
+        | none => rw [hcs] at h; cases h
+        | some cs =>
+          rw [hcs] at h; simp only [StepResult.next.injEq] at h
+          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+  | unif s t =>
+    cases s with
+    | atm a =>
+      cases t with
+      | atm b =>
+        simp only [unifStep] at h
+        by_cases hab : a = b
+        · simp only [if_pos hab, StepResult.next.injEq] at h
+          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+        · simp only [if_neg hab] at h; cases h
+      | mvar π x =>
+        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
+                   StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        refine Or.inr ⟨x, (ntm.atm (X := X) (F := F) a).permute π.reverse, rfl,
+          instantiation_binding_props σ rest
+            (UnifConstraint.unif (ntm.atm a) (ntm.mvar π x)) x
+            ((ntm.atm (X := X) (F := F) a).permute π.reverse) hdisj ?_ ?_ ?_⟩
+        · simp [UnifConstraint.metavars, ntm.metavars]
+        · intro z hz; simp [ntm.permute, ntm.metavars] at hz
+        · simp [ntm.permute, ntm.occursIn]
+      | fapp _ _ | abs _ _ => simp [unifStep] at h
+    | mvar π x =>
+      cases t with
+      | atm a =>
+        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
+                   StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        refine Or.inr ⟨x, (ntm.atm (X := X) (F := F) a).permute π.reverse, rfl,
+          instantiation_binding_props σ rest
+            (UnifConstraint.unif (ntm.mvar π x) (ntm.atm a)) x
+            ((ntm.atm (X := X) (F := F) a).permute π.reverse) hdisj ?_ ?_ ?_⟩
+        · simp [UnifConstraint.metavars, ntm.metavars]
+        · intro z hz; simp [ntm.permute, ntm.metavars] at hz
+        · simp [ntm.permute, ntm.occursIn]
+      | mvar π' y =>
+        simp only [unifStep] at h
+        by_cases hxy : x = y
+        · subst hxy
+          simp only [if_pos rfl, StepResult.next.injEq] at h
+          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+        · simp only [if_neg hxy, StepResult.next.injEq] at h
+          obtain ⟨rfl, rfl⟩ := h
+          refine Or.inr ⟨x, (ntm.mvar (F := F) π' y).permute π.reverse, rfl,
+            instantiation_binding_props σ rest
+              (UnifConstraint.unif (ntm.mvar π x) (ntm.mvar π' y)) x
+              ((ntm.mvar (F := F) π' y).permute π.reverse) hdisj ?_ ?_ ?_⟩
+          · simp [UnifConstraint.metavars, ntm.metavars]
+          · intro z hz
+            simp [UnifConstraint.metavars, ntm.metavars]
+            right
+            rw [ntm.permute_metavars] at hz
+            simp [ntm.metavars] at hz; exact hz
+          · rw [ntm.occursIn_permute]
+            simp only [ntm.occursIn, beq_eq_false_iff_ne]
+            exact hxy
+      | fapp g ts =>
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rw [Bool.not_eq_true] at hocc
+        refine Or.inr ⟨x, (ntm.fapp (X := X) (𝔸 := 𝔸) g ts).permute π.reverse, rfl,
+          instantiation_binding_props σ rest
+            (UnifConstraint.unif (ntm.mvar π x) (ntm.fapp g ts)) x
+            ((ntm.fapp (X := X) (𝔸 := 𝔸) g ts).permute π.reverse) hdisj ?_ ?_ ?_⟩
+        · simp [UnifConstraint.metavars, ntm.metavars]
+        · intro z hz
+          simp [UnifConstraint.metavars, ntm.metavars]
+          right
+          rw [ntm.permute_metavars] at hz
+          exact hz
+        · rw [ntm.occursIn_permute]; exact hocc
+      | abs b t =>
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rw [Bool.not_eq_true] at hocc
+        refine Or.inr ⟨x, (ntm.abs (X := X) b t).permute π.reverse, rfl,
+          instantiation_binding_props σ rest
+            (UnifConstraint.unif (ntm.mvar π x) (ntm.abs b t)) x
+            ((ntm.abs (X := X) b t).permute π.reverse) hdisj ?_ ?_ ?_⟩
+        · simp [UnifConstraint.metavars, ntm.metavars]
+        · intro z hz
+          simp [UnifConstraint.metavars, ntm.metavars]
+          right
+          rw [ntm.permute_metavars] at hz
+          exact hz
+        · rw [ntm.occursIn_permute]; exact hocc
+    | fapp f ss =>
+      cases t with
+      | atm _    => simp [unifStep] at h
+      | mvar π' y =>
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rw [Bool.not_eq_true] at hocc
+        refine Or.inr ⟨y, (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse, rfl,
+          instantiation_binding_props σ rest
+            (UnifConstraint.unif (ntm.fapp f ss) (ntm.mvar π' y)) y
+            ((ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse) hdisj ?_ ?_ ?_⟩
+        · show y ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
+              (ntm.fapp f ss) (ntm.mvar π' y)).metavars
+          simp only [UnifConstraint.metavars]
+          exact Finset.mem_union_right _ (by simp [ntm.metavars])
+        · intro z hz
+          rw [ntm.permute_metavars] at hz
+          show z ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
+              (ntm.fapp f ss) (ntm.mvar π' y)).metavars
+          simp only [UnifConstraint.metavars]
+          exact Finset.mem_union_left _ hz
+        · rw [ntm.occursIn_permute]; exact hocc
+      | abs _ _  => simp [unifStep] at h
+      | fapp g ts =>
+        simp only [unifStep] at h
+        by_cases hfg : f = g ∧ ss.length = ts.length
+        · simp only [if_pos hfg, StepResult.next.injEq] at h
+          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+        · simp only [if_neg hfg] at h; cases h
+    | abs a s' =>
+      cases t with
+      | atm _    => simp [unifStep] at h
+      | fapp _ _ => simp [unifStep] at h
+      | mvar π' y =>
+        simp only [unifStep] at h
+        split_ifs at h with hocc
+        simp only [StepResult.next.injEq] at h
+        obtain ⟨rfl, rfl⟩ := h
+        rw [Bool.not_eq_true] at hocc
+        refine Or.inr ⟨y, (ntm.abs (F := F) a s').permute π'.reverse, rfl,
+          instantiation_binding_props σ rest
+            (UnifConstraint.unif (ntm.abs a s') (ntm.mvar π' y)) y
+            ((ntm.abs (F := F) a s').permute π'.reverse) hdisj ?_ ?_ ?_⟩
+        · show y ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
+              (ntm.abs a s') (ntm.mvar π' y)).metavars
+          simp only [UnifConstraint.metavars]
+          exact Finset.mem_union_right _ (by simp [ntm.metavars])
+        · intro z hz
+          rw [ntm.permute_metavars] at hz
+          show z ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
+              (ntm.abs a s') (ntm.mvar π' y)).metavars
+          simp only [UnifConstraint.metavars]
+          exact Finset.mem_union_left _ hz
+        · rw [ntm.occursIn_permute]; exact hocc
+      | abs b t' =>
+        simp only [unifStep] at h
+        by_cases hab : a = b
+        · simp only [if_pos hab, StepResult.next.injEq] at h
+          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+        · simp only [if_neg hab, StepResult.next.injEq] at h
+          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+
+/-- `unifStep` preserves `MovesDom` under the idempotence/disjointness invariant. -/
+lemma unifStep_next_movesDom
+    (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
+    (Pr' : UnifProblem F X 𝔸) (σ_next : Subst F X 𝔸)
+    (h : unifStep c rest σ = .next Pr' σ_next)
+    (hσ : σ.IsIdempotent) (hdisj : σ.disjointPr (c :: rest))
+    (hmove : σ.MovesDom) : σ_next.MovesDom := by
+  rcases unifStep_next_binding_props c rest σ Pr' σ_next h hdisj with rfl | ⟨x, u, rfl, hx, hu, hxu⟩
+  · exact hmove
+  · exact hmove.append_singleton hσ hx hu hxu
+
+/-- `unify` preserves `MovesDom`, mirroring `unify_preserves_idempotent`. -/
+theorem unify_preserves_movesDom :
+    ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
+      (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸),
+      unify Pr σ ds = some (ds', σ') →
+      σ.IsIdempotent → σ.disjointPr Pr → σ.MovesDom → σ'.MovesDom := by
+  intro Pr σ ds
+  induction Pr, σ, ds using unify.induct with
+  | case1 σ ds =>
+      intro ds' σ' h _ _ hmove
+      simp only [unify, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨_, rfl⟩ := h; exact hmove
+  | case2 σ ds c rest hfail =>
+      intro ds' σ' h _ _ _
+      rw [unify, hfail] at h; cases h
+  | case3 σ ds c rest a x hctx ih =>
+      intro ds' σ' h hσ hdisj hmove
+      rw [unify, hctx] at h
+      exact ih ds' σ' h hσ (Subst.disjointPr_cons hdisj) hmove
+  | case4 σ ds c rest Pr' σ_next hnext ih =>
+      intro ds' σ' h hσ hdisj hmove
+      rw [unify, hnext] at h
+      obtain ⟨hσ_next, hdisj_next⟩ :=
+        unifStep_next_idempotent_and_disjoint c rest σ Pr' σ_next hnext hσ hdisj
+      exact ih ds' σ' h hσ_next hdisj_next
+        (unifStep_next_movesDom c rest σ Pr' σ_next hnext hσ hdisj hmove)
+
+/-- The substitution produced by `solve` moves every variable of its domain. -/
+theorem UnifProblem.solve_movesDom (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
+    (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) : σ.MovesDom := by
+  simp only [UnifProblem.solve] at h
+  cases hu : unify Pr [] [] with
+  | none => rw [hu] at h; cases h
+  | some result =>
+    rw [hu] at h
+    obtain ⟨ds, σ_u⟩ := result
+    simp only at h
+    cases hf : finalizeDeferred ds σ_u ∅ with
+    | none => rw [hf] at h; cases h
+    | some Γ_fin =>
+      rw [hf] at h
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨_, hσeq⟩ := h
+      subst hσeq
+      have hσ_empty : Subst.IsIdempotent ([] : Subst F X 𝔸) := fun x => rfl
+      have hdisj_empty : Subst.disjointPr ([] : Subst F X 𝔸) Pr := by
+        intro x _; simp [Subst.dom]
+      have hmove_empty : Subst.MovesDom ([] : Subst F X 𝔸) := by
+        intro z hz; simp [Subst.dom] at hz
+      exact unify_preserves_movesDom Pr [] [] ds σ_u hu hσ_empty hdisj_empty hmove_empty
+
+/-- The `normalize` of `solve`'s output is in solved form: the algorithm's
+    sequential substitution computes the simultaneous action of a solved-form
+    substitution (`subst_eq_substSim_normalize` + `solvedForm_normalize`). -/
+theorem UnifProblem.solve_normalize_solvedForm (Pr : UnifProblem F X 𝔸)
+    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) :
+    Subst.SolvedForm σ.normalize :=
+  Subst.solvedForm_normalize (UnifProblem.solve_idempotent Pr Γ σ h)
+    (UnifProblem.solve_movesDom Pr Γ σ h)
+
 end Nominal
