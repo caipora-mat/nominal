@@ -97,7 +97,8 @@ mutual
              ntm.freshList_subst Γ Γ' σ a tl hctx htl⟩
 end
 
-/-- If every atom where π and π' differ is fresh for t, then π·t ≈α π'·t. -/
+-- If every atom where π and π' differ is fresh for t, then π·t ≈α π'·t.
+mutual
 lemma ntm.alphaEquiv_of_perm_fresh (Γ : Context 𝔸 X) (π π' : LPerm 𝔸) (t : ntm F X 𝔸)
     (h : ∀ n ∈ ds π π', (Γ ⊢ n # t) = true) :
     (Γ ⊢ t.permute π ≈α t.permute π') = true := by
@@ -113,10 +114,107 @@ lemma ntm.alphaEquiv_of_perm_fresh (Γ : Context 𝔸 X) (π π' : LPerm 𝔸) (
     · rw [Finset.mem_union, not_or] at hmem
       exact hne ((LPermApply_not_mem_atoms π a hmem.1).trans
                (LPermApply_not_mem_atoms π' a hmem.2).symm)
-  | .mvar σ x
-  | .fapp f ts
-  | .abs a t => 
-    sorry
+  | .mvar σ x =>
+    -- π·(mvar σ x) = mvar (σ++π) x; need every disagreement of σ++π,σ++π' in Γ.
+    simp only [ntm.permute, alphaEquiv, beq_self_eq_true, decide_eq_true_eq, true_and]
+    intro m hm
+    simp only [ds, Finset.mem_filter, Finset.mem_union] at hm
+    obtain ⟨_, hmne⟩ := hm
+    have hπn : LPermApply π (LPermApply σ m) ≠ LPermApply π' (LPermApply σ m) := by
+      rw [← LPermApply_append, ← LPermApply_append]; exact hmne
+    have hnds : LPermApply σ m ∈ ds π π' := by
+      simp only [ds, Finset.mem_filter, Finset.mem_union]
+      refine ⟨?_, hπn⟩
+      by_contra hnat
+      rw [not_or] at hnat
+      exact hπn ((LPermApply_not_mem_atoms π _ hnat.1).trans
+                 (LPermApply_not_mem_atoms π' _ hnat.2).symm)
+    have hh := h _ hnds
+    simp only [fresh, LPermApply_reverse_left] at hh
+    exact of_decide_eq_true hh
+  | .fapp f ts =>
+    simp only [ntm.permute, alphaEquiv, beq_self_eq_true, decide_eq_true_eq, true_and]
+    exact ntm.alphaEquivList_of_perm_fresh Γ π π' ts (fun n hn => by
+      have := h n hn; simpa only [fresh] using this)
+  | .abs a t' =>
+    simp only [ntm.permute, alphaEquiv]
+    by_cases hpa : LPermApply π a = LPermApply π' a
+    · rw [if_pos hpa]
+      apply ntm.alphaEquiv_of_perm_fresh
+      intro n hn
+      have hh := h n hn
+      simp only [fresh, Bool.or_eq_true, decide_eq_true_eq] at hh
+      rcases hh with rfl | hh
+      · exfalso; simp only [ds, Finset.mem_filter] at hn; exact hn.2 hpa
+      · exact hh
+    · rw [if_neg hpa, decide_eq_true_eq]
+      refine ⟨?_, ?_⟩
+      · -- Part 1: alphaEquiv (permute swap ∘ permute π) (permute π') via recursion.
+        rw [ntm.permute_append]
+        apply ntm.alphaEquiv_of_perm_fresh
+        intro n hn
+        have hnne : LPermApply (π ++ [(LPermApply π' a, LPermApply π a)]) n
+            ≠ LPermApply π' n := by
+          simp only [ds, Finset.mem_filter] at hn; exact hn.2
+        rw [LPermApply_append, LPermApply_singleton] at hnne
+        -- n ≠ a (else the swap makes the two sides agree).
+        have hna : n ≠ a := by
+          rintro rfl
+          exact hnne (by rw [swapApply_right])
+        -- π·n ≠ π'·n, so n ∈ ds π π'.
+        have hpn : LPermApply π n ≠ LPermApply π' n := by
+          by_cases hp1 : LPermApply π n = LPermApply π' a
+          · rw [hp1]; intro heq; exact hna (LPermApply_injective π' heq).symm
+          · have hp2 : LPermApply π n ≠ LPermApply π a := fun heq =>
+              hna (LPermApply_injective π heq)
+            rwa [swapApply_other _ _ _ hp1 hp2] at hnne
+        have hnds : n ∈ ds π π' := by
+          simp only [ds, Finset.mem_filter, Finset.mem_union]
+          refine ⟨?_, hpn⟩
+          by_contra hc; rw [not_or] at hc
+          exact hpn ((LPermApply_not_mem_atoms π n hc.1).trans
+                     (LPermApply_not_mem_atoms π' n hc.2).symm)
+        have hf := h n hnds
+        simp only [fresh, Bool.or_eq_true, decide_eq_true_eq] at hf
+        rcases hf with rfl | hf
+        · exact absurd rfl hna
+        · exact hf
+      · -- Part 2: π'·a is fresh for t'.permute π, via the witness c = π⁻¹·(π'·a).
+        have hc : LPermApply π.reverse (LPermApply π' a) ≠ a := by
+          intro heq
+          apply hpa
+          have h2 := congrArg (LPermApply π) heq
+          rw [LPermApply_reverse_right] at h2
+          exact h2.symm
+        have hπc : LPermApply π (LPermApply π.reverse (LPermApply π' a)) = LPermApply π' a :=
+          LPermApply_reverse_right π _
+        have hpc : LPermApply π (LPermApply π.reverse (LPermApply π' a))
+            ≠ LPermApply π' (LPermApply π.reverse (LPermApply π' a)) := by
+          rw [hπc]; intro heq; exact hc (LPermApply_injective π' heq).symm
+        have hcds : LPermApply π.reverse (LPermApply π' a) ∈ ds π π' := by
+          simp only [ds, Finset.mem_filter, Finset.mem_union]
+          refine ⟨?_, hpc⟩
+          by_contra hcc; rw [not_or] at hcc
+          exact hpc ((LPermApply_not_mem_atoms π _ hcc.1).trans
+                     (LPermApply_not_mem_atoms π' _ hcc.2).symm)
+        have hf := h _ hcds
+        simp only [fresh, Bool.or_eq_true, decide_eq_true_eq] at hf
+        rcases hf with hca | hf
+        · exact absurd hca hc
+        · rw [fresh_equivariance Γ _ t' π, hπc] at hf
+          exact hf
+
+lemma ntm.alphaEquivList_of_perm_fresh (Γ : Context 𝔸 X) (π π' : LPerm 𝔸) :
+    ∀ (ts : List (ntm F X 𝔸)), (∀ n ∈ ds π π', freshList Γ n ts = true) →
+      alphaEquivList Γ (ts.map (·.permute π)) (ts.map (·.permute π')) = true
+  | [], _ => by simp [alphaEquivList]
+  | t :: ts', h => by
+      simp only [List.map_cons, alphaEquivList, decide_eq_true_eq]
+      refine ⟨ntm.alphaEquiv_of_perm_fresh Γ π π' t (fun n hn => ?_),
+              ntm.alphaEquivList_of_perm_fresh Γ π π' ts' (fun n hn => ?_)⟩
+      · have := h n hn; simp only [freshList, decide_eq_true_eq] at this; exact this.1
+      · have := h n hn; simp only [freshList, decide_eq_true_eq] at this; exact this.2
+end
 
 
 mutual
