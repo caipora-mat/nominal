@@ -1,4 +1,5 @@
 import Nominal.Syntax.Unification.Completeness
+import Nominal.Syntax.Unification.SimSubst
 
 namespace Nominal
 
@@ -225,5 +226,26 @@ theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
       fun p hp z _ hzθ => hθ p hp z hzθ
     rw [ntm.subst_drop_dom θ ((ntm.mvar (F := F) [] x).subst σ) hu hrange]
     exact habs x
+
+-- `normalize σ` is in solved form, when `σ` is idempotent and genuinely moves
+-- every variable of its domain (no trivial `z ↦ z` chains — guaranteed by the
+-- occurs-check in the algorithm).  Each value of `normalize σ` is a full image
+-- `y.subst σ`, which is `σ`-fixed by idempotence; if a domain variable `z`
+-- occurred in it, `subst_fixed_of_occurs` would force `σ` to fix `z`,
+-- contradicting that `σ` moves `z`.  Combined with `subst_eq_substSim_normalize`,
+-- this shows the algorithm's sequential `σ` computes the simultaneous action of a
+-- *solved-form* substitution — exactly the classical picture.
+theorem Subst.solvedForm_normalize {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent)
+    (hmove : ∀ z ∈ σ.dom, (ntm.mvar (F := F) [] z).subst σ ≠ ntm.mvar [] z) :
+    Subst.SolvedForm σ.normalize := by
+  intro p hp z hz
+  rw [Subst.dom_normalize] at hz
+  simp only [Subst.normalize, List.mem_map] at hp
+  obtain ⟨q, _, rfl⟩ := hp
+  by_contra hocc
+  simp only [Bool.not_eq_false] at hocc
+  have hfix : ((ntm.mvar (F := F) [] q.1).subst σ).subst σ
+      = (ntm.mvar (F := F) [] q.1).subst σ := ntm.subst_idempotent hσ _
+  exact hmove z hz (ntm.subst_fixed_of_occurs hfix hocc)
 
 end Nominal
