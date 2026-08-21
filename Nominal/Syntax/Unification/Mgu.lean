@@ -579,4 +579,123 @@ theorem UnifProblem.solve_normalize_solvedForm (Pr : UnifProblem F X 𝔸)
   Subst.solvedForm_normalize (UnifProblem.solve_idempotent Pr Γ σ h)
     (UnifProblem.solve_movesDom Pr Γ σ h)
 
+-- ===========================================================================
+-- End-to-end explicit mediator for the algorithm's output.
+--
+-- On a *solved-form* substitution sequential and simultaneous substitution
+-- coincide, so `normalize σ` acts exactly as `σ` and the explicit mediator
+-- `θ ∖ dom σ` applies to the algorithm's output.  Assembled below into a single
+-- statement: for `solve`'s output and any solved-form solution `θ`, the guessed
+-- mediator works.
+-- ===========================================================================
+
+/-- A sub-substitution of a solved-form substitution is in solved form. -/
+lemma Subst.SolvedForm.of_cons {p : X × ntm F X 𝔸} {ρ : Subst F X 𝔸}
+    (h : Subst.SolvedForm (p :: ρ)) : Subst.SolvedForm ρ :=
+  fun q hq z hz => h q (List.mem_cons_of_mem _ hq) z
+    (by rw [Subst.dom_cons]; exact Finset.mem_insert_of_mem hz)
+
+/-- On a solved-form `ρ`, the sequential value of a metavariable is exactly its
+    one-shot lookup: no re-scanning happens because values avoid the domain. -/
+lemma ntm.subst_mvar_eq_lookupSim :
+    ∀ (ρ : Subst F X 𝔸), Subst.SolvedForm ρ → ∀ (x : X),
+      (ntm.mvar (F := F) [] x).subst ρ = ρ.lookupSim x
+  | [], _, x => by simp [Subst.lookupSim, ntm.subst_nil]
+  | (y, s) :: ρ₀, hsolved, x => by
+      rw [ntm.subst_cons]
+      unfold Subst.lookupSim
+      rw [List.find?_cons]
+      by_cases hxy : x = y
+      · subst hxy
+        simp only [ntm.applyOne, beq_self_eq_true, if_true, ntm.permute_nil,
+                   Option.elim_some]
+        apply ntm.subst_of_disjoint_dom
+        intro z hz
+        exact hsolved (x, s) (by simp) z
+          (by rw [Subst.dom_cons]; exact Finset.mem_insert_of_mem hz)
+      · have hyx : (y == x) = false := by
+          simp only [beq_eq_false_iff_ne]; exact fun h => hxy h.symm
+        rw [hyx]
+        simp only [ntm.applyOne, if_neg hxy]
+        exact ntm.subst_mvar_eq_lookupSim ρ₀ hsolved.of_cons x
+
+/-- On a solved-form substitution, sequential and simultaneous substitution
+    agree outright: `t.subst ρ = t.substSim ρ`. -/
+lemma ntm.subst_eq_substSim_of_solved (ρ : Subst F X 𝔸) (hρ : Subst.SolvedForm ρ) :
+    ∀ t : ntm F X 𝔸, t.subst ρ = t.substSim ρ
+  | .atm a => by simp [ntm.substSim, ntm.subst_atm]
+  | .mvar π x => by
+      rw [ntm.substSim, ntm.subst_mvar, ntm.subst_mvar_eq_lookupSim ρ hρ x]
+  | .fapp f ts => by
+      rw [ntm.substSim, ntm.subst_fapp]
+      congr 1
+      exact List.map_congr_left (fun t _ => ntm.subst_eq_substSim_of_solved ρ hρ t)
+  | .abs a t => by
+      rw [ntm.substSim, ntm.subst_abs, ntm.subst_eq_substSim_of_solved ρ hρ t]
+
+/-- The algorithm's output `σ` and its normalisation act identically:
+    `t.subst σ = t.subst (normalize σ)` for every term.  (Sequential `σ` =
+    simultaneous `normalize σ` by `subst_eq_substSim_normalize`; and on the
+    solved-form `normalize σ`, sequential = simultaneous.) -/
+theorem UnifProblem.solve_subst_eq_normalize (Pr : UnifProblem F X 𝔸)
+    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
+    (t : ntm F X 𝔸) : t.subst σ = t.subst σ.normalize := by
+  rw [ntm.subst_eq_substSim_normalize σ t,
+      ntm.subst_eq_substSim_of_solved σ.normalize
+        (UnifProblem.solve_normalize_solvedForm Pr Γ σ h) t]
+
+/-- Every solution `(Δ, θ)` is absorbed by the algorithm's output `σ`.  This is
+    the absorption invariant established inside `solve_principal`, isolated here
+    so the explicit mediator can be assembled. -/
+theorem UnifProblem.solve_absorbedBy (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
+    (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) (Δ : Context 𝔸 X)
+    (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) : Subst.absorbedBy Δ σ θ := by
+  simp only [UnifProblem.solve] at h
+  cases hu : unify Pr [] [] with
+  | none => rw [hu] at h; cases h
+  | some result =>
+    rw [hu] at h
+    obtain ⟨ds, σ_u⟩ := result
+    simp only at h
+    cases hf : finalizeDeferred ds σ_u ∅ with
+    | none => rw [hf] at h; cases h
+    | some Γ_fin =>
+      rw [hf] at h
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨_, hσeq⟩ := h
+      subst hσeq
+      have habs0 : Subst.absorbedBy Δ ([] : Subst F X 𝔸) θ := Subst.absorbedBy_nil Δ θ
+      have hds0 : ∀ p ∈ ([] : List (𝔸 × X)),
+          (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
+        intros _ hp; cases hp
+      exact (unify_le Pr [] [] ds σ_u Δ θ hu hq habs0 hds0).1
+
+/-- End-to-end explicit mediator: for `solve`'s output `(Γ, σ)` and any solution
+    `(Δ, θ)` in solved form, the guessed mediator `σ' = θ ∖ dom σ` works.  It has
+    domain disjoint from `dom σ` and factors `θ` through `σ` up to `≈α`
+    (`Xσσ' ≈α Xθ`).  Combines `solve_absorbedBy`, `solve_normalize_solvedForm`
+    (so `normalize σ` acts as `σ`), and `solvedForm_mediator`. -/
+theorem UnifProblem.solve_mediator_explicit (Pr : UnifProblem F X 𝔸)
+    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
+    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions)
+    (hθ : Subst.SolvedForm θ) :
+    ∃ σ' : Subst F X 𝔸,
+      (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
+      (∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst σ'
+                  ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
+  have hσ_norm := UnifProblem.solve_normalize_solvedForm Pr Γ σ h
+  have habs := UnifProblem.solve_absorbedBy Pr Γ σ h Δ θ hq
+  have habs_norm : Subst.absorbedBy Δ σ.normalize θ := by
+    intro x
+    rw [← UnifProblem.solve_subst_eq_normalize Pr Γ σ h]
+    exact habs x
+  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_norm hθ habs_norm
+  refine ⟨σ', ?_, ?_⟩
+  · intro z hz
+    have hz' := hdisj z hz
+    rwa [Subst.dom_normalize] at hz'
+  · intro x
+    rw [UnifProblem.solve_subst_eq_normalize Pr Γ σ h]
+    exact hmed x
+
 end Nominal
