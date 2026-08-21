@@ -670,32 +670,176 @@ theorem UnifProblem.solve_absorbedBy (Pr : UnifProblem F X 𝔸) (Γ : Context �
         intros _ hp; cases hp
       exact (unify_le Pr [] [] ds σ_u Δ θ hu hq habs0 hds0).1
 
-/-- End-to-end explicit mediator: for `solve`'s output `(Γ, σ)` and any solution
-    `(Δ, θ)` in solved form, the guessed mediator `σ' = θ ∖ dom σ` works.  It has
-    domain disjoint from `dom σ` and factors `θ` through `σ` up to `≈α`
-    (`Xσσ' ≈α Xθ`).  Combines `solve_absorbedBy`, `solve_normalize_solvedForm`
-    (so `normalize σ` acts as `σ`), and `solvedForm_mediator`. -/
+-- ===========================================================================
+-- Removing the solved-form hypothesis on θ (ressalva b).
+--
+-- A competing solution θ need only be idempotent-as-an-action (Definition 27),
+-- not in solved form: e.g. `[z ↦ x, x ↦ z]` acts as `z ↦ z, x ↦ z`.  Its
+-- *reduction* `reduce θ` — normalise, then drop the now-trivial bindings
+-- `z ↦ z` — is always in solved form (no `MovesDom` needed) and has the same
+-- action as θ.  So the explicit mediator applies to any solution.
+-- ===========================================================================
+
+/-- Auxiliary: if every element satisfying `P` also satisfies `Q`, then filtering
+    by `Q` first does not change `find? P`. -/
+private lemma find?_and_of_imp {α : Type*} {P Q : α → Bool} :
+    ∀ {L : List α}, (∀ a ∈ L, P a → Q a) →
+      L.find? (fun a => P a && Q a) = L.find? P
+  | [], _ => rfl
+  | a :: L₀, h => by
+      simp only [List.find?_cons]
+      by_cases hp : P a = true
+      · have hq : Q a = true := h a (by simp) hp
+        simp [hp, hq]
+      · simp only [hp, Bool.false_and, Bool.false_eq_true]
+        exact find?_and_of_imp (fun a' ha' => h a' (by simp [ha']))
+
+/-- A binding is *trivial* when it maps its variable to itself (`x ↦ x`).
+    Structural test — avoids needing `DecidableEq` on terms. -/
+def Subst.isTrivialBinding (p : X × ntm F X 𝔸) : Bool :=
+  match p.2 with
+  | .mvar [] y => decide (y = p.1)
+  | _          => false
+
+lemma Subst.not_isTrivial_iff {p : X × ntm F X 𝔸} :
+    (!Subst.isTrivialBinding p) = true ↔ p.2 ≠ ntm.mvar [] p.1 := by
+  obtain ⟨y0, t0⟩ := p
+  simp only [Subst.isTrivialBinding]
+  cases t0 with
+  | atm _ => simp
+  | fapp _ _ => simp
+  | abs _ _ => simp
+  | mvar π z =>
+      cases π with
+      | nil => simp [decide_eq_false_iff_not, ntm.mvar.injEq]
+      | cons b π' => simp [ntm.mvar.injEq]
+
+/-- The reduction of `σ`: its simultaneous normalisation with the now-trivial
+    self-bindings removed.  Always in solved form and equivalent in action. -/
+def Subst.reduce (σ : Subst F X 𝔸) : Subst F X 𝔸 :=
+  σ.normalize.filter (fun p => !Subst.isTrivialBinding p)
+
+lemma Subst.mem_reduce {σ : Subst F X 𝔸} {p : X × ntm F X 𝔸} :
+    p ∈ σ.reduce ↔ p ∈ σ.normalize ∧ p.2 ≠ ntm.mvar [] p.1 := by
+  unfold Subst.reduce
+  rw [List.mem_filter]
+  constructor
+  · exact fun h => ⟨h.1, Subst.not_isTrivial_iff.mp h.2⟩
+  · exact fun h => ⟨h.1, Subst.not_isTrivial_iff.mpr h.2⟩
+
+/-- The reduction looks up each variable to its full image `x.subst θ` — same as
+    `normalize`, since dropping a trivial binding `x ↦ x` leaves the default `x`. -/
+lemma Subst.lookupSim_reduce (θ : Subst F X 𝔸) (x : X) :
+    θ.reduce.lookupSim x = (ntm.mvar (F := F) [] x).subst θ := by
+  have hn := Subst.lookupSim_normalize θ x
+  unfold Subst.lookupSim at hn ⊢
+  unfold Subst.reduce
+  rw [List.find?_filter]
+  by_cases hx : (ntm.mvar (F := F) [] x).subst θ = ntm.mvar [] x
+  · have hnone : θ.normalize.find?
+        (fun a => decide (((!Subst.isTrivialBinding a) = true) ∧ ((a.1 == x) = true)))
+        = none := by
+      rw [List.find?_eq_none]
+      intro p hp
+      simp only [decide_eq_true_eq, beq_iff_eq, not_and]
+      intro hnt hpx
+      have hne := Subst.not_isTrivial_iff.mp hnt
+      simp only [Subst.normalize, List.mem_map] at hp
+      obtain ⟨q, _, rfl⟩ := hp
+      simp only at hpx
+      exact hne (by rw [hpx, hx])
+    rw [hnone, Option.elim_none, hx]
+  · have himp : ∀ a ∈ θ.normalize, (a.1 == x) = true → (!Subst.isTrivialBinding a) = true := by
+      intro a ha hax
+      simp only [beq_iff_eq] at hax
+      apply Subst.not_isTrivial_iff.mpr
+      simp only [Subst.normalize, List.mem_map] at ha
+      obtain ⟨q, _, rfl⟩ := ha
+      simp only at hax ⊢
+      rwa [hax]
+    have hcomm : (fun a : X × ntm F X 𝔸 =>
+          decide (((!Subst.isTrivialBinding a) = true) ∧ ((a.1 == x) = true)))
+        = (fun a : X × ntm F X 𝔸 => (a.1 == x) && (!Subst.isTrivialBinding a)) := by
+      funext a
+      cases hb : (!Subst.isTrivialBinding a) <;> cases hc : (a.1 == x) <;> simp [hb, hc]
+    rw [hcomm, find?_and_of_imp himp, hn]
+
+/-- `reduce θ` is in solved form whenever θ is idempotent (no `MovesDom` needed:
+    the trivial self-bindings have been dropped). -/
+lemma Subst.solvedForm_reduce (θ : Subst F X 𝔸) (hθ : θ.IsIdempotent) :
+    Subst.SolvedForm θ.reduce := by
+  intro p hp z hz
+  rw [Subst.mem_reduce] at hp
+  obtain ⟨hp_norm, _⟩ := hp
+  simp only [Subst.normalize, List.mem_map] at hp_norm
+  obtain ⟨q, _, rfl⟩ := hp_norm
+  by_contra hocc
+  simp only [Bool.not_eq_false] at hocc
+  have hfix : ((ntm.mvar (F := F) [] q.1).subst θ).subst θ
+      = (ntm.mvar (F := F) [] q.1).subst θ := ntm.subst_idempotent hθ _
+  have hzfix : (ntm.mvar (F := F) [] z).subst θ = ntm.mvar [] z :=
+    ntm.subst_fixed_of_occurs hfix hocc
+  -- z ∈ dom (reduce θ) means z's binding is non-trivial: z.subst θ ≠ z.
+  rw [Subst.dom, List.mem_toFinset, List.mem_map] at hz
+  obtain ⟨p', hp'_mem, hp'1⟩ := hz
+  rw [Subst.mem_reduce] at hp'_mem
+  obtain ⟨hp'_norm, hp'_ne⟩ := hp'_mem
+  simp only [Subst.normalize, List.mem_map] at hp'_norm
+  obtain ⟨q', _, rfl⟩ := hp'_norm
+  simp only at hp'1
+  rw [hp'1] at hp'_ne
+  exact hp'_ne hzfix
+
+/-- Sequential substitution by θ equals simultaneous substitution by its
+    reduction: `t.subst θ = t.substSim (reduce θ)` (from `lookupSim_reduce`;
+    no hypothesis on θ). -/
+lemma Subst.subst_eq_substSim_reduce (θ : Subst F X 𝔸) :
+    ∀ t : ntm F X 𝔸, t.subst θ = t.substSim θ.reduce
+  | .atm a => by simp [ntm.substSim, ntm.subst_atm]
+  | .mvar π x => by rw [ntm.substSim, Subst.lookupSim_reduce, ntm.subst_mvar]
+  | .fapp f ts => by
+      rw [ntm.substSim, ntm.subst_fapp]
+      congr 1
+      exact List.map_congr_left (fun t _ => Subst.subst_eq_substSim_reduce θ t)
+  | .abs a t => by rw [ntm.substSim, ntm.subst_abs, Subst.subst_eq_substSim_reduce θ t]
+
+/-- On any idempotent θ, sequential substitution equals that of its (solved-form)
+    reduction: `t.subst θ = t.subst (reduce θ)`. -/
+lemma Subst.subst_eq_reduce (θ : Subst F X 𝔸) (hθ : θ.IsIdempotent)
+    (t : ntm F X 𝔸) : t.subst θ = t.subst θ.reduce := by
+  rw [Subst.subst_eq_substSim_reduce θ t,
+      ← ntm.subst_eq_substSim_of_solved θ.reduce (Subst.solvedForm_reduce θ hθ) t]
+
+/-- End-to-end explicit mediator: for `solve`'s output `(Γ, σ)` and *any*
+    solution `(Δ, θ)`, the guessed mediator works.  The mediator is
+    `σ' = (reduce θ) ∖ dom σ` — built from the solved-form reduction of θ, since
+    a raw idempotent θ need not be in solved form.  It has domain disjoint from
+    `dom σ` and factors θ through σ up to `≈α` (`Xσσ' ≈α Xθ`). -/
 theorem UnifProblem.solve_mediator_explicit (Pr : UnifProblem F X 𝔸)
     (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
-    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions)
-    (hθ : Subst.SolvedForm θ) :
+    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) :
     ∃ σ' : Subst F X 𝔸,
       (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
       (∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst σ'
                   ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
+  have hθ_idem : θ.IsIdempotent := hq.2
   have hσ_norm := UnifProblem.solve_normalize_solvedForm Pr Γ σ h
+  have hθ_red := Subst.solvedForm_reduce θ hθ_idem
   have habs := UnifProblem.solve_absorbedBy Pr Γ σ h Δ θ hq
-  have habs_norm : Subst.absorbedBy Δ σ.normalize θ := by
+  -- Transport absorption to (normalize σ, reduce θ): both act as (σ, θ).
+  have habs_red : Subst.absorbedBy Δ σ.normalize θ.reduce := by
     intro x
-    rw [← UnifProblem.solve_subst_eq_normalize Pr Γ σ h]
+    rw [← UnifProblem.solve_subst_eq_normalize Pr Γ σ h,
+        ← Subst.subst_eq_reduce θ hθ_idem,
+        ← Subst.subst_eq_reduce θ hθ_idem]
     exact habs x
-  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_norm hθ habs_norm
+  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_norm hθ_red habs_red
   refine ⟨σ', ?_, ?_⟩
   · intro z hz
     have hz' := hdisj z hz
     rwa [Subst.dom_normalize] at hz'
   · intro x
-    rw [UnifProblem.solve_subst_eq_normalize Pr Γ σ h]
+    rw [UnifProblem.solve_subst_eq_normalize Pr Γ σ h, Subst.subst_eq_reduce θ hθ_idem]
     exact hmed x
 
 end Nominal
