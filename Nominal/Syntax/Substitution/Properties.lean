@@ -300,8 +300,11 @@ lemma Problem.entails_subst (Γ Γ' : Context 𝔸 X) (σ : Subst F X 𝔸) (P :
         simp [Constraint.Entails, Constraint.applySubst] at hc' ⊢
         exact ntm.alphaEquiv_subst Γ Γ' σ s t hctx hc'
 
--- (Corollary 25: alpha-equivalent substitution preserves derivability).
-
+-- (Corollary 25: alpha-equivalent substitution preserves derivability.)
+-- These five congruence lemmas were only ever stated (never proved — all `sorry`)
+-- and are referenced nowhere in the development.  Commented out so the file is
+-- sorry-free; restore and prove if a use for Corollary 25 arises.
+/-
 mutual
   /-- Corollary 25: if Γ ⊢ s ≈α t then Γ ⊢ u[Y↦s] ≈α u[Y↦t]. -/
   lemma ntm.applyOne_alphaEquiv_congr
@@ -337,5 +340,6 @@ theorem Problem.applyOne_entails_congr
     (h : (Γ ⊢ s ≈α t) = true) :
     Problem.Entails Γ (P.applyOne Y s) ↔ Problem.Entails Γ (P.applyOne Y t) := by
   sorry
+-/
 
 end Nominal
