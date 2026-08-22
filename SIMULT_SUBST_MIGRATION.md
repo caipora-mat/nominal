@@ -34,26 +34,41 @@ algoritmo saia em forma resolvida (não triangular).
   invariante (binding fresco p/ o range de σ), comp colapsa em append — então o
   raciocínio baseado em `++` porta com `rw [← Subst.comp_singleton_eq_append hx]`.
 
-### Restante
-1. **`Unification/Properties.lean`** (~36 erros): mecânicos (`subst_cons` →
-   `subst_singleton`; `subst_append` → `subst_comp`, sed direto) + o cascade do
-   σ-prefix:
-   - `unifStep_σ_extends` / `unify_σ_prefix` afirmam `σ' = σ ++ ε` — falso em
-     geral, verdadeiro sob a invariante (via `comp_singleton_eq_append`).
-     Threadear `IsIdempotent`+`disjointPr` e reaplicar o bridge; ou restatar em
-     nível de ação (`∀ t, t.subst σ' = (t.subst σ).subst ε`, vale por `subst_comp`).
-   - `unifStep_next_idempotent_and_disjoint`: usar `comp_singleton`; provar
-     `Subst.dom_comp : dom (σ.comp τ) = dom σ ∪ dom τ` (idêntico ao append).
-   - `unifStep_next_sound`, `unify_sound` consomem `σ' = σ_next ++ extra`.
-2. **`Completeness.lean`** (~4 mecânicos + `absorbedBy_append` → versão comp).
-3. **`Mgu.lean`** (~6 mecânicos; caso instanciação passa a `σ.comp [binding]`).
+### Feito — NÚCLEO COMPLETO (verde, zero sorry)
+- **`Unification/Properties.lean`** (soundness): migrado. Chave foi o
+  **restatement em nível de ação** do σ-prefix:
+  `unifStep_σ_extends` / `unify_σ_prefix` viraram
+  `∃ε ∀t, t.subst σ' = (t.subst σ).subst ε` (composição via `Subst.comp`, vale
+  por `subst_comp`). `mvar_subst_eq_binding` / `unifStep_next_sound` tomam a
+  hipótese de ação. `instantiation_invariant` usa `comp_singleton` + `dom_comp`.
+- **`Unification/Completeness.lean`** (principalidade): migrado.
+  `absorbedBy_append` → `absorbedBy_comp`; os 7 `heq` de instanciação passam a
+  `σ.comp [binding]`. `solve_principal` compila, axiomas padrão.
+- **`Subst.dom_comp`** (Basic): `dom (σ.comp τ) = dom σ ∪ dom τ`.
 
-## Estratégia recomendada
+### Restante — só `Mgu.lean` (mediador explícito)
+Precisa **rework conceitual**, não mecânico. `SimSubst.lean` foi criado para
+DEFINIR a substituição simultânea quando `subst` era sequencial (`substSim`,
+`normalize`, `reduce`, `subst_eq_substSim_normalize`). Agora `subst` JÁ é
+simultânea, então:
+- `substSim` e `subst` coincidem (provar `subst = substSim` diretamente, ou
+  eliminar `substSim` e usar `subst`).
+- `normalize`/`reduce` e a relação sequencial↔simultânea ficam redundantes ou
+  se invertem — o mediador `solve_mediator_explicit` deve ser reescrito sobre a
+  `subst` simultânea direta.
+- Lemas de suporte já reprovados sob simultânea: `subst_avoids_dom_of_solved`,
+  `subst_drop_dom` (agora por indução no termo, via `lookup`),
+  `occursIn_subst_of_avoid`, `lookup_filter_not_mem_dom`, `lookup_mem`.
+- Pendências pontuais: `subst_mvar_eq_lookupSim` (relacionar `lookup` e
+  `lookupSim`), casos `MovesDom`/binding_props já em `comp`.
 
-Chave: **`comp_singleton_eq_append`** sob a invariante. Onde as provas usavam
-`σ ++ [binding]` / `subst_append`, reescrever comp → append (bridge) e reusar o
-raciocínio de `applyOne` (occurs-check, estabilidade, disjunção). Provar
-`Subst.dom_comp` cedo destrava todo o raciocínio de domínio.
+## Estratégia (para o restante do Mgu)
+
+Como `subst` é simultânea, provavelmente **eliminar `SimSubst.lean`** e reescrever
+o mediador diretamente: `solvedForm_mediator` + `solve_mediator_explicit` sobre
+`subst`, usando `lookup`. Os lemas de forma resolvida (`SolvedForm`,
+`subst_avoids_dom_of_solved`, `subst_drop_dom`) já estão prontos e são o núcleo
+do mediador.
 
 ## Nota
 
