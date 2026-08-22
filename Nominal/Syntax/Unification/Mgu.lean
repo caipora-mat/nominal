@@ -302,34 +302,14 @@ theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
     rw [ntm.subst_drop_dom θ ((ntm.mvar (F := F) [] x).subst σ) hu]
     exact habs x
 
--- `normalize σ` is in solved form, when `σ` is idempotent and genuinely moves
--- every variable of its domain (no trivial `z ↦ z` chains — guaranteed by the
--- occurs-check in the algorithm).  Each value of `normalize σ` is a full image
--- `y.subst σ`, which is `σ`-fixed by idempotence; if a domain variable `z`
--- occurred in it, `subst_fixed_of_occurs` would force `σ` to fix `z`,
--- contradicting that `σ` moves `z`.  Since `subst` is simultaneous,
--- this shows the algorithm's sequential `σ` computes the simultaneous action of a
--- *solved-form* substitution — exactly the classical picture.
-theorem Subst.solvedForm_normalize {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent)
-    (hmove : ∀ z ∈ σ.dom, (ntm.mvar (F := F) [] z).subst σ ≠ ntm.mvar [] z) :
-    Subst.SolvedForm σ.normalize := by
-  intro p hp z hz
-  rw [Subst.dom_normalize] at hz
-  simp only [Subst.normalize, List.mem_map] at hp
-  obtain ⟨q, _, rfl⟩ := hp
-  by_contra hocc
-  simp only [Bool.not_eq_false] at hocc
-  have hfix : ((ntm.mvar (F := F) [] q.1).subst σ).subst σ
-      = (ntm.mvar (F := F) [] q.1).subst σ := ntm.subst_idempotent hσ _
-  exact hmove z hz (ntm.subst_fixed_of_occurs hfix hocc)
-
 -- ===========================================================================
--- The algorithm's output moves every domain variable (`MovesDom`), so its
--- `normalize` is in solved form (via `solvedForm_normalize`).
+-- The algorithm's output moves every domain variable (`MovesDom`) and is in
+-- solved form (`SolvedForm`).  Both are threaded through the recursion `unify`,
+-- mirroring `unify_preserves_idempotent`.  `MovesDom` is the auxiliary needed to
+-- show that composing a fresh binding preserves `SolvedForm`.
 --
 -- `MovesDom σ` = every `z ∈ dom σ` is genuinely changed by `σ` (`z.subst σ ≠ z`).
--- The occurs-check guarantees this for each binding; we thread it through the
--- recursion `unify`, mirroring `unify_preserves_idempotent`.
+-- The occurs-check guarantees this for each binding.
 -- ===========================================================================
 
 /-- `σ` moves every variable of its domain. -/
@@ -363,6 +343,51 @@ lemma Subst.MovesDom.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X �
     intro heq
     rw [heq] at hxu
     simp [ntm.occursIn] at hxu
+
+/-- A `σ`-fixed value avoids every variable `σ` moves.  If `z ∈ dom σ` occurred
+    in the `σ`-fixed `u`, then `subst_fixed_of_occurs` would force `σ` to fix `z`,
+    contradicting `MovesDom σ`. -/
+lemma Subst.MovesDom.value_avoids_dom {σ : Subst F X 𝔸} {u : ntm F X 𝔸}
+    (hmove : σ.MovesDom) (hu_fixed : u.subst σ = u) :
+    ∀ z ∈ σ.dom, u.occursIn z = false := by
+  intro z hz
+  by_contra hocc
+  simp only [Bool.not_eq_false] at hocc
+  exact hmove z hz (ntm.subst_fixed_of_occurs hu_fixed hocc)
+
+/-- `comp σ [(x, u)]` is in solved form, given the algorithm's invariants: `σ` is
+    solved and moves its domain, `x ∉ dom σ`, `u` is `σ`-fixed and passes the
+    occurs-check.  Each value of the composition is `s.applyOne x u` (or `u`), and
+    the domain is `dom σ ∪ {x}`; the occurs-check plus `value_avoids_dom` ensure
+    none of these values mentions a domain variable. -/
+lemma Subst.SolvedForm.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
+    (hσ_solved : σ.SolvedForm) (hmove : σ.MovesDom) (hx : x ∉ σ.dom)
+    (hu_fixed : u.subst σ = u) (hxu : u.occursIn x = false) :
+    (σ.comp [(x, u)]).SolvedForm := by
+  -- `u` avoids every domain variable of `σ` and `x` itself.
+  have hu_avoids : ∀ z ∈ Subst.dom (σ.comp [(x, u)]), u.occursIn z = false := by
+    intro z hz
+    rw [Subst.dom_comp, Subst.dom_singleton, Finset.mem_union, Finset.mem_singleton] at hz
+    rcases hz with hz | rfl
+    · exact hmove.value_avoids_dom hu_fixed z hz
+    · exact hxu
+  intro p hp z hz
+  -- `p` is either a rewritten binding `(y, s.applyOne x u)` or `(x, u)`.
+  simp only [Subst.comp, List.mem_append, List.map, List.mem_map, List.mem_singleton] at hp
+  rcases hp with ⟨q, hq, rfl⟩ | rfl
+  · -- Rewritten binding: value is `s.subst [(x,u)] = s.applyOne x u`.
+    rw [ntm.subst_singleton]
+    by_cases hzx : z = x
+    · subst hzx; exact ntm.occursIn_applyOne_self q.2 z u hxu
+    · have hsz : q.2.occursIn z = false := by
+        rw [Subst.dom_comp, Subst.dom_singleton, Finset.mem_union,
+            Finset.mem_singleton] at hz
+        rcases hz with hz | rfl
+        · exact hσ_solved q hq z hz
+        · exact absurd rfl hzx
+      exact ntm.occursIn_applyOne_of_ne hzx (hu_avoids z hz) hsz
+  · -- The added binding `(x, u)`.
+    exact hu_avoids z hz
 
 /-- For an instantiation step, the three side-conditions on the new binding:
     the variable is outside `dom σ`, the value is `σ`-fixed, and passes the
@@ -645,14 +670,74 @@ theorem UnifProblem.solve_movesDom (Pr : UnifProblem F X 𝔸) (Γ : Context �
         intro z hz; simp [Subst.dom] at hz
       exact unify_preserves_movesDom Pr [] [] ds σ_u hu hσ_empty hdisj_empty hmove_empty
 
-/-- The `normalize` of `solve`'s output is in solved form: the algorithm's
-    sequential substitution computes the simultaneous action of a solved-form
-    substitution (`ntm.subst_eq_normalize` + `solvedForm_normalize`). -/
-theorem UnifProblem.solve_normalize_solvedForm (Pr : UnifProblem F X 𝔸)
-    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) :
-    Subst.SolvedForm σ.normalize :=
-  Subst.solvedForm_normalize (UnifProblem.solve_idempotent Pr Γ σ h)
-    (UnifProblem.solve_movesDom Pr Γ σ h)
+/-- `unifStep` preserves `SolvedForm` under the full invariant. -/
+lemma unifStep_next_solvedForm
+    (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
+    (Pr' : UnifProblem F X 𝔸) (σ_next : Subst F X 𝔸)
+    (h : unifStep c rest σ = .next Pr' σ_next)
+    (hσ : σ.IsIdempotent) (hdisj : σ.disjointPr (c :: rest))
+    (hmove : σ.MovesDom) (hsolved : σ.SolvedForm) : σ_next.SolvedForm := by
+  rcases unifStep_next_binding_props c rest σ Pr' σ_next h hdisj with rfl | ⟨x, u, rfl, hx, hu, hxu⟩
+  · exact hsolved
+  · exact hsolved.comp_singleton hmove hx hu hxu
+
+/-- `unify` preserves `SolvedForm`, threading the full invariant. -/
+theorem unify_preserves_solvedForm :
+    ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
+      (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸),
+      unify Pr σ ds = some (ds', σ') →
+      σ.IsIdempotent → σ.disjointPr Pr → σ.MovesDom → σ.SolvedForm → σ'.SolvedForm := by
+  intro Pr σ ds
+  induction Pr, σ, ds using unify.induct with
+  | case1 σ ds =>
+      intro ds' σ' h _ _ _ hsolved
+      simp only [unify, Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨_, rfl⟩ := h; exact hsolved
+  | case2 σ ds c rest hfail =>
+      intro ds' σ' h _ _ _ _
+      rw [unify, hfail] at h; cases h
+  | case3 σ ds c rest a x hctx ih =>
+      intro ds' σ' h hσ hdisj hmove hsolved
+      rw [unify, hctx] at h
+      exact ih ds' σ' h hσ (Subst.disjointPr_cons hdisj) hmove hsolved
+  | case4 σ ds c rest Pr' σ_next hnext ih =>
+      intro ds' σ' h hσ hdisj hmove hsolved
+      rw [unify, hnext] at h
+      obtain ⟨hσ_next, hdisj_next⟩ :=
+        unifStep_next_idempotent_and_disjoint c rest σ Pr' σ_next hnext hσ hdisj
+      exact ih ds' σ' h hσ_next hdisj_next
+        (unifStep_next_movesDom c rest σ Pr' σ_next hnext hσ hdisj hmove)
+        (unifStep_next_solvedForm c rest σ Pr' σ_next hnext hσ hdisj hmove hsolved)
+
+/-- The substitution produced by `solve` is in solved form.  This is the point
+    simultaneous substitution buys: the algorithm's output is genuinely a
+    solved-form (idempotent, `dom ∩ range = ∅`) substitution, not a triangular
+    one — so the mediator applies to `σ` directly, without normalisation. -/
+theorem UnifProblem.solve_solvedForm (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
+    (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) : σ.SolvedForm := by
+  simp only [UnifProblem.solve] at h
+  cases hu : unify Pr [] [] with
+  | none => rw [hu] at h; cases h
+  | some result =>
+    rw [hu] at h
+    obtain ⟨ds, σ_u⟩ := result
+    simp only at h
+    cases hf : finalizeDeferred ds σ_u ∅ with
+    | none => rw [hf] at h; cases h
+    | some Γ_fin =>
+      rw [hf] at h
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨_, hσeq⟩ := h
+      subst hσeq
+      have hσ_empty : Subst.IsIdempotent ([] : Subst F X 𝔸) := fun x => by simp
+      have hdisj_empty : Subst.disjointPr ([] : Subst F X 𝔸) Pr := by
+        intro x _; simp [Subst.dom]
+      have hmove_empty : Subst.MovesDom ([] : Subst F X 𝔸) := by
+        intro z hz; simp [Subst.dom] at hz
+      have hsolved_empty : Subst.SolvedForm ([] : Subst F X 𝔸) := by
+        intro p hp; simp at hp
+      exact unify_preserves_solvedForm Pr [] [] ds σ_u hu hσ_empty hdisj_empty
+        hmove_empty hsolved_empty
 
 -- ===========================================================================
 -- End-to-end explicit mediator for the algorithm's output.
@@ -685,21 +770,6 @@ lemma Subst.lookup_getD_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
 lemma ntm.subst_mvar_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
     (ntm.mvar (F := F) [] x).subst ρ = ρ.lookupSim x := by
   rw [ntm.subst_mvar_nil, Subst.lookup_getD_eq_lookupSim]
-
-/-- A substitution and its normalisation act identically: `t.subst (normalize σ)
-    = t.subst σ` for every term and every `σ`.  Both are simultaneous, and
-    `normalize σ` just replaces each value by the same image `lookupSim` returns. -/
-lemma ntm.subst_eq_normalize (σ : Subst F X 𝔸) :
-    ∀ t : ntm F X 𝔸, t.subst σ.normalize = t.subst σ
-  | .atm a => by simp [ntm.subst_atm]
-  | .mvar π y => by
-      rw [ntm.subst_mvar, ntm.subst_mvar_nil, Subst.lookup_getD_eq_lookupSim,
-          Subst.lookupSim_normalize, ← ntm.subst_mvar]
-  | .fapp f ts => by
-      rw [ntm.subst_fapp, ntm.subst_fapp]
-      congr 1
-      exact List.map_congr_left (fun t _ => ntm.subst_eq_normalize σ t)
-  | .abs a t => by rw [ntm.subst_abs, ntm.subst_abs, ntm.subst_eq_normalize σ t]
 
 /-- Every solution `(Δ, θ)` is absorbed by the algorithm's output `σ`.  This is
     the absorption invariant established inside `solve_principal`, isolated here
@@ -876,20 +946,17 @@ theorem UnifProblem.solve_mediator_explicit (Pr : UnifProblem F X 𝔸)
       (∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst σ'
                   ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
   have hθ_idem : θ.IsIdempotent := hq.2
-  have hσ_norm := UnifProblem.solve_normalize_solvedForm Pr Γ σ h
+  have hσ_solved := UnifProblem.solve_solvedForm Pr Γ σ h
   have habs := UnifProblem.solve_absorbedBy Pr Γ σ h Δ θ hq
-  -- Transport absorption to (normalize σ, reduce θ): both act as (σ, θ).
-  have habs_red : Subst.absorbedBy Δ σ.normalize θ.reduce := by
+  -- σ is already solved-form; transport absorption to (σ, reduce θ).
+  have habs_red : Subst.absorbedBy Δ σ θ.reduce := by
     intro x
-    rw [ntm.subst_eq_normalize σ, ← Subst.subst_eq_reduce θ, ← Subst.subst_eq_reduce θ]
+    rw [← Subst.subst_eq_reduce θ, ← Subst.subst_eq_reduce θ]
     exact habs x
-  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_norm habs_red
-  refine ⟨σ', ?_, ?_⟩
-  · intro z hz
-    have hz' := hdisj z hz
-    rwa [Subst.dom_normalize] at hz'
+  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_solved habs_red
+  refine ⟨σ', hdisj, ?_⟩
   · intro x
-    rw [← ntm.subst_eq_normalize σ, Subst.subst_eq_reduce θ]
+    rw [Subst.subst_eq_reduce θ]
     exact hmed x
 
 -- ===========================================================================
