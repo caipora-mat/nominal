@@ -23,19 +23,63 @@ def ntm.applyOne : ntm F X 𝔸 → X → ntm F X 𝔸 → ntm F X 𝔸
   | .fapp f ts, Y, s => .fapp f (ts.map fun t => t.applyOne Y s)
   | .abs a t,   Y, s => .abs a (t.applyOne Y s)
 
--- (σ acts elementwise: tId ≡ t, t[X↦s]σ ≡ (t[X↦s])σ).
+-- (Simultaneous substitution.)
 
-/-- `tσ`: apply each binding in `σ` from left to right. -/
+/-- Look up the term bound to `x` in `σ` (first match wins). -/
+def Subst.lookup : Subst F X 𝔸 → X → Option (ntm F X 𝔸)
+  | [],          _ => none
+  | (Y, s) :: σ, x => if x = Y then some s else Subst.lookup σ x
+
+@[simp] lemma Subst.lookup_nil (x : X) : Subst.lookup ([] : Subst F X 𝔸) x = none := rfl
+
+@[simp] lemma Subst.lookup_cons (Y : X) (s : ntm F X 𝔸) (σ : Subst F X 𝔸) (x : X) :
+    Subst.lookup ((Y, s) :: σ) x = if x = Y then some s else Subst.lookup σ x := rfl
+
+/-- `tσ`: replace every suspended occurrence `π·x` by `π·(σ x)` in one pass. -/
 def ntm.subst : ntm F X 𝔸 → Subst F X 𝔸 → ntm F X 𝔸
-  | t, []            => t
-  | t, (Y, s) :: σ  => (t.applyOne Y s).subst σ
+  | .atm a,     _ => .atm a
+  | .mvar π x,  σ => match σ.lookup x with
+                    | some s => s.permute π
+                    | none   => .mvar π x
+  | .fapp f ts, σ => .fapp f (ts.map fun t => t.subst σ)
+  | .abs a t,   σ => .abs a (t.subst σ)
 
-@[simp] lemma ntm.subst_nil (t : ntm F X 𝔸) : t.subst [] = t := rfl
+-- (Shape lemmas — now definitional.)
 
-@[simp] lemma ntm.subst_cons (t : ntm F X 𝔸) (Y : X) (s : ntm F X 𝔸) (σ : Subst F X 𝔸) :
-    t.subst ((Y, s) :: σ) = (t.applyOne Y s).subst σ := rfl
+@[simp] lemma ntm.subst_atm (b : 𝔸) (σ : Subst F X 𝔸) :
+    (ntm.atm (F := F) (X := X) b).subst σ = ntm.atm b := by
+  simp only [ntm.subst]
 
--- (Lemma 5: π·(tσ) ≡ (π·t)σ).
+@[simp] lemma ntm.subst_fapp (f : F) (ts : List (ntm F X 𝔸)) (σ : Subst F X 𝔸) :
+    (ntm.fapp f ts).subst σ = ntm.fapp f (ts.map (·.subst σ)) := by
+  simp only [ntm.subst]
+
+@[simp] lemma ntm.subst_abs (b : 𝔸) (t : ntm F X 𝔸) (σ : Subst F X 𝔸) :
+    (ntm.abs b t).subst σ = ntm.abs b (t.subst σ) := by
+  simp only [ntm.subst]
+
+/-- On a bare metavariable, `subst` is the raw lookup (or the variable itself). -/
+lemma ntm.subst_mvar_nil (y : X) (σ : Subst F X 𝔸) :
+    (ntm.mvar (F := F) [] y).subst σ = (σ.lookup y).getD (ntm.mvar [] y) := by
+  simp only [ntm.subst]; cases σ.lookup y <;> simp [ntm.permute_nil]
+
+/-- `mvar π y` under `σ`: apply `σ` to the bare mvar, then re-suspend `π`. -/
+lemma ntm.subst_mvar (π : LPerm 𝔸) (y : X) (σ : Subst F X 𝔸) :
+    (ntm.mvar π y).subst σ = ((ntm.mvar (F := F) [] y).subst σ).permute π := by
+  simp only [ntm.subst]; cases σ.lookup y <;> simp [ntm.permute, ntm.permute_nil]
+
+mutual
+@[simp] lemma ntm.subst_nil : ∀ (t : ntm F X 𝔸), t.subst [] = t
+  | .atm _ => by simp only [ntm.subst]
+  | .mvar π x => by simp only [ntm.subst, Subst.lookup_nil]
+  | .fapp f ts => by simp only [ntm.subst_fapp, ntm.substList_nil ts]
+  | .abs a t => by simp only [ntm.subst_abs, ntm.subst_nil t]
+lemma ntm.substList_nil : ∀ (ts : List (ntm F X 𝔸)), ts.map (·.subst []) = ts
+  | [] => rfl
+  | t :: ts' => by simp only [List.map_cons, ntm.subst_nil t, ntm.substList_nil ts']
+end
+
+-- (Single binding [Y↦s] on a term = subst by a singleton; still a useful shape.)
 
 /-- Single-step: `(π·t)[Y↦s] ≡ π·(t[Y↦s])`. -/
 lemma ntm.applyOne_permute (t : ntm F X 𝔸) (Y : X) (s : ntm F X 𝔸) (π : LPerm 𝔸) :
@@ -59,49 +103,19 @@ lemma ntm.applyOne_permute (t : ntm F X 𝔸) (Y : X) (s : ntm F X 𝔸) (π : L
     rw [ntm.applyOne_permute t' Y s π]
 
 /-- Lemma 5: substitution and permutation commute: `π·(tσ) ≡ (π·t)σ`. -/
-lemma ntm.subst_permute (t : ntm F X 𝔸) (π : LPerm 𝔸) (σ : Subst F X 𝔸) :
-    (t.permute π).subst σ = (t.subst σ).permute π := by
-  induction σ generalizing t with
-  | nil => rfl
-  | cons p σ' ih =>
-    obtain ⟨Y, s⟩ := p
-    simp only [subst_cons]
-    rw [applyOne_permute, ih]
-
--- (Shape lemmas for subst on each constructor).
-
-@[simp] lemma ntm.subst_atm (b : 𝔸) (σ : Subst F X 𝔸) :
-    (ntm.atm (F := F) (X := X) b).subst σ = ntm.atm b := by
-  induction σ with
-  | nil => rfl
-  | cons p σ' ih =>
-    obtain ⟨_, _⟩ := p
-    simp [ntm.subst_cons, ntm.applyOne, ih]
-
-@[simp] lemma ntm.subst_fapp (f : F) (ts : List (ntm F X 𝔸)) (σ : Subst F X 𝔸) :
-    (ntm.fapp f ts).subst σ = ntm.fapp f (ts.map (·.subst σ)) := by
-  induction σ generalizing ts with
-  | nil => simp
-  | cons p σ' ih =>
-    obtain ⟨Y, s⟩ := p
-    simp only [ntm.subst_cons, ntm.applyOne]
-    rw [ih]
-    simp [List.map_map, Function.comp]
-
-@[simp] lemma ntm.subst_abs (b : 𝔸) (t : ntm F X 𝔸) (σ : Subst F X 𝔸) :
-    (ntm.abs b t).subst σ = ntm.abs b (t.subst σ) := by
-  induction σ generalizing t with
-  | nil => rfl
-  | cons p σ' ih =>
-    obtain ⟨Y, s⟩ := p
-    simp only [ntm.subst_cons, ntm.applyOne]
-    exact ih _
-
-lemma ntm.subst_mvar (π : LPerm 𝔸) (y : X) (σ : Subst F X 𝔸) :
-    (ntm.mvar π y).subst σ = ((ntm.mvar (F := F) [] y).subst σ).permute π := by
-  have : ntm.mvar π y = ntm.permute π (ntm.mvar (F := F) [] y) := by simp [ntm.permute]
-  rw [this]
-  exact ntm.subst_permute _ _ _
+lemma ntm.subst_permute : ∀ (t : ntm F X 𝔸) (π : LPerm 𝔸) (σ : Subst F X 𝔸),
+    (t.permute π).subst σ = (t.subst σ).permute π
+  | .atm a, π, σ => by simp only [ntm.permute, ntm.subst]
+  | .mvar ρ x, π, σ => by
+      simp only [ntm.permute, ntm.subst]
+      cases σ.lookup x <;> simp [ntm.permute, ntm.permute_append]
+  | .fapp f ts, π, σ => by
+      simp only [ntm.permute, ntm.subst_fapp, List.map_map]
+      congr 1
+      exact List.map_congr_left (fun t _ => ntm.subst_permute t π σ)
+  | .abs a t, π, σ => by
+      simp only [ntm.permute, ntm.subst_abs]
+      rw [ntm.subst_permute t π σ]
 
 -- (Idempotence — condition (2) of Definition 27).
 
