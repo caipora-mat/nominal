@@ -7,6 +7,29 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
+/-- A member of a list on which `occursIn z` is false itself has `occursIn z` false. -/
+lemma ntmList.not_occursIn_of_mem {z : X} {t : ntm F X 𝔸} {ts : List (ntm F X 𝔸)}
+    (ht : t ∈ ts) (h : ntmList.occursIn z ts = false) : t.occursIn z = false := by
+  induction ts with
+  | nil => simp at ht
+  | cons a as ih =>
+      simp only [ntmList.occursIn, Bool.or_eq_false_iff] at h
+      rcases List.mem_cons.mp ht with rfl | ht'
+      · exact h.1
+      · exact ih ht' h.2
+
+/-- A successful lookup exhibits the binding as a member of the substitution. -/
+lemma Subst.lookup_mem {σ : Subst F X 𝔸} {y : X} {s : ntm F X 𝔸}
+    (h : Subst.lookup σ y = some s) : (y, s) ∈ σ := by
+  induction σ with
+  | nil => simp [Subst.lookup] at h
+  | cons p σ' ih =>
+      obtain ⟨Y, t⟩ := p
+      simp only [Subst.lookup_cons] at h
+      split at h
+      · rename_i he; subst he; simp only [Option.some.injEq] at h; subst h; simp
+      · exact List.mem_cons_of_mem _ (ih h)
+
 -- ===========================================================================
 -- Explicit most-general-unifier mediator.
 --
@@ -121,79 +144,131 @@ mutual
 end
 
 -- Substituting by `σ` cannot introduce a variable `w` that all of `σ`'s values
--- avoid, if the term already avoids `w`.  Induction on `σ`.
-lemma ntm.occursIn_subst_of_avoid {w : X} :
-    ∀ (σ : Subst F X 𝔸), (∀ p ∈ σ, p.2.occursIn w = false) →
+-- avoid, if the term already avoids `w`.  Induction on the term `v`: at a
+-- metavariable, the value (from `lookup`) avoids `w` by hypothesis, and the
+-- suspended permutation does not affect `occursIn`.
+mutual
+lemma ntm.occursIn_subst_of_avoid {w : X} {σ : Subst F X 𝔸}
+    (hσ : ∀ p ∈ σ, p.2.occursIn w = false) :
     ∀ {v : ntm F X 𝔸}, v.occursIn w = false → (v.subst σ).occursIn w = false
-  | [], _, v, hv => by simpa using hv
-  | (y, s) :: σ₀, hσ, v, hv => by
-      rw [ntm.subst_cons]
-      have hs : s.occursIn w = false := hσ (y, s) (by simp)
-      have hv' : (v.applyOne y s).occursIn w = false := by
-        by_cases hwy : w = y
-        · subst hwy; exact ntm.occursIn_applyOne_self v w s hs
-        · exact ntm.occursIn_applyOne_of_ne hwy hs hv
-      exact ntm.occursIn_subst_of_avoid σ₀
-        (fun p hp => hσ p (List.mem_cons_of_mem _ hp)) hv'
+  | .atm _, _ => by simp [ntm.subst, ntm.occursIn]
+  | .mvar π y, hv => by
+      rw [ntm.subst_mvar]
+      rw [ntm.occursIn_permute]
+      rw [ntm.subst_mvar_nil]
+      cases hl : Subst.lookup σ y with
+      | none => simpa using hv
+      | some s =>
+          simp only [Option.getD_some]
+          exact hσ (y, s) (Subst.lookup_mem hl)
+  | .fapp f ts, hv => by
+      rw [ntm.subst_fapp]
+      simp only [ntm.occursIn] at hv ⊢
+      exact ntmList.occursIn_substList_of_avoid hσ hv
+  | .abs a t, hv => by
+      rw [ntm.subst_abs]
+      simp only [ntm.occursIn] at hv ⊢
+      exact ntm.occursIn_subst_of_avoid hσ hv
+
+lemma ntmList.occursIn_substList_of_avoid {w : X} {σ : Subst F X 𝔸}
+    (hσ : ∀ p ∈ σ, p.2.occursIn w = false) :
+    ∀ {ts : List (ntm F X 𝔸)}, ntmList.occursIn w ts = false →
+      ntmList.occursIn w (ts.map (·.subst σ)) = false
+  | [], _ => rfl
+  | t :: ts', hv => by
+      simp only [List.map_cons, ntmList.occursIn, Bool.or_eq_false_iff] at hv ⊢
+      exact ⟨ntm.occursIn_subst_of_avoid hσ hv.1,
+             ntmList.occursIn_substList_of_avoid hσ hv.2⟩
+end
 
 -- For a solved-form `σ`, the result `t.subst σ` avoids every variable of
 -- `dom σ`: the domain variable is either removed (occurs-check on its binding)
 -- or was never there, and no value reintroduces it (solved form).  Induction on
 -- `σ`.
-lemma ntm.subst_avoids_dom_of_solved :
-    ∀ (σ : Subst F X 𝔸), σ.SolvedForm →
-    ∀ (t : ntm F X 𝔸) (z : X), z ∈ σ.dom → (t.subst σ).occursIn z = false
-  | [], _, t, z, hz => by simp [Subst.dom_nil] at hz
-  | (x, s) :: σ₀, hσ, t, z, hz => by
-      rw [ntm.subst_cons]
-      rw [Subst.dom_cons] at hz
-      have hval : ∀ p ∈ (x, s) :: σ₀, p.2.occursIn z = false :=
-        fun p hp => hσ p hp z (by rw [Subst.dom_cons]; exact hz)
-      rcases Finset.mem_insert.mp hz with hzx | hz₀
-      · subst hzx
-        exact ntm.occursIn_subst_of_avoid σ₀
-          (fun p hp => hval p (List.mem_cons_of_mem _ hp))
-          (ntm.occursIn_applyOne_self t z s (hval (z, s) (by simp)))
-      · have hσ₀ : Subst.SolvedForm σ₀ := fun p hp w hw =>
-          hσ p (List.mem_cons_of_mem _ hp) w
-            (by rw [Subst.dom_cons]; exact Finset.mem_insert_of_mem hw)
-        exact ntm.subst_avoids_dom_of_solved σ₀ hσ₀ (t.applyOne x s) z hz₀
+mutual
+lemma ntm.subst_avoids_dom_of_solved (σ : Subst F X 𝔸) (hσ : σ.SolvedForm)
+    (z : X) (hz : z ∈ σ.dom) :
+    ∀ (t : ntm F X 𝔸), (t.subst σ).occursIn z = false
+  | .atm _ => by simp [ntm.subst, ntm.occursIn]
+  | .mvar π y => by
+      rw [ntm.subst_mvar, ntm.occursIn_permute, ntm.subst_mvar_nil]
+      cases hl : Subst.lookup σ y with
+      | none =>
+          simp only [Option.getD_none, ntm.occursIn, beq_eq_false_iff_ne]
+          intro rfl
+          exact ((Subst.lookup_eq_none_iff_not_mem_dom σ z).mp hl) hz
+      | some s =>
+          simp only [Option.getD_some]
+          exact hσ (y, s) (Subst.lookup_mem hl) z hz
+  | .fapp f ts => by
+      rw [ntm.subst_fapp]; simp only [ntm.occursIn]
+      exact ntmList.substList_avoids_dom_of_solved σ hσ z hz ts
+  | .abs a t => by
+      rw [ntm.subst_abs]; simp only [ntm.occursIn]
+      exact ntm.subst_avoids_dom_of_solved σ hσ z hz t
 
--- Drop lemma: a binding of `θ` whose variable lies in `dom σ` is redundant when
--- acting on a term `u` free of the shared variables `dom σ ∩ dom θ`, provided no
--- `θ`-value reintroduces such a variable.  So filtering out the `dom σ` bindings
--- does not change the action of `θ` on `u`.  Only the *shared* variables matter,
--- since a `dom σ` variable not bound by `θ` is untouched by both.  Induction on `θ`.
-lemma ntm.subst_drop_dom {σ : Subst F X 𝔸} :
-    ∀ (θ : Subst F X 𝔸) (u : ntm F X 𝔸),
-      (∀ z ∈ σ.dom, z ∈ θ.dom → u.occursIn z = false) →
-      (∀ p ∈ θ, ∀ z ∈ σ.dom, z ∈ θ.dom → p.2.occursIn z = false) →
-      u.subst (θ.filter (fun p => decide (p.1 ∉ σ.dom))) = u.subst θ
-  | [], u, _, _ => by simp
-  | (Y, s) :: θ₀, u, hu, hrange => by
-      have hθmem : Y ∈ Subst.dom ((Y, s) :: θ₀) := by
-        rw [Subst.dom_cons]; exact Finset.mem_insert_self _ _
-      have hsub : ∀ z, z ∈ Subst.dom θ₀ → z ∈ Subst.dom ((Y, s) :: θ₀) :=
-        fun z hz => by rw [Subst.dom_cons]; exact Finset.mem_insert_of_mem hz
-      have hu₀ : ∀ z ∈ σ.dom, z ∈ Subst.dom θ₀ → u.occursIn z = false :=
-        fun z hz hzθ => hu z hz (hsub z hzθ)
-      have hrange₀ : ∀ p ∈ θ₀, ∀ z ∈ σ.dom, z ∈ Subst.dom θ₀ → p.2.occursIn z = false :=
-        fun p hp z hz hzθ => hrange p (List.mem_cons_of_mem _ hp) z hz (hsub z hzθ)
+lemma ntmList.substList_avoids_dom_of_solved (σ : Subst F X 𝔸) (hσ : σ.SolvedForm)
+    (z : X) (hz : z ∈ σ.dom) :
+    ∀ (ts : List (ntm F X 𝔸)), ntmList.occursIn z (ts.map (·.subst σ)) = false
+  | [] => rfl
+  | t :: ts' => by
+      simp only [List.map_cons, ntmList.occursIn, Bool.or_eq_false_iff]
+      exact ⟨ntm.subst_avoids_dom_of_solved σ hσ z hz t,
+             ntmList.substList_avoids_dom_of_solved σ hσ z hz ts'⟩
+end
+
+-- Looking up in `θ` filtered by "key ∉ dom σ": a key in `dom σ` is dropped
+-- (misses), otherwise the lookup is unchanged.
+lemma Subst.lookup_filter_not_mem_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) (y : X) :
+    Subst.lookup (θ.filter (fun p => decide (p.1 ∉ σ.dom))) y
+      = if y ∈ σ.dom then none else Subst.lookup θ y := by
+  induction θ with
+  | nil => simp [Subst.lookup]
+  | cons p θ₀ ih =>
+      obtain ⟨Y, s⟩ := p
+      simp only [List.filter_cons]
       by_cases hY : Y ∈ σ.dom
-      · -- Dropped binding: `u.applyOne Y s = u` since `u` avoids `Y`.
-        simp only [List.filter_cons, hY, not_true, decide_false, Bool.false_eq_true,
-                   if_false]
-        rw [ntm.subst_drop_dom θ₀ u hu₀ hrange₀, ntm.subst_cons,
-            ntm.applyOne_of_not_occursIn u Y s (hu Y hY hθmem)]
-      · -- Kept binding: recurse on `u.applyOne Y s`.
-        have hzY : ∀ z ∈ σ.dom, z ≠ Y := fun z hz h => hY (h ▸ hz)
-        simp only [List.filter_cons, decide_eq_true_eq, hY, not_false_iff, if_pos,
-                   ntm.subst_cons]
-        apply ntm.subst_drop_dom θ₀ (u.applyOne Y s)
-        · intro z hz hzθ
-          exact ntm.occursIn_applyOne_of_ne (hzY z hz)
-            (hrange (Y, s) (by simp) z hz (hsub z hzθ)) (hu z hz (hsub z hzθ))
-        · exact hrange₀
+      · simp only [hY, not_true, decide_false, Bool.false_eq_true, if_false, ih]
+        by_cases hy : y = Y
+        · subst hy; simp [hY]
+        · simp only [Subst.lookup_cons, if_neg hy]
+      · simp only [hY, not_false_iff, decide_true, if_true, Subst.lookup_cons]
+        by_cases hy : y = Y
+        · subst hy; simp [hY]
+        · simp only [if_neg hy, ih]
+
+-- Drop lemma: bindings of `θ` whose variable lies in `dom σ` are redundant when
+-- acting on a term `u` free of the shared variables `dom σ ∩ dom θ`.  Induction
+-- on `u`: at a metavariable `y`, either `y ∉ dom σ` (lookup unchanged) or
+-- `y ∈ dom σ ∩ dom θ`, which `u` avoids — so `y` is not this metavariable.
+lemma ntm.subst_drop_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) :
+    ∀ (u : ntm F X 𝔸),
+      (∀ z ∈ σ.dom, z ∈ θ.dom → u.occursIn z = false) →
+      u.subst (θ.filter (fun p => decide (p.1 ∉ σ.dom))) = u.subst θ
+  | .atm _, _ => by simp [ntm.subst]
+  | .mvar π y, hu => by
+      rw [ntm.subst_mvar, ntm.subst_mvar]
+      congr 1
+      rw [ntm.subst_mvar_nil, ntm.subst_mvar_nil, Subst.lookup_filter_not_mem_dom]
+      by_cases hy : y ∈ σ.dom
+      · by_cases hyθ : y ∈ θ.dom
+        · exact absurd (by simp [ntm.occursIn] : (ntm.mvar (F := F) [] y).occursIn y = true)
+            (by rw [hu y hy hyθ])
+        · rw [if_pos hy, (Subst.lookup_eq_none_iff_not_mem_dom θ y).mpr hyθ]
+      · rw [if_neg hy]
+  | .fapp f ts, hu => by
+      rw [ntm.subst_fapp, ntm.subst_fapp]
+      congr 1
+      apply List.map_congr_left
+      intro t ht
+      exact ntm.subst_drop_dom θ t (fun z hz hzθ => by
+        have := hu z hz hzθ
+        simp only [ntm.occursIn] at this
+        exact ntmList.not_occursIn_of_mem ht this)
+  | .abs a t, hu => by
+      rw [ntm.subst_abs, ntm.subst_abs]
+      rw [ntm.subst_drop_dom θ t (fun z hz hzθ => by
+        have := hu z hz hzθ; simpa only [ntm.occursIn] using this)]
 
 -- Explicit most-general-unifier mediator (`θ ∖ dom σ`).
 -- If `σ` and `θ` are both in solved form and `θ` is absorbed by `σ` in `Δ`,
@@ -221,10 +296,8 @@ theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
   · intro x
     have hu : ∀ z ∈ σ.dom, z ∈ Subst.dom θ →
         ((ntm.mvar (F := F) [] x).subst σ).occursIn z = false :=
-      fun z hz _ => ntm.subst_avoids_dom_of_solved σ hσ _ z hz
-    have hrange : ∀ p ∈ θ, ∀ z ∈ σ.dom, z ∈ Subst.dom θ → p.2.occursIn z = false :=
-      fun p hp z _ hzθ => hθ p hp z hzθ
-    rw [ntm.subst_drop_dom θ ((ntm.mvar (F := F) [] x).subst σ) hu hrange]
+      fun z hz _ => ntm.subst_avoids_dom_of_solved σ hσ z hz _
+    rw [ntm.subst_drop_dom θ ((ntm.mvar (F := F) [] x).subst σ) hu]
     exact habs x
 
 -- `normalize σ` is in solved form, when `σ` is idempotent and genuinely moves
@@ -266,15 +339,15 @@ def Subst.MovesDom (σ : Subst F X 𝔸) : Prop :=
     `x.subst = u ≠ x`.  For an old `z ∈ dom σ`, apply `subst σ` to a would-be
     equation `(z.subst σ).applyOne x u = z`: the left side is `σ`-stable, so it
     collapses to `z.subst σ = z`, contradicting `MovesDom σ`. -/
-lemma Subst.MovesDom.append_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
+lemma Subst.MovesDom.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
     (hmove : σ.MovesDom) (hσ : σ.IsIdempotent) (hx : x ∉ σ.dom)
     (hu_fixed : u.subst σ = u) (hxu : u.occursIn x = false) :
-    (σ ++ [(x, u)]).MovesDom := by
+    (σ.comp [(x, u)]).MovesDom := by
   intro z hz
-  have hexp : (ntm.mvar (F := F) [] z).subst (σ ++ [(x, u)])
+  have hexp : (ntm.mvar (F := F) [] z).subst (σ.comp [(x, u)])
       = ((ntm.mvar (F := F) [] z).subst σ).applyOne x u := by
-    rw [ntm.subst_append, ntm.subst_cons, ntm.subst_nil]
-  rw [hexp, Subst.dom_append, Subst.dom_singleton, Finset.mem_union,
+    rw [ntm.subst_mvar_nil_comp, ntm.subst_singleton]
+  rw [hexp, Subst.dom_comp, Subst.dom_singleton, Finset.mem_union,
       Finset.mem_singleton] at *
   rcases hz with hz | rfl
   · intro heq
@@ -322,7 +395,7 @@ lemma unifStep_next_binding_props
     (Pr' : UnifProblem F X 𝔸) (σ_next : Subst F X 𝔸)
     (h : unifStep c rest σ = .next Pr' σ_next)
     (hdisj : σ.disjointPr (c :: rest)) :
-    σ_next = σ ∨ ∃ (x : X) (u : ntm F X 𝔸), σ_next = σ ++ [(x, u)] ∧
+    σ_next = σ ∨ ∃ (x : X) (u : ntm F X 𝔸), σ_next = σ.comp [(x, u)] ∧
       x ∉ σ.dom ∧ u.subst σ = u ∧ u.occursIn x = false := by
   cases c with
   | fresh a t =>
@@ -517,7 +590,7 @@ lemma unifStep_next_movesDom
     (hmove : σ.MovesDom) : σ_next.MovesDom := by
   rcases unifStep_next_binding_props c rest σ Pr' σ_next h hdisj with rfl | ⟨x, u, rfl, hx, hu, hxu⟩
   · exact hmove
-  · exact hmove.append_singleton hσ hx hu hxu
+  · exact hmove.comp_singleton hσ hx hu hxu
 
 /-- `unify` preserves `MovesDom`, mirroring `unify_preserves_idempotent`. -/
 theorem unify_preserves_movesDom :
@@ -563,7 +636,7 @@ theorem UnifProblem.solve_movesDom (Pr : UnifProblem F X 𝔸) (Γ : Context �
       simp only [Option.some.injEq, Prod.mk.injEq] at h
       obtain ⟨_, hσeq⟩ := h
       subst hσeq
-      have hσ_empty : Subst.IsIdempotent ([] : Subst F X 𝔸) := fun x => rfl
+      have hσ_empty : Subst.IsIdempotent ([] : Subst F X 𝔸) := fun x => by simp
       have hdisj_empty : Subst.disjointPr ([] : Subst F X 𝔸) Pr := by
         intro x _; simp [Subst.dom]
       have hmove_empty : Subst.MovesDom ([] : Subst F X 𝔸) := by
@@ -602,7 +675,7 @@ lemma ntm.subst_mvar_eq_lookupSim :
       (ntm.mvar (F := F) [] x).subst ρ = ρ.lookupSim x
   | [], _, x => by simp [Subst.lookupSim, ntm.subst_nil]
   | (y, s) :: ρ₀, hsolved, x => by
-      rw [ntm.subst_cons]
+      rw [ntm.subst_singleton]
       unfold Subst.lookupSim
       rw [List.find?_cons]
       by_cases hxy : x = y
