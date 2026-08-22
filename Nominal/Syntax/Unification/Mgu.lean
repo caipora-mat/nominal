@@ -247,15 +247,17 @@ lemma ntm.subst_drop_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) :
       u.subst (θ.filter (fun p => decide (p.1 ∉ σ.dom))) = u.subst θ
   | .atm _, _ => by simp [ntm.subst]
   | .mvar π y, hu => by
-      rw [ntm.subst_mvar, ntm.subst_mvar]
-      congr 1
-      rw [ntm.subst_mvar_nil, ntm.subst_mvar_nil, Subst.lookup_filter_not_mem_dom]
-      by_cases hy : y ∈ σ.dom
-      · by_cases hyθ : y ∈ θ.dom
-        · exact absurd (by simp [ntm.occursIn] : (ntm.mvar (F := F) [] y).occursIn y = true)
-            (by rw [hu y hy hyθ])
-        · rw [if_pos hy, (Subst.lookup_eq_none_iff_not_mem_dom θ y).mpr hyθ]
-      · rw [if_neg hy]
+      have hbare : (ntm.mvar (F := F) [] y).subst (θ.filter (fun p => decide (p.1 ∉ σ.dom)))
+          = (ntm.mvar (F := F) [] y).subst θ := by
+        rw [ntm.subst_mvar_nil, ntm.subst_mvar_nil, Subst.lookup_filter_not_mem_dom]
+        by_cases hy : y ∈ σ.dom
+        · rw [if_pos hy]
+          by_cases hyθ : y ∈ θ.dom
+          · exact absurd (by simp [ntm.occursIn] : ntm.occursIn y (ntm.mvar (F := F) π y) = true)
+              (by rw [hu y hy hyθ]; simp)
+          · rw [(Subst.lookup_eq_none_iff_not_mem_dom θ y).mpr hyθ]
+        · rw [if_neg hy]
+      rw [ntm.subst_mvar, hbare, ← ntm.subst_mvar]
   | .fapp f ts, hu => by
       rw [ntm.subst_fapp, ntm.subst_fapp]
       congr 1
@@ -668,29 +670,27 @@ lemma Subst.SolvedForm.of_cons {p : X × ntm F X 𝔸} {ρ : Subst F X 𝔸}
   fun q hq z hz => h q (List.mem_cons_of_mem _ hq) z
     (by rw [Subst.dom_cons]; exact Finset.mem_insert_of_mem hz)
 
-/-- On a solved-form `ρ`, the sequential value of a metavariable is exactly its
-    one-shot lookup: no re-scanning happens because values avoid the domain. -/
-lemma ntm.subst_mvar_eq_lookupSim :
-    ∀ (ρ : Subst F X 𝔸), Subst.SolvedForm ρ → ∀ (x : X),
-      (ntm.mvar (F := F) [] x).subst ρ = ρ.lookupSim x
-  | [], _, x => by simp [Subst.lookupSim, ntm.subst_nil]
-  | (y, s) :: ρ₀, hsolved, x => by
-      rw [ntm.subst_singleton]
-      unfold Subst.lookupSim
-      rw [List.find?_cons]
+/-- `Subst.lookup` (recursive) agrees with `Subst.lookupSim` (`find?`-based):
+    both return the first binding for `x`, defaulting to the bare metavariable. -/
+lemma Subst.lookup_getD_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
+    (Subst.lookup ρ x).getD (ntm.mvar [] x) = ρ.lookupSim x := by
+  unfold Subst.lookupSim
+  induction ρ with
+  | nil => simp [Subst.lookup]
+  | cons p ρ₀ ih =>
+      obtain ⟨y, s⟩ := p
+      rw [Subst.lookup_cons, List.find?_cons]
       by_cases hxy : x = y
-      · subst hxy
-        simp only [ntm.applyOne, beq_self_eq_true, if_true, ntm.permute_nil,
-                   Option.elim_some]
-        apply ntm.subst_of_disjoint_dom
-        intro z hz
-        exact hsolved (x, s) (by simp) z
-          (by rw [Subst.dom_cons]; exact Finset.mem_insert_of_mem hz)
+      · subst hxy; simp
       · have hyx : (y == x) = false := by
           simp only [beq_eq_false_iff_ne]; exact fun h => hxy h.symm
-        rw [hyx]
-        simp only [ntm.applyOne, if_neg hxy]
-        exact ntm.subst_mvar_eq_lookupSim ρ₀ hsolved.of_cons x
+        rw [if_neg hxy, hyx, ih]
+
+/-- Since `subst` is simultaneous, on a bare metavariable it coincides with the
+    one-shot `lookupSim` — for every `ρ` (no solved-form hypothesis needed). -/
+lemma ntm.subst_mvar_eq_lookupSim (ρ : Subst F X 𝔸) (_hρ : Subst.SolvedForm ρ) (x : X) :
+    (ntm.mvar (F := F) [] x).subst ρ = ρ.lookupSim x := by
+  rw [ntm.subst_mvar_nil, Subst.lookup_getD_eq_lookupSim]
 
 /-- On a solved-form substitution, sequential and simultaneous substitution
     agree outright: `t.subst ρ = t.substSim ρ`. -/
