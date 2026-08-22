@@ -105,11 +105,11 @@ lemma Subst.absorbedBy_append (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸)
     (x : X) (u_perm : ntm F X 𝔸)
     (habs : Subst.absorbedBy Δ σ θ)
     (hu : (Δ ⊢ u_perm.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true) :
-    Subst.absorbedBy Δ (σ ++ [(x, u_perm)]) θ := by
+    Subst.absorbedBy Δ (σ.comp [(x, u_perm)]) θ := by
   intro y
-  rw [ntm.subst_append]
+  rw [ntm.subst_mvar_nil_comp]
   -- ((mvar [] y).subst σ).subst [(x, u_perm)] = ((mvar [] y).subst σ).applyOne x u_perm.
-  simp only [ntm.subst_cons, ntm.subst_nil]
+  simp only [ntm.subst_singleton]
   -- Goal: Δ ⊢ (((mvar [] y).subst σ).applyOne x u_perm).subst θ ≈α (mvar [] y).subst θ.
   -- Use congruence to swap to (((mvar [] y).subst σ).subst θ), then habs.
   have hcong := alphaEquiv_applyOne_subst Δ θ x u_perm hu
@@ -127,13 +127,13 @@ lemma UnifConstraint.entails_applyOne_of_entails
   cases c with
   | fresh a t =>
     simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-               Constraint.Entails, ntm.subst_cons, ntm.subst_nil] at *
+               Constraint.Entails, ntm.subst_singleton] at *
     have hcong := alphaEquiv_applyOne_subst Δ θ x u hu t
     exact freshPreserves_alphaEquiv Δ a (t.subst θ) ((t.applyOne x u).subst θ) h
       (alphaEquiv_symm Δ _ _ hcong)
   | unif s t =>
     simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-               Constraint.Entails, ntm.subst_cons, ntm.subst_nil] at *
+               Constraint.Entails, ntm.subst_singleton] at *
     have hcongS := alphaEquiv_applyOne_subst Δ θ x u hu s
     have hcongT := alphaEquiv_applyOne_subst Δ θ x u hu t
     -- h : alphaEquiv Δ (s.subst θ) (t.subst θ).
@@ -383,7 +383,7 @@ lemma unifStep_next_le
         -- atm-mvar: instantiation with u = .atm a, u_perm = .atm (π.reverse·a).
         have heq : unifStep (UnifConstraint.unif (X := X) (ntm.atm a) (ntm.mvar π x)) rest σ
             = .next (rest.applySubst [(x, (ntm.atm (F := F) a).permute π.reverse)])
-                    (σ ++ [(x, (ntm.atm (F := F) a).permute π.reverse)]) := by
+                    (σ.comp [(x, (ntm.atm (F := F) a).permute π.reverse)]) := by
           simp [unifStep, ntm.occursIn]
         rw [heq] at h; injection h with hPr hσ
         subst hPr; subst hσ
@@ -424,7 +424,7 @@ lemma unifStep_next_le
         -- mvar-atm: instantiation, arm 3 with u = .atm a.
         have heq : unifStep (UnifConstraint.unif (X := X) (ntm.mvar π x) (ntm.atm a)) rest σ
             = .next (rest.applySubst [(x, (ntm.atm (F := F) a).permute π.reverse)])
-                    (σ ++ [(x, (ntm.atm (F := F) a).permute π.reverse)]) := by
+                    (σ.comp [(x, (ntm.atm (F := F) a).permute π.reverse)]) := by
           simp [unifStep, ntm.occursIn]
         rw [heq] at h; injection h with hPr hσ
         subst hPr; subst hσ
@@ -494,7 +494,7 @@ lemma unifStep_next_le
           have heq : unifStep (UnifConstraint.unif (X := X) (ntm.mvar π x)
                                 (ntm.mvar π' y)) rest σ
               = .next (rest.applySubst [(x, (ntm.mvar (F := F) π' y).permute π.reverse)])
-                      (σ ++ [(x, (ntm.mvar (F := F) π' y).permute π.reverse)]) := by
+                      (σ.comp [(x, (ntm.mvar (F := F) π' y).permute π.reverse)]) := by
             simp [unifStep, hxy]
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
@@ -515,7 +515,7 @@ lemma unifStep_next_le
           have heq : unifStep (UnifConstraint.unif (X := X) (ntm.mvar π x)
                                 (ntm.fapp f ts)) rest σ
               = .next (rest.applySubst [(x, (ntm.fapp (X := X) f ts).permute π.reverse)])
-                      (σ ++ [(x, (ntm.fapp (X := X) f ts).permute π.reverse)]) := by
+                      (σ.comp [(x, (ntm.fapp (X := X) f ts).permute π.reverse)]) := by
             simp [unifStep, hocc_false]
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
@@ -536,7 +536,7 @@ lemma unifStep_next_le
           have heq : unifStep (UnifConstraint.unif (X := X) (ntm.mvar π x)
                                 (ntm.abs b t')) rest σ
               = .next (rest.applySubst [(x, (ntm.abs (F := F) b t').permute π.reverse)])
-                      (σ ++ [(x, (ntm.abs (F := F) b t').permute π.reverse)]) := by
+                      (σ.comp [(x, (ntm.abs (F := F) b t').permute π.reverse)]) := by
             simp [unifStep, hocc_false]
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
@@ -560,7 +560,7 @@ lemma unifStep_next_le
           have heq : unifStep (UnifConstraint.unif (X := X) (ntm.fapp f ss)
                                 (ntm.mvar π x)) rest σ
               = .next (rest.applySubst [(x, (ntm.fapp (X := X) f ss).permute π.reverse)])
-                      (σ ++ [(x, (ntm.fapp (X := X) f ss).permute π.reverse)]) := by
+                      (σ.comp [(x, (ntm.fapp (X := X) f ss).permute π.reverse)]) := by
             simp [unifStep, hocc_false]
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
@@ -619,7 +619,7 @@ lemma unifStep_next_le
           have heq : unifStep (UnifConstraint.unif (X := X) (ntm.abs a s')
                                 (ntm.mvar π x)) rest σ
               = .next (rest.applySubst [(x, (ntm.abs (F := F) a s').permute π.reverse)])
-                      (σ ++ [(x, (ntm.abs (F := F) a s').permute π.reverse)]) := by
+                      (σ.comp [(x, (ntm.abs (F := F) a s').permute π.reverse)]) := by
             simp [unifStep, hocc_false]
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
