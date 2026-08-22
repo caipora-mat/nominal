@@ -307,7 +307,7 @@ theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
 -- occurs-check in the algorithm).  Each value of `normalize σ` is a full image
 -- `y.subst σ`, which is `σ`-fixed by idempotence; if a domain variable `z`
 -- occurred in it, `subst_fixed_of_occurs` would force `σ` to fix `z`,
--- contradicting that `σ` moves `z`.  Combined with `subst_eq_substSim_normalize`,
+-- contradicting that `σ` moves `z`.  Since `subst` is simultaneous,
 -- this shows the algorithm's sequential `σ` computes the simultaneous action of a
 -- *solved-form* substitution — exactly the classical picture.
 theorem Subst.solvedForm_normalize {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent)
@@ -647,7 +647,7 @@ theorem UnifProblem.solve_movesDom (Pr : UnifProblem F X 𝔸) (Γ : Context �
 
 /-- The `normalize` of `solve`'s output is in solved form: the algorithm's
     sequential substitution computes the simultaneous action of a solved-form
-    substitution (`subst_eq_substSim_normalize` + `solvedForm_normalize`). -/
+    substitution (`ntm.subst_eq_normalize` + `solvedForm_normalize`). -/
 theorem UnifProblem.solve_normalize_solvedForm (Pr : UnifProblem F X 𝔸)
     (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) :
     Subst.SolvedForm σ.normalize :=
@@ -686,27 +686,20 @@ lemma ntm.subst_mvar_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
     (ntm.mvar (F := F) [] x).subst ρ = ρ.lookupSim x := by
   rw [ntm.subst_mvar_nil, Subst.lookup_getD_eq_lookupSim]
 
-/-- `subst` and `substSim` agree on every term (both are simultaneous). -/
-lemma ntm.subst_eq_substSim (ρ : Subst F X 𝔸) :
-    ∀ t : ntm F X 𝔸, t.subst ρ = t.substSim ρ
-  | .atm a => by simp [ntm.substSim, ntm.subst_atm]
-  | .mvar π x => by
-      rw [ntm.substSim, ntm.subst_mvar, ntm.subst_mvar_eq_lookupSim ρ x]
+/-- A substitution and its normalisation act identically: `t.subst (normalize σ)
+    = t.subst σ` for every term and every `σ`.  Both are simultaneous, and
+    `normalize σ` just replaces each value by the same image `lookupSim` returns. -/
+lemma ntm.subst_eq_normalize (σ : Subst F X 𝔸) :
+    ∀ t : ntm F X 𝔸, t.subst σ.normalize = t.subst σ
+  | .atm a => by simp [ntm.subst_atm]
+  | .mvar π y => by
+      rw [ntm.subst_mvar, ntm.subst_mvar_nil, Subst.lookup_getD_eq_lookupSim,
+          Subst.lookupSim_normalize, ← ntm.subst_mvar]
   | .fapp f ts => by
-      rw [ntm.substSim, ntm.subst_fapp]
+      rw [ntm.subst_fapp, ntm.subst_fapp]
       congr 1
-      exact List.map_congr_left (fun t _ => ntm.subst_eq_substSim ρ t)
-  | .abs a t => by
-      rw [ntm.substSim, ntm.subst_abs, ntm.subst_eq_substSim ρ t]
-
-/-- The algorithm's output `σ` and its normalisation act identically:
-    `t.subst σ = t.subst (normalize σ)` for every term.  (Sequential `σ` =
-    simultaneous `normalize σ` by `subst_eq_substSim_normalize`; and on the
-    solved-form `normalize σ`, sequential = simultaneous.) -/
-theorem UnifProblem.solve_subst_eq_normalize (Pr : UnifProblem F X 𝔸)
-    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (_h : Pr.solve = some (Γ, σ))
-    (t : ntm F X 𝔸) : t.subst σ = t.subst σ.normalize := by
-  rw [ntm.subst_eq_substSim_normalize σ t, ntm.subst_eq_substSim σ.normalize t]
+      exact List.map_congr_left (fun t _ => ntm.subst_eq_normalize σ t)
+  | .abs a t => by rw [ntm.subst_abs, ntm.subst_abs, ntm.subst_eq_normalize σ t]
 
 /-- Every solution `(Δ, θ)` is absorbed by the algorithm's output `σ`.  This is
     the absorption invariant established inside `solve_principal`, isolated here
@@ -854,24 +847,21 @@ lemma Subst.solvedForm_reduce (θ : Subst F X 𝔸) (hθ : θ.IsIdempotent) :
   rw [hp'1] at hp'_ne
   exact hp'_ne hzfix
 
-/-- Sequential substitution by θ equals simultaneous substitution by its
-    reduction: `t.subst θ = t.substSim (reduce θ)` (from `lookupSim_reduce`;
-    no hypothesis on θ). -/
-lemma Subst.subst_eq_substSim_reduce (θ : Subst F X 𝔸) :
-    ∀ t : ntm F X 𝔸, t.subst θ = t.substSim θ.reduce
-  | .atm a => by simp [ntm.substSim, ntm.subst_atm]
-  | .mvar π x => by rw [ntm.substSim, Subst.lookupSim_reduce, ntm.subst_mvar]
-  | .fapp f ts => by
-      rw [ntm.substSim, ntm.subst_fapp]
-      congr 1
-      exact List.map_congr_left (fun t _ => Subst.subst_eq_substSim_reduce θ t)
-  | .abs a t => by rw [ntm.substSim, ntm.subst_abs, Subst.subst_eq_substSim_reduce θ t]
-
 /-- Substitution by θ equals substitution by its reduction:
-    `t.subst θ = t.subst (reduce θ)` (both simultaneous; no hypothesis on θ). -/
-lemma Subst.subst_eq_reduce (θ : Subst F X 𝔸)
-    (t : ntm F X 𝔸) : t.subst θ = t.subst θ.reduce := by
-  rw [Subst.subst_eq_substSim_reduce θ t, ← ntm.subst_eq_substSim θ.reduce t]
+    `t.subst θ = t.subst (reduce θ)` (both simultaneous; no hypothesis on θ).
+    On a metavariable `y`, `reduce θ` looks up the same image `θ` does
+    (`lookupSim_reduce`). -/
+lemma Subst.subst_eq_reduce (θ : Subst F X 𝔸) :
+    ∀ t : ntm F X 𝔸, t.subst θ = t.subst θ.reduce
+  | .atm a => by simp [ntm.subst_atm]
+  | .mvar π y => by
+      conv_rhs => rw [ntm.subst_mvar, ntm.subst_mvar_nil, Subst.lookup_getD_eq_lookupSim,
+                      Subst.lookupSim_reduce, ← ntm.subst_mvar]
+  | .fapp f ts => by
+      rw [ntm.subst_fapp, ntm.subst_fapp]
+      congr 1
+      exact List.map_congr_left (fun t _ => Subst.subst_eq_reduce θ t)
+  | .abs a t => by rw [ntm.subst_abs, ntm.subst_abs, Subst.subst_eq_reduce θ t]
 
 /-- End-to-end explicit mediator: for `solve`'s output `(Γ, σ)` and *any*
     solution `(Δ, θ)`, the guessed mediator works.  The mediator is
@@ -891,9 +881,7 @@ theorem UnifProblem.solve_mediator_explicit (Pr : UnifProblem F X 𝔸)
   -- Transport absorption to (normalize σ, reduce θ): both act as (σ, θ).
   have habs_red : Subst.absorbedBy Δ σ.normalize θ.reduce := by
     intro x
-    rw [← UnifProblem.solve_subst_eq_normalize Pr Γ σ h,
-        ← Subst.subst_eq_reduce θ,
-        ← Subst.subst_eq_reduce θ]
+    rw [ntm.subst_eq_normalize σ, ← Subst.subst_eq_reduce θ, ← Subst.subst_eq_reduce θ]
     exact habs x
   obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_norm habs_red
   refine ⟨σ', ?_, ?_⟩
@@ -901,7 +889,7 @@ theorem UnifProblem.solve_mediator_explicit (Pr : UnifProblem F X 𝔸)
     have hz' := hdisj z hz
     rwa [Subst.dom_normalize] at hz'
   · intro x
-    rw [UnifProblem.solve_subst_eq_normalize Pr Γ σ h, Subst.subst_eq_reduce θ]
+    rw [← ntm.subst_eq_normalize σ, Subst.subst_eq_reduce θ]
     exact hmed x
 
 -- ===========================================================================
