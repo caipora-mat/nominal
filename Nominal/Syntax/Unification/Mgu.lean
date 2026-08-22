@@ -41,10 +41,10 @@ lemma Subst.lookup_mem {σ : Subst F X 𝔸} {y : X} {s : ntm F X 𝔸}
 -- witnesses `Xσσ' ≈α Xθ`.  This is the "`θ` is `σ` composed with a further,
 -- independent instantiation `σ'`" statement expected in unification theory.
 --
--- Throughout, `Xσ` abbreviates `(ntm.mvar [] X).subst σ`.  The delicate point
--- is that substitutions are *sequential lists*: dropping bindings from `θ` is
--- only harmless because the dropped variables do not reappear, which follows
--- from `σ` and `θ` being idempotent with no trivial (identity) bindings.
+-- Throughout, `Xσ` abbreviates `(ntm.mvar [] X).subst σ`.  Substitution is
+-- simultaneous, so `Subst.comp` is genuine composition and dropping the `dom σ`
+-- bindings from a solved-form `θ` is harmless (the dropped variables cannot
+-- reappear).  Solutions are reduced to solved form (`reduce`) when needed.
 -- ===========================================================================
 
 -- If a term `v` is fixed by `σ` and a variable `z` occurs in `v`, then `σ` also
@@ -273,13 +273,13 @@ lemma ntm.subst_drop_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) :
         have := hu z hz hzθ; simpa only [ntm.occursIn] using this)]
 
 -- Explicit most-general-unifier mediator (`θ ∖ dom σ`).
--- If `σ` and `θ` are both in solved form and `θ` is absorbed by `σ` in `Δ`,
--- then `σ' := θ` with the `dom σ` bindings removed is a mediator: its domain is
--- disjoint from `dom σ`, and `Xσσ' ≈α Xθ` for every metavariable `X`.  This is
--- the canonical "`θ` is `σ` followed by an independent instantiation `σ'`" form;
--- the disjoint domain is what makes it non-trivial (unlike the witness `σ' := θ`).
+-- If `σ` is in solved form and `θ` is absorbed by `σ` in `Δ`, then `σ' := θ`
+-- with the `dom σ` bindings removed is a mediator: its domain is disjoint from
+-- `dom σ`, and `Xσσ' ≈α Xθ` for every metavariable `X`.  This is the canonical
+-- "`θ` is `σ` followed by an independent instantiation `σ'`" form; the disjoint
+-- domain is what makes it non-trivial (unlike the witness `σ' := θ`).
 theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
-    (hσ : σ.SolvedForm) (hθ : θ.SolvedForm) (habs : Subst.absorbedBy Δ σ θ) :
+    (hσ : σ.SolvedForm) (habs : Subst.absorbedBy Δ σ θ) :
     ∃ σ' : Subst F X 𝔸,
       (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
       (∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst σ'
@@ -664,12 +664,6 @@ theorem UnifProblem.solve_normalize_solvedForm (Pr : UnifProblem F X 𝔸)
 -- mediator works.
 -- ===========================================================================
 
-/-- A sub-substitution of a solved-form substitution is in solved form. -/
-lemma Subst.SolvedForm.of_cons {p : X × ntm F X 𝔸} {ρ : Subst F X 𝔸}
-    (h : Subst.SolvedForm (p :: ρ)) : Subst.SolvedForm ρ :=
-  fun q hq z hz => h q (List.mem_cons_of_mem _ hq) z
-    (by rw [Subst.dom_cons]; exact Finset.mem_insert_of_mem hz)
-
 /-- `Subst.lookup` (recursive) agrees with `Subst.lookupSim` (`find?`-based):
     both return the first binding for `x`, defaulting to the bare metavariable. -/
 lemma Subst.lookup_getD_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
@@ -687,35 +681,32 @@ lemma Subst.lookup_getD_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
         rw [if_neg hxy, hyx, ih]
 
 /-- Since `subst` is simultaneous, on a bare metavariable it coincides with the
-    one-shot `lookupSim` — for every `ρ` (no solved-form hypothesis needed). -/
-lemma ntm.subst_mvar_eq_lookupSim (ρ : Subst F X 𝔸) (_hρ : Subst.SolvedForm ρ) (x : X) :
+    one-shot `lookupSim` — for every `ρ`. -/
+lemma ntm.subst_mvar_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
     (ntm.mvar (F := F) [] x).subst ρ = ρ.lookupSim x := by
   rw [ntm.subst_mvar_nil, Subst.lookup_getD_eq_lookupSim]
 
-/-- On a solved-form substitution, sequential and simultaneous substitution
-    agree outright: `t.subst ρ = t.substSim ρ`. -/
-lemma ntm.subst_eq_substSim_of_solved (ρ : Subst F X 𝔸) (hρ : Subst.SolvedForm ρ) :
+/-- `subst` and `substSim` agree on every term (both are simultaneous). -/
+lemma ntm.subst_eq_substSim (ρ : Subst F X 𝔸) :
     ∀ t : ntm F X 𝔸, t.subst ρ = t.substSim ρ
   | .atm a => by simp [ntm.substSim, ntm.subst_atm]
   | .mvar π x => by
-      rw [ntm.substSim, ntm.subst_mvar, ntm.subst_mvar_eq_lookupSim ρ hρ x]
+      rw [ntm.substSim, ntm.subst_mvar, ntm.subst_mvar_eq_lookupSim ρ x]
   | .fapp f ts => by
       rw [ntm.substSim, ntm.subst_fapp]
       congr 1
-      exact List.map_congr_left (fun t _ => ntm.subst_eq_substSim_of_solved ρ hρ t)
+      exact List.map_congr_left (fun t _ => ntm.subst_eq_substSim ρ t)
   | .abs a t => by
-      rw [ntm.substSim, ntm.subst_abs, ntm.subst_eq_substSim_of_solved ρ hρ t]
+      rw [ntm.substSim, ntm.subst_abs, ntm.subst_eq_substSim ρ t]
 
 /-- The algorithm's output `σ` and its normalisation act identically:
     `t.subst σ = t.subst (normalize σ)` for every term.  (Sequential `σ` =
     simultaneous `normalize σ` by `subst_eq_substSim_normalize`; and on the
     solved-form `normalize σ`, sequential = simultaneous.) -/
 theorem UnifProblem.solve_subst_eq_normalize (Pr : UnifProblem F X 𝔸)
-    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
+    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (_h : Pr.solve = some (Γ, σ))
     (t : ntm F X 𝔸) : t.subst σ = t.subst σ.normalize := by
-  rw [ntm.subst_eq_substSim_normalize σ t,
-      ntm.subst_eq_substSim_of_solved σ.normalize
-        (UnifProblem.solve_normalize_solvedForm Pr Γ σ h) t]
+  rw [ntm.subst_eq_substSim_normalize σ t, ntm.subst_eq_substSim σ.normalize t]
 
 /-- Every solution `(Δ, θ)` is absorbed by the algorithm's output `σ`.  This is
     the absorption invariant established inside `solve_principal`, isolated here
@@ -876,12 +867,11 @@ lemma Subst.subst_eq_substSim_reduce (θ : Subst F X 𝔸) :
       exact List.map_congr_left (fun t _ => Subst.subst_eq_substSim_reduce θ t)
   | .abs a t => by rw [ntm.substSim, ntm.subst_abs, Subst.subst_eq_substSim_reduce θ t]
 
-/-- On any idempotent θ, sequential substitution equals that of its (solved-form)
-    reduction: `t.subst θ = t.subst (reduce θ)`. -/
-lemma Subst.subst_eq_reduce (θ : Subst F X 𝔸) (hθ : θ.IsIdempotent)
+/-- Substitution by θ equals substitution by its reduction:
+    `t.subst θ = t.subst (reduce θ)` (both simultaneous; no hypothesis on θ). -/
+lemma Subst.subst_eq_reduce (θ : Subst F X 𝔸)
     (t : ntm F X 𝔸) : t.subst θ = t.subst θ.reduce := by
-  rw [Subst.subst_eq_substSim_reduce θ t,
-      ← ntm.subst_eq_substSim_of_solved θ.reduce (Subst.solvedForm_reduce θ hθ) t]
+  rw [Subst.subst_eq_substSim_reduce θ t, ← ntm.subst_eq_substSim θ.reduce t]
 
 /-- End-to-end explicit mediator: for `solve`'s output `(Γ, σ)` and *any*
     solution `(Δ, θ)`, the guessed mediator works.  The mediator is
@@ -897,34 +887,33 @@ theorem UnifProblem.solve_mediator_explicit (Pr : UnifProblem F X 𝔸)
                   ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
   have hθ_idem : θ.IsIdempotent := hq.2
   have hσ_norm := UnifProblem.solve_normalize_solvedForm Pr Γ σ h
-  have hθ_red := Subst.solvedForm_reduce θ hθ_idem
   have habs := UnifProblem.solve_absorbedBy Pr Γ σ h Δ θ hq
   -- Transport absorption to (normalize σ, reduce θ): both act as (σ, θ).
   have habs_red : Subst.absorbedBy Δ σ.normalize θ.reduce := by
     intro x
     rw [← UnifProblem.solve_subst_eq_normalize Pr Γ σ h,
-        ← Subst.subst_eq_reduce θ hθ_idem,
-        ← Subst.subst_eq_reduce θ hθ_idem]
+        ← Subst.subst_eq_reduce θ,
+        ← Subst.subst_eq_reduce θ]
     exact habs x
-  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_norm hθ_red habs_red
+  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_norm habs_red
   refine ⟨σ', ?_, ?_⟩
   · intro z hz
     have hz' := hdisj z hz
     rwa [Subst.dom_normalize] at hz'
   · intro x
-    rw [UnifProblem.solve_subst_eq_normalize Pr Γ σ h, Subst.subst_eq_reduce θ hθ_idem]
+    rw [UnifProblem.solve_subst_eq_normalize Pr Γ σ h, Subst.subst_eq_reduce θ]
     exact hmed x
 
 -- ===========================================================================
--- The advisor's factorisation, exactly: `θ = σ.comp σ'`.
+-- Factorisation of a solution through the algorithm's output: `θ = σ.comp σ'`.
 --
 -- With *simultaneous* substitution `Subst.comp` is genuine composition
--- (`ntm.subst_comp`).  So the mediator statement can be phrased directly as
--- "`θ` is `σ` composed with an independent `σ'`": for the algorithm's output `σ`
--- and any solution `(Δ, θ)`, there is a `σ'` with domain disjoint from `dom σ`
--- such that `σ.comp σ'` acts as `θ` (modulo `≈α` in `Δ`) on every metavariable.
--- This is exactly the guess "σ ++ σ' = θ", now correct: `comp` (not append) is
--- the composition, and `σ' = θ ∖ dom σ` is the independent remainder.
+-- (`ntm.subst_comp`), so the mediator can be phrased as "`θ` is `σ` composed
+-- with an independent `σ'`": for the algorithm's output `σ` and any solution
+-- `(Δ, θ)`, there is a `σ'` with domain disjoint from `dom σ` such that
+-- `σ.comp σ'` acts as `θ` (modulo `≈α` in `Δ`) on every metavariable.  This is
+-- the classical "`θ` is an instance of the most general unifier `σ`", with
+-- `σ' = θ ∖ dom σ` the independent remainder.
 -- ===========================================================================
 theorem UnifProblem.solve_factors_comp (Pr : UnifProblem F X 𝔸)
     (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
