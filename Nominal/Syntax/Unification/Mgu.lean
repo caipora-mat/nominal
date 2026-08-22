@@ -915,4 +915,28 @@ theorem UnifProblem.solve_mediator_explicit (Pr : UnifProblem F X 𝔸)
     rw [UnifProblem.solve_subst_eq_normalize Pr Γ σ h, Subst.subst_eq_reduce θ hθ_idem]
     exact hmed x
 
+-- ===========================================================================
+-- The advisor's factorisation, exactly: `θ = σ.comp σ'`.
+--
+-- With *simultaneous* substitution `Subst.comp` is genuine composition
+-- (`ntm.subst_comp`).  So the mediator statement can be phrased directly as
+-- "`θ` is `σ` composed with an independent `σ'`": for the algorithm's output `σ`
+-- and any solution `(Δ, θ)`, there is a `σ'` with domain disjoint from `dom σ`
+-- such that `σ.comp σ'` acts as `θ` (modulo `≈α` in `Δ`) on every metavariable.
+-- This is exactly the guess "σ ++ σ' = θ", now correct: `comp` (not append) is
+-- the composition, and `σ' = θ ∖ dom σ` is the independent remainder.
+-- ===========================================================================
+theorem UnifProblem.solve_factors_comp (Pr : UnifProblem F X 𝔸)
+    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
+    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) :
+    ∃ σ' : Subst F X 𝔸,
+      (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
+      (∀ x : X, (Δ ⊢ (ntm.mvar (F := F) [] x).subst (σ.comp σ')
+                  ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
+  obtain ⟨σ', hdisj, hmed⟩ :=
+    UnifProblem.solve_mediator_explicit Pr Γ σ h Δ θ hq
+  refine ⟨σ', hdisj, fun x => ?_⟩
+  rw [ntm.subst_mvar_nil_comp]
+  exact hmed x
+
 end Nominal
