@@ -198,4 +198,14 @@ def Subst.dom (σ : Subst F X 𝔸) : Finset X :=
     Subst.dom ([(x, s)] : Subst F X 𝔸) = {x} := by
   simp [Subst.dom]
 
+/-- Composition has the same domain as append: `dom (σ.comp τ) = dom σ ∪ dom τ`.
+    (The `map` in `comp` preserves the first components.) -/
+@[simp] lemma Subst.dom_comp (σ τ : Subst F X 𝔸) :
+    Subst.dom (σ.comp τ) = Subst.dom σ ∪ Subst.dom τ := by
+  unfold Subst.comp
+  rw [Subst.dom_append]
+  congr 1
+  simp only [Subst.dom, List.map_map]
+  congr 1
+
 end Nominal
