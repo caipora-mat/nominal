@@ -60,8 +60,8 @@ def ntm.subst : ntm F X 𝔸 → Subst F X 𝔸 → ntm F X 𝔸
 
 /-- On a bare metavariable, `subst` is the raw lookup (or the variable itself). -/
 lemma ntm.subst_mvar_nil (y : X) (σ : Subst F X 𝔸) :
-    (ntm.mvar (F := F) [] y).subst σ = (σ.lookup y).getD (ntm.mvar [] y) := by
-  simp only [ntm.subst]; cases σ.lookup y <;> simp [ntm.permute_nil]
+    (ntm.mvar (F := F) [] y).subst σ = (Subst.lookup σ y).getD (ntm.mvar [] y) := by
+  simp only [ntm.subst]; cases Subst.lookup σ y <;> simp [ntm.permute_nil]
 
 /-- `mvar π y` under `σ`: apply `σ` to the bare mvar, then re-suspend `π`. -/
 lemma ntm.subst_mvar (π : LPerm 𝔸) (y : X) (σ : Subst F X 𝔸) :
@@ -116,6 +116,60 @@ lemma ntm.subst_permute : ∀ (t : ntm F X 𝔸) (π : LPerm 𝔸) (σ : Subst F
   | .abs a t, π, σ => by
       simp only [ntm.permute, ntm.subst_abs]
       rw [ntm.subst_permute t π σ]
+
+-- (Composition of simultaneous substitutions.)
+-- Under simultaneous substitution, `subst (σ ++ τ) ≠ (subst σ) ∘ subst τ` in
+-- general (append prepends bindings, it does not compose them).  The correct
+-- composition applies `τ` to the *range* of `σ` and then appends `τ`.
+
+/-- Composition: `t.subst (σ.comp τ) = (t.subst σ).subst τ`.  Applies `τ` to each
+    value of `σ`, then falls back to `τ` for variables outside `dom σ`. -/
+def Subst.comp (σ τ : Subst F X 𝔸) : Subst F X 𝔸 :=
+  σ.map (fun p => (p.1, p.2.subst τ)) ++ τ
+
+lemma Subst.lookup_append (σ τ : Subst F X 𝔸) (x : X) :
+    Subst.lookup (σ ++ τ) x = (Subst.lookup σ x).orElse (fun _ => Subst.lookup τ x) := by
+  induction σ with
+  | nil => rfl
+  | cons p σ' ih =>
+      obtain ⟨Y, s⟩ := p
+      simp only [List.cons_append, Subst.lookup_cons]
+      split <;> simp [ih]
+
+lemma Subst.lookup_map_subst (σ τ : Subst F X 𝔸) (x : X) :
+    Subst.lookup (σ.map (fun p => (p.1, p.2.subst τ))) x
+      = (Subst.lookup σ x).map (·.subst τ) := by
+  induction σ with
+  | nil => rfl
+  | cons p σ' ih =>
+      obtain ⟨Y, s⟩ := p
+      simp only [List.map_cons, Subst.lookup_cons, ih]
+      split <;> rfl
+
+/-- Composition law on a bare metavariable. -/
+lemma ntm.subst_mvar_nil_comp (x : X) (σ τ : Subst F X 𝔸) :
+    (ntm.mvar (F := F) [] x).subst (σ.comp τ)
+      = ((ntm.mvar (F := F) [] x).subst σ).subst τ := by
+  rw [Subst.comp, ntm.subst_mvar_nil, ntm.subst_mvar_nil, Subst.lookup_append,
+      Subst.lookup_map_subst]
+  cases Subst.lookup σ x with
+  | some s => simp
+  | none => simp [ntm.subst_mvar_nil]
+
+/-- Composition law: `t.subst (σ.comp τ) = (t.subst σ).subst τ` for every term. -/
+lemma ntm.subst_comp : ∀ (t : ntm F X 𝔸) (σ τ : Subst F X 𝔸),
+    t.subst (σ.comp τ) = (t.subst σ).subst τ
+  | .atm a, _, _ => by simp
+  | .mvar π x, σ, τ => by
+      rw [ntm.subst_mvar π x (σ.comp τ), ntm.subst_mvar_nil_comp,
+          ntm.subst_mvar π x σ, ntm.subst_permute]
+  | .fapp f ts, σ, τ => by
+      simp only [ntm.subst_fapp, List.map_map]
+      congr 1
+      exact List.map_congr_left (fun t _ => ntm.subst_comp t σ τ)
+  | .abs a t, σ, τ => by
+      simp only [ntm.subst_abs]
+      rw [ntm.subst_comp t σ τ]
 
 -- (Idempotence — condition (2) of Definition 27).
 
