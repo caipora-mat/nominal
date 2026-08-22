@@ -26,26 +26,34 @@ algoritmo saia em forma resolvida (não triangular).
 
 ## Falta
 
-1. **Def do algoritmo** (`Algorithm/Defs.lean:44,49,54`): trocar
-   `σ ++ [binding]` por `Subst.comp σ [binding]` nos 3 casos de instanciação.
-   A ação é idêntica (provado), então o unificador é o mesmo; o output passa a
-   sair em forma resolvida.
-2. **Terminação** (`Algorithm/Measure.lean`, `unifStep_next_decreasing`):
-   revisar — a medida não depende de `σ`, então deve sobreviver quase intacta.
-3. **Cascata de `σ ++ ε` → `comp`** (reformular enunciados/provas):
-   - `unifStep_σ_extends` (σ_next = σ ++ ε; 16 casos)
-   - `unifStep_next_idempotent_and_disjoint`, `instantiation_invariant`
-   - `unify_le`, `absorbedBy_append`
-   - `unifStep_next_binding_props` (Mgu)
-4. **Mecânico `subst_cons`** (some sob simultânea; trocar por `subst_mvar_nil`/
-   shape lemmas): Helpers ×5, Properties ×7, Completeness ×4, Mgu ×6.
+### Já feito nesta leva
+- **Def do algoritmo** (`Algorithm/Defs.lean`): `σ ++ [binding]` → `σ.comp [binding]`
+  nos 3 casos de instanciação. Verde; terminação intacta (medida independe de σ).
+- **Bridge decisivo** (`Unification/Basic.lean`) **`Subst.comp_singleton_eq_append`**:
+  se `x` não ocorre em nenhum valor de `σ`, `σ.comp [(x,u)] = σ ++ [(x,u)]`. Sob a
+  invariante (binding fresco p/ o range de σ), comp colapsa em append — então o
+  raciocínio baseado em `++` porta com `rw [← Subst.comp_singleton_eq_append hx]`.
+
+### Restante
+1. **`Unification/Properties.lean`** (~36 erros): mecânicos (`subst_cons` →
+   `subst_singleton`; `subst_append` → `subst_comp`, sed direto) + o cascade do
+   σ-prefix:
+   - `unifStep_σ_extends` / `unify_σ_prefix` afirmam `σ' = σ ++ ε` — falso em
+     geral, verdadeiro sob a invariante (via `comp_singleton_eq_append`).
+     Threadear `IsIdempotent`+`disjointPr` e reaplicar o bridge; ou restatar em
+     nível de ação (`∀ t, t.subst σ' = (t.subst σ).subst ε`, vale por `subst_comp`).
+   - `unifStep_next_idempotent_and_disjoint`: usar `comp_singleton`; provar
+     `Subst.dom_comp : dom (σ.comp τ) = dom σ ∪ dom τ` (idêntico ao append).
+   - `unifStep_next_sound`, `unify_sound` consomem `σ' = σ_next ++ extra`.
+2. **`Completeness.lean`** (~4 mecânicos + `absorbedBy_append` → versão comp).
+3. **`Mgu.lean`** (~6 mecânicos; caso instanciação passa a `σ.comp [binding]`).
 
 ## Estratégia recomendada
 
-Usar o bridge: onde as provas antigas usavam `subst_append` para obter
-`(t.subst σ).applyOne x u`, agora usar `subst_comp` + `subst_singleton`. Assim a
-maior parte do raciocínio de `applyOne` (occurs-check, estabilidade, disjunção)
-é reaproveitada sem reprovar do zero.
+Chave: **`comp_singleton_eq_append`** sob a invariante. Onde as provas usavam
+`σ ++ [binding]` / `subst_append`, reescrever comp → append (bridge) e reusar o
+raciocínio de `applyOne` (occurs-check, estabilidade, disjunção). Provar
+`Subst.dom_comp` cedo destrava todo o raciocínio de domínio.
 
 ## Nota
 
