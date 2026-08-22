@@ -75,3 +75,23 @@ do mediador.
 A branch `murillo/Syntax` permanece **zero-sorry** e é a versão a defender. Esta
 refatoração é melhoria de fundação (semântica canônica), sem ganho de resultado
 matemático — completude/principalidade valem igual nas duas.
+
+---
+
+## ✅ CONCLUÍDA (todos os arquivos verdes, zero sorry)
+
+Toda a árvore migrada para substituição simultânea:
+- Substitution/Basic, Properties; Unification/Basic, Algorithm, Helpers,
+  Properties (soundness), Completeness (principalidade), Mgu (mediador).
+- `solve_principal`, `solve_mediator_explicit` e `solve_factors_comp` dependem
+  apenas dos axiomas padrão (`propext`, `Classical.choice`, `Quot.sound`).
+
+**Resultado novo, só possível com a simultânea:**
+`UnifProblem.solve_factors_comp` — a fatoração EXATA que o Daniel pediu:
+para o output σ do solve e qualquer solução θ, existe σ' (= θ∖dom σ) com
+domínio disjunto de dom σ tal que `∀X, Δ ⊢ X(σ.comp σ') ≈α Xθ`, i.e.
+`σ.comp σ' = θ` como ação. Com `comp` sendo composição genuína (subst_comp),
+isto é o "σ ++ σ' = θ" correto — não mais coincidência da aplicação sequencial.
+
+Validação empírica: os 4 exemplos da Fig.1 (Maribel) produzem output idêntico
+nas duas semânticas (sequencial vs simultânea).
