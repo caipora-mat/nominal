@@ -416,4 +416,22 @@ lemma Subst.IsIdempotent.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F
   rw [hA, ntm.subst_comp, ntm.subst_singleton, hStep1]
   exact (ntm.applyOne_of_not_occursIn _ x u (ntm.occursIn_applyOne_self r x u hxu)).symm
 
+/-- Under the algorithm's invariant (`x` does not occur in any value of `σ`),
+    composition collapses to append: `σ.comp [(x, u)] = σ ++ [(x, u)]`.  This is
+    why all the append-based reasoning ports: applying `[(x, u)]` to `σ`'s range
+    is a no-op when `x` is fresh for that range. -/
+lemma Subst.comp_singleton_eq_append {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
+    (hx : ∀ p ∈ σ, p.2.occursIn x = false) :
+    σ.comp [(x, u)] = σ ++ [(x, u)] := by
+  unfold Subst.comp
+  congr 1
+  induction σ with
+  | nil => rfl
+  | cons p σ' ih =>
+      obtain ⟨Y, s⟩ := p
+      simp only [List.map_cons, List.cons.injEq]
+      refine ⟨?_, ih (fun q hq => hx q (List.mem_cons_of_mem _ hq))⟩
+      have hs : s.occursIn x = false := hx (Y, s) (by simp)
+      rw [ntm.subst_singleton, ntm.applyOne_of_not_occursIn s x u hs]
+
 end Nominal
