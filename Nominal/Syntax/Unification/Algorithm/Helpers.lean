@@ -175,7 +175,7 @@ lemma unifVars_foldl_applySubst_le
       cases c with
       | fresh _ _ => simp [UnifConstraint.applySubst]
       | unif u v =>
-        simp only [UnifConstraint.applySubst, ntm.subst_cons, ntm.subst_nil]
+        simp only [UnifConstraint.applySubst, ntm.subst_singleton]
         apply Finset.union_subset_union
         · apply Finset.union_subset_union
           · rfl
@@ -222,9 +222,9 @@ lemma UnifProblem.unifDepthMs_applySubst_depth0
   apply List.map_congr_left
   intro c _
   cases c with
-  | fresh _ t => simp [UnifConstraint.applySubst, ntm.subst_cons, ntm.subst_nil,
+  | fresh _ t => simp [UnifConstraint.applySubst, ntm.subst_singleton,
                         ntm.depth_applyOne_depth0 t x s hs]
-  | unif u v  => simp [UnifConstraint.applySubst, ntm.subst_cons, ntm.subst_nil,
+  | unif u v  => simp [UnifConstraint.applySubst, ntm.subst_singleton,
                         ntm.depth_applyOne_depth0 u x s hs, ntm.depth_applyOne_depth0 v x s hs]
 
 lemma le_unifVars_foldl (Pr : UnifProblem F X 𝔸) (acc : Finset X) :
@@ -292,9 +292,9 @@ lemma not_mem_unifVars_applySubst_self (Pr : UnifProblem F X 𝔸) (x : X)
     cases c with
     | fresh _ _ => simpa [UnifConstraint.applySubst] using ih acc hacc
     | unif u v =>
-      simp only [UnifConstraint.applySubst, ntm.subst_cons, ntm.subst_nil]
       apply ih
-      simp only [Finset.mem_union, not_or]
+      simp only [UnifConstraint.applySubst, ntm.subst_singleton,
+                 Finset.mem_union, not_or]
       exact ⟨⟨hacc, ntm.not_mem_metavars_applyOne_self u x s hs⟩,
          ntm.not_mem_metavars_applyOne_self v x s hs⟩
 
@@ -369,7 +369,7 @@ lemma unifVars_foldl_applySubst_subset
       cases c with
       | fresh _ _ => simpa [UnifConstraint.applySubst] using h
       | unif u v =>
-        simp only [UnifConstraint.applySubst, ntm.subst_cons, ntm.subst_nil]
+        simp only [UnifConstraint.applySubst, ntm.subst_singleton]
         refine Finset.union_subset (Finset.union_subset ?_ ?_) ?_
         · refine Finset.Subset.trans h ?_
           intro z hz; simp only [Finset.mem_union] at hz ⊢; tauto
