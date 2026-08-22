@@ -8,17 +8,9 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- (Composition of substitutions: subst is functorial wrt list concatenation).
-
-/-- `t.subst (σ ++ σ') = (t.subst σ).subst σ'`: substitution lists compose by append. -/
-@[simp] lemma ntm.subst_append (t : ntm F X 𝔸) (σ σ' : Subst F X 𝔸) :
-    t.subst (σ ++ σ') = (t.subst σ).subst σ' := by
-  induction σ generalizing t with
-  | nil => rfl
-  | cons p σ ih =>
-    obtain ⟨Y, s⟩ := p
-    simp only [List.cons_append, ntm.subst_cons]
-    exact ih _
+-- (Composition of substitutions: use `Subst.comp` and `ntm.subst_comp` from
+-- Basic.lean.  NOTE: under simultaneous substitution `t.subst (σ ++ σ')` is NOT
+-- `(t.subst σ).subst σ'` in general — append prepends, it does not compose.)
 
 /-- An idempotent substitution is idempotent on all terms, not just on bare metavariables. -/
 lemma ntm.subst_idempotent {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent) (t : ntm F X 𝔸) :
