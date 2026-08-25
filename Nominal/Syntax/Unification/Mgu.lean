@@ -619,57 +619,6 @@ lemma unifStep_next_movesDom
   · exact hmove
   · exact hmove.comp_singleton hσ hx hu hxu
 
-/-- `unify` preserves `MovesDom`, mirroring `unify_preserves_idempotent`. -/
-theorem unify_preserves_movesDom :
-    ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
-      (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸),
-      unify Pr σ ds = some (ds', σ') →
-      σ.IsIdempotent → σ.disjointPr Pr → σ.MovesDom → σ'.MovesDom := by
-  intro Pr σ ds
-  induction Pr, σ, ds using unify.induct with
-  | case1 σ ds =>
-      intro ds' σ' h _ _ hmove
-      simp only [unify, Option.some.injEq, Prod.mk.injEq] at h
-      obtain ⟨_, rfl⟩ := h; exact hmove
-  | case2 σ ds c rest hfail =>
-      intro ds' σ' h _ _ _
-      rw [unify, hfail] at h; cases h
-  | case3 σ ds c rest a x hctx ih =>
-      intro ds' σ' h hσ hdisj hmove
-      rw [unify, hctx] at h
-      exact ih ds' σ' h hσ (Subst.disjointPr_cons hdisj) hmove
-  | case4 σ ds c rest Pr' σ_next hnext ih =>
-      intro ds' σ' h hσ hdisj hmove
-      rw [unify, hnext] at h
-      obtain ⟨hσ_next, hdisj_next⟩ :=
-        unifStep_next_idempotent_and_disjoint c rest σ Pr' σ_next hnext hσ hdisj
-      exact ih ds' σ' h hσ_next hdisj_next
-        (unifStep_next_movesDom c rest σ Pr' σ_next hnext hσ hdisj hmove)
-
-/-- The substitution produced by `solve` moves every variable of its domain. -/
-theorem UnifProblem.solve_movesDom (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
-    (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) : σ.MovesDom := by
-  simp only [UnifProblem.solve] at h
-  cases hu : unify Pr [] [] with
-  | none => rw [hu] at h; cases h
-  | some result =>
-    rw [hu] at h
-    obtain ⟨ds, σ_u⟩ := result
-    simp only at h
-    cases hf : finalizeDeferred ds σ_u ∅ with
-    | none => rw [hf] at h; cases h
-    | some Γ_fin =>
-      rw [hf] at h
-      simp only [Option.some.injEq, Prod.mk.injEq] at h
-      obtain ⟨_, hσeq⟩ := h
-      subst hσeq
-      have hσ_empty : Subst.IsIdempotent ([] : Subst F X 𝔸) := fun x => by simp
-      have hdisj_empty : Subst.disjointPr ([] : Subst F X 𝔸) Pr := by
-        intro x _; simp [Subst.dom]
-      have hmove_empty : Subst.MovesDom ([] : Subst F X 𝔸) := by
-        intro z hz; simp [Subst.dom] at hz
-      exact unify_preserves_movesDom Pr [] [] ds σ_u hu hσ_empty hdisj_empty hmove_empty
-
 /-- `unifStep` preserves `SolvedForm` under the full invariant. -/
 lemma unifStep_next_solvedForm
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
@@ -839,14 +788,6 @@ lemma Subst.not_isTrivial_iff {p : X × ntm F X 𝔸} :
     self-bindings removed.  Always in solved form and equivalent in action. -/
 def Subst.reduce (σ : Subst F X 𝔸) : Subst F X 𝔸 :=
   σ.normalize.filter (fun p => !Subst.isTrivialBinding p)
-
-lemma Subst.mem_reduce {σ : Subst F X 𝔸} {p : X × ntm F X 𝔸} :
-    p ∈ σ.reduce ↔ p ∈ σ.normalize ∧ p.2 ≠ ntm.mvar [] p.1 := by
-  unfold Subst.reduce
-  rw [List.mem_filter]
-  constructor
-  · exact fun h => ⟨h.1, Subst.not_isTrivial_iff.mp h.2⟩
-  · exact fun h => ⟨h.1, Subst.not_isTrivial_iff.mpr h.2⟩
 
 /-- The reduction looks up each variable to its full image `x.subst θ` — same as
     `normalize`, since dropping a trivial binding `x ↦ x` leaves the default `x`. -/
