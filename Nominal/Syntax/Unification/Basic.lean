@@ -376,8 +376,8 @@ end
 -- (Bridge: substituting by a singleton = a single `applyOne`.)
 -- Under simultaneous substitution, `t.subst [(x, u)]` replaces `x` by `u` in one
 -- pass — exactly what `applyOne x u` does.  This lets all the `applyOne`
--- machinery carry over, and makes `σ.comp [(x, u)]` act as the sequential
--- `σ ++ [(x, u)]` did (`t.subst (σ.comp [(x,u)]) = (t.subst σ).applyOne x u`).
+-- machinery carry over, and gives `σ.comp [(x, u)]` its action law
+-- `t.subst (σ.comp [(x,u)]) = (t.subst σ).applyOne x u`.
 lemma ntm.subst_singleton : ∀ (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸),
     t.subst [(x, u)] = t.applyOne x u
   | .atm a, x, u => by simp [ntm.applyOne]

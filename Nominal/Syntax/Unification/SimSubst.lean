@@ -7,14 +7,14 @@ open Core
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
 -- ===========================================================================
--- One-shot lookup and normalisation, used to reason about the mediator.
+-- One-shot lookup and normalisation, used to reason about `Subst.reduce`.
 --
 -- `Subst.lookupSim` is a `find?`-based lookup (first binding for `x`, or the
--- bare metavariable).  It agrees with `subst` on a bare metavariable — see
--- `ntm.subst_mvar_eq_lookupSim` in `Mgu.lean` — since substitution is
--- simultaneous.  `Subst.normalize` replaces each value by its full image; it has
--- the same action as `σ` (`ntm.subst_eq_normalize`) and is used to phrase the
--- explicit mediator.
+-- bare metavariable).  Since substitution is simultaneous, it agrees with `subst`
+-- on a bare metavariable (`lookup_getD_eq_lookupSim` in `Mgu.lean`).
+-- `Subst.normalize` replaces each value by its full image, and
+-- `lookupSim_normalize` looks each variable up to that image.  Both feed
+-- `Subst.reduce` (the solved-form reduction of a solution) via `lookupSim_reduce`.
 -- ===========================================================================
 
 /-- Look up `x` in `σ`, returning the (first) bound value or the bare `mvar` if

@@ -105,11 +105,12 @@ mutual
 end
 
 -- A substitution is in *solved form* when no variable of its domain occurs in
--- any of its (raw) binding values, i.e. `dom σ ∩ range σ = ∅`.  For sequential
--- (list) substitutions this is strictly stronger than idempotence of the action
--- (`IsIdempotent`): `[Y ↦ X, X ↦ a]` is idempotent as an action but not in
--- solved form (`X` is in the domain and in the value `X` of `Y`).  Solved form
--- is what makes dropping bindings safe; the unification algorithm outputs it.
+-- any of its (raw) binding values, i.e. `dom σ ∩ range σ = ∅`.  It implies
+-- idempotence of the action (`SolvedForm.isIdempotent`), and is strictly
+-- stronger: `[X ↦ Y, Y ↦ Y]` is idempotent but not solved (`Y` is in the domain
+-- and in the value `Y` of `X`).  Under simultaneous substitution such a gap needs
+-- a trivial self-binding `Y ↦ Y`, which the algorithm never emits — so its output
+-- is genuinely solved.  Solved form is what makes dropping bindings safe.
 def Subst.SolvedForm (σ : Subst F X 𝔸) : Prop :=
   ∀ p ∈ σ, ∀ z ∈ σ.dom, p.2.occursIn z = false
 
@@ -691,11 +692,11 @@ theorem UnifProblem.solve_solvedForm (Pr : UnifProblem F X 𝔸) (Γ : Context �
 -- ===========================================================================
 -- End-to-end explicit mediator for the algorithm's output.
 --
--- On a *solved-form* substitution sequential and simultaneous substitution
--- coincide, so `normalize σ` acts exactly as `σ` and the explicit mediator
--- `θ ∖ dom σ` applies to the algorithm's output.  Assembled below into a single
--- statement: for `solve`'s output and any solved-form solution `θ`, the guessed
--- mediator works.
+-- The algorithm's output `σ` is in solved form (`solve_solvedForm`), so the
+-- explicit mediator `θ ∖ dom σ` (`solvedForm_mediator`) applies to it directly.
+-- A competing solution `θ` need not be solved: its reduction `reduce θ` has the
+-- same action (`subst_eq_reduce`) and feeds the mediator.  Assembled below into a
+-- single statement: for `solve`'s output and any solution `θ`, the mediator works.
 -- ===========================================================================
 
 /-- `Subst.lookup` (recursive) agrees with `Subst.lookupSim` (`find?`-based):
