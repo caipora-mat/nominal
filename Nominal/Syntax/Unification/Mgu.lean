@@ -932,4 +932,47 @@ theorem UnifProblem.solve_factors_comp (Pr : UnifProblem F X 𝔸)
   rw [ntm.subst_mvar_nil_comp, Subst.subst_eq_reduce θ]
   exact hmed x
 
+-- ===========================================================================
+-- Converse: factorisation through σ implies absorption.
+--
+-- If `θ` factors through the algorithm's output `σ` as `σ.comp σ'` for *some*
+-- `σ'` (`X(σ.comp σ') ≈α Xθ` on every metavariable), and `σ` is idempotent,
+-- then `σ` is absorbed by `θ`.  Together with `solve_factors_comp` this gives
+-- the equivalence "θ is absorbed by σ ⟺ θ factors through σ".  The proof is the
+-- algebraic argument `σ.comp θ = σ.comp (σ.comp σ') = (σ.comp σ).comp σ' =
+-- σ.comp σ' = θ`, carried out pointwise via `subst_comp` and idempotence.
+-- ===========================================================================
+theorem Subst.absorbedBy_of_factors {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
+    (σ' : Subst F X 𝔸) (hidem : σ.IsIdempotent)
+    (hfact : ∀ x : X, (Δ ⊢ (ntm.mvar (F := F) [] x).subst (σ.comp σ')
+                        ≈α (ntm.mvar (F := F) [] x).subst θ) = true) :
+    Subst.absorbedBy Δ σ θ := by
+  intro x
+  -- Congruence between `σ.comp σ'` and `θ`, applied to the term `Xσ`.
+  have hcongr := ntm.alphaEquiv_subst_pointwise Δ (σ.comp σ') θ hfact
+    ((ntm.mvar (F := F) [] x).subst σ)
+  -- `(Xσ)(σ.comp σ') = (Xσσ)σ' = (Xσ)σ'` by `subst_comp` + idempotence.
+  rw [ntm.subst_comp, ntm.subst_idempotent hidem] at hcongr
+  -- `hcongr : Δ ⊢ (Xσ)σ' ≈α (Xσ)θ`;  `hfact x` rewrites to `(Xσ)σ' ≈α Xθ`.
+  have hf := hfact x
+  rw [ntm.subst_mvar_nil_comp] at hf
+  exact alphaEquiv_trans Δ _ _ _ (alphaEquiv_symm Δ _ _ hcongr) hf
+
+-- Absorption is equivalent to factorisation, for idempotent `σ`.  The forward
+-- direction is trivial (`σ' := θ`, since `X(σ.comp θ) = Xσθ`); the backward
+-- direction is `absorbedBy_of_factors`, which needs idempotence.
+theorem Subst.absorbedBy_iff_factors {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
+    (hidem : σ.IsIdempotent) :
+    Subst.absorbedBy Δ σ θ ↔
+      ∃ σ' : Subst F X 𝔸, ∀ x : X,
+        (Δ ⊢ (ntm.mvar (F := F) [] x).subst (σ.comp σ')
+           ≈α (ntm.mvar (F := F) [] x).subst θ) = true := by
+  constructor
+  · intro habs
+    refine ⟨θ, fun x => ?_⟩
+    rw [ntm.subst_mvar_nil_comp]
+    exact habs x
+  · rintro ⟨σ', hfact⟩
+    exact Subst.absorbedBy_of_factors σ' hidem hfact
+
 end Nominal

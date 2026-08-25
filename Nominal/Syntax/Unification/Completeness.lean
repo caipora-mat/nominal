@@ -70,6 +70,38 @@ mutual
                alphaEquivList_applyOne_subst Δ θ x u hu ts'⟩
 end
 
+-- Pointwise congruence of substitution under α-equivalence: if two
+-- substitutions `ρ₁`, `ρ₂` agree (up to `≈α` in `Δ`) on every bare
+-- metavariable, then they agree on every term.  Substitution is determined by
+-- its action on metavariables, so the equivalence propagates structurally.
+mutual
+  lemma ntm.alphaEquiv_subst_pointwise (Δ : Context 𝔸 X) (ρ₁ ρ₂ : Subst F X 𝔸)
+      (h : ∀ y : X, (Δ ⊢ (ntm.mvar (F := F) [] y).subst ρ₁
+                      ≈α (ntm.mvar (F := F) [] y).subst ρ₂) = true) :
+      ∀ t : ntm F X 𝔸, (Δ ⊢ t.subst ρ₁ ≈α t.subst ρ₂) = true
+    | .atm a => by simp only [ntm.subst_atm]; exact alphaEquiv_refl _ _
+    | .mvar π y => by
+        rw [ntm.subst_mvar π y ρ₁, ntm.subst_mvar π y ρ₂]
+        exact alphaEquiv_permute_congr Δ _ _ π (h y)
+    | .fapp f ts => by
+        simp only [ntm.subst_fapp, alphaEquiv, decide_eq_true_eq, true_and]
+        exact ntm.alphaEquivList_subst_pointwise Δ ρ₁ ρ₂ h ts
+    | .abs a t' => by
+        simp only [ntm.subst_abs, alphaEquiv]
+        exact ntm.alphaEquiv_subst_pointwise Δ ρ₁ ρ₂ h t'
+
+  lemma ntm.alphaEquivList_subst_pointwise (Δ : Context 𝔸 X) (ρ₁ ρ₂ : Subst F X 𝔸)
+      (h : ∀ y : X, (Δ ⊢ (ntm.mvar (F := F) [] y).subst ρ₁
+                      ≈α (ntm.mvar (F := F) [] y).subst ρ₂) = true) :
+      ∀ ts : List (ntm F X 𝔸),
+        alphaEquivList Δ (ts.map (·.subst ρ₁)) (ts.map (·.subst ρ₂)) = true
+    | [] => by simp [alphaEquivList]
+    | t :: ts' => by
+        simp only [List.map_cons, alphaEquivList, decide_eq_true_eq]
+        exact ⟨ntm.alphaEquiv_subst_pointwise Δ ρ₁ ρ₂ h t,
+               ntm.alphaEquivList_subst_pointwise Δ ρ₁ ρ₂ h ts'⟩
+end
+
 -- Variant of `ntm.alphaEquiv_permute_reverse_permute_self` for the opposite
 -- order: applying `π` then `π.reverse` is α-equivalent to identity.
 lemma ntm.alphaEquiv_permute_permute_reverse_self (Γ : Context 𝔸 X)
