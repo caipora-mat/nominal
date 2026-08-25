@@ -916,4 +916,35 @@ theorem Subst.absorbedBy_iff_factors {Δ : Context 𝔸 X} {σ θ : Subst F X �
   · rintro ⟨σ', hfact⟩
     exact Subst.absorbedBy_of_factors σ' hidem hfact
 
+/-- A solved-form substitution is idempotent: `Xσ` avoids every domain variable
+    (`subst_avoids_dom_of_solved`), so applying `σ` again leaves it fixed. -/
+lemma Subst.SolvedForm.isIdempotent {σ : Subst F X 𝔸} (hσ : σ.SolvedForm) :
+    σ.IsIdempotent := fun x =>
+  (ntm.subst_of_disjoint_dom ((ntm.mvar (F := F) [] x).subst σ) σ
+    (fun z hz => ntm.subst_avoids_dom_of_solved σ hσ z hz _)).symm
+
+-- ===========================================================================
+-- Strong form of the equivalence: an *independent* mediator.
+--
+-- For a *solved-form* `σ`, absorption is equivalent to factorisation by a
+-- mediator `σ'` whose domain is disjoint from `dom σ` (the classical `θ = σ ∘ σ'`
+-- with `σ'` the independent remainder `θ ∖ dom σ`, generally `≠ θ`).  The forward
+-- direction builds the mediator with `solvedForm_mediator`; the backward one is
+-- `absorbedBy_of_factors` (which does not even use the disjointness).  Compared to
+-- `absorbedBy_iff_factors`, the hypothesis is stronger (`SolvedForm` vs. merely
+-- idempotent) and so is the conclusion (`σ'` independent, not the trivial `σ' = θ`).
+-- ===========================================================================
+theorem Subst.absorbedBy_iff_factors_indep {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
+    (hσ : σ.SolvedForm) :
+    Subst.absorbedBy Δ σ θ ↔
+      ∃ σ' : Subst F X 𝔸, (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
+        ∀ x : X, (Δ ⊢ (ntm.mvar (F := F) [] x).subst (σ.comp σ')
+                    ≈α (ntm.mvar (F := F) [] x).subst θ) = true := by
+  constructor
+  · intro habs
+    obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ habs
+    exact ⟨σ', hdisj, fun x => by rw [ntm.subst_mvar_nil_comp]; exact hmed x⟩
+  · rintro ⟨σ', _, hfact⟩
+    exact Subst.absorbedBy_of_factors σ' hσ.isIdempotent hfact
+
 end Nominal
