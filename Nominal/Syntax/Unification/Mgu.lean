@@ -765,12 +765,6 @@ lemma Subst.lookup_getD_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
           simp only [beq_eq_false_iff_ne]; exact fun h => hxy h.symm
         rw [if_neg hxy, hyx, ih]
 
-/-- Since `subst` is simultaneous, on a bare metavariable it coincides with the
-    one-shot `lookupSim` — for every `ρ`. -/
-lemma ntm.subst_mvar_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
-    (ntm.mvar (F := F) [] x).subst ρ = ρ.lookupSim x := by
-  rw [ntm.subst_mvar_nil, Subst.lookup_getD_eq_lookupSim]
-
 /-- Every solution `(Δ, θ)` is absorbed by the algorithm's output `σ`.  This is
     the absorption invariant established inside `solve_principal`, isolated here
     so the explicit mediator can be assembled. -/
@@ -818,7 +812,7 @@ private lemma find?_and_of_imp {α : Type*} {P Q : α → Bool} :
       by_cases hp : P a = true
       · have hq : Q a = true := h a (by simp) hp
         simp [hp, hq]
-      · simp only [hp, Bool.false_and, Bool.false_eq_true]
+      · simp only [hp, Bool.false_and]
         exact find?_and_of_imp (fun a' ha' => h a' (by simp [ha']))
 
 /-- A binding is *trivial* when it maps its variable to itself (`x ↦ x`).
@@ -888,34 +882,8 @@ lemma Subst.lookupSim_reduce (θ : Subst F X 𝔸) (x : X) :
           decide (((!Subst.isTrivialBinding a) = true) ∧ ((a.1 == x) = true)))
         = (fun a : X × ntm F X 𝔸 => (a.1 == x) && (!Subst.isTrivialBinding a)) := by
       funext a
-      cases hb : (!Subst.isTrivialBinding a) <;> cases hc : (a.1 == x) <;> simp [hb, hc]
+      cases hb : (!Subst.isTrivialBinding a) <;> cases hc : (a.1 == x) <;> simp
     rw [hcomm, find?_and_of_imp himp, hn]
-
-/-- `reduce θ` is in solved form whenever θ is idempotent (no `MovesDom` needed:
-    the trivial self-bindings have been dropped). -/
-lemma Subst.solvedForm_reduce (θ : Subst F X 𝔸) (hθ : θ.IsIdempotent) :
-    Subst.SolvedForm θ.reduce := by
-  intro p hp z hz
-  rw [Subst.mem_reduce] at hp
-  obtain ⟨hp_norm, _⟩ := hp
-  simp only [Subst.normalize, List.mem_map] at hp_norm
-  obtain ⟨q, _, rfl⟩ := hp_norm
-  by_contra hocc
-  simp only [Bool.not_eq_false] at hocc
-  have hfix : ((ntm.mvar (F := F) [] q.1).subst θ).subst θ
-      = (ntm.mvar (F := F) [] q.1).subst θ := ntm.subst_idempotent hθ _
-  have hzfix : (ntm.mvar (F := F) [] z).subst θ = ntm.mvar [] z :=
-    ntm.subst_fixed_of_occurs hfix hocc
-  -- z ∈ dom (reduce θ) means z's binding is non-trivial: z.subst θ ≠ z.
-  rw [Subst.dom, List.mem_toFinset, List.mem_map] at hz
-  obtain ⟨p', hp'_mem, hp'1⟩ := hz
-  rw [Subst.mem_reduce] at hp'_mem
-  obtain ⟨hp'_norm, hp'_ne⟩ := hp'_mem
-  simp only [Subst.normalize, List.mem_map] at hp'_norm
-  obtain ⟨q', _, rfl⟩ := hp'_norm
-  simp only at hp'1
-  rw [hp'1] at hp'_ne
-  exact hp'_ne hzfix
 
 /-- Substitution by θ equals substitution by its reduction:
     `t.subst θ = t.subst (reduce θ)` (both simultaneous; no hypothesis on θ).
@@ -933,42 +901,17 @@ lemma Subst.subst_eq_reduce (θ : Subst F X 𝔸) :
       exact List.map_congr_left (fun t _ => Subst.subst_eq_reduce θ t)
   | .abs a t => by rw [ntm.subst_abs, ntm.subst_abs, Subst.subst_eq_reduce θ t]
 
-/-- End-to-end explicit mediator: for `solve`'s output `(Γ, σ)` and *any*
-    solution `(Δ, θ)`, the guessed mediator works.  The mediator is
-    `σ' = (reduce θ) ∖ dom σ` — built from the solved-form reduction of θ, since
-    a raw idempotent θ need not be in solved form.  It has domain disjoint from
-    `dom σ` and factors θ through σ up to `≈α` (`Xσσ' ≈α Xθ`). -/
-theorem UnifProblem.solve_mediator_explicit (Pr : UnifProblem F X 𝔸)
-    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
-    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) :
-    ∃ σ' : Subst F X 𝔸,
-      (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
-      (∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst σ'
-                  ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
-  have hθ_idem : θ.IsIdempotent := hq.2
-  have hσ_solved := UnifProblem.solve_solvedForm Pr Γ σ h
-  have habs := UnifProblem.solve_absorbedBy Pr Γ σ h Δ θ hq
-  -- σ is already solved-form; transport absorption to (σ, reduce θ).
-  have habs_red : Subst.absorbedBy Δ σ θ.reduce := by
-    intro x
-    rw [← Subst.subst_eq_reduce θ, ← Subst.subst_eq_reduce θ]
-    exact habs x
-  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_solved habs_red
-  refine ⟨σ', hdisj, ?_⟩
-  · intro x
-    rw [Subst.subst_eq_reduce θ]
-    exact hmed x
-
 -- ===========================================================================
 -- Factorisation of a solution through the algorithm's output: `θ = σ.comp σ'`.
 --
 -- With *simultaneous* substitution `Subst.comp` is genuine composition
--- (`ntm.subst_comp`), so the mediator can be phrased as "`θ` is `σ` composed
--- with an independent `σ'`": for the algorithm's output `σ` and any solution
--- `(Δ, θ)`, there is a `σ'` with domain disjoint from `dom σ` such that
--- `σ.comp σ'` acts as `θ` (modulo `≈α` in `Δ`) on every metavariable.  This is
--- the classical "`θ` is an instance of the most general unifier `σ`", with
--- `σ' = θ ∖ dom σ` the independent remainder.
+-- (`ntm.subst_comp`), so the mediator is phrased as "`θ` is `σ` composed with an
+-- independent `σ'`": for the algorithm's output `σ` and any solution `(Δ, θ)`,
+-- there is a `σ'` with domain disjoint from `dom σ` such that `σ.comp σ'` acts as
+-- `θ` (modulo `≈α` in `Δ`) on every metavariable — the classical "`θ` is an
+-- instance of the most general unifier `σ`", with `σ' = reduce θ ∖ dom σ` the
+-- independent remainder.  (A raw idempotent θ need not be in solved form, so the
+-- mediator is built from `reduce θ`, which has the same action — `subst_eq_reduce`.)
 -- ===========================================================================
 theorem UnifProblem.solve_factors_comp (Pr : UnifProblem F X 𝔸)
     (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
@@ -977,10 +920,16 @@ theorem UnifProblem.solve_factors_comp (Pr : UnifProblem F X 𝔸)
       (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
       (∀ x : X, (Δ ⊢ (ntm.mvar (F := F) [] x).subst (σ.comp σ')
                   ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
-  obtain ⟨σ', hdisj, hmed⟩ :=
-    UnifProblem.solve_mediator_explicit Pr Γ σ h Δ θ hq
+  have hσ_solved := UnifProblem.solve_solvedForm Pr Γ σ h
+  have habs := UnifProblem.solve_absorbedBy Pr Γ σ h Δ θ hq
+  -- σ is already solved-form; transport absorption to (σ, reduce θ).
+  have habs_red : Subst.absorbedBy Δ σ θ.reduce := by
+    intro x
+    rw [← Subst.subst_eq_reduce θ, ← Subst.subst_eq_reduce θ]
+    exact habs x
+  obtain ⟨σ', hdisj, hmed⟩ := Subst.solvedForm_mediator hσ_solved habs_red
   refine ⟨σ', hdisj, fun x => ?_⟩
-  rw [ntm.subst_mvar_nil_comp]
+  rw [ntm.subst_mvar_nil_comp, Subst.subst_eq_reduce θ]
   exact hmed x
 
 end Nominal
