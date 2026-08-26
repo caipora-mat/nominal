@@ -8,11 +8,7 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- (Composition of substitutions: use `Subst.comp` and `ntm.subst_comp` from
--- Basic.lean.  NOTE: under simultaneous substitution `t.subst (σ ++ σ')` is NOT
--- `(t.subst σ).subst σ'` in general — append prepends, it does not compose.)
-
-/-- An idempotent substitution is idempotent on all terms, not just on bare metavariables. -/
+/-- Idempotency lifts from bare metavariables to all terms. -/
 lemma ntm.subst_idempotent {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent) (t : ntm F X 𝔸) :
     (t.subst σ).subst σ = t.subst σ := by
   match t with
@@ -29,7 +25,6 @@ lemma ntm.subst_idempotent {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent) (t : nt
     simp only [ntm.subst_abs]
     rw [ntm.subst_idempotent hσ t']
 
--- (Applying a full substitution to constraints and problems).
 
 def Constraint.applySubst (c : Constraint F X 𝔸) (σ : Subst F X 𝔸) : Constraint F X 𝔸 :=
   match c with
@@ -39,9 +34,6 @@ def Constraint.applySubst (c : Constraint F X 𝔸) (σ : Subst F X 𝔸) : Cons
 def Problem.applySubst (P : Problem F X 𝔸) (σ : Subst F X 𝔸) : Problem F X 𝔸 :=
   P.map fun c => c.applySubst σ
 
--- (Lemma 22: substitution preserves freshness and alpha-equivalence).
--- Hypothesis `hctx` encodes that Γ' satisfies all freshness constraints of Γ after applying σ,
--- i.e. Γ' ≥ ⟨Γσ⟩_nf in the paper's sense.
 
 mutual
   /-- Lemma 22(a): freshness preserved by substitution. -/
@@ -58,8 +50,6 @@ mutual
       have hkey := hctx ⟨LPermApply π.reverse a, y⟩ h
       simp at hkey
       rw [ntm.subst_mvar]
-      -- fresh_equivariance: (Γ' ⊢ b # t) = (Γ' ⊢ LPermApply π b # t.permute π)
-      -- instantiate with b := LPermApply π.reverse a, then use LPermApply_reverse_right
       conv_lhs => rw [show a = LPermApply π (LPermApply π.reverse a)
                           from (LPermApply_reverse_right π a).symm]
       rw [← fresh_equivariance]
@@ -89,7 +79,6 @@ mutual
              ntm.freshList_subst Γ Γ' σ a tl hctx htl⟩
 end
 
--- If every atom where π and π' differ is fresh for t, then π·t ≈α π'·t.
 mutual
 lemma ntm.alphaEquiv_of_perm_fresh (Γ : Context 𝔸 X) (π π' : LPerm 𝔸) (t : ntm F X 𝔸)
     (h : ∀ n ∈ ds π π', (Γ ⊢ n # t) = true) :
@@ -107,7 +96,6 @@ lemma ntm.alphaEquiv_of_perm_fresh (Γ : Context 𝔸 X) (π π' : LPerm 𝔸) (
       exact hne ((LPermApply_not_mem_atoms π a hmem.1).trans
                (LPermApply_not_mem_atoms π' a hmem.2).symm)
   | .mvar σ x =>
-    -- π·(mvar σ x) = mvar (σ++π) x; need every disagreement of σ++π,σ++π' in Γ.
     simp only [ntm.permute, alphaEquiv, beq_self_eq_true, decide_eq_true_eq, true_and]
     intro m hm
     simp only [ds, Finset.mem_filter, Finset.mem_union] at hm
@@ -149,11 +137,9 @@ lemma ntm.alphaEquiv_of_perm_fresh (Γ : Context 𝔸 X) (π π' : LPerm 𝔸) (
             ≠ LPermApply π' n := by
           simp only [ds, Finset.mem_filter] at hn; exact hn.2
         rw [LPermApply_append, LPermApply_singleton] at hnne
-        -- n ≠ a (else the swap makes the two sides agree).
         have hna : n ≠ a := by
           rintro rfl
           exact hnne (by rw [swapApply_right])
-        -- π·n ≠ π'·n, so n ∈ ds π π'.
         have hpn : LPermApply π n ≠ LPermApply π' n := by
           by_cases hp1 : LPermApply π n = LPermApply π' a
           · rw [hp1]; intro heq; exact hna (LPermApply_injective π' heq).symm
@@ -292,10 +278,6 @@ lemma Problem.entails_subst (Γ Γ' : Context 𝔸 X) (σ : Subst F X 𝔸) (P :
         simp [Constraint.Entails, Constraint.applySubst] at hc' ⊢
         exact ntm.alphaEquiv_subst Γ Γ' σ s t hctx hc'
 
--- (Corollary 25: alpha-equivalent substitution preserves derivability.)
--- These five congruence lemmas were only ever stated (never proved — all `sorry`)
--- and are referenced nowhere in the development.  Commented out so the file is
--- sorry-free; restore and prove if a use for Corollary 25 arises.
 /-
 mutual
   /-- Corollary 25: if Γ ⊢ s ≈α t then Γ ⊢ u[Y↦s] ≈α u[Y↦t]. -/
@@ -333,5 +315,47 @@ theorem Problem.applyOne_entails_congr
     Problem.Entails Γ (P.applyOne Y s) ↔ Problem.Entails Γ (P.applyOne Y t) := by
   sorry
 -/
+
+/-- `x ∉ dom σ ↔ σ.lookup x = none`. -/
+lemma Subst.lookup_eq_none_iff_not_mem_dom (σ : Subst F X 𝔸) (x : X) :
+    Subst.lookup σ x = none ↔ x ∉ Subst.dom σ := by
+  induction σ with
+  | nil => simp [Subst.lookup]
+  | cons p σ' ih =>
+      obtain ⟨Y, s⟩ := p
+      simp only [Subst.lookup_cons, Subst.dom_cons, Finset.mem_insert, not_or]
+      by_cases hxY : x = Y
+      · subst hxY; simp
+      · rw [if_neg hxY, ih]; simp only [hxY, not_false_iff, true_and]
+
+@[simp] lemma Subst.dom_normalize (σ : Subst F X 𝔸) :
+    (σ.normalize).dom = σ.dom := by
+  simp only [Subst.normalize, Subst.dom, List.map_map]
+  congr 1
+
+/-- `(normalize σ).lookupSim x = (mvar [] x).subst σ`. -/
+lemma Subst.lookupSim_normalize (σ : Subst F X 𝔸) (x : X) :
+    (σ.normalize).lookupSim x = (ntm.mvar (F := F) [] x).subst σ := by
+  unfold Subst.lookupSim Subst.normalize
+  rw [List.find?_map]
+  simp only [Function.comp_def]
+  cases hf : σ.find? (fun p => p.1 == x) with
+  | none =>
+      simp only [Option.map_none, Option.elim_none]
+      have hnd : x ∉ σ.dom := by
+        rw [Subst.dom, List.mem_toFinset, List.mem_map]
+        rintro ⟨p, hp, hpx⟩
+        have := List.find?_eq_none.mp hf p hp
+        simp only [beq_iff_eq] at this
+        exact this hpx
+      have hnone : Subst.lookup σ x = none :=
+        (Subst.lookup_eq_none_iff_not_mem_dom σ x).mpr hnd
+      rw [ntm.subst_mvar_nil, hnone]; rfl
+  | some p =>
+      simp only [Option.map_some, Option.elim_some]
+      have hpx : p.1 = x := by
+        have := List.find?_some hf
+        simpa using this
+      rw [hpx]
 
 end Nominal

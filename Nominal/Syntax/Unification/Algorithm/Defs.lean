@@ -7,25 +7,21 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- (Convert a regular Constraint to a UnifConstraint).
 
 def Constraint.toUnif : Constraint F X 𝔸 → UnifConstraint F X 𝔸
   | .fresh a t => .fresh a t
   | .alpha s t => .unif s t
 
--- (Step result).
 
 inductive StepResult (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] where
   | fail : StepResult F X 𝔸
   | ctx  : 𝔸 → X → StepResult F X 𝔸
   | next : UnifProblem F X 𝔸 → Subst F X 𝔸 → StepResult F X 𝔸
 
--- (One step of the nominal unification algorithm).
 
 def unifStep (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) :
     StepResult F X 𝔸 :=
   match c with
-  -- All mvar fresh constraints: `a #? (π·X)` becomes context entry `(π⁻¹·a, X)`.
   | .fresh b (.mvar π x) =>
       .ctx (LPermApply π.reverse b) x
   | .fresh a t =>

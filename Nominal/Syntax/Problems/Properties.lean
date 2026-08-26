@@ -6,7 +6,6 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- (Reduced form).
 
 /-- A constraint is *reduced* iff it has the form `a #? X` for an unconstrained metavariable. -/
 def Constraint.IsReduced : Constraint F X 𝔸 → Bool
@@ -27,7 +26,6 @@ lemma Problem.IsReduced.append {Q₁ Q₂ : Problem F X 𝔸}
   · exact h₁ c h
   · exact h₂ c h
 
--- (Normalization).
 
 mutual
   /-- `simplifyFresh` produces a reduced problem whenever it succeeds. -/
@@ -179,7 +177,6 @@ lemma simplify_isReduced : ∀ (P : Problem F X 𝔸) {Q : Problem F X 𝔸},
             (simplifyAlpha_isReduced s t h₁)
             (simplify_isReduced rest h₂)
 
--- (Entailment).
 
 /-- A context entails a constraint when the constraint is satisfied. -/
 def Constraint.Entails (Γ : Context 𝔸 X) : Constraint F X 𝔸 → Bool
@@ -204,7 +201,6 @@ lemma Problem.Entails_append_iff {Γ : Context 𝔸 X} {P Q : Problem F X 𝔸} 
     · exact h1 c hc
     · exact h2 c hc
 
--- (Soundness of simplification).
 
 mutual
   /-- Soundness for `simplifyFresh`: a successful simplification preserves the freshness judgement. -/

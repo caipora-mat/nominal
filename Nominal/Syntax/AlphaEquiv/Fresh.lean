@@ -52,7 +52,6 @@ mutual
              ntm.permute_swap_symm_alphaEquivList Γ a b tl⟩
 end
 
--- (Freshness preservation under ≈α).
 mutual
   lemma freshPreserves_alphaEquiv (Γ : Context 𝔸 X) (a : 𝔸) (s t : ntm F X 𝔸)
     (hf : fresh Γ a s = true) (ha : alphaEquiv Γ s t = true) : fresh Γ a t = true := by

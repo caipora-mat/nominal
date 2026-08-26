@@ -10,34 +10,23 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- (Definition 26: Unification constraints and problems).
--- A unification problem is like a problem (Definition 4 of Section 3),
--- but replacing equality constraints s ≈α t by unification constraints s ≈? t.
-
-/-- A unification constraint is either a freshness constraint `a #? t`
-    or a unification constraint `s ≈? t`. -/
+/-- Freshness constraint `a #? t` or unification constraint `s ≈? t`. -/
 inductive UnifConstraint (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] where
   | fresh : 𝔸 → ntm F X 𝔸 → UnifConstraint F X 𝔸
   | unif  : ntm F X 𝔸 → ntm F X 𝔸 → UnifConstraint F X 𝔸
 
-/-- A unification problem is a list of unification constraints (Definition 26). -/
+/-- A unification problem (Def. 26): list of unification constraints. -/
 abbrev UnifProblem (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] :=
   List (UnifConstraint F X 𝔸)
 
--- (Substitution on unification constraints and problems).
 
-/-- Apply a substitution to a unification constraint. -/
 def UnifConstraint.applySubst (c : UnifConstraint F X 𝔸) (σ : Subst F X 𝔸) : UnifConstraint F X 𝔸 :=
   match c with
   | .fresh a t => .fresh a (t.subst σ)
   | .unif  s t => .unif  (s.subst σ) (t.subst σ)
 
-/-- Apply a substitution to a unification problem. -/
 def UnifProblem.applySubst (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) : UnifProblem F X 𝔸 :=
   Pr.map (·.applySubst σ)
-
--- (NOTE: the `applySubst (σ ++ σ')` composition laws were removed — under
--- simultaneous substitution append does not compose; use `Subst.comp` if needed.)
 
 @[simp] lemma UnifConstraint.applySubst_nil (c : UnifConstraint F X 𝔸) :
     c.applySubst [] = c := by
@@ -47,68 +36,57 @@ def UnifProblem.applySubst (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) : U
     Pr.applySubst [] = Pr := by
   simp [UnifProblem.applySubst]
 
--- (Conversion to regular problem: replace ≈? by ≈α).
 
-/-- Convert a unification constraint to a regular constraint. -/
 def UnifConstraint.toConstraint : UnifConstraint F X 𝔸 → Constraint F X 𝔸
   | .fresh a t => .fresh a t
   | .unif  s t => .alpha s t
 
-/-- Convert a unification problem to a regular problem (Pr' in Definition 27). -/
+/-- `Pr'` in Def. 27: `≈?` becomes `≈α`. -/
 def UnifProblem.toConstraint (Pr : UnifProblem F X 𝔸) : Problem F X 𝔸 :=
   Pr.map UnifConstraint.toConstraint
 
--- (Definition 27: Solution).
 
-/-- A solution to a unification problem Pr is a pair (Γ, σ) satisfying (Definition 27):
-    (1) Γ ⊢ Pr'σ, where Pr' replaces ≈? by ≈α, and Pr'σ applies σ to all terms;
-    (2) Xσ ≡ Xσσ for all X (idempotence). -/
+/-- Solution to `Pr` (Def. 27): `Γ ⊢ Pr'σ` and `σ` is idempotent. -/
 def Solution.Satisfies (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (Pr : UnifProblem F X 𝔸) : Prop :=
   Problem.Entails Γ (Pr.applySubst σ).toConstraint ∧ σ.IsIdempotent
 
-/-- The set of solutions to Pr, written 𝒰(Pr) in the paper. -/
+/-- `𝒰(Pr)`: set of solutions to `Pr`. -/
 def UnifProblem.Solutions (Pr : UnifProblem F X 𝔸) : Set (Context 𝔸 X × Subst F X 𝔸) :=
   { p | Solution.Satisfies p.1 p.2 Pr }
 
--- (Definition 28: Instantiation ordering).
 
-/-- Γ₂ entails context Γ₁ under substitution σ': for every (a, Y) ∈ Γ₁, Γ₂ ⊢ a # Yσ'. -/
+/-- `Γ₂ ⊢ Γ₁σ'`: for every `(a, Y) ∈ Γ₁`, `Γ₂ ⊢ a # Yσ'`. -/
 def Context.EntailsUnder (Γ₁ : Context 𝔸 X) (Γ₂ : Context 𝔸 X) (σ : Subst F X 𝔸) : Bool :=
   decide (∀ p ∈ Γ₁, (Γ₂ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst σ) = true)
 
-/-- (Γ₁, σ₁) ≤ (Γ₂, σ₂) iff there exists σ' such that (Definition 28):
-    - for all X, Γ₂ ⊢ Xσ₁σ' ≈α Xσ₂, and
-    - Γ₂ ⊢ Γ₁σ' (Γ₁ is entailed by Γ₂ under σ'). -/
+/-- Instantiation ordering (Def. 28): `(Γ₁, σ₁) ≤ (Γ₂, σ₂)` iff some `σ'`
+    factors `σ₁σ' ≈α σ₂` under `Γ₂` and entails `Γ₁σ'`. -/
 def SolutionLe (p₁ p₂ : Context 𝔸 X × Subst F X 𝔸) : Prop :=
   ∃ σ' : Subst F X 𝔸,
     (∀ x : X, (p₂.1 ⊢ ((ntm.mvar (F := F) [] x).subst p₁.2).subst σ' ≈α
                         (ntm.mvar (F := F) [] x).subst p₂.2) = true) ∧
     p₁.1.EntailsUnder p₂.1 σ' = true
 
--- (Definition 30: Principal solution).
 
-/-- A principal (most general) solution is a least element of 𝒰(Pr) under the instantiation ordering (Definition 30). -/
+/-- Principal (mgu) solution (Def. 30): least element of `𝒰(Pr)` under `SolutionLe`. -/
 def UnifProblem.IsPrincipalSolution (Pr : UnifProblem F X 𝔸)
     (p : Context 𝔸 X × Subst F X 𝔸) : Prop :=
   p ∈ Pr.Solutions ∧ ∀ q ∈ Pr.Solutions, SolutionLe p q
 
--- (Occurrence check — used in Definition 31 and instantiation rules).
 
 mutual
-  /-- True iff metavariable x occurs in term t. -/
+  /-- `x` occurs in `t`. -/
   def ntm.occursIn (x : X) : ntm F X 𝔸 → Bool
     | .atm _     => false
     | .mvar _ y  => x == y
     | .fapp _ ts => ntmList.occursIn x ts
     | .abs _ t   => t.occursIn x
 
-  /-- True iff x occurs in any term in the list. -/
   def ntmList.occursIn (x : X) : List (ntm F X 𝔸) → Bool
     | []      => false
     | t :: ts => t.occursIn x || ntmList.occursIn x ts
 end
 
--- (Permutation preserves occursIn — only renames atoms, not mvars.)
 
 mutual
   lemma ntm.occursIn_permute (t : ntm F X 𝔸) (π : LPerm 𝔸) (x : X) :
@@ -132,10 +110,9 @@ mutual
       rw [ntm.occursIn_permute t π x, ntmList.occursIn_permute ts' π x]
 end
 
--- (Lemmas relating `occursIn` and substitution.)
 
 mutual
-  /-- If `x` doesn't occur in `t`, then substituting `s` for `x` is a no-op. -/
+  /-- `applyOne x s` is a no-op when `x` does not occur in `t`. -/
   lemma ntm.applyOne_of_not_occursIn (t : ntm F X 𝔸) (x : X) (s : ntm F X 𝔸)
       (h : t.occursIn x = false) : t.applyOne x s = t := by
     match t with
@@ -154,7 +131,6 @@ mutual
       simp only [ntm.occursIn] at h
       simp only [ntm.applyOne, ntm.applyOne_of_not_occursIn t' x s h]
 
-  /-- List version. -/
   lemma ntmList.applyOne_of_not_occursIn (ts : List (ntm F X 𝔸)) (x : X) (s : ntm F X 𝔸)
       (h : ntmList.occursIn x ts = false) :
       ts.map (·.applyOne x s) = ts := by
@@ -167,21 +143,6 @@ mutual
           ntmList.applyOne_of_not_occursIn ts' x s h.2]
 end
 
-/-- `x ∉ dom σ ↔ σ.lookup x = none`. -/
-lemma Subst.lookup_eq_none_iff_not_mem_dom (σ : Subst F X 𝔸) (x : X) :
-    Subst.lookup σ x = none ↔ x ∉ Subst.dom σ := by
-  induction σ with
-  | nil => simp [Subst.lookup]
-  | cons p σ' ih =>
-      obtain ⟨Y, s⟩ := p
-      simp only [Subst.lookup_cons, Subst.dom_cons, Finset.mem_insert, not_or]
-      by_cases hxY : x = Y
-      · subst hxY; simp
-      · rw [if_neg hxY, ih]; simp only [hxY, not_false_iff, true_and]
-
--- If `t` references no variable in `σ.dom`, then `σ` acts as identity on `t`.
--- Proof by induction on `t`: at a metavariable, `x ∉ dom σ` means the lookup
--- misses, so `σ` leaves it unchanged.
 mutual
 lemma ntm.subst_of_disjoint_dom : ∀ (t : ntm F X 𝔸) (σ : Subst F X 𝔸),
     (∀ x ∈ Subst.dom σ, t.occursIn x = false) → t.subst σ = t
@@ -242,12 +203,10 @@ lemma ntm.subst_mvar_nil_of_not_mem_dom {x : X} {σ : Subst F X 𝔸}
   subst hzx
   exact h hz
 
--- (Commutation of `applyOne` and `subst`).
 
 mutual
-  /-- `applyOne x u` commutes with `subst σ` when `x ∉ Subst.dom σ`, `u` is fixed by `σ`,
-      and `x` doesn't appear in any image of `σ` (i.e., the new variable `x` is fresh
-      with respect to the existing substitution). -/
+  /-- `applyOne x u` commutes with `subst σ` when `x` is fresh for `σ`
+      (out of `dom`, out of range) and `u` is `σ`-fixed. -/
   lemma ntm.applyOne_subst_comm (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸) (σ : Subst F X 𝔸)
       (hx_dom : x ∉ Subst.dom σ)
       (hu_fixed : u.subst σ = u)
@@ -279,7 +238,6 @@ mutual
       simp only [ntm.applyOne, ntm.subst_abs]
       rw [ntm.applyOne_subst_comm t' x u σ hx_dom hu_fixed hx_img]
 
-  /-- List version of `applyOne_subst_comm`. -/
   lemma ntmList.applyOne_subst_comm (ts : List (ntm F X 𝔸)) (x : X) (u : ntm F X 𝔸)
       (σ : Subst F X 𝔸)
       (hx_dom : x ∉ Subst.dom σ)
@@ -295,7 +253,6 @@ mutual
           ntmList.applyOne_subst_comm ts' x u σ hx_dom hu_fixed hx_img]
 end
 
--- (`applyOne x u` removes all occurrences of `x` when `x ∉ u`.)
 
 mutual
   lemma ntm.occursIn_applyOne_self (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸)
@@ -328,11 +285,10 @@ mutual
       rfl
 end
 
--- (Commutation of `applyOne` and `subst` for σ-stable terms.)
 
 mutual
-  /-- If `t` and `u` are σ-stable (fixed by σ), then `(t.applyOne x u).subst σ = t.applyOne x u`.
-      Unlike `applyOne_subst_comm`, this version does NOT require `x ∉ image σ`. -/
+  /-- `(t.applyOne x u).subst σ = t.applyOne x u` when both `t` and `u` are
+      `σ`-fixed.  No hypothesis on `x` vs. `σ`. -/
   lemma ntm.applyOne_subst_of_stable (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸)
       (σ : Subst F X 𝔸) (ht : t.subst σ = t) (hu : u.subst σ = u) :
       (t.applyOne x u).subst σ = t.applyOne x u := by
@@ -373,11 +329,6 @@ mutual
           ntmList.applyOne_subst_of_stable ts' x u σ hts' hu]
 end
 
--- (Bridge: substituting by a singleton = a single `applyOne`.)
--- Under simultaneous substitution, `t.subst [(x, u)]` replaces `x` by `u` in one
--- pass — exactly what `applyOne x u` does.  This lets all the `applyOne`
--- machinery carry over, and gives `σ.comp [(x, u)]` its action law
--- `t.subst (σ.comp [(x,u)]) = (t.subst σ).applyOne x u`.
 lemma ntm.subst_singleton : ∀ (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸),
     t.subst [(x, u)] = t.applyOne x u
   | .atm a, x, u => by simp [ntm.applyOne]
@@ -395,12 +346,9 @@ lemma ntm.subst_singleton : ∀ (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸),
       rw [ntm.subst_abs]; simp only [ntm.applyOne]
       rw [ntm.subst_singleton t x u]
 
--- (Extension: composing a fresh, occurs-check-passing binding preserves idempotence.)
 
-/-- If `σ` is idempotent, `u` is fixed by `σ`, and `x` doesn't occur in `u`, then
-    `σ.comp [(x, u)]` is idempotent.  This replaces the old sequential
-    `append_singleton`; under simultaneous substitution the algorithm accumulates
-    via `comp`, and this acts exactly as the old `σ ++ [(x, u)]` did. -/
+/-- `σ.comp [(x, u)]` is idempotent when `σ` is idempotent, `u` is `σ`-fixed,
+    and `x ∉ u`. -/
 lemma Subst.IsIdempotent.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
     (hσ : σ.IsIdempotent)
     (hu_fixed : u.subst σ = u)
@@ -416,10 +364,7 @@ lemma Subst.IsIdempotent.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F
   rw [hA, ntm.subst_comp, ntm.subst_singleton, hStep1]
   exact (ntm.applyOne_of_not_occursIn _ x u (ntm.occursIn_applyOne_self r x u hxu)).symm
 
-/-- Under the algorithm's invariant (`x` does not occur in any value of `σ`),
-    composition collapses to append: `σ.comp [(x, u)] = σ ++ [(x, u)]`.  This is
-    why all the append-based reasoning ports: applying `[(x, u)]` to `σ`'s range
-    is a no-op when `x` is fresh for that range. -/
+/-- When `x` is fresh for the range of `σ`, `σ.comp [(x, u)] = σ ++ [(x, u)]`. -/
 lemma Subst.comp_singleton_eq_append {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
     (hx : ∀ p ∈ σ, p.2.occursIn x = false) :
     σ.comp [(x, u)] = σ ++ [(x, u)] := by

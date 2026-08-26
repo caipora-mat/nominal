@@ -61,9 +61,6 @@ lemma alphaEquivList_of_zip_subst_entails (Γ : Context 𝔸 X) (σ : Subst F X 
     simp only [List.length_cons, Nat.add_right_cancel_iff] at hlen
     exact alphaEquivList_of_zip_subst_entails Γ σ ss' ts' hlen htail
 
--- ============================================================
--- Commutation of `simplifyFresh` with substitution.
--- ============================================================
 
 mutual
   /-- If `simplifyFresh a t = some cs` and the substituted leaves are entailed
@@ -355,7 +352,6 @@ lemma Subst.disjointPr_append_singleton {σ : Subst F X 𝔸} {Pr : UnifProblem 
     subst h
     exact hx hy
 
--- Helper: simplifyFresh leaves' metavars ⊆ t's metavars.
 mutual
   lemma simplifyFresh_metavars_subset (a : 𝔸) :
       ∀ (t : ntm F X 𝔸) (cs : Problem F X 𝔸),
@@ -430,7 +426,6 @@ lemma allMetavars_map_toUnif_subset (cs : Problem F X 𝔸) (target : Finset X)
     · exact h c List.mem_cons_self x hx
     · exact ih (fun c' hc' => h c' (List.mem_cons_of_mem _ hc')) hx
 
--- Helper: subst by a single binding bounds metavars.
 mutual
   lemma ntm.applyOne_metavars_subset (t : ntm F X 𝔸) (x : X) (u : ntm F X 𝔸) :
       (t.applyOne x u).metavars ⊆ (t.metavars \ {x}) ∪ u.metavars := by
@@ -890,9 +885,6 @@ lemma unifStep_next_idempotent_and_disjoint
                        Finset.mem_union] at hy ⊢
             tauto)
 
--- ============================================================
--- Helpers for the instantiation cases of `unifStep_next_sound`.
--- ============================================================
 
 /-- Under the invariants of `unify`, the final substitution τ "resolves" the
     binding `(x, u_perm)` produced by the instantiation step:
@@ -1119,13 +1111,9 @@ lemma unifStep_next_sound
         · simp only [if_neg hab] at h
           exact absurd h (by simp)
       | mvar π x =>
-        -- atm-mvar instantiation: s = atm a, t = mvar π x
-        -- σ_next = σ ++ [(x, (atm a).permute π.reverse)]
-        -- Pr' = rest.applySubst [(x, (atm a).permute π.reverse)]
         simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
                    StepResult.next.injEq] at h
         obtain ⟨rfl, rfl⟩ := h
-        -- Build (mvar [] x).subst τ = u_perm.subst τ via mvar_subst_eq_binding.
         set u_perm := (ntm.atm (X := X) (F := F) a).permute π.reverse with hu_perm_def
         have hx_dom : x ∉ Subst.dom σ := hdisj x (by
           simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
@@ -1136,21 +1124,13 @@ lemma unifStep_next_sound
           simp [u_perm, ntm.permute, ntm.occursIn]
         have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
           mvar_subst_eq_binding hσ hx_dom hu_fixed hxu (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
-        -- Decompose hΓ: (rest.applySubst [(x, u_perm)]).applySubst τ
         rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
-        -- Now hΓ : Γ ⊢ (rest.applySubst τ).toConstraint
         simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
                    Problem.Entails_cons]
         refine ⟨?_, hΓ⟩
-        -- Goal: Γ ⊢ alphaEquiv ((atm a).subst τ) ((mvar π x).subst τ)
         simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
                    Constraint.Entails]
         rw [ntm.subst_mvar, hresolve]
-        -- (atm a).subst τ ≈α (u_perm.subst τ).permute π
-        -- u_perm = (atm a).permute π.reverse
-        -- (u_perm.subst τ).permute π = ((atm a).permute π.reverse .subst τ).permute π
-        --                            = ((atm a).subst τ .permute π.reverse).permute π
-        --                            = (atm a).subst τ (since permute composes to id)
         show alphaEquiv Γ ((ntm.atm (X := X) (F := F) a).subst τ)
              ((u_perm.subst τ).permute π) = true
         simp [u_perm, ntm.permute, ntm.subst_atm, alphaEquiv,
@@ -1159,7 +1139,6 @@ lemma unifStep_next_sound
     | mvar π x =>
       cases t with
       | atm a =>
-        -- mvar-atm instantiation: s = mvar π x, t = atm a
         simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
                    StepResult.next.injEq] at h
         obtain ⟨rfl, rfl⟩ := h
@@ -1192,7 +1171,6 @@ lemma unifStep_next_sound
           obtain ⟨rfl, rfl⟩ := h
           simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
                      Problem.Entails_cons]
-          -- hΓ has the (rest ++ fresh_list).applySubst σ'.toConstraint piece
           rw [UnifProblem.applySubst, List.map_append, ← UnifProblem.applySubst,
               ← UnifProblem.applySubst,
               UnifProblem.toConstraint, List.map_append, ← UnifProblem.toConstraint,
@@ -1200,7 +1178,6 @@ lemma unifStep_next_sound
               Problem.Entails_append_iff] at hΓ
           obtain ⟨hrest, hfresh⟩ := hΓ
           refine ⟨?_, hrest⟩
-          -- Goal: alphaEquiv ((mvar π x).subst σ') ((mvar π' x).subst σ')
           simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
                      Constraint.Entails]
           have heq1 : (ntm.mvar π x : ntm F X 𝔸).subst τ =
@@ -1212,7 +1189,6 @@ lemma unifStep_next_sound
           rw [heq1, heq2]
           apply ntm.alphaEquiv_of_perm_fresh
           intro n hn
-          -- Use hfresh on the corresponding `.fresh n (mvar [] x)` constraint
           have hmem : n ∈ dsList π π' := (mem_dsList_iff_mem_ds n π π').mpr hn
           have hcfresh : Constraint.fresh n (((ntm.mvar (F := F) [] x : ntm F X 𝔸).subst τ)) ∈
               UnifProblem.toConstraint
@@ -1258,7 +1234,6 @@ lemma unifStep_next_sound
           exact ntm.alphaEquiv_permute_reverse_permute_self Γ
             ((ntm.mvar π' y).subst τ) π
       | fapp f ts =>
-        -- mvar-fapp instantiation
         simp only [unifStep] at h
         split_ifs at h with hocc
         simp only [StepResult.next.injEq] at h
@@ -1292,7 +1267,6 @@ lemma unifStep_next_sound
         exact ntm.alphaEquiv_permute_reverse_permute_self Γ
           ((ntm.fapp f ts).subst τ) π
       | abs b t =>
-        -- mvar-abs instantiation
         simp only [unifStep] at h
         split_ifs at h with hocc
         simp only [StepResult.next.injEq] at h
@@ -1351,7 +1325,6 @@ lemma unifStep_next_sound
                      UnifConstraint.applySubst, UnifConstraint.toConstraint] at hzip
           exact hzip
       | mvar π' y =>
-        -- fapp-mvar instantiation
         simp only [unifStep] at h
         split_ifs at h with hocc
         simp only [StepResult.next.injEq] at h
@@ -1414,7 +1387,6 @@ lemma unifStep_next_sound
           rw [ntm.subst_permute] at hperm
           exact hperm
       | mvar π' y =>
-        -- abs-mvar instantiation
         simp only [unifStep] at h
         split_ifs at h with hocc
         simp only [StepResult.next.injEq] at h
@@ -1449,9 +1421,6 @@ lemma unifStep_next_sound
           ((ntm.abs a s').subst τ) π')
       | atm _ | fapp _ _ => simp [unifStep] at h
 
--- ============================================================
--- Freshness monotonicity in Γ (used by `finalizeDeferred_sound`).
--- ============================================================
 
 mutual
   /-- Freshness is monotone in the context. -/
@@ -1482,9 +1451,6 @@ mutual
       exact ⟨fresh_mono hsub a t h1, freshList_mono hsub a ts' h2⟩
 end
 
--- ============================================================
--- Soundness of `finalizeDeferred`.
--- ============================================================
 
 /-- A reduced constraint has the shape `.fresh _ (.mvar [] _)`. -/
 lemma Constraint.reduced_destr {c : Constraint F X 𝔸} (h : c.IsReduced = true) :
@@ -1586,9 +1552,6 @@ lemma finalizeDeferred_sound (σ : Subst F X 𝔸) :
           exact (simplifyFresh_sound Γ a _ hcs).mpr hent'
         · exact hrec.2 p hmem
 
--- ============================================================
--- Soundness of `unify`.
--- ============================================================
 
 /-- Inversion of `.ctx`: only `.fresh _ (.mvar _ _)` produces it. -/
 lemma unifStep_ctx_inv (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸)
@@ -1678,9 +1641,6 @@ theorem unify_sound (Γ : Context 𝔸 X) :
     exact unifStep_next_sound c rest σ Pr' σ_next Γ σ' σ_extra
       hnext hσ hdisj hσ_ext hpr'
 
--- ============================================================
--- Soundness of `UnifProblem.solve`.
--- ============================================================
 
 /-- `solve Pr = some (Γ, σ)` produces a context that entails `Pr` under σ. -/
 theorem UnifProblem.solve_sound (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)

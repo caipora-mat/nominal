@@ -6,9 +6,6 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- ============================================================
--- Main loop.
--- ============================================================
 
 /-- Every `.next` output of `unifStep` is strictly smaller in the lex measure. -/
 private lemma unifStep_next_decreasing
@@ -20,11 +17,9 @@ private lemma unifStep_next_decreasing
       ((UnifProblem.unifVars (c :: rest)).card,
        UnifProblem.unifDepthMs (c :: rest)) := by
   cases c with
-  -- ── FRESH constraints ───────────────────────────────────────
   | fresh a t =>
     cases t with
     | mvar π x =>
-      -- unifStep (.fresh a (.mvar π x)) = .ctx …, never .next
       simp [unifStep] at h
     | atm b =>
       simp only [unifStep] at h
@@ -40,7 +35,6 @@ private lemma unifStep_next_decreasing
           exact ⟨UnifProblem.unifDepthMs rest, ∅, {1},
                  by simp, by simp, by rw [add_comm], by simp⟩
     | fapp f ts =>
-      -- simplifyFresh a (.fapp f ts) = simplifyFreshList a ts
       simp only [unifStep, simplifyFresh] at h
       cases hcs : simplifyFreshList a ts with
       | none => simp [hcs] at h
@@ -117,18 +111,14 @@ private lemma unifStep_next_decreasing
                      obtain ⟨c, hc, rfl⟩ := hy
                      obtain ⟨a', u, rfl, hle⟩ := simplifyFresh_constraints_le a t hcs c hc
                      simp [Constraint.toUnif]; omega⟩⟩
-  -- ── UNIF constraints ────────────────────────────────────────
   | unif s t =>
     cases s with
     | atm a =>
       cases t with
       | atm b =>
-        -- h : unifStep (.unif (.atm a) (.atm b)) rest σ = .next Pr' σ'
-        -- unifStep gives: if a = b then .next rest σ else .fail
         simp only [unifStep] at h
         by_cases hab : a = b
         · simp only [if_pos hab] at h
-          -- h : .next rest σ = .next Pr' σ'
           simp only [StepResult.next.injEq] at h
           obtain ⟨rfl, rfl⟩ := h
           apply Prod.Lex.right'
@@ -154,7 +144,6 @@ private lemma unifStep_next_decreasing
               UnifProblem.unifDepthMs_applySubst_depth0 rest x _
                 (by simp [ntm.permute_depth, ntm.depth])]
           simp only [ntm.depth]
-          -- goal: unifDepthMs rest <_DM {0 + 2} + unifDepthMs rest
           exact ⟨UnifProblem.unifDepthMs rest, ∅, {2},
                  by simp, by simp, by rw [add_comm]; simp, by simp⟩
       | fapp _ _ | abs _ _ =>
@@ -163,7 +152,6 @@ private lemma unifStep_next_decreasing
       cases t with
       | atm a =>
         simp [unifStep, ntm.occursIn, reduceIte, StepResult.next.injEq] at h
-        -- depth 0: reuse Prod.Lex.right' path (same as atm-mvar case)
         apply Prod.Lex.right'
         · obtain ⟨rfl, rfl⟩ := h
           apply Finset.card_le_card
@@ -176,14 +164,12 @@ private lemma unifStep_next_decreasing
               UnifProblem.unifDepthMs_applySubst_depth0 rest x _
                 (by simp [ntm.permute_depth, ntm.depth])]
           simp only [ntm.depth]
-          -- goal: unifDepthMs rest <_DM {0 + 2} + unifDepthMs rest
           exact ⟨UnifProblem.unifDepthMs rest, ∅, {2},
                  by simp, by simp, by rw [add_comm]; simp, by simp⟩
       | mvar π' y =>
         simp only [unifStep] at h
         by_cases hxy : x = y
         · subst hxy; simp at h; obtain ⟨rfl, rfl⟩ := h
-          -- DM: mvar-mvar-same (similar to existing abs-abs a≠b fresh sub-goals)
           apply Prod.Lex.right'
           · apply Finset.card_le_card
             have hL : UnifProblem.unifVars
@@ -406,13 +392,10 @@ private lemma unifStep_next_decreasing
               (hsub hyc)
       | atm _ | fapp _ _ => simp [unifStep] at h
 
--- Main loop: collect freshness facts deferred during reduction into a list of
--- pairs (a, x).  These are NOT committed to Γ during reduction — instead they
--- stay independent of σ until the main loop finishes, then `finalizeDeferred`
--- substitutes each `x` by `x.subst σ` and re-simplifies the freshness check.
--- This matches Maribel's algorithm (Theorem 35), where the substitution θ from
--- instantiation acts uniformly on all constraints, freshness included.
-
+/-- Main loop: iterate `unifStep` on the constraint queue, threading `σ` and
+    a list of deferred freshness pairs.  Terminates on the lex measure
+    `(unifVars.card, unifDepthMs)`.  Corresponds to Maribel's algorithm
+    (Theorem 35), with freshness bindings deferred until after the loop. -/
 def unify (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (deferred : List (𝔸 × X)) :
     Option (List (𝔸 × X) × Subst F X 𝔸) :=
   match Pr with
@@ -424,7 +407,6 @@ def unify (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (deferred : List (�
     | .next Pr' σ' => unify Pr' σ' deferred
 termination_by (Pr.unifVars.card, Pr.unifDepthMs)
 decreasing_by
-  -- .ctx case: recurse on `rest`.
   · apply Prod.Lex.right'
     · exact Finset.card_le_card (UnifProblem.unifVars_subset_cons c rest)
     · cases c with
@@ -436,15 +418,10 @@ decreasing_by
         rw [UnifProblem.unifDepthMs_cons]
         exact ⟨UnifProblem.unifDepthMs rest, ∅, {max s.depth t.depth + 2},
                by simp, by simp, by rw [add_comm], by simp⟩
-  -- .next case: existing structural argument.
   · exact unifStep_next_decreasing c rest σ Pr' σ' h
 
--- After `unify` finishes, each deferred entry (a, x) is interpreted under the
--- final σ as `a # (x.subst σ)`.  We simplify each such constraint; the result
--- is a list of bare-mvar freshness pairs (the reduced leaves of `simplifyFresh`)
--- which become Γ entries directly.  Assuming σ is idempotent (an algorithm
--- invariant), these leaves have variables outside `dom σ`, so no further
--- expansion is needed.
+/-- Post-loop step: applies the final `σ` to each deferred `(a, x)` pair and
+    accumulates the reduced freshness leaves into `Γ`. -/
 def finalizeDeferred : List (𝔸 × X) → Subst F X 𝔸 → Context 𝔸 X →
     Option (Context 𝔸 X)
   | [],            _, Γ => some Γ
@@ -458,6 +435,7 @@ def finalizeDeferred : List (𝔸 × X) → Subst F X 𝔸 → Context 𝔸 X �
         | _                       => g) Γ
       finalizeDeferred tl σ Γ'
 
+/-- Top-level entry point: runs `unify` then `finalizeDeferred`. -/
 def UnifProblem.solve (Pr : UnifProblem F X 𝔸) : Option (Context 𝔸 X × Subst F X 𝔸) :=
   match unify Pr [] [] with
   | none => none

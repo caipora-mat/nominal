@@ -8,7 +8,6 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- (Atoms of a permutation and difference list).
 
 /-- Computable list of atoms in a permutation. -/
 def LPerm.atomsList : LPerm 𝔸 → List 𝔸
@@ -20,7 +19,6 @@ def dsList (π π' : LPerm 𝔸) : List 𝔸 :=
   (LPerm.atomsList π ++ LPerm.atomsList π').filter fun n =>
     LPermApply π n ≠ LPermApply π' n
 
--- (Constraints and problems).
 
 /-- A constraint is either a freshness question `a #? t` or an alpha-equivalence question `s ≈α? t`. -/
 inductive Constraint (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] where
@@ -31,7 +29,6 @@ inductive Constraint (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name �
 abbrev Problem (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] :=
   List (Constraint F X 𝔸)
 
--- (Substitution on constraints).
 
 /-- Apply a single substitution binding `[Y ↦ s]` to a constraint. -/
 def Constraint.applyOne : Constraint F X 𝔸 → X → ntm F X 𝔸 → Constraint F X 𝔸
@@ -42,7 +39,6 @@ def Constraint.applyOne : Constraint F X 𝔸 → X → ntm F X 𝔸 → Constra
 def Problem.applyOne (P : Problem F X 𝔸) (Y : X) (s : ntm F X 𝔸) : Problem F X 𝔸 :=
   P.map fun c => c.applyOne Y s
 
--- (Freshness simplification).
 
 mutual
   /-- Simplify `a # t` to a list of reduced constraints. -/
@@ -60,7 +56,6 @@ mutual
       | _, _               => none
 end
 
--- (Alpha-equivalence simplification).
 
 mutual
   /-- Simplify `s ≈α t` to a list of reduced constraints. -/
@@ -89,7 +84,6 @@ mutual
     | _, _ => none
 end
 
--- (Top-level simplifier).
 
 /-- Simplify each constraint to reduced form; `none` if any is inconsistent. -/
 def simplify : Problem F X 𝔸 → Option (Problem F X 𝔸)
@@ -103,7 +97,6 @@ def simplify : Problem F X 𝔸 → Option (Problem F X 𝔸)
     | some cs₁, some cs₂ => some (cs₁ ++ cs₂)
     | _, _               => none
 
--- (Bridging dsList <-> ds).
 
 lemma LPerm.mem_atomsList_iff (n : 𝔸) (π : LPerm 𝔸) :
     n ∈ LPerm.atomsList π ↔ n ∈ LPerm.atoms π := by

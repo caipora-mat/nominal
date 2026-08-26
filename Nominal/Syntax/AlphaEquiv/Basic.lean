@@ -11,13 +11,9 @@ variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 mutual
   def alphaEquiv
     (Γ : Context 𝔸 X) : ntm F X 𝔸 → ntm F X 𝔸 → Bool
-    -- (≈αa)
     | ntm.atm a, ntm.atm b => a = b
-    -- (≈αX)
     | ntm.mvar π x, ntm.mvar π' y => x = y ∧ (∀ n ∈ ds π π', (n, x) ∈ Γ)
-    -- (≈αtup)/(≈αf)
     | ntm.fapp f ss, ntm.fapp g ts => f = g ∧ alphaEquivList Γ ss ts
-    -- (≈αabsa)/(≈αabsb)
     | ntm.abs a s, ntm.abs b t =>
         if a = b then alphaEquiv Γ s t
         else alphaEquiv Γ (ntm.permute [(b, a)] s) t ∧ fresh Γ b s

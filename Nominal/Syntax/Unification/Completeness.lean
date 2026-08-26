@@ -6,19 +6,8 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- Completeness of the nominal unification algorithm.
--- Goal: `UnifProblem.solve_principal` — Maribel Theorem 35.
--- The result produced by `solve` is the most general unifier (mgu) in the
--- sense of `UnifProblem.IsPrincipalSolution` (Definition 30).
---
--- This file establishes the *converse* of soundness: every solution of `Pr`
--- factors through `(Γ, σ)` returned by `solve`.  Roadmap mirrors the Isabelle
--- formalisation (`P1-from-P2-sred/cred` + `mgu` lemma), adapted to our
--- recursive `unify` + `finalizeDeferred` (Plan A) architecture.
-
--- The accumulated substitution σ is consistent with θ modulo Δ.
--- This is the inductive invariant we carry through `unify_le`.  Initially
--- (σ = []) it is trivially true; each `unifStep_next_le` step preserves it.
+/-- The accumulated substitution `σ` is consistent with `θ` modulo `Δ`:
+    inductive invariant carried through `unify_le`.  Maribel Theorem 35. -/
 def Subst.absorbedBy (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸) : Prop :=
   ∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst θ ≈α
                (ntm.mvar (F := F) [] x).subst θ) = true
@@ -29,11 +18,9 @@ def Subst.absorbedBy (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸) : Prop :=
   simp only [ntm.subst_nil]
   exact alphaEquiv_refl _ _
 
--- Congruence: if `u.subst θ` is α-equivalent to `(.mvar [] x).subst θ` in Δ,
--- then for any term `t`, applying `[(x, u)]` before `θ` gives an α-equivalent
--- result to applying `θ` directly.  This is the key lemma for proving that
--- `θ` "absorbs" an instantiation binding consistent with it.
 mutual
+  /-- If `u.subst θ ≈α (.mvar [] x).subst θ` in Δ, then for any term `t`,
+      applying `[(x, u)]` before `θ` gives an α-equivalent result to `θ` alone. -/
   lemma alphaEquiv_applyOne_subst (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
       (x : X) (u : ntm F X 𝔸)
       (hu : (Δ ⊢ u.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true) :
@@ -70,11 +57,9 @@ mutual
                alphaEquivList_applyOne_subst Δ θ x u hu ts'⟩
 end
 
--- Pointwise congruence of substitution under α-equivalence: if two
--- substitutions `ρ₁`, `ρ₂` agree (up to `≈α` in `Δ`) on every bare
--- metavariable, then they agree on every term.  Substitution is determined by
--- its action on metavariables, so the equivalence propagates structurally.
 mutual
+  /-- Pointwise congruence: if `ρ₁` and `ρ₂` agree up to `≈α` in `Δ` on every
+      bare metavariable, they agree on every term. -/
   lemma ntm.alphaEquiv_subst_pointwise (Δ : Context 𝔸 X) (ρ₁ ρ₂ : Subst F X 𝔸)
       (h : ∀ y : X, (Δ ⊢ (ntm.mvar (F := F) [] y).subst ρ₁
                       ≈α (ntm.mvar (F := F) [] y).subst ρ₂) = true) :
@@ -102,8 +87,7 @@ mutual
                ntm.alphaEquivList_subst_pointwise Δ ρ₁ ρ₂ h ts'⟩
 end
 
--- Variant of `ntm.alphaEquiv_permute_reverse_permute_self` for the opposite
--- order: applying `π` then `π.reverse` is α-equivalent to identity.
+/-- Applying `π` then `π.reverse` is α-equivalent to identity. -/
 lemma ntm.alphaEquiv_permute_permute_reverse_self (Γ : Context 𝔸 X)
     (t : ntm F X 𝔸) (π : LPerm 𝔸) :
     (Γ ⊢ (t.permute π).permute π.reverse ≈α t) = true := by
@@ -111,10 +95,8 @@ lemma ntm.alphaEquiv_permute_permute_reverse_self (Γ : Context 𝔸 X)
   rw [List.reverse_reverse] at this
   exact this
 
--- From an α-equivalence between `(.mvar π x).subst θ` and `u.subst θ` in Δ,
--- derive consistency `(u.permute π.reverse).subst θ ≈α (.mvar [] x).subst θ`
--- in Δ.  This is the precondition needed for `Subst.absorbedBy_append` in
--- the instantiation cases (arms 3 and 4 of `unifStep`).
+/-- Arm 3 of `unifStep` (mvar-vs-rhs): shifts the permutation to derive the
+    consistency precondition needed by `Subst.absorbedBy_append`. -/
 lemma alphaEquiv_imp_consistency_arm3
     (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (π : LPerm 𝔸) (x : X) (u : ntm F X 𝔸)
     (hc : (Δ ⊢ (ntm.mvar (F := F) π x).subst θ ≈α u.subst θ) = true) :
@@ -132,7 +114,6 @@ lemma alphaEquiv_imp_consistency_arm4
     (Δ ⊢ (u.permute π.reverse).subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true :=
   alphaEquiv_imp_consistency_arm3 Δ θ π x u (alphaEquiv_symm Δ _ _ hc)
 
--- absorbedBy extension by a consistent binding.
 lemma Subst.absorbedBy_append (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸)
     (x : X) (u_perm : ntm F X 𝔸)
     (habs : Subst.absorbedBy Δ σ θ)
@@ -140,16 +121,13 @@ lemma Subst.absorbedBy_append (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸)
     Subst.absorbedBy Δ (σ.comp [(x, u_perm)]) θ := by
   intro y
   rw [ntm.subst_mvar_nil_comp]
-  -- ((mvar [] y).subst σ).subst [(x, u_perm)] = ((mvar [] y).subst σ).applyOne x u_perm.
   simp only [ntm.subst_singleton]
-  -- Goal: Δ ⊢ (((mvar [] y).subst σ).applyOne x u_perm).subst θ ≈α (mvar [] y).subst θ.
-  -- Use congruence to swap to (((mvar [] y).subst σ).subst θ), then habs.
   have hcong := alphaEquiv_applyOne_subst Δ θ x u_perm hu
       ((ntm.mvar (F := F) [] y).subst σ)
   exact alphaEquiv_trans Δ _ _ _ hcong (habs y)
 
--- Constraint-level congruence: under consistency `u.subst θ ≈α θ(x)` in Δ,
--- the binding `[(x, u)]` is invisible at the entailment level.
+/-- Under consistency `u.subst θ ≈α θ(x)` in `Δ`, the binding `[(x, u)]` is
+    invisible at the constraint-entailment level. -/
 lemma UnifConstraint.entails_applyOne_of_entails
     (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (x : X) (u : ntm F X 𝔸)
     (hu : (Δ ⊢ u.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true)
@@ -168,12 +146,10 @@ lemma UnifConstraint.entails_applyOne_of_entails
                Constraint.Entails, ntm.subst_singleton] at *
     have hcongS := alphaEquiv_applyOne_subst Δ θ x u hu s
     have hcongT := alphaEquiv_applyOne_subst Δ θ x u hu t
-    -- h : alphaEquiv Δ (s.subst θ) (t.subst θ).
-    -- Want: alphaEquiv Δ ((s.applyOne x u).subst θ) ((t.applyOne x u).subst θ).
     exact alphaEquiv_trans Δ _ _ _
       (alphaEquiv_trans Δ _ _ _ hcongS h) (alphaEquiv_symm Δ _ _ hcongT)
 
--- Lift to UnifProblem.
+/-- Lift of `UnifConstraint.entails_applyOne_of_entails` to `UnifProblem`. -/
 lemma UnifProblem.entails_applyOne_of_entails
     (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (x : X) (u : ntm F X 𝔸)
     (hu : (Δ ⊢ u.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true)
@@ -189,11 +165,10 @@ lemma UnifProblem.entails_applyOne_of_entails
   simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.mem_map]
   exact ⟨c.applySubst θ, ⟨c, hc_mem, rfl⟩, rfl⟩
 
--- Reverse of `fresh_subst_of_simplifyFresh_entails` from Properties.
--- If `simplifyFresh a t = some cs` and `Γ ⊢ a # t.subst τ`, then every
--- constraint in `cs.applySubst τ` is entailed by Γ.  Used in fresh-abs and
--- fresh-fapp completeness cases.
 mutual
+  /-- Converse of `fresh_subst_of_simplifyFresh_entails` (from Properties).
+      If `simplifyFresh a t = some cs` and `Γ ⊢ a # t.subst τ`, then every
+      constraint in `cs.applySubst τ` is entailed by `Γ`. -/
   lemma simplifyFresh_subst_imp_entails (Γ : Context 𝔸 X) (a : 𝔸) (τ : Subst F X 𝔸) :
       ∀ (t : ntm F X 𝔸) (cs : Problem F X 𝔸),
         simplifyFresh a t = some cs →
@@ -224,11 +199,8 @@ mutual
         split_ifs at hs with hab
         · cases hs
           simp [Problem.applySubst, Problem.Entails.nil]
-        · -- a ≠ b. cs = simplifyFresh a t'.
-          -- Decompose hf: fresh Γ a (.abs b (t'.subst τ)) = (a = b ∨ fresh Γ a t'.subst τ).
-          have hft : (Γ ⊢ a # t'.subst τ) = true := by
+        · have hft : (Γ ⊢ a # t'.subst τ) = true := by
             simp only [ntm.subst_abs, fresh] at hf
-            -- hf : decide (a = b ∨ (Γ ⊢ a # t'.subst τ) = true) = true.
             rw [decide_eq_true_eq] at hf
             rcases hf with rfl | h
             · exact absurd rfl hab
@@ -236,8 +208,6 @@ mutual
           exact simplifyFresh_subst_imp_entails Γ a τ t' cs hs hft
     | .fapp f ts, cs, hs, hf => by
         simp only [simplifyFresh] at hs
-        -- cs = simplifyFreshList a ts.
-        -- hf : Γ ⊢ a # (.fapp f ts).subst τ = freshList Γ a (ts.map (·.subst τ)).
         rw [ntm.subst_fapp] at hf
         simp only [fresh] at hf
         exact simplifyFreshList_subst_imp_entails Γ a τ ts cs hs hf
@@ -264,7 +234,6 @@ mutual
             obtain ⟨hft, hftail⟩ := hfl
             have ih1 := simplifyFresh_subst_imp_entails Γ a τ t cs₁ hsf hft
             have ih2 := simplifyFreshList_subst_imp_entails Γ a τ ts' cs₂ hsfl hftail
-            -- Need: Problem.Entails Γ ((cs₁ ++ cs₂).applySubst τ).
             intro c' hc'
             simp only [Problem.applySubst, List.map_append, List.mem_append] at hc'
             rcases hc' with hc'' | hc''
@@ -272,8 +241,8 @@ mutual
             · exact ih2 c' hc''
 end
 
--- Helper (reverse of `alphaEquivList_of_zip_subst_entails` from Properties).
--- Used in the fapp-fapp completeness case.
+/-- Converse of `alphaEquivList_of_zip_subst_entails` (from Properties);
+    used in the fapp-fapp completeness case. -/
 private lemma alphaEquivList_imp_zip_entails {Γ : Context 𝔸 X} {σ : Subst F X 𝔸} :
     ∀ (ss ts : List (ntm F X 𝔸)),
       ss.length = ts.length →
@@ -293,7 +262,7 @@ private lemma alphaEquivList_imp_zip_entails {Γ : Context 𝔸 X} {σ : Subst F
       · simp only [List.length_cons, Nat.add_right_cancel_iff] at hlen
         exact alphaEquivList_imp_zip_entails ss' ts' hlen htail
 
--- Helper: from a satisfied (c :: rest), extract that c is entailed (after applySubst).
+/-- From a satisfied `c :: rest`, extract that `c` is entailed after `applySubst`. -/
 private lemma entails_head_of_satisfies
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸)
     (Δ : Context 𝔸 X) (θ : Subst F X 𝔸)
@@ -305,11 +274,9 @@ private lemma entails_head_of_satisfies
     simp [UnifProblem.applySubst, UnifProblem.toConstraint]
   exact hΓ _ hmem
 
--- (4a) Step-level converse for the recursive case `.next Pr' σ_next`.
--- Analogue of Isabelle's `P1-from-P2-sred`: a solution of `c::rest` carries
--- over to `Pr'` (under the same θ), and σ_next remains absorbed by θ.
--- The factorization `θ ≈_Δ σ_next ; ρ` of `SolutionLe` is recovered globally
--- via the `Subst.absorbedBy` invariant with ρ = θ throughout.
+/-- Step-level converse for `.next Pr' σ_next`: a solution of `c :: rest`
+    carries over to `Pr'` under the same `θ`, and `σ_next` remains absorbed
+    by `θ`.  Analogue of Isabelle's `P1-from-P2-sred`. -/
 lemma unifStep_next_le
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸)
     (σ σ_next : Subst F X 𝔸) (Pr' : UnifProblem F X 𝔸)
@@ -319,10 +286,8 @@ lemma unifStep_next_le
     (habs : Subst.absorbedBy Δ σ θ) :
     Solution.Satisfies Δ θ Pr' ∧ Subst.absorbedBy Δ σ_next θ := by
   obtain ⟨hΓ, hidem⟩ := hθ
-  -- Helper: c entailment for use in instantiation cases.
   have hc : Constraint.Entails Δ (c.applySubst θ).toConstraint = true :=
     entails_head_of_satisfies c rest Δ θ ⟨hΓ, hidem⟩
-  -- Helper: rest entailment (used in non-instantiation cases).
   have hrest : Problem.Entails Δ (rest.applySubst θ).toConstraint := by
     intro c' hc'
     apply hΓ c'
@@ -332,11 +297,8 @@ lemma unifStep_next_le
   | fresh a t =>
     cases t with
     | mvar π x =>
-      -- unifStep returns .ctx — contradicts h.
       simp [unifStep] at h
     | atm b =>
-      -- a = b ⇒ simplifyFresh = none ⇒ .fail (contradicts h).
-      -- a ≠ b ⇒ simplifyFresh = some [] ⇒ .next rest σ.
       by_cases hab : a = b
       · subst hab; simp [unifStep, simplifyFresh] at h
       · have heq : unifStep (UnifConstraint.fresh (X := X) a (ntm.atm b)) rest σ
@@ -364,8 +326,6 @@ lemma unifStep_next_le
         · exact hrest c' hc''_rest
         · simp only [List.map_map, List.mem_map, Function.comp] at hc''_cs
           obtain ⟨c'', hc''_mem, rfl⟩ := hc''_cs
-          -- c'' ∈ cs.  Goal: ((c''.toUnif).applySubst θ).toConstraint entailed.
-          -- Reduce via toConstraint_applySubst + toConstraint of toUnif = id.
           have hround : ((Constraint.toUnif c'').applySubst θ).toConstraint
               = c''.applySubst θ := by
             cases c'' <;> simp [Constraint.toUnif, UnifConstraint.applySubst,
@@ -412,36 +372,28 @@ lemma unifStep_next_le
           exact ⟨⟨hrest, hidem⟩, habs⟩
         · simp [unifStep, hab] at h
       | mvar π x =>
-        -- atm-mvar: instantiation with u = .atm a, u_perm = .atm (π.reverse·a).
         have heq : unifStep (UnifConstraint.unif (X := X) (ntm.atm a) (ntm.mvar π x)) rest σ
             = .next (rest.applySubst [(x, (ntm.atm (F := F) a).permute π.reverse)])
                     (σ.comp [(x, (ntm.atm (F := F) a).permute π.reverse)]) := by
           simp [unifStep, ntm.occursIn]
         rw [heq] at h; injection h with hPr hσ
         subst hPr; subst hσ
-        -- u_perm = .atm (π.reverse·a). Establish consistency hu.
         set u_perm : ntm F X 𝔸 := ntm.atm (LPermApply π.reverse a) with hu_perm_def
         have hu : (Δ ⊢ u_perm.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true := by
-          -- u_perm.subst θ = u_perm (atom is fixed).
           have hu_subst : u_perm.subst θ = u_perm := by simp [u_perm]
           rw [hu_subst]
-          -- From hc: Δ ⊢ .atm a ≈α (mvar π x).subst θ.
           have hc_simpl : (Δ ⊢ ntm.atm (F := F) (X := X) a ≈α
                               (ntm.mvar (F := F) π x).subst θ) = true := by
             simpa [UnifConstraint.applySubst, UnifConstraint.toConstraint,
                    Constraint.Entails] using hc
           rw [ntm.subst_mvar] at hc_simpl
-          -- Apply permute π.reverse to both sides.
           have hperm := alphaEquiv_permute_congr Δ _ _ π.reverse hc_simpl
-          -- LHS: (.atm a).permute π.reverse = .atm (π.reverse·a) = u_perm.
-          -- RHS: ((mvar [] x).subst θ .permute π).permute π.reverse ≈α (mvar [] x).subst θ.
           have hatm_perm : (ntm.atm (F := F) (X := X) a).permute π.reverse = u_perm := by
             simp [ntm.permute, u_perm]
           rw [hatm_perm] at hperm
           have hself := ntm.alphaEquiv_permute_permute_reverse_self Δ
             ((ntm.mvar (F := F) [] x).subst θ) π
           exact alphaEquiv_trans Δ _ _ _ hperm hself
-        -- Goal still uses the raw permute form; convert via hu_perm_def.
         have huperm_eq : (ntm.atm (F := F) (X := X) a).permute π.reverse = u_perm := by
           simp [ntm.permute, u_perm]
         rw [huperm_eq]
@@ -453,7 +405,6 @@ lemma unifStep_next_le
     | mvar π x =>
       cases t with
       | atm a =>
-        -- mvar-atm: instantiation, arm 3 with u = .atm a.
         have heq : unifStep (UnifConstraint.unif (X := X) (ntm.mvar π x) (ntm.atm a)) rest σ
             = .next (rest.applySubst [(x, (ntm.atm (F := F) a).permute π.reverse)])
                     (σ.comp [(x, (ntm.atm (F := F) a).permute π.reverse)]) := by
@@ -464,7 +415,6 @@ lemma unifStep_next_le
         have hu : (Δ ⊢ u_perm.subst θ ≈α (ntm.mvar (F := F) [] x).subst θ) = true := by
           have hu_subst : u_perm.subst θ = u_perm := by simp [u_perm]
           rw [hu_subst]
-          -- hc: Δ ⊢ (mvar π x).subst θ ≈α .atm a.  Symm + same as atm-mvar.
           have hc_simpl : (Δ ⊢ (ntm.mvar (F := F) π x).subst θ ≈α
                               ntm.atm (F := F) (X := X) a) = true := by
             simpa [UnifConstraint.applySubst, UnifConstraint.toConstraint,
@@ -494,7 +444,6 @@ lemma unifStep_next_le
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
           refine ⟨⟨?_, hidem⟩, habs⟩
-          -- Extract α-equivalence from hc, convert to fresh constraints via invariance_mpr.
           have hcα : (Δ ⊢ ((ntm.mvar (F := F) [] x).subst θ).permute π ≈α
                           ((ntm.mvar (F := F) [] x).subst θ).permute π') = true := by
             have hraw : alphaEquiv Δ ((ntm.mvar (F := F) π x).subst θ)
@@ -508,7 +457,6 @@ lemma unifStep_next_le
           have hfreshAll := alphaEquiv_invariance_mpr Δ
             ((ntm.mvar (F := F) [] x).subst θ) π π' hcα
           intro c' hc'
-          -- c' ∈ ((rest ++ dsList.map ...).applySubst θ).toConstraint.
           simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_append,
                      List.mem_append] at hc'
           rcases hc' with hc''_rest | hc''_ds
@@ -539,7 +487,6 @@ lemma unifStep_next_le
           · exact UnifProblem.entails_applyOne_of_entails Δ θ x u_perm hu rest hrest
           · exact Subst.absorbedBy_append Δ σ θ x u_perm habs hu
       | fapp f ts =>
-        -- mvar-fapp: arm 3 instantiation if occursIn = false.
         by_cases hocc : (ntm.fapp (X := X) (𝔸 := 𝔸) f ts).occursIn x
         · simp [unifStep, hocc] at h
         · have hocc_false : (ntm.fapp (X := X) (𝔸 := 𝔸) f ts).occursIn x = false :=
@@ -560,7 +507,6 @@ lemma unifStep_next_le
           · exact UnifProblem.entails_applyOne_of_entails Δ θ x u_perm hu rest hrest
           · exact Subst.absorbedBy_append Δ σ θ x u_perm habs hu
       | abs b t' =>
-        -- mvar-abs: arm 3 instantiation.
         by_cases hocc : (ntm.abs (F := F) (X := X) b t').occursIn x
         · simp [unifStep, hocc] at h
         · have hocc_false : (ntm.abs (F := F) (X := X) b t').occursIn x = false :=
@@ -584,7 +530,6 @@ lemma unifStep_next_le
       cases t with
       | atm _ => simp [unifStep] at h
       | mvar π x =>
-        -- fapp-mvar: arm 4 instantiation if occursIn = false.
         by_cases hocc : (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).occursIn x
         · simp [unifStep, hocc] at h
         · have hocc_false : (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).occursIn x = false :=
@@ -616,19 +561,16 @@ lemma unifStep_next_le
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
           refine ⟨⟨?_, hidem⟩, habs⟩
-          -- Extract alphaEquivList from hc.
           simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
                      Constraint.Entails, ntm.subst_fapp, alphaEquiv,
                      decide_eq_true_eq] at hc
           obtain ⟨_, halist⟩ := hc
-          -- Entailment for zip-mapped constraints + rest.
           intro c' hc'
           simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_append,
                      List.mem_append] at hc'
           rcases hc' with hc''_zip | hc''_rest
           · -- zip-mapped: use alphaEquivList_imp_zip_entails.
             have hzip := alphaEquivList_imp_zip_entails ss ts hlen halist
-            -- Rewrite c''_zip's shape to apply hzip.
             simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_map,
                        List.mem_map, Function.comp] at hc''_zip
             obtain ⟨p, hp_mem, rfl⟩ := hc''_zip
@@ -643,7 +585,6 @@ lemma unifStep_next_le
       cases t with
       | atm _ => simp [unifStep] at h
       | mvar π x =>
-        -- abs-mvar: arm 4 instantiation.
         by_cases hocc : (ntm.abs (F := F) (X := X) a s').occursIn x
         · simp [unifStep, hocc] at h
         · have hocc_false : (ntm.abs (F := F) (X := X) a s').occursIn x = false :=
@@ -673,8 +614,6 @@ lemma unifStep_next_le
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
           refine ⟨⟨?_, hidem⟩, habs⟩
-          -- head: from hc (alphaEquiv abs-abs same reduces to children).
-          -- tail: from hrest.
           intro c' hc'
           rcases List.mem_cons.mp hc' with rfl | hc''
           · -- head case: alphaEquiv Δ (s'.subst θ) (t'.subst θ).
@@ -685,7 +624,6 @@ lemma unifStep_next_le
           · -- tail in rest.applySubst θ.toConstraint.
             exact hrest c' hc''
         · -- abs-abs different binder: σ_next = σ.
-          -- Pr' = .unif (s'.permute [(b, a)]) t' :: .fresh b s' :: rest.
           have heq : unifStep (UnifConstraint.unif (X := X) (ntm.abs a s') (ntm.abs b t')) rest σ
               = .next (UnifConstraint.unif (s'.permute [(b, a)]) t'
                        :: UnifConstraint.fresh b s' :: rest) σ := by
@@ -693,7 +631,6 @@ lemma unifStep_next_le
           rw [heq] at h; injection h with hPr hσ
           subst hPr; subst hσ
           refine ⟨⟨?_, hidem⟩, habs⟩
-          -- Decompose hc: alphaEquiv (.abs a ...) (.abs b ...) with a ≠ b.
           simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
                      Constraint.Entails, ntm.subst_abs, alphaEquiv, if_neg hab,
                      decide_eq_true_eq] at hc
@@ -710,8 +647,6 @@ lemma unifStep_next_le
               exact hcfr
             · exact hrest c' hc'''
 
--- (4a, ctx variant) Same converse for the `.ctx a x` case: the freshness
--- constraint `(a, x)` is deferred, σ is unchanged, and θ carries to `rest`.
 lemma unifStep_ctx_le
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
     (a : 𝔸) (x : X)
@@ -726,11 +661,9 @@ lemma unifStep_ctx_le
     apply hΓ c'
     rw [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons]
     exact List.mem_cons_of_mem _ hc'
-  -- .ctx only arises from c = .fresh b (.mvar π x'), a = π.reverse · b, x = x'.
   cases c with
   | unif s t =>
     exfalso
-    -- unifStep on .unif never returns .ctx.
     cases s <;> cases t <;> simp [unifStep, ntm.occursIn] at h <;>
       first
         | (split_ifs at h <;> cases h)
@@ -770,7 +703,6 @@ lemma unifStep_ctx_le
       injection h with ha hx
       subst ha; subst hx
       refine ⟨⟨hrest, hidem⟩, ?_⟩
-      -- hΓ gives Δ ⊢ b # (mvar π x').subst θ; convert via fresh_equivariance.
       have hcfresh : (Δ ⊢ b # (ntm.mvar (F := F) π x').subst θ) = true := by
         have hcent := entails_head_of_satisfies
             (UnifConstraint.fresh (X := X) b (ntm.mvar π x')) rest Δ θ ⟨hΓ, hidem⟩
@@ -782,10 +714,6 @@ lemma unifStep_ctx_le
           LPermApply_reverse_right]
       exact hcfresh
 
--- Term size (counts every node, including leaves).  Used for the occurs-check
--- completeness argument: if `x` occurs strictly inside `u`, then `u.subst θ`
--- is strictly larger than `(.mvar π x).subst θ`, contradicting α-equivalence
--- (which preserves size).
 mutual
   def ntm.size : ntm F X 𝔸 → ℕ
     | .atm _     => 1
@@ -810,7 +738,6 @@ end
 @[simp] lemma ntmList.sumSize_cons (t : ntm F X 𝔸) (ts : List (ntm F X 𝔸)) :
     ntmList.sumSize (t :: ts) = t.size + ntmList.sumSize ts := rfl
 
--- Permutation preserves size (renames atoms only, no structural change).
 mutual
   lemma ntm.size_permute (t : ntm F X 𝔸) (π : LPerm 𝔸) :
       (t.permute π).size = t.size := by
@@ -834,7 +761,6 @@ mutual
         rw [ntm.size_permute t π, ntmList.sumSize_permute ts' π]
 end
 
--- α-equivalence preserves size.
 mutual
   lemma ntm.alphaEquiv_size (Γ : Context 𝔸 X) (s t : ntm F X 𝔸)
       (h : (Γ ⊢ s ≈α t) = true) : s.size = t.size := by
@@ -880,11 +806,8 @@ mutual
         rw [ntm.alphaEquiv_size Γ s t h.1, ntm.alphaEquivList_sumSize Γ ss' ts' h.2]
 end
 
--- size of (u.subst θ) for non-mvar `u` containing `x`: strictly larger than
--- `(.mvar [] x).subst θ`. Used to refute occurs-check failures.
 mutual
-  /-- The size of `t.subst θ` is at least the size of every variable substitution
-      `(.mvar [] x).subst θ` for every `x ∈ vars(t)`. -/
+  /-- `(.mvar [] x).subst θ` is bounded by `t.subst θ` in size when `x ∈ vars(t)`. -/
   lemma ntm.size_subst_ge_var (t : ntm F X 𝔸) (θ : Subst F X 𝔸) (x : X)
       (h : t.occursIn x = true) :
       ((ntm.mvar (F := F) [] x).subst θ).size ≤ (t.subst θ).size := by
@@ -925,9 +848,6 @@ mutual
             omega
 end
 
--- The strict version: if `u` is not a bare metavariable (has a non-trivial head
--- constructor) and `x ∈ vars(u)`, then `u.subst θ` is strictly larger than
--- `(.mvar [] x).subst θ`.
 lemma ntm.size_subst_gt_var_of_nonmvar (u : ntm F X 𝔸) (θ : Subst F X 𝔸) (x : X)
     (hocc : u.occursIn x = true)
     (hnon : ∀ π y, u ≠ ntm.mvar π y) :
@@ -946,8 +866,6 @@ lemma ntm.size_subst_gt_var_of_nonmvar (u : ntm F X 𝔸) (θ : Subst F X 𝔸) 
       have := ntm.size_subst_ge_var t' θ x hocc
       omega
 
--- Helper: `simplifyFresh` failure means `a` cannot be made fresh for `t.subst θ`
--- in any context.  Proven by mutual induction over `t`.
 mutual
   lemma simplifyFresh_none_subst_not_fresh (a : 𝔸) (t : ntm F X 𝔸)
       (h : simplifyFresh (X := X) a t = none) (Γ : Context 𝔸 X) (θ : Subst F X 𝔸) :
@@ -959,7 +877,6 @@ mutual
         subst hab
         simp [fresh]
     | .mvar π x =>
-        -- simplifyFresh on .mvar never returns none.
         simp [simplifyFresh] at h
     | .abs b t' =>
         simp only [simplifyFresh] at h
@@ -999,7 +916,6 @@ mutual
             | some cs₂ => rw [hsfl] at h; cases h
 end
 
--- Helper: alphaEquivList preserves length.
 private lemma alphaEquivList_length_eq {Γ : Context 𝔸 X} :
     ∀ {l1 l2 : List (ntm F X 𝔸)}, alphaEquivList Γ l1 l2 = true → l1.length = l2.length
   | [], [], _ => rfl
@@ -1009,9 +925,7 @@ private lemma alphaEquivList_length_eq {Γ : Context 𝔸 X} :
       simp [alphaEquivList] at h
       exact congrArg (· + 1) (alphaEquivList_length_eq h.2)
 
--- (4b) Failure implies no solution.
 -- Analogue of Maribel's claim that `.fail` is terminal: clash (atm/fapp) or
--- occurs-check violation rules out every potential (Δ, θ).
 lemma unifStep_fail_no_solution
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
     (h : unifStep c rest σ = .fail) :
@@ -1023,7 +937,6 @@ lemma unifStep_fail_no_solution
   | fresh a t =>
     cases t with
     | mvar π x =>
-      -- unifStep returns .ctx — not .fail. Contradiction.
       simp [unifStep] at h
     | atm b =>
       by_cases hab : a = b
@@ -1050,10 +963,6 @@ lemma unifStep_fail_no_solution
       | some cs =>
         simp [unifStep, hsf] at h
   | unif s t =>
-    -- Clash and occurs-check cases.  Strategy: case-analyse s and t, then for
-    -- each pair reduce `unifStep` by `simp [unifStep]`.  Clash cases derive
-    -- contradiction from α-equivalence; occurs-check cases require the
-    -- forthcoming size lemma and are STUBBED.
     cases s with
     | atm a =>
       cases t with
@@ -1063,7 +972,6 @@ lemma unifStep_fail_no_solution
         · simp [UnifConstraint.applySubst, UnifConstraint.toConstraint, Constraint.Entails,
                 alphaEquiv, hab] at hc
       | mvar π x =>
-        -- arm 4 (.atm a, .mvar π x): occursIn x of atm is false ⇒ .next.
         simp [unifStep, ntm.occursIn] at h
       | fapp _ _ =>
         simp [UnifConstraint.applySubst, UnifConstraint.toConstraint, Constraint.Entails,
@@ -1076,12 +984,10 @@ lemma unifStep_fail_no_solution
       | atm _ =>
         simp [unifStep, ntm.occursIn] at h
       | mvar π' y =>
-        -- mvar/mvar: both branches return .next.
         by_cases hxy : x = y
         · simp [unifStep, hxy] at h
         · simp [unifStep, hxy] at h
       | fapp f ts =>
-        -- arm 3: occurs-check failure ⇒ u.occursIn x = true.
         have hocc : (ntm.fapp (X := X) (𝔸 := 𝔸) f ts).occursIn x = true := by
           by_contra hne
           have hne' : (ntm.fapp (X := X) (𝔸 := 𝔸) f ts).occursIn x = false :=
@@ -1113,7 +1019,6 @@ lemma unifStep_fail_no_solution
         simp [UnifConstraint.applySubst, UnifConstraint.toConstraint, Constraint.Entails,
               alphaEquiv] at hc
       | mvar π x =>
-        -- arm 4: occurs-check for fapp side.
         have hocc : (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).occursIn x = true := by
           by_contra hne
           have hne' : (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).occursIn x = false :=
@@ -1132,7 +1037,6 @@ lemma unifStep_fail_no_solution
         · -- f ≠ g or |ss| ≠ |ts|.
           simp [UnifConstraint.applySubst, UnifConstraint.toConstraint, Constraint.Entails,
                 alphaEquiv] at hc
-          -- hc : f = g ∧ alphaEquivList Δ ... ... = true.
           obtain ⟨hfeq, halist⟩ := hc
           subst hfeq
           have hlen := alphaEquivList_length_eq halist
@@ -1147,7 +1051,6 @@ lemma unifStep_fail_no_solution
         simp [UnifConstraint.applySubst, UnifConstraint.toConstraint, Constraint.Entails,
               alphaEquiv] at hc
       | mvar π x =>
-        -- arm 4: occurs-check for abs side.
         have hocc : (ntm.abs (F := F) (X := X) a s').occursIn x = true := by
           by_contra hne
           have hne' : (ntm.abs (F := F) (X := X) a s').occursIn x = false :=
@@ -1168,9 +1071,6 @@ lemma unifStep_fail_no_solution
         · simp [unifStep, hab] at h
         · simp [unifStep, hab] at h
 
--- (4c) Transitive converse: every solution of the input `Pr` factors through
--- the substitution produced by `unify`, modulo the deferred freshness pairs.
--- Analogue of `P1-from-P2-red-plus`.
 lemma unify_le :
     ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
       (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸)
@@ -1197,7 +1097,6 @@ lemma unify_le :
     intro ds' σ' Δ θ h hθ habs hds
     rw [unify, hctx] at h
     obtain ⟨hθrest, hfresh⟩ := unifStep_ctx_le c rest σ a x Δ θ hctx hθ
-    -- New deferred = (a, x) :: ds.
     have hds_new : ∀ p ∈ (a, x) :: ds,
         (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
       intro p hp
@@ -1212,8 +1111,6 @@ lemma unify_le :
       unifStep_next_le c rest σ σ_next Pr' Δ θ hnext hθ habs
     exact ih ds' σ' Δ θ h hθPr' habs_next hds
 
--- (4d) `finalizeDeferred` compatibility: if the deferred pairs are satisfied
--- by θ in Δ, then Δ entails the resulting Γ under θ.
 -- This step has no direct Isabelle counterpart (Plan A divergence).
 lemma finalizeDeferred_le :
     ∀ (deferred : List (𝔸 × X)) (σ : Subst F X 𝔸)
@@ -1232,33 +1129,22 @@ lemma finalizeDeferred_le :
       | none => rw [hsf] at h; cases h
       | some cs =>
         rw [hsf] at h
-        -- Inductive hypothesis to apply: need EntailsUnder for the new Γ' after foldl.
-        -- Step 1: derive Δ ⊢ a # ((mvar [] x).subst σ).subst θ from absorbedBy + hdef.
         have hfresh_θ : (Δ ⊢ a # ((ntm.mvar (F := F) [] x).subst σ).subst θ) = true := by
           have h_a_in : (a, x) ∈ (a, x) :: tl := List.mem_cons_self
           have hfresh_θ_x := hdef (a, x) h_a_in
-          -- Δ ⊢ a # (mvar [] x).subst θ. Use absorbedBy + symm for substituted form.
           have habs_x := habs x
-          -- habs_x : Δ ⊢ ((mvar [] x).subst σ).subst θ ≈α (mvar [] x).subst θ.
           exact freshPreserves_alphaEquiv Δ a ((ntm.mvar (F := F) [] x).subst θ)
             (((ntm.mvar (F := F) [] x).subst σ).subst θ)
             hfresh_θ_x (alphaEquiv_symm Δ _ _ habs_x)
-        -- Step 2: apply simplifyFresh_subst_imp_entails to get Problem.Entails Δ (cs.applySubst θ).
         have hcs := simplifyFresh_subst_imp_entails Δ a θ
           ((ntm.mvar (F := F) [] x).subst σ) cs hsf hfresh_θ
-        -- Step 3: the foldl inserts leaves (.fresh a' (mvar [] x')) into Γ_init. Each is
-        -- entailed by Δ under θ from hcs.  Build new Γ_init' and recurse.
         set Γ_init' : Context 𝔸 X := cs.foldl (fun g c =>
           match c with
           | .fresh a' (.mvar [] x') => insert (a', x') g
           | _                       => g) Γ_init with hΓ_init'_def
         have hinit' : Γ_init'.EntailsUnder Δ θ = true := by
-          -- Show every entry in Γ_init' is satisfied under θ.
           simp only [Context.EntailsUnder, decide_eq_true_eq]
           intro p hp
-          -- p ∈ Γ_init' = foldl over cs starting from Γ_init.
-          -- Either p ∈ Γ_init (use hinit) or p was inserted from a .fresh a' (mvar [] x') in cs.
-          -- Helper claim: foldl insert preserves the property.
           have hfold_prop : ∀ (cs_pre : Problem F X 𝔸) (Γ₀ : Context 𝔸 X),
               (∀ q ∈ Γ₀, (Δ ⊢ q.1 # (ntm.mvar (F := F) [] q.2).subst θ) = true) →
               (∀ c' ∈ cs_pre, Constraint.Entails Δ (c'.applySubst θ) = true) →
@@ -1281,7 +1167,6 @@ lemma finalizeDeferred_le :
                   | mvar π x' =>
                     cases π with
                     | nil =>
-                      -- Insert (a', x').
                       intro q' hq'
                       rcases Finset.mem_insert.mp hq' with rfl | hq''
                       · -- q' = (a', x').  Use hentails on c0 = .fresh a' (.mvar [] x').
@@ -1307,13 +1192,11 @@ lemma finalizeDeferred_le :
             simp only [Problem.applySubst, List.mem_map]
             exact ⟨c', hc', rfl⟩
           exact hfold_prop cs Γ_init hΓ_init_prop hcs_prop p hp
-        -- Step 4: recurse.
         have hdef_tl : ∀ p ∈ tl, (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
           intro p hp; exact hdef p (List.mem_cons_of_mem _ hp)
         exact finalizeDeferred_le tl σ Γ_init' Γ Δ θ h habs hdef_tl hinit'
 
--- (Fase 5) Final theorem — Maribel Theorem 35 forward.
--- `solve` returns the most general unifier of `Pr`.
+-- Final theorem — Maribel Theorem 35.
 theorem UnifProblem.solve_principal
     (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X) (σ : Subst F X 𝔸)
     (h : Pr.solve = some (Γ, σ)) :
@@ -1324,7 +1207,6 @@ theorem UnifProblem.solve_principal
   case generality =>
     intro q hq
     obtain ⟨Δ, θ⟩ := q
-    -- Unpack `solve` into `unify` + `finalizeDeferred`.
     simp only [UnifProblem.solve] at h
     cases hu : unify Pr [] [] with
     | none => rw [hu] at h; cases h
@@ -1339,21 +1221,16 @@ theorem UnifProblem.solve_principal
         simp only [Option.some.injEq, Prod.mk.injEq] at h
         obtain ⟨hΓeq, hσeq⟩ := h
         subst hΓeq; subst hσeq
-        -- σ starts empty: absorbedBy trivially holds.
         have habs0 : Subst.absorbedBy Δ ([] : Subst F X 𝔸) θ :=
           Subst.absorbedBy_nil Δ θ
-        -- ds starts empty: deferred property trivially holds.
         have hds0 : ∀ p ∈ ([] : List (𝔸 × X)),
             (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
           intros _ h; cases h
-        -- Apply unify_le.
         obtain ⟨habs_u, hds_u⟩ :=
           unify_le Pr [] [] ds σ_u Δ θ hu hq habs0 hds0
-        -- Apply finalizeDeferred_le.
         have hinit_empty : (∅ : Context 𝔸 X).EntailsUnder Δ θ = true := by
           simp [Context.EntailsUnder]
         have hΓ_under := finalizeDeferred_le ds σ_u ∅ Γ_fin Δ θ hf habs_u hds_u hinit_empty
-        -- Assemble SolutionLe (Γ, σ) (Δ, θ) with witness σ' = θ.
         refine ⟨θ, ?_, ?_⟩
         · -- ∀ x, Δ ⊢ ((mvar [] x).subst σ).subst θ ≈α (mvar [] x).subst θ.
           exact habs_u

@@ -6,15 +6,10 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- (Definition 4: Substitution).
--- σ ::= Id | [X↦s]σ
--- Represented as a list: [] = Id, (Y, s) :: σ = [Y↦s]σ.
-
-/-- A substitution is a list of variable-term bindings, applied left-to-right. -/
+/-- A substitution (Def. 4): list of variable-term bindings, applied left-to-right. -/
 abbrev Subst (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] :=
   List (X × ntm F X 𝔸)
 
--- (Action of a single binding [Y↦s] on a term).
 
 /-- `t[Y↦s]`: replace every suspended occurrence `π·Y` with `π·s`; leave all else unchanged. -/
 def ntm.applyOne : ntm F X 𝔸 → X → ntm F X 𝔸 → ntm F X 𝔸
@@ -23,7 +18,6 @@ def ntm.applyOne : ntm F X 𝔸 → X → ntm F X 𝔸 → ntm F X 𝔸
   | .fapp f ts, Y, s => .fapp f (ts.map fun t => t.applyOne Y s)
   | .abs a t,   Y, s => .abs a (t.applyOne Y s)
 
--- (Simultaneous substitution.)
 
 /-- Look up the term bound to `x` in `σ` (first match wins). -/
 def Subst.lookup : Subst F X 𝔸 → X → Option (ntm F X 𝔸)
@@ -44,7 +38,6 @@ def ntm.subst : ntm F X 𝔸 → Subst F X 𝔸 → ntm F X 𝔸
   | .fapp f ts, σ => .fapp f (ts.map fun t => t.subst σ)
   | .abs a t,   σ => .abs a (t.subst σ)
 
--- (Shape lemmas — now definitional.)
 
 @[simp] lemma ntm.subst_atm (b : 𝔸) (σ : Subst F X 𝔸) :
     (ntm.atm (F := F) (X := X) b).subst σ = ntm.atm b := by
@@ -79,7 +72,6 @@ lemma ntm.substList_nil : ∀ (ts : List (ntm F X 𝔸)), ts.map (·.subst []) =
   | t :: ts' => by simp only [List.map_cons, ntm.subst_nil t, ntm.substList_nil ts']
 end
 
--- (Single binding [Y↦s] on a term = subst by a singleton; still a useful shape.)
 
 /-- Single-step: `(π·t)[Y↦s] ≡ π·(t[Y↦s])`. -/
 lemma ntm.applyOne_permute (t : ntm F X 𝔸) (Y : X) (s : ntm F X 𝔸) (π : LPerm 𝔸) :
@@ -117,13 +109,8 @@ lemma ntm.subst_permute : ∀ (t : ntm F X 𝔸) (π : LPerm 𝔸) (σ : Subst F
       simp only [ntm.permute, ntm.subst_abs]
       rw [ntm.subst_permute t π σ]
 
--- (Composition of simultaneous substitutions.)
--- Under simultaneous substitution, `subst (σ ++ τ) ≠ (subst σ) ∘ subst τ` in
--- general (append prepends bindings, it does not compose them).  The correct
--- composition applies `τ` to the *range* of `σ` and then appends `τ`.
 
-/-- Composition: `t.subst (σ.comp τ) = (t.subst σ).subst τ`.  Applies `τ` to each
-    value of `σ`, then falls back to `τ` for variables outside `dom σ`. -/
+/-- Composition: `t.subst (σ.comp τ) = (t.subst σ).subst τ`. -/
 def Subst.comp (σ τ : Subst F X 𝔸) : Subst F X 𝔸 :=
   σ.map (fun p => (p.1, p.2.subst τ)) ++ τ
 
@@ -171,13 +158,11 @@ lemma ntm.subst_comp : ∀ (t : ntm F X 𝔸) (σ τ : Subst F X 𝔸),
       simp only [ntm.subst_abs]
       rw [ntm.subst_comp t σ τ]
 
--- (Idempotence — condition (2) of Definition 27).
 
 /-- A substitution is idempotent: `Xσ ≡ Xσσ` for all `X`. -/
 def Subst.IsIdempotent (σ : Subst F X 𝔸) : Prop :=
   ∀ x : X, (ntm.mvar (F := F) [] x).subst σ = ((ntm.mvar (F := F) [] x).subst σ).subst σ
 
--- (Domain of a substitution).
 
 /-- The set of variables on the left-hand side of bindings in `σ`. -/
 def Subst.dom (σ : Subst F X 𝔸) : Finset X :=
@@ -198,8 +183,7 @@ def Subst.dom (σ : Subst F X 𝔸) : Finset X :=
     Subst.dom ([(x, s)] : Subst F X 𝔸) = {x} := by
   simp [Subst.dom]
 
-/-- Composition has the same domain as append: `dom (σ.comp τ) = dom σ ∪ dom τ`.
-    (The `map` in `comp` preserves the first components.) -/
+/-- `dom (σ.comp τ) = dom σ ∪ dom τ`. -/
 @[simp] lemma Subst.dom_comp (σ τ : Subst F X 𝔸) :
     Subst.dom (σ.comp τ) = Subst.dom σ ∪ Subst.dom τ := by
   unfold Subst.comp
@@ -207,5 +191,13 @@ def Subst.dom (σ : Subst F X 𝔸) : Finset X :=
   congr 1
   simp only [Subst.dom, List.map_map]
   congr 1
+
+/-- `find?`-based lookup: first bound value, or bare `mvar` if unbound. -/
+def Subst.lookupSim (σ : Subst F X 𝔸) (x : X) : ntm F X 𝔸 :=
+  (σ.find? (fun p => p.1 == x)).elim (ntm.mvar [] x) Prod.snd
+
+/-- Send each domain variable to its full image under `σ`. -/
+def Subst.normalize (σ : Subst F X 𝔸) : Subst F X 𝔸 :=
+  σ.map (fun p => (p.1, (ntm.mvar (F := F) [] p.1).subst σ))
 
 end Nominal

@@ -7,7 +7,6 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- (Reflexivity of ≈α ).
 mutual
 /-- α-equivalence is reflexive: every term is α-equivalent to itself. -/
     theorem alphaEquiv_refl (Γ : Context 𝔸 X) (t : ntm F X 𝔸) :
@@ -31,7 +30,6 @@ mutual
         exact ⟨alphaEquiv_refl Γ t, alphaEquivList_refl Γ tl⟩
   end
 
--- (Symmetry of ≈α ).
 mutual
   /-- α-equivalence is symmetric. -/
   theorem alphaEquiv_symm (Γ : Context 𝔸 X) (s t : ntm F X 𝔸)
@@ -102,7 +100,6 @@ mutual
       exact ⟨alphaEquiv_symm Γ s t h.1, alphaEquivList_symm Γ ss' ts' h.2⟩
 end
 
--- (Transitivity of ≈α ).
 mutual
 /-- α-equivalence is transitive. -/
   theorem alphaEquiv_trans (Γ : Context 𝔸 X) (t₁ t₂ t₃ : ntm F X 𝔸)
@@ -261,7 +258,6 @@ mutual
     · simp [ntmSize.ntmSizeList]
 end
 
--- (Congruence of ≈α — second half of Theorem 24.)
 
 /-- Congruence under abstraction: if `s ≈α t` then `[a]s ≈α [a]t`. (≈αabsa) -/
 theorem alphaEquiv_abs_congr (Γ : Context 𝔸 X) (a : 𝔸) (s t : ntm F X 𝔸)

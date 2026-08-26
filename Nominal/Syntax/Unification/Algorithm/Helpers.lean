@@ -8,12 +8,7 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
--- ============================================================
--- Helpers for the termination proof.
--- ============================================================
 
--- The foldl defining unifVars is monotone in its accumulator:
--- if acc ⊆ acc' then foldl_unifVars acc Pr ⊆ foldl_unifVars acc' Pr.
 lemma unifVars_foldl_mono (Pr : UnifProblem F X 𝔸) {acc acc' : Finset X}
     (h : acc ⊆ acc') :
     Pr.foldl (fun a c => match c with
@@ -56,7 +51,6 @@ lemma UnifProblem.unifDepthMs_append (Pr Pr' : UnifProblem F X 𝔸) :
     (Pr ++ Pr').unifDepthMs = Pr.unifDepthMs + Pr'.unifDepthMs := by
   simp [UnifProblem.unifDepthMs, List.map_append, ← Multiset.coe_add]
 
--- foldl over an all-fresh problem leaves the accumulator unchanged.
 lemma unifVars_foldl_fresh_stable (Pr : UnifProblem F X 𝔸) (acc : Finset X)
     (hall : ∀ c ∈ Pr, ∃ a t, c = UnifConstraint.fresh a t) :
     Pr.foldl (fun a c => match c with
@@ -100,7 +94,6 @@ mutual
          (ntmList.metavars_applyOne_le ts' x s hs)
  end
 
--- Every constraint produced by simplifyFresh is a `.fresh` with depth ≤ the original term's depth.
 mutual
   lemma simplifyFresh_constraints_le (a : 𝔸) (t : ntm F X 𝔸) {cs : Problem F X 𝔸}
       (h : simplifyFresh a t = some cs) :
@@ -168,8 +161,6 @@ lemma unifVars_foldl_applySubst_le
     | nil => simp [UnifProblem.applySubst]
     | cons c rest ih =>
       simp only [UnifProblem.applySubst, List.map_cons, List.foldl_cons]
-      -- step 1: IH at acc' = f acc (c.applySubst)
-      -- step 2: mono from (f acc c.applySubst) ⊆ (f acc c)
       apply Finset.Subset.trans (ih _)
       apply unifVars_foldl_mono
       cases c with
@@ -239,7 +230,6 @@ lemma le_unifVars_foldl (Pr : UnifProblem F X 𝔸) (acc : Finset X) :
     | fresh _ _ => exact Finset.Subset.refl _
     | unif s t  => exact Finset.subset_union_left
 
--- x always in unifVars of a unif constraint mentioning it
 lemma unifVars_mem_of_unif_mvar (x : X) (π : LPerm 𝔸) (u : ntm F X 𝔸)
     (rest : UnifProblem F X 𝔸) :
     x ∈ UnifProblem.unifVars (UnifConstraint.unif (ntm.mvar π x) u :: rest) := by

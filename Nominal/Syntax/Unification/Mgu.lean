@@ -1,5 +1,4 @@
 import Nominal.Syntax.Unification.Completeness
-import Nominal.Syntax.Unification.SimSubst
 
 namespace Nominal
 
@@ -30,28 +29,7 @@ lemma Subst.lookup_mem {σ : Subst F X 𝔸} {y : X} {s : ntm F X 𝔸}
       · rename_i he; subst he; simp only [Option.some.injEq] at h; subst h; simp
       · exact List.mem_cons_of_mem _ (ih h)
 
--- ===========================================================================
--- Explicit most-general-unifier mediator.
---
--- The completeness proof shows the algorithm's substitution `σ` is principal by
--- using each competing solution `θ` as its own mediator (`θ` absorbs itself).
--- Here we build the *canonical* mediator instead: for a solution `θ`, the
--- substitution `σ' := θ` with the bindings whose variable is already in
--- `dom σ` removed.  We prove `σ'` has domain disjoint from `σ` and still
--- witnesses `Xσσ' ≈α Xθ`.  This is the "`θ` is `σ` composed with a further,
--- independent instantiation `σ'`" statement expected in unification theory.
---
--- Throughout, `Xσ` abbreviates `(ntm.mvar [] X).subst σ`.  Substitution is
--- simultaneous, so `Subst.comp` is genuine composition and dropping the `dom σ`
--- bindings from a solved-form `θ` is harmless (the dropped variables cannot
--- reappear).  Solutions are reduced to solved form (`reduce`) when needed.
--- ===========================================================================
 
--- If a term `v` is fixed by `σ` and a variable `z` occurs in `v`, then `σ` also
--- fixes the bare metavariable `z`.  (Contrapositive: a variable that `σ` moves
--- cannot occur in any `σ`-fixed term.)  Proved by induction on `v`; the `mvar`
--- case cancels the suspended permutation using that `permute` preserves the
--- metavariable and its suspension list.
 mutual
   lemma ntm.subst_fixed_of_occurs {σ : Subst F X 𝔸} {z : X} :
       ∀ {v : ntm F X 𝔸}, v.subst σ = v → v.occursIn z = true →
@@ -61,18 +39,14 @@ mutual
         simp only [ntm.occursIn, beq_iff_eq] at hocc
         subst hocc
         rw [ntm.subst_mvar] at hfix
-        -- hfix : ntm.permute π ((mvar [] z).subst σ) = mvar π z ; goal : (mvar [] z).subst σ = mvar [] z
         generalize hm : (ntm.mvar (F := F) [] z).subst σ = m at hfix ⊢
-        -- `permute π m` is a metavariable, so `m` is a metavariable.
         cases m with
         | atm _ => simp [ntm.permute] at hfix
         | fapp _ _ => simp [ntm.permute] at hfix
         | abs _ _ => simp [ntm.permute] at hfix
         | mvar ρ x =>
             simp only [ntm.permute] at hfix
-            -- hfix : mvar (π ++ ρ) x = mvar π z
             injection hfix with hlist hx
-            -- hlist : π ++ ρ = π, hx : x = z
             have hρ : ρ = [] := by
               have hlen := congrArg List.length hlist
               simp only [List.length_append] at hlen
@@ -104,18 +78,9 @@ mutual
         · exact ntmList.subst_fixed_of_occurs hts' hocc
 end
 
--- A substitution is in *solved form* when no variable of its domain occurs in
--- any of its (raw) binding values, i.e. `dom σ ∩ range σ = ∅`.  It implies
--- idempotence of the action (`SolvedForm.isIdempotent`), and is strictly
--- stronger: `[X ↦ Y, Y ↦ Y]` is idempotent but not solved (`Y` is in the domain
--- and in the value `Y` of `X`).  Under simultaneous substitution such a gap needs
--- a trivial self-binding `Y ↦ Y`, which the algorithm never emits — so its output
--- is genuinely solved.  Solved form is what makes dropping bindings safe.
 def Subst.SolvedForm (σ : Subst F X 𝔸) : Prop :=
   ∀ p ∈ σ, ∀ z ∈ σ.dom, p.2.occursIn z = false
 
--- `applyOne Y s` does not introduce an occurrence of `z ≠ Y`, as long as `z`
--- occurs in neither the term nor `s`.
 mutual
   lemma ntm.occursIn_applyOne_of_ne {Y : X} {s : ntm F X 𝔸} {z : X}
       (hzY : z ≠ Y) (hs : s.occursIn z = false) :
@@ -144,10 +109,6 @@ mutual
                ntmList.occursIn_applyOne_of_ne hzY hs ht.2⟩
 end
 
--- Substituting by `σ` cannot introduce a variable `w` that all of `σ`'s values
--- avoid, if the term already avoids `w`.  Induction on the term `v`: at a
--- metavariable, the value (from `lookup`) avoids `w` by hypothesis, and the
--- suspended permutation does not affect `occursIn`.
 mutual
 lemma ntm.occursIn_subst_of_avoid {w : X} {σ : Subst F X 𝔸}
     (hσ : ∀ p ∈ σ, p.2.occursIn w = false) :
@@ -182,10 +143,6 @@ lemma ntmList.occursIn_substList_of_avoid {w : X} {σ : Subst F X 𝔸}
              ntmList.occursIn_substList_of_avoid hσ hv.2⟩
 end
 
--- For a solved-form `σ`, the result `t.subst σ` avoids every variable of
--- `dom σ`: the domain variable is either removed (occurs-check on its binding)
--- or was never there, and no value reintroduces it (solved form).  Induction on
--- `σ`.
 mutual
 lemma ntm.subst_avoids_dom_of_solved (σ : Subst F X 𝔸) (hσ : σ.SolvedForm)
     (z : X) (hz : z ∈ σ.dom) :
@@ -218,8 +175,6 @@ lemma ntmList.substList_avoids_dom_of_solved (σ : Subst F X 𝔸) (hσ : σ.Sol
              ntmList.substList_avoids_dom_of_solved σ hσ z hz ts'⟩
 end
 
--- Looking up in `θ` filtered by "key ∉ dom σ": a key in `dom σ` is dropped
--- (misses), otherwise the lookup is unchanged.
 lemma Subst.lookup_filter_not_mem_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) (y : X) :
     Subst.lookup (θ.filter (fun p => decide (p.1 ∉ σ.dom))) y
       = if y ∈ σ.dom then none else Subst.lookup θ y := by
@@ -238,10 +193,6 @@ lemma Subst.lookup_filter_not_mem_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸
         · subst hy; simp [hY]
         · simp only [if_neg hy, ih]
 
--- Drop lemma: bindings of `θ` whose variable lies in `dom σ` are redundant when
--- acting on a term `u` free of the shared variables `dom σ ∩ dom θ`.  Induction
--- on `u`: at a metavariable `y`, either `y ∉ dom σ` (lookup unchanged) or
--- `y ∈ dom σ ∩ dom θ`, which `u` avoids — so `y` is not this metavariable.
 lemma ntm.subst_drop_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) :
     ∀ (u : ntm F X 𝔸),
       (∀ z ∈ σ.dom, z ∈ θ.dom → u.occursIn z = false) →
@@ -273,12 +224,6 @@ lemma ntm.subst_drop_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) :
       rw [ntm.subst_drop_dom θ t (fun z hz hzθ => by
         have := hu z hz hzθ; simpa only [ntm.occursIn] using this)]
 
--- Explicit most-general-unifier mediator (`θ ∖ dom σ`).
--- If `σ` is in solved form and `θ` is absorbed by `σ` in `Δ`, then `σ' := θ`
--- with the `dom σ` bindings removed is a mediator: its domain is disjoint from
--- `dom σ`, and `Xσσ' ≈α Xθ` for every metavariable `X`.  This is the canonical
--- "`θ` is `σ` followed by an independent instantiation `σ'`" form; the disjoint
--- domain is what makes it non-trivial (unlike the witness `σ' := θ`).
 theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
     (hσ : σ.SolvedForm) (habs : Subst.absorbedBy Δ σ θ) :
     ∃ σ' : Subst F X 𝔸,
@@ -286,8 +231,7 @@ theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
       (∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst σ'
                   ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
   refine ⟨θ.filter (fun p => decide (p.1 ∉ σ.dom)), ?_, ?_⟩
-  · -- The filter keeps only bindings whose variable avoids `dom σ`.
-    intro z hz
+  · intro z hz
     simp only [Subst.dom, List.mem_toFinset, List.mem_map] at hz
     obtain ⟨p, hpf, hpz⟩ := hz
     rw [List.mem_filter] at hpf
@@ -303,25 +247,12 @@ theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
     rw [ntm.subst_drop_dom θ ((ntm.mvar (F := F) [] x).subst σ) hu]
     exact habs x
 
--- ===========================================================================
--- The algorithm's output moves every domain variable (`MovesDom`) and is in
--- solved form (`SolvedForm`).  Both are threaded through the recursion `unify`,
--- mirroring `unify_preserves_idempotent`.  `MovesDom` is the auxiliary needed to
--- show that composing a fresh binding preserves `SolvedForm`.
---
--- `MovesDom σ` = every `z ∈ dom σ` is genuinely changed by `σ` (`z.subst σ ≠ z`).
--- The occurs-check guarantees this for each binding.
--- ===========================================================================
 
 /-- `σ` moves every variable of its domain. -/
 def Subst.MovesDom (σ : Subst F X 𝔸) : Prop :=
   ∀ z ∈ σ.dom, (ntm.mvar (F := F) [] z).subst σ ≠ ntm.mvar [] z
 
-/-- Appending an occurs-check-passing, `σ`-fixed binding preserves `MovesDom`.
-    For the new variable `x`, the value `u` avoids `x` (occurs-check), so
-    `x.subst = u ≠ x`.  For an old `z ∈ dom σ`, apply `subst σ` to a would-be
-    equation `(z.subst σ).applyOne x u = z`: the left side is `σ`-stable, so it
-    collapses to `z.subst σ = z`, contradicting `MovesDom σ`. -/
+/-- Appending an occurs-check-passing, `σ`-fixed binding preserves `MovesDom`. -/
 lemma Subst.MovesDom.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
     (hmove : σ.MovesDom) (hσ : σ.IsIdempotent) (hx : x ∉ σ.dom)
     (hu_fixed : u.subst σ = u) (hxu : u.occursIn x = false) :
@@ -345,9 +276,7 @@ lemma Subst.MovesDom.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X �
     rw [heq] at hxu
     simp [ntm.occursIn] at hxu
 
-/-- A `σ`-fixed value avoids every variable `σ` moves.  If `z ∈ dom σ` occurred
-    in the `σ`-fixed `u`, then `subst_fixed_of_occurs` would force `σ` to fix `z`,
-    contradicting `MovesDom σ`. -/
+/-- A `σ`-fixed value avoids every variable `σ` moves. -/
 lemma Subst.MovesDom.value_avoids_dom {σ : Subst F X 𝔸} {u : ntm F X 𝔸}
     (hmove : σ.MovesDom) (hu_fixed : u.subst σ = u) :
     ∀ z ∈ σ.dom, u.occursIn z = false := by
@@ -356,16 +285,13 @@ lemma Subst.MovesDom.value_avoids_dom {σ : Subst F X 𝔸} {u : ntm F X 𝔸}
   simp only [Bool.not_eq_false] at hocc
   exact hmove z hz (ntm.subst_fixed_of_occurs hu_fixed hocc)
 
-/-- `comp σ [(x, u)]` is in solved form, given the algorithm's invariants: `σ` is
-    solved and moves its domain, `x ∉ dom σ`, `u` is `σ`-fixed and passes the
-    occurs-check.  Each value of the composition is `s.applyOne x u` (or `u`), and
-    the domain is `dom σ ∪ {x}`; the occurs-check plus `value_avoids_dom` ensure
-    none of these values mentions a domain variable. -/
+/-- `comp σ [(x, u)]` is in solved form under the algorithm's invariants
+    (`σ` solved and moving its domain, `x ∉ dom σ`, `u` fixed by `σ` and
+    passing occurs-check). -/
 lemma Subst.SolvedForm.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X 𝔸}
     (hσ_solved : σ.SolvedForm) (hmove : σ.MovesDom) (hx : x ∉ σ.dom)
     (hu_fixed : u.subst σ = u) (hxu : u.occursIn x = false) :
     (σ.comp [(x, u)]).SolvedForm := by
-  -- `u` avoids every domain variable of `σ` and `x` itself.
   have hu_avoids : ∀ z ∈ Subst.dom (σ.comp [(x, u)]), u.occursIn z = false := by
     intro z hz
     rw [Subst.dom_comp, Subst.dom_singleton, Finset.mem_union, Finset.mem_singleton] at hz
@@ -373,11 +299,9 @@ lemma Subst.SolvedForm.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X
     · exact hmove.value_avoids_dom hu_fixed z hz
     · exact hxu
   intro p hp z hz
-  -- `p` is either a rewritten binding `(y, s.applyOne x u)` or `(x, u)`.
   simp only [Subst.comp, List.mem_append, List.map, List.mem_map, List.mem_singleton] at hp
   rcases hp with ⟨q, hq, rfl⟩ | rfl
-  · -- Rewritten binding: value is `s.subst [(x,u)] = s.applyOne x u`.
-    rw [ntm.subst_singleton]
+  · rw [ntm.subst_singleton]
     by_cases hzx : z = x
     · subst hzx; exact ntm.occursIn_applyOne_self q.2 z u hxu
     · have hsz : q.2.occursIn z = false := by
@@ -387,13 +311,10 @@ lemma Subst.SolvedForm.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X
         · exact hσ_solved q hq z hz
         · exact absurd rfl hzx
       exact ntm.occursIn_applyOne_of_ne hzx (hu_avoids z hz) hsz
-  · -- The added binding `(x, u)`.
-    exact hu_avoids z hz
+  · exact hu_avoids z hz
 
-/-- For an instantiation step, the three side-conditions on the new binding:
-    the variable is outside `dom σ`, the value is `σ`-fixed, and passes the
-    occurs-check.  Extracted uniformly from the invariants (mirrors the setup
-    inside `instantiation_invariant`). -/
+/-- The three side-conditions on the new binding of an instantiation step:
+    variable outside `dom σ`, value fixed by `σ`, occurs-check passing. -/
 lemma instantiation_binding_props
     (σ : Subst F X 𝔸) (rest : UnifProblem F X 𝔸) (c : UnifConstraint F X 𝔸)
     (x : X) (u_perm : ntm F X 𝔸)
@@ -413,11 +334,9 @@ lemma instantiation_binding_props
       left; exact hu_perm_in_c y hy_in
     exact hdisj y hy_all hy
 
-/-- Every `.next` step either leaves `σ` unchanged (non-instantiation steps) or
-    appends a single binding satisfying the three side-conditions.  This is the
-    uniform classifier used to thread `MovesDom` (and reusable for any other
-    binding-level invariant), mirroring the case split of
-    `unifStep_next_idempotent_and_disjoint`. -/
+/-- Every `.next` step either leaves `σ` unchanged (non-instantiation steps)
+    or appends a single binding satisfying the three side-conditions.
+    Uniform classifier used to thread `MovesDom` and similar invariants. -/
 lemma unifStep_next_binding_props
     (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸)
     (Pr' : UnifProblem F X 𝔸) (σ_next : Subst F X 𝔸)
@@ -659,10 +578,9 @@ theorem unify_preserves_solvedForm :
         (unifStep_next_movesDom c rest σ Pr' σ_next hnext hσ hdisj hmove)
         (unifStep_next_solvedForm c rest σ Pr' σ_next hnext hσ hdisj hmove hsolved)
 
-/-- The substitution produced by `solve` is in solved form.  This is the point
-    simultaneous substitution buys: the algorithm's output is genuinely a
-    solved-form (idempotent, `dom ∩ range = ∅`) substitution, not a triangular
-    one — so the mediator applies to `σ` directly, without normalisation. -/
+/-- The substitution produced by `solve` is in solved form (idempotent,
+    `dom ∩ range = ∅`) — the mediator applies to `σ` directly, without
+    normalisation. -/
 theorem UnifProblem.solve_solvedForm (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
     (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) : σ.SolvedForm := by
   simp only [UnifProblem.solve] at h
@@ -689,18 +607,8 @@ theorem UnifProblem.solve_solvedForm (Pr : UnifProblem F X 𝔸) (Γ : Context �
       exact unify_preserves_solvedForm Pr [] [] ds σ_u hu hσ_empty hdisj_empty
         hmove_empty hsolved_empty
 
--- ===========================================================================
--- End-to-end explicit mediator for the algorithm's output.
---
--- The algorithm's output `σ` is in solved form (`solve_solvedForm`), so the
--- explicit mediator `θ ∖ dom σ` (`solvedForm_mediator`) applies to it directly.
--- A competing solution `θ` need not be solved: its reduction `reduce θ` has the
--- same action (`subst_eq_reduce`) and feeds the mediator.  Assembled below into a
--- single statement: for `solve`'s output and any solution `θ`, the mediator works.
--- ===========================================================================
 
-/-- `Subst.lookup` (recursive) agrees with `Subst.lookupSim` (`find?`-based):
-    both return the first binding for `x`, defaulting to the bare metavariable. -/
+/-- `Subst.lookup` (recursive) agrees with `Subst.lookupSim` (`find?`-based). -/
 lemma Subst.lookup_getD_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
     (Subst.lookup ρ x).getD (ntm.mvar [] x) = ρ.lookupSim x := by
   unfold Subst.lookupSim
@@ -715,9 +623,8 @@ lemma Subst.lookup_getD_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
           simp only [beq_eq_false_iff_ne]; exact fun h => hxy h.symm
         rw [if_neg hxy, hyx, ih]
 
-/-- Every solution `(Δ, θ)` is absorbed by the algorithm's output `σ`.  This is
-    the absorption invariant established inside `solve_principal`, isolated here
-    so the explicit mediator can be assembled. -/
+/-- Every solution `(Δ, θ)` is absorbed by the algorithm's output `σ`.
+    Isolated from `solve_principal` so the explicit mediator can be assembled. -/
 theorem UnifProblem.solve_absorbedBy (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
     (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) (Δ : Context 𝔸 X)
     (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) : Subst.absorbedBy Δ σ θ := by
@@ -741,15 +648,6 @@ theorem UnifProblem.solve_absorbedBy (Pr : UnifProblem F X 𝔸) (Γ : Context �
         intros _ hp; cases hp
       exact (unify_le Pr [] [] ds σ_u Δ θ hu hq habs0 hds0).1
 
--- ===========================================================================
--- Removing the solved-form hypothesis on θ (ressalva b).
---
--- A competing solution θ need only be idempotent-as-an-action (Definition 27),
--- not in solved form: e.g. `[z ↦ x, x ↦ z]` acts as `z ↦ z, x ↦ z`.  Its
--- *reduction* `reduce θ` — normalise, then drop the now-trivial bindings
--- `z ↦ z` — is always in solved form (no `MovesDom` needed) and has the same
--- action as θ.  So the explicit mediator applies to any solution.
--- ===========================================================================
 
 /-- Auxiliary: if every element satisfying `P` also satisfies `Q`, then filtering
     by `Q` first does not change `find? P`. -/
@@ -765,8 +663,7 @@ private lemma find?_and_of_imp {α : Type*} {P Q : α → Bool} :
       · simp only [hp, Bool.false_and]
         exact find?_and_of_imp (fun a' ha' => h a' (by simp [ha']))
 
-/-- A binding is *trivial* when it maps its variable to itself (`x ↦ x`).
-    Structural test — avoids needing `DecidableEq` on terms. -/
+/-- A binding is *trivial* when it maps its variable to itself (`x ↦ x`). -/
 def Subst.isTrivialBinding (p : X × ntm F X 𝔸) : Bool :=
   match p.2 with
   | .mvar [] y => decide (y = p.1)
@@ -785,13 +682,12 @@ lemma Subst.not_isTrivial_iff {p : X × ntm F X 𝔸} :
       | nil => simp [decide_eq_false_iff_not, ntm.mvar.injEq]
       | cons b π' => simp [ntm.mvar.injEq]
 
-/-- The reduction of `σ`: its simultaneous normalisation with the now-trivial
-    self-bindings removed.  Always in solved form and equivalent in action. -/
+/-- The reduction of `σ`: simultaneous normalisation with trivial
+    self-bindings removed. -/
 def Subst.reduce (σ : Subst F X 𝔸) : Subst F X 𝔸 :=
   σ.normalize.filter (fun p => !Subst.isTrivialBinding p)
 
-/-- The reduction looks up each variable to its full image `x.subst θ` — same as
-    `normalize`, since dropping a trivial binding `x ↦ x` leaves the default `x`. -/
+/-- The reduction looks up each variable to its full image `x.subst θ`. -/
 lemma Subst.lookupSim_reduce (θ : Subst F X 𝔸) (x : X) :
     θ.reduce.lookupSim x = (ntm.mvar (F := F) [] x).subst θ := by
   have hn := Subst.lookupSim_normalize θ x
@@ -827,10 +723,7 @@ lemma Subst.lookupSim_reduce (θ : Subst F X 𝔸) (x : X) :
       cases hb : (!Subst.isTrivialBinding a) <;> cases hc : (a.1 == x) <;> simp
     rw [hcomm, find?_and_of_imp himp, hn]
 
-/-- Substitution by θ equals substitution by its reduction:
-    `t.subst θ = t.subst (reduce θ)` (both simultaneous; no hypothesis on θ).
-    On a metavariable `y`, `reduce θ` looks up the same image `θ` does
-    (`lookupSim_reduce`). -/
+/-- `t.subst θ = t.subst θ.reduce` (both simultaneous; no hypothesis on θ). -/
 lemma Subst.subst_eq_reduce (θ : Subst F X 𝔸) :
     ∀ t : ntm F X 𝔸, t.subst θ = t.subst θ.reduce
   | .atm a => by simp [ntm.subst_atm]
@@ -843,18 +736,6 @@ lemma Subst.subst_eq_reduce (θ : Subst F X 𝔸) :
       exact List.map_congr_left (fun t _ => Subst.subst_eq_reduce θ t)
   | .abs a t => by rw [ntm.subst_abs, ntm.subst_abs, Subst.subst_eq_reduce θ t]
 
--- ===========================================================================
--- Factorisation of a solution through the algorithm's output: `θ = σ.comp σ'`.
---
--- With *simultaneous* substitution `Subst.comp` is genuine composition
--- (`ntm.subst_comp`), so the mediator is phrased as "`θ` is `σ` composed with an
--- independent `σ'`": for the algorithm's output `σ` and any solution `(Δ, θ)`,
--- there is a `σ'` with domain disjoint from `dom σ` such that `σ.comp σ'` acts as
--- `θ` (modulo `≈α` in `Δ`) on every metavariable — the classical "`θ` is an
--- instance of the most general unifier `σ`", with `σ' = reduce θ ∖ dom σ` the
--- independent remainder.  (A raw idempotent θ need not be in solved form, so the
--- mediator is built from `reduce θ`, which has the same action — `subst_eq_reduce`.)
--- ===========================================================================
 theorem UnifProblem.solve_factors_comp (Pr : UnifProblem F X 𝔸)
     (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
     (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) :
@@ -864,7 +745,6 @@ theorem UnifProblem.solve_factors_comp (Pr : UnifProblem F X 𝔸)
                   ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
   have hσ_solved := UnifProblem.solve_solvedForm Pr Γ σ h
   have habs := UnifProblem.solve_absorbedBy Pr Γ σ h Δ θ hq
-  -- σ is already solved-form; transport absorption to (σ, reduce θ).
   have habs_red : Subst.absorbedBy Δ σ θ.reduce := by
     intro x
     rw [← Subst.subst_eq_reduce θ, ← Subst.subst_eq_reduce θ]
@@ -874,35 +754,19 @@ theorem UnifProblem.solve_factors_comp (Pr : UnifProblem F X 𝔸)
   rw [ntm.subst_mvar_nil_comp, Subst.subst_eq_reduce θ]
   exact hmed x
 
--- ===========================================================================
--- Converse: factorisation through σ implies absorption.
---
--- If `θ` factors through the algorithm's output `σ` as `σ.comp σ'` for *some*
--- `σ'` (`X(σ.comp σ') ≈α Xθ` on every metavariable), and `σ` is idempotent,
--- then `σ` is absorbed by `θ`.  Together with `solve_factors_comp` this gives
--- the equivalence "θ is absorbed by σ ⟺ θ factors through σ".  The proof is the
--- algebraic argument `σ.comp θ = σ.comp (σ.comp σ') = (σ.comp σ).comp σ' =
--- σ.comp σ' = θ`, carried out pointwise via `subst_comp` and idempotence.
--- ===========================================================================
 theorem Subst.absorbedBy_of_factors {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
     (σ' : Subst F X 𝔸) (hidem : σ.IsIdempotent)
     (hfact : ∀ x : X, (Δ ⊢ (ntm.mvar (F := F) [] x).subst (σ.comp σ')
                         ≈α (ntm.mvar (F := F) [] x).subst θ) = true) :
     Subst.absorbedBy Δ σ θ := by
   intro x
-  -- Congruence between `σ.comp σ'` and `θ`, applied to the term `Xσ`.
   have hcongr := ntm.alphaEquiv_subst_pointwise Δ (σ.comp σ') θ hfact
     ((ntm.mvar (F := F) [] x).subst σ)
-  -- `(Xσ)(σ.comp σ') = (Xσσ)σ' = (Xσ)σ'` by `subst_comp` + idempotence.
   rw [ntm.subst_comp, ntm.subst_idempotent hidem] at hcongr
-  -- `hcongr : Δ ⊢ (Xσ)σ' ≈α (Xσ)θ`;  `hfact x` rewrites to `(Xσ)σ' ≈α Xθ`.
   have hf := hfact x
   rw [ntm.subst_mvar_nil_comp] at hf
   exact alphaEquiv_trans Δ _ _ _ (alphaEquiv_symm Δ _ _ hcongr) hf
 
--- Absorption is equivalent to factorisation, for idempotent `σ`.  The forward
--- direction is trivial (`σ' := θ`, since `X(σ.comp θ) = Xσθ`); the backward
--- direction is `absorbedBy_of_factors`, which needs idempotence.
 theorem Subst.absorbedBy_iff_factors {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
     (hidem : σ.IsIdempotent) :
     Subst.absorbedBy Δ σ θ ↔
@@ -917,24 +781,12 @@ theorem Subst.absorbedBy_iff_factors {Δ : Context 𝔸 X} {σ θ : Subst F X �
   · rintro ⟨σ', hfact⟩
     exact Subst.absorbedBy_of_factors σ' hidem hfact
 
-/-- A solved-form substitution is idempotent: `Xσ` avoids every domain variable
-    (`subst_avoids_dom_of_solved`), so applying `σ` again leaves it fixed. -/
+/-- A solved-form substitution is idempotent. -/
 lemma Subst.SolvedForm.isIdempotent {σ : Subst F X 𝔸} (hσ : σ.SolvedForm) :
     σ.IsIdempotent := fun x =>
   (ntm.subst_of_disjoint_dom ((ntm.mvar (F := F) [] x).subst σ) σ
     (fun z hz => ntm.subst_avoids_dom_of_solved σ hσ z hz _)).symm
 
--- ===========================================================================
--- Strong form of the equivalence: an *independent* mediator.
---
--- For a *solved-form* `σ`, absorption is equivalent to factorisation by a
--- mediator `σ'` whose domain is disjoint from `dom σ` (the classical `θ = σ ∘ σ'`
--- with `σ'` the independent remainder `θ ∖ dom σ`, generally `≠ θ`).  The forward
--- direction builds the mediator with `solvedForm_mediator`; the backward one is
--- `absorbedBy_of_factors` (which does not even use the disjointness).  Compared to
--- `absorbedBy_iff_factors`, the hypothesis is stronger (`SolvedForm` vs. merely
--- idempotent) and so is the conclusion (`σ'` independent, not the trivial `σ' = θ`).
--- ===========================================================================
 theorem Subst.absorbedBy_iff_factors_indep {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
     (hσ : σ.SolvedForm) :
     Subst.absorbedBy Δ σ θ ↔

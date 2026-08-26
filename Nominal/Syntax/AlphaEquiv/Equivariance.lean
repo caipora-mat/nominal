@@ -121,7 +121,6 @@ mutual
           alphaEquivList_permute_right_ds_empty Γ ss' ts' π π' h]
 end
 
--- (Inversion of permutations over ≈α ).
 mutual
   lemma alphaEquivPermInver (Γ : Context 𝔸 X) (s t : ntm F X 𝔸) (π : LPerm 𝔸) :
       (Γ ⊢ (s.permute π) ≈α t) = (Γ ⊢ s ≈α (t.permute π.reverse)) := by
