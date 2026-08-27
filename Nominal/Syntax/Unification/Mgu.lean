@@ -224,28 +224,117 @@ lemma ntm.subst_drop_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) :
       rw [ntm.subst_drop_dom θ t (fun z hz hzθ => by
         have := hu z hz hzθ; simpa only [ntm.occursIn] using this)]
 
+/-- The mediator `θ ∖ dom σ` has domain disjoint from `dom σ` by construction. -/
+lemma Subst.filter_avoid_dom (σ θ : Subst F X 𝔸) :
+    ∀ z ∈ Subst.dom (θ.filter (fun p => decide (p.1 ∉ σ.dom))), z ∉ σ.dom := by
+  intro z hz
+  simp only [Subst.dom, List.mem_toFinset, List.mem_map] at hz
+  obtain ⟨p, hpf, hpz⟩ := hz
+  rw [List.mem_filter] at hpf
+  rw [← hpz]
+  have h2 := hpf.2
+  simp only [decide_eq_true_eq, Subst.dom, List.mem_toFinset, List.mem_map] at h2 ⊢
+  exact h2
+
+/-- The mediator `θ ∖ dom σ` factors an absorbed solution through `σ`:
+    `(Xσ)(θ ∖ dom σ) ≈α Xθ` (solved `σ` fixes its image away from `dom σ`). -/
+lemma Subst.absorbedBy_filter_clause1 {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
+    (hσ : σ.SolvedForm) (habs : Subst.absorbedBy Δ σ θ) :
+    ∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst
+                  (θ.filter (fun p => decide (p.1 ∉ σ.dom)))
+                ≈α (ntm.mvar (F := F) [] x).subst θ) = true := by
+  intro x
+  have hu : ∀ z ∈ σ.dom, z ∈ Subst.dom θ →
+      ((ntm.mvar (F := F) [] x).subst σ).occursIn z = false :=
+    fun z hz _ => ntm.subst_avoids_dom_of_solved σ hσ z hz _
+  rw [ntm.subst_drop_dom θ ((ntm.mvar (F := F) [] x).subst σ) hu]
+  exact habs x
+
 theorem Subst.solvedForm_mediator {Δ : Context 𝔸 X} {σ θ : Subst F X 𝔸}
     (hσ : σ.SolvedForm) (habs : Subst.absorbedBy Δ σ θ) :
     ∃ σ' : Subst F X 𝔸,
       (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
       (∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst σ'
-                  ≈α (ntm.mvar (F := F) [] x).subst θ) = true) := by
-  refine ⟨θ.filter (fun p => decide (p.1 ∉ σ.dom)), ?_, ?_⟩
-  · intro z hz
-    simp only [Subst.dom, List.mem_toFinset, List.mem_map] at hz
-    obtain ⟨p, hpf, hpz⟩ := hz
-    rw [List.mem_filter] at hpf
-    have hp : p.1 ∉ σ.dom := by
-      have h2 := hpf.2
-      simp only [decide_eq_true_eq, Subst.dom, List.mem_toFinset, List.mem_map] at h2 ⊢
-      exact h2
-    rw [← hpz]; exact hp
-  · intro x
-    have hu : ∀ z ∈ σ.dom, z ∈ Subst.dom θ →
-        ((ntm.mvar (F := F) [] x).subst σ).occursIn z = false :=
-      fun z hz _ => ntm.subst_avoids_dom_of_solved σ hσ z hz _
-    rw [ntm.subst_drop_dom θ ((ntm.mvar (F := F) [] x).subst σ) hu]
-    exact habs x
+                  ≈α (ntm.mvar (F := F) [] x).subst θ) = true) :=
+  ⟨θ.filter (fun p => decide (p.1 ∉ σ.dom)),
+   Subst.filter_avoid_dom σ θ,
+   Subst.absorbedBy_filter_clause1 hσ habs⟩
+
+/-- Restricting `θ` to variables outside `dom σ` preserves entailment of a
+    context whose recorded metavariables all avoid `dom σ`. -/
+lemma Context.entailsUnder_filter_of_avoid {σ : Subst F X 𝔸}
+    {Γ Δ : Context 𝔸 X} {θ : Subst F X 𝔸}
+    (hvars : ∀ p ∈ Γ, p.2 ∉ σ.dom)
+    (hΓ : Γ.EntailsUnder Δ θ = true) :
+    Γ.EntailsUnder Δ (θ.filter (fun p => decide (p.1 ∉ σ.dom))) = true := by
+  simp only [Context.EntailsUnder, decide_eq_true_eq] at hΓ ⊢
+  intro p hp
+  rw [ntm.subst_drop_dom θ (ntm.mvar (F := F) [] p.2) (by
+    intro z hz _
+    simp only [ntm.occursIn, beq_eq_false_iff_ne]
+    rintro rfl
+    exact (hvars p hp) hz)]
+  exact hΓ p hp
+
+/-- Under a solved `σ`, every metavariable recorded in the finalised context
+    avoids `dom σ`: the residual freshness leaves from `simplifyFresh a (Xσ)`
+    live outside `dom σ`, since `σ`'s image already avoids its own domain. -/
+lemma finalizeDeferred_vars_avoid_dom (σ : Subst F X 𝔸) (hσ : σ.SolvedForm) :
+    ∀ (ds : List (𝔸 × X)) (Γ_init Γ : Context 𝔸 X),
+      finalizeDeferred ds σ Γ_init = some Γ →
+      (∀ p ∈ Γ_init, p.2 ∉ σ.dom) →
+      ∀ p ∈ Γ, p.2 ∉ σ.dom
+  | [], Γ_init, Γ, h, hinit => by
+      simp only [finalizeDeferred, Option.some.injEq] at h
+      subst h; exact hinit
+  | (a, x) :: tl, Γ_init, Γ, h, hinit => by
+      simp only [finalizeDeferred] at h
+      cases hsf : simplifyFresh a ((ntm.mvar (F := F) [] x).subst σ) with
+      | none => rw [hsf] at h; cases h
+      | some cs =>
+        rw [hsf] at h
+        have hleaf : ∀ a' x', Constraint.fresh a' (ntm.mvar (F := F) [] x') ∈ cs →
+            x' ∉ σ.dom := by
+          intro a' x' hc hx'dom
+          have hmem : x' ∈ ((ntm.mvar (F := F) [] x).subst σ).metavars :=
+            simplifyFresh_metavars_subset a _ cs hsf _ hc x'
+              (by simp [Constraint.toUnif, UnifConstraint.metavars, ntm.metavars])
+          have havoid := ntm.subst_avoids_dom_of_solved σ hσ x' hx'dom
+            (ntm.mvar (F := F) [] x)
+          exact ((ntm.occursIn_false_iff_not_mem_metavars x' _).mp havoid) hmem
+        have hfold : ∀ (cs_pre : Problem F X 𝔸) (Γ₀ : Context 𝔸 X),
+            (∀ p ∈ Γ₀, p.2 ∉ σ.dom) →
+            (∀ a' x', Constraint.fresh a' (ntm.mvar (F := F) [] x') ∈ cs_pre →
+              x' ∉ σ.dom) →
+            ∀ p ∈ cs_pre.foldl (fun g c =>
+              match c with
+              | .fresh a' (.mvar [] x') => insert (a', x') g
+              | _                       => g) Γ₀, p.2 ∉ σ.dom := by
+          intro cs_pre
+          induction cs_pre with
+          | nil => intro Γ₀ hΓ₀ _ p hp; exact hΓ₀ p hp
+          | cons c0 cs_rest ih =>
+            intro Γ₀ hΓ₀ hleaf' p hp
+            simp only [List.foldl] at hp
+            apply ih _ ?_ ?_ p hp
+            · cases c0 with
+              | fresh a' t' =>
+                cases t' with
+                | mvar π x' =>
+                  cases π with
+                  | nil =>
+                    intro q hq
+                    rcases Finset.mem_insert.mp hq with rfl | hq'
+                    · exact hleaf' a' x' List.mem_cons_self
+                    · exact hΓ₀ q hq'
+                  | cons _ _ => intro q hq; exact hΓ₀ q hq
+                | atm _ => intro q hq; exact hΓ₀ q hq
+                | fapp _ _ => intro q hq; exact hΓ₀ q hq
+                | abs _ _ => intro q hq; exact hΓ₀ q hq
+              | alpha _ _ => intro q hq; exact hΓ₀ q hq
+            · intro a'' x'' hmem
+              exact hleaf' a'' x'' (List.mem_cons_of_mem _ hmem)
+        exact finalizeDeferred_vars_avoid_dom σ hσ tl _ Γ h (hfold cs Γ_init hinit hleaf)
 
 
 /-- `σ` moves every variable of its domain. -/
@@ -799,5 +888,77 @@ theorem Subst.absorbedBy_iff_factors_indep {Δ : Context 𝔸 X} {σ θ : Subst 
     exact ⟨σ', hdisj, fun x => by rw [ntm.subst_mvar_nil_comp]; exact hmed x⟩
   · rintro ⟨σ', _, hfact⟩
     exact Subst.absorbedBy_of_factors σ' hσ.isIdempotent hfact
+
+/-- The finalised context `Γ` is entailed by every solution `(Δ, θ)` under `θ`
+    itself (the `SolutionLe` context clause with the trivial mediator). -/
+theorem UnifProblem.solve_entailsUnder (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X)
+    (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) (Δ : Context 𝔸 X)
+    (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) : Γ.EntailsUnder Δ θ = true := by
+  simp only [UnifProblem.solve] at h
+  cases hu : unify Pr [] [] with
+  | none => rw [hu] at h; cases h
+  | some result =>
+    rw [hu] at h
+    obtain ⟨ds, σ_u⟩ := result
+    simp only at h
+    cases hf : finalizeDeferred ds σ_u ∅ with
+    | none => rw [hf] at h; cases h
+    | some Γ_fin =>
+      rw [hf] at h
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨hΓeq, hσeq⟩ := h
+      subst hΓeq; subst hσeq
+      have habs0 : Subst.absorbedBy Δ ([] : Subst F X 𝔸) θ := Subst.absorbedBy_nil Δ θ
+      have hds0 : ∀ p ∈ ([] : List (𝔸 × X)),
+          (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
+        intros _ hp; cases hp
+      obtain ⟨habs_u, hds_u⟩ := unify_le Pr [] [] ds σ_u Δ θ hu hq habs0 hds0
+      have hinit_empty : (∅ : Context 𝔸 X).EntailsUnder Δ θ = true := by
+        simp [Context.EntailsUnder]
+      exact finalizeDeferred_le ds σ_u ∅ Γ_fin Δ θ hf habs_u hds_u hinit_empty
+
+/-- Every metavariable recorded in the algorithm's output context `Γ` avoids
+    `dom σ` — `σ` being solved, its residual freshness leaves lie outside it. -/
+theorem UnifProblem.solve_ctxVars_avoid_dom (Pr : UnifProblem F X 𝔸)
+    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ)) :
+    ∀ p ∈ Γ, p.2 ∉ σ.dom := by
+  have hσ := UnifProblem.solve_solvedForm Pr Γ σ h
+  simp only [UnifProblem.solve] at h
+  cases hu : unify Pr [] [] with
+  | none => rw [hu] at h; cases h
+  | some result =>
+    rw [hu] at h
+    obtain ⟨ds, σ_u⟩ := result
+    simp only at h
+    cases hf : finalizeDeferred ds σ_u ∅ with
+    | none => rw [hf] at h; cases h
+    | some Γ_fin =>
+      rw [hf] at h
+      simp only [Option.some.injEq, Prod.mk.injEq] at h
+      obtain ⟨hΓeq, hσeq⟩ := h
+      subst hΓeq; subst hσeq
+      exact finalizeDeferred_vars_avoid_dom σ_u hσ ds ∅ Γ_fin hf (by intro p hp; simp at hp)
+
+/-- Independent-mediator form of principality's `≤` (Def. 28): the algorithm's
+    output `(Γ, σ)` sits below any solution `(Δ, θ)` via a mediator `σ'` whose
+    domain is disjoint from `dom σ`, satisfying BOTH clauses of `SolutionLe` —
+    the factorization `(Xσ)σ' ≈α Xθ` and the context entailment `Δ ⊢ Γσ'`.
+    Strengthens `solve_principal`, which uses the trivial mediator `σ' = θ`. -/
+theorem UnifProblem.solve_le_indep (Pr : UnifProblem F X 𝔸)
+    (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
+    (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) :
+    ∃ σ' : Subst F X 𝔸,
+      (∀ z ∈ σ'.dom, z ∉ σ.dom) ∧
+      (∀ x : X, (Δ ⊢ ((ntm.mvar (F := F) [] x).subst σ).subst σ'
+                  ≈α (ntm.mvar (F := F) [] x).subst θ) = true) ∧
+      Γ.EntailsUnder Δ σ' = true := by
+  have hσ_solved := UnifProblem.solve_solvedForm Pr Γ σ h
+  have habs := UnifProblem.solve_absorbedBy Pr Γ σ h Δ θ hq
+  have hΓθ := UnifProblem.solve_entailsUnder Pr Γ σ h Δ θ hq
+  have hvars := UnifProblem.solve_ctxVars_avoid_dom Pr Γ σ h
+  exact ⟨θ.filter (fun p => decide (p.1 ∉ σ.dom)),
+    Subst.filter_avoid_dom σ θ,
+    Subst.absorbedBy_filter_clause1 hσ_solved habs,
+    Context.entailsUnder_filter_of_avoid hvars hΓθ⟩
 
 end Nominal
