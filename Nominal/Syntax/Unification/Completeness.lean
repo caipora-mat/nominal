@@ -1321,4 +1321,18 @@ theorem UnifProblem.solve_none_no_solution (Pr : UnifProblem F X 𝔸)
       | some Γ_fin =>
           rw [hf] at h; simp at h
 
+/-- `solve` fails exactly when the problem is unsolvable. The forward direction
+    is `solve_none_no_solution`; the converse is soundness (`solve_satisfies`),
+    since a successful run exhibits a solution. -/
+theorem UnifProblem.solve_none_iff_no_solution (Pr : UnifProblem F X 𝔸) :
+    Pr.solve = none ↔ Pr.Solutions = ∅ := by
+  constructor
+  · exact UnifProblem.solve_none_no_solution Pr
+  · intro hempty
+    by_contra hne
+    obtain ⟨⟨Γ, σ⟩, hsome⟩ := Option.ne_none_iff_exists'.mp hne
+    have hmem : (Γ, σ) ∈ Pr.Solutions := UnifProblem.solve_satisfies Pr Γ σ hsome
+    rw [hempty] at hmem
+    simp at hmem
+
 end Nominal
