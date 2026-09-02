@@ -1111,6 +1111,35 @@ lemma unify_le :
       unifStep_next_le c rest σ σ_next Pr' Δ θ hnext hθ habs
     exact ih ds' σ' Δ θ h hθPr' habs_next hds
 
+/-- If `unify` fails, `Pr` has no solution. Absorption is threaded so the
+    recursion can carry `unifStep_fail_no_solution` back through each step. -/
+lemma unify_none_no_solution :
+    ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X)),
+      unify Pr σ ds = none →
+      ∀ (Δ : Context 𝔸 X) (θ : Subst F X 𝔸),
+        Subst.absorbedBy Δ σ θ → ¬ Solution.Satisfies Δ θ Pr := by
+  intro Pr σ ds
+  induction Pr, σ, ds using unify.induct with
+  | case1 σ ds =>
+      intro h; rw [unify] at h; simp at h
+  | case2 σ ds c rest hfail =>
+      intro _ Δ θ _ hsat
+      exact unifStep_fail_no_solution c rest σ hfail ⟨Δ, θ, hsat⟩
+  | case3 σ ds c rest a x hctx ih =>
+      intro h Δ θ habs hsat
+      rw [unify, hctx] at h
+      obtain ⟨hΓ, hidem⟩ := hsat
+      refine ih h Δ θ habs ⟨?_, hidem⟩
+      intro c' hc'
+      apply hΓ c'
+      rw [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons]
+      exact List.mem_cons_of_mem _ hc'
+  | case4 σ ds c rest Pr' σ_next hnext ih =>
+      intro h Δ θ habs hsat
+      rw [unify, hnext] at h
+      obtain ⟨hsat', habs'⟩ := unifStep_next_le c rest σ σ_next Pr' Δ θ hnext hsat habs
+      exact ih h Δ θ habs' hsat'
+
 -- This step has no direct Isabelle counterpart (Plan A divergence).
 lemma finalizeDeferred_le :
     ∀ (deferred : List (𝔸 × X)) (σ : Subst F X 𝔸)
@@ -1196,6 +1225,34 @@ lemma finalizeDeferred_le :
           intro p hp; exact hdef p (List.mem_cons_of_mem _ hp)
         exact finalizeDeferred_le tl σ Γ_init' Γ Δ θ h habs hdef_tl hinit'
 
+/-- If `finalizeDeferred` fails, no absorbing `θ` satisfies every deferred leaf:
+    the failing leaf is rigidly non-fresh under `σθ`, contradicting absorption. -/
+lemma finalizeDeferred_none_no_solution :
+    ∀ (ds : List (𝔸 × X)) (σ : Subst F X 𝔸) (Γ_init : Context 𝔸 X),
+      finalizeDeferred ds σ Γ_init = none →
+      ∀ (Δ : Context 𝔸 X) (θ : Subst F X 𝔸),
+        Subst.absorbedBy Δ σ θ →
+        ¬ (∀ p ∈ ds, (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true)
+  | [], σ, Γ_init, h, Δ, θ, _, _ => by
+      simp [finalizeDeferred] at h
+  | (a, x) :: tl, σ, Γ_init, h, Δ, θ, habs, hdef => by
+      simp only [finalizeDeferred] at h
+      cases hsf : simplifyFresh a ((ntm.mvar (F := F) [] x).subst σ) with
+      | none =>
+          have hfresh_leaf := hdef (a, x) List.mem_cons_self
+          have hfresh_σ : (Δ ⊢ a # ((ntm.mvar (F := F) [] x).subst σ).subst θ) = true :=
+            freshPreserves_alphaEquiv Δ a ((ntm.mvar (F := F) [] x).subst θ)
+              (((ntm.mvar (F := F) [] x).subst σ).subst θ)
+              hfresh_leaf (alphaEquiv_symm Δ _ _ (habs x))
+          have hnot := simplifyFresh_none_subst_not_fresh a
+            ((ntm.mvar (F := F) [] x).subst σ) hsf Δ θ
+          rw [hfresh_σ] at hnot
+          simp at hnot
+      | some cs =>
+          rw [hsf] at h
+          exact finalizeDeferred_none_no_solution tl σ _ h Δ θ habs
+            (fun p hp => hdef p (List.mem_cons_of_mem _ hp))
+
 -- Final theorem — Maribel Theorem 35.
 theorem UnifProblem.solve_principal
     (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X) (σ : Subst F X 𝔸)
@@ -1236,5 +1293,32 @@ theorem UnifProblem.solve_principal
           exact habs_u
         · -- Γ.EntailsUnder Δ θ.
           exact hΓ_under
+
+/-- Existence half of completeness: `solve = none` ⟹ no solution, failing in
+    `unify` or in `finalizeDeferred`. Contrapositive: a solvable problem makes
+    `solve` succeed. -/
+theorem UnifProblem.solve_none_no_solution (Pr : UnifProblem F X 𝔸)
+    (h : Pr.solve = none) : Pr.Solutions = ∅ := by
+  ext ⟨Δ, θ⟩
+  simp only [UnifProblem.Solutions, Set.mem_setOf_eq, Set.mem_empty_iff_false, iff_false]
+  intro hsat
+  simp only [UnifProblem.solve] at h
+  cases hu : unify Pr [] [] with
+  | none =>
+      exact unify_none_no_solution Pr [] [] hu Δ θ (Subst.absorbedBy_nil Δ θ) hsat
+  | some result =>
+      obtain ⟨ds, σ_u⟩ := result
+      rw [hu] at h
+      simp only at h
+      cases hf : finalizeDeferred ds σ_u ∅ with
+      | none =>
+          have habs0 : Subst.absorbedBy Δ ([] : Subst F X 𝔸) θ := Subst.absorbedBy_nil Δ θ
+          have hds0 : ∀ p ∈ ([] : List (𝔸 × X)),
+              (Δ ⊢ p.1 # (ntm.mvar (F := F) [] p.2).subst θ) = true := by
+            intro _ hp; cases hp
+          obtain ⟨habs_u, hds_u⟩ := unify_le Pr [] [] ds σ_u Δ θ hu hsat habs0 hds0
+          exact finalizeDeferred_none_no_solution ds σ_u ∅ hf Δ θ habs_u hds_u
+      | some Γ_fin =>
+          rw [hf] at h; simp at h
 
 end Nominal

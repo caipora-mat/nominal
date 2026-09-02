@@ -939,11 +939,10 @@ theorem UnifProblem.solve_ctxVars_avoid_dom (Pr : UnifProblem F X 𝔸)
       subst hΓeq; subst hσeq
       exact finalizeDeferred_vars_avoid_dom σ_u hσ ds ∅ Γ_fin hf (by intro p hp; simp at hp)
 
-/-- Independent-mediator form of principality's `≤` (Def. 28): the algorithm's
-    output `(Γ, σ)` sits below any solution `(Δ, θ)` via a mediator `σ'` whose
-    domain is disjoint from `dom σ`, satisfying BOTH clauses of `SolutionLe` —
-    the factorization `(Xσ)σ' ≈α Xθ` and the context entailment `Δ ⊢ Γσ'`.
-    Strengthens `solve_principal`, which uses the trivial mediator `σ' = θ`. -/
+/-- Independent-mediator form of principality's `≤` (Def. 28): the output
+    `(Γ, σ)` sits below any solution `(Δ, θ)` via a mediator disjoint from
+    `dom σ` satisfying both `SolutionLe` clauses. Strengthens `solve_principal`
+    (trivial mediator `σ' = θ`). -/
 theorem UnifProblem.solve_le_indep (Pr : UnifProblem F X 𝔸)
     (Γ : Context 𝔸 X) (σ : Subst F X 𝔸) (h : Pr.solve = some (Γ, σ))
     (Δ : Context 𝔸 X) (θ : Subst F X 𝔸) (hq : (Δ, θ) ∈ Pr.Solutions) :
