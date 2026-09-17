@@ -68,6 +68,54 @@ def SolutionLe (p₁ p₂ : Context 𝔸 X × Subst F X 𝔸) : Prop :=
     p₁.1.EntailsUnder p₂.1 σ' = true
 
 
+/-- `SolutionLe` is reflexive: the identity substitution mediates `p ≤ p`. -/
+lemma SolutionLe_refl (p : Context 𝔸 X × Subst F X 𝔸) : SolutionLe p p := by
+  refine ⟨[], ?_, ?_⟩
+  · intro x
+    simpa [ntm.subst_nil] using
+      alphaEquiv_refl p.1 ((ntm.mvar (F := F) [] x).subst p.2)
+  · simp only [Context.EntailsUnder, decide_eq_true_eq]
+    intro q hq
+    rw [ntm.subst_nil, fresh_mvar_id]
+    simpa using hq
+
+/-- `SolutionLe` is transitive: mediators compose via `σ' ◇ σ''`.  Together with
+    `SolutionLe_refl` this makes `SolutionLe` a preorder — Maribel's Lemma 29,
+    whose proof likewise establishes only reflexivity and transitivity.  (It is
+    not a partial order on `Context × Subst`: mutually related solutions coincide
+    only up to `≈α`, so antisymmetry fails on the raw type.) -/
+lemma SolutionLe_trans {p₁ p₂ p₃ : Context 𝔸 X × Subst F X 𝔸}
+    (h₁₂ : SolutionLe p₁ p₂) (h₂₃ : SolutionLe p₂ p₃) : SolutionLe p₁ p₃ := by
+  obtain ⟨σ', hfac₁, hctx₁⟩ := h₁₂
+  obtain ⟨σ'', hfac₂, hctx₂⟩ := h₂₃
+  simp only [Context.EntailsUnder, decide_eq_true_eq] at hctx₁ hctx₂
+  refine ⟨σ'.comp σ'', ?_, ?_⟩
+  · intro x
+    -- Transport the first factoring under `σ''` from `p₂.1` to `p₃.1`.
+    have hstep :
+        (p₃.1 ⊢ (((ntm.mvar (F := F) [] x).subst p₁.2).subst σ').subst σ''
+                ≈α ((ntm.mvar (F := F) [] x).subst p₂.2).subst σ'') = true :=
+      ntm.alphaEquiv_subst p₂.1 p₃.1 σ''
+        (((ntm.mvar (F := F) [] x).subst p₁.2).subst σ')
+        ((ntm.mvar (F := F) [] x).subst p₂.2) hctx₂ (hfac₁ x)
+    rw [ntm.subst_comp]
+    exact alphaEquiv_trans p₃.1 _ _ _ hstep (hfac₂ x)
+  · simp only [Context.EntailsUnder, decide_eq_true_eq]
+    intro q hq
+    have h2 := ntm.fresh_subst p₂.1 p₃.1 σ'' q.1
+      ((ntm.mvar (F := F) [] q.2).subst σ') hctx₂ (hctx₁ q hq)
+    rw [ntm.subst_comp]
+    exact h2
+
+instance : IsRefl (Context 𝔸 X × Subst F X 𝔸) SolutionLe := ⟨SolutionLe_refl⟩
+
+instance : IsTrans (Context 𝔸 X × Subst F X 𝔸) SolutionLe :=
+  ⟨fun _ _ _ h₁₂ h₂₃ => SolutionLe_trans h₁₂ h₂₃⟩
+
+/-- `SolutionLe` is a preorder (Maribel's Lemma 29). -/
+instance : IsPreorder (Context 𝔸 X × Subst F X 𝔸) SolutionLe := ⟨⟩
+
+
 /-- Principal (mgu) solution (Def. 30): least element of `𝒰(Pr)` under `SolutionLe`. -/
 def UnifProblem.IsPrincipalSolution (Pr : UnifProblem F X 𝔸)
     (p : Context 𝔸 X × Subst F X 𝔸) : Prop :=
