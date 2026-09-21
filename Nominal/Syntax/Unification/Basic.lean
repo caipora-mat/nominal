@@ -107,13 +107,57 @@ lemma SolutionLe_trans {p₁ p₂ p₃ : Context 𝔸 X × Subst F X 𝔸}
     rw [ntm.subst_comp]
     exact h2
 
-instance : IsRefl (Context 𝔸 X × Subst F X 𝔸) SolutionLe := ⟨SolutionLe_refl⟩
+instance : Std.Refl (SolutionLe (F := F) (X := X) (𝔸 := 𝔸)) := ⟨SolutionLe_refl⟩
 
 instance : IsTrans (Context 𝔸 X × Subst F X 𝔸) SolutionLe :=
   ⟨fun _ _ _ h₁₂ h₂₃ => SolutionLe_trans h₁₂ h₂₃⟩
 
 /-- `SolutionLe` is a preorder (Maribel's Lemma 29). -/
 instance : IsPreorder (Context 𝔸 X × Subst F X 𝔸) SolutionLe := ⟨⟩
+
+/-- Two solutions are equivalent when each is an instance of the other.  Modulo
+    this equivalence `SolutionLe` is antisymmetric, so it induces a partial order
+    on solutions.  Concretely, `SolEquiv` identifies solutions that agree up to
+    `≈α` on the substitution and mutual entailment of the contexts. -/
+def SolEquiv (p q : Context 𝔸 X × Subst F X 𝔸) : Prop :=
+  SolutionLe p q ∧ SolutionLe q p
+
+/-- `SolEquiv` is an equivalence relation (immediate from `SolutionLe` being a
+    preorder): reflexive and transitive from `SolutionLe`, symmetric by swapping
+    the two conjuncts. -/
+theorem SolEquiv.equivalence :
+    Equivalence (SolEquiv (F := F) (X := X) (𝔸 := 𝔸)) where
+  refl p := ⟨SolutionLe_refl p, SolutionLe_refl p⟩
+  symm h := ⟨h.2, h.1⟩
+  trans h₁ h₂ := ⟨SolutionLe_trans h₁.1 h₂.1, SolutionLe_trans h₂.2 h₁.2⟩
+
+/-- Solutions form a setoid under `SolEquiv`. -/
+instance solSetoid : Setoid (Context 𝔸 X × Subst F X 𝔸) where
+  r := SolEquiv
+  iseqv := SolEquiv.equivalence
+
+/-- Solutions up to equivalence: `Context × Subst` quotiented by `SolEquiv`. -/
+def SolClass (F X 𝔸 : Type*) [DecidableEq F] [DecidableEq X] [Name 𝔸] : Type _ :=
+  Quotient (solSetoid (F := F) (X := X) (𝔸 := 𝔸))
+
+/-- `SolutionLe` is a genuine partial order on solutions taken up to `SolEquiv`.
+    Antisymmetry holds by construction: two classes below each other are equal
+    because their representatives are `SolEquiv`.  On the raw type `SolutionLe`
+    is only a preorder — antisymmetry fails up to `≈α`. -/
+instance : PartialOrder (SolClass F X 𝔸) where
+  le := Quotient.lift₂ SolutionLe (by
+    intro a b a' b' ha hb
+    exact propext
+      ⟨fun h => SolutionLe_trans (SolutionLe_trans ha.2 h) hb.1,
+       fun h => SolutionLe_trans (SolutionLe_trans ha.1 h) hb.2⟩)
+  le_refl := by
+    refine Quotient.ind ?_; intro p; exact SolutionLe_refl p
+  le_trans := by
+    refine Quotient.ind fun p => Quotient.ind fun q => Quotient.ind fun r => ?_
+    intro h₁ h₂; exact SolutionLe_trans h₁ h₂
+  le_antisymm := by
+    refine Quotient.ind fun p => Quotient.ind fun q => ?_
+    intro h₁ h₂; exact Quotient.sound ⟨h₁, h₂⟩
 
 
 /-- Principal (mgu) solution (Def. 30): least element of `𝒰(Pr)` under `SolutionLe`. -/
