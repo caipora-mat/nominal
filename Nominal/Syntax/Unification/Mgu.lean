@@ -402,6 +402,28 @@ lemma Subst.SolvedForm.comp_singleton {σ : Subst F X 𝔸} {x : X} {u : ntm F X
       exact ntm.occursIn_applyOne_of_ne hzx (hu_avoids z hz) hsz
   · exact hu_avoids z hz
 
+/-- General form: composing two substitutions in solved form whose composition
+    has disjoint domain and range yields a substitution in solved form.  The
+    disjointness hypothesis `hdr` states `dom σ ∩ range τ = ∅`, i.e. no domain
+    variable of `σ` occurs in any value of `τ`.  The single-binding case used by
+    the loop, `SolvedForm.comp_singleton`, is the instance `τ = [(x, u)]`. -/
+lemma Subst.SolvedForm.comp {σ τ : Subst F X 𝔸}
+    (hσ : σ.SolvedForm) (hτ : τ.SolvedForm)
+    (hdr : ∀ z ∈ σ.dom, ∀ p ∈ τ, p.2.occursIn z = false) :
+    (σ.comp τ).SolvedForm := by
+  intro p hp z hz
+  rw [Subst.dom_comp, Finset.mem_union] at hz
+  rw [Subst.comp, List.mem_append] at hp
+  rcases hp with hpσ | hpτ
+  · rw [List.mem_map] at hpσ
+    obtain ⟨q, hqσ, rfl⟩ := hpσ
+    rcases hz with hzσ | hzτ
+    · exact ntm.occursIn_subst_of_avoid (fun r hr => hdr z hzσ r hr) (hσ q hqσ z hzσ)
+    · exact ntm.subst_avoids_dom_of_solved τ hτ z hzτ q.2
+  · rcases hz with hzσ | hzτ
+    · exact hdr z hzσ p hpτ
+    · exact hτ p hpτ z hzτ
+
 /-- The three side-conditions on the new binding of an instantiation step:
     variable outside `dom σ`, value fixed by `σ`, occurs-check passing. -/
 lemma instantiation_binding_props
