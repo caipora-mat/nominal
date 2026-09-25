@@ -1140,7 +1140,7 @@ lemma unify_none_no_solution :
       obtain ⟨hsat', habs'⟩ := unifStep_next_le c rest σ σ_next Pr' Δ θ hnext hsat habs
       exact ih h Δ θ habs' hsat'
 
--- This step has no direct Isabelle counterpart (Plan A divergence).
+-- This step has no direct Isabelle counterpart.
 lemma finalizeDeferred_le :
     ∀ (deferred : List (𝔸 × X)) (σ : Subst F X 𝔸)
       (Γ_init Γ : Context 𝔸 X) (Δ : Context 𝔸 X) (θ : Subst F X 𝔸),
