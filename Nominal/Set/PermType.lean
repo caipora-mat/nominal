@@ -147,6 +147,7 @@ theorem prod_smul_snd (π : FinitePerm α) (p : X × Y) : (π • p).2 = π • 
 
 This is a `def` rather than a global `instance` because `α` cannot be inferred from `Unit` alone — Lean's `outParam` mechanism requires `α` to be determined
 from the target type, but `Unit` does not mention `α`. Use `letI := instUnit` at call sites where `α` is already known. -/
+@[instance_reducible]
 def instUnit : PermType α Unit where
   smul _ _ := ()
   one_smul _ := rfl
@@ -160,6 +161,7 @@ theorem unit_smul (π : FinitePerm α) (u : Unit) : letI : PermType α Unit := i
 /-- `Bool` carries the trivial (discrete) permutation action.
 
 This is a `def` rather than a global `instance` because `α` cannot be inferred from `Bool` alone (same reason as `instUnit`). Use `letI := instBool` at call sites where `α` is already known. -/
+@[instance_reducible]
 def instBool : PermType α Bool where
   smul _ b := b
   one_smul _ := rfl
@@ -175,6 +177,7 @@ theorem bool_smul (π : FinitePerm α) (b : Bool) : letI : PermType α Bool := i
 This is a `def` rather than a global `instance` because `α` cannot be inferred
 from `ℕ` alone (same reason as `instUnit`). Use `letI := instNat` at call sites
 where `α` is already known. -/
+@[instance_reducible]
 def instNat : PermType α ℕ where
   smul _ n := n
   one_smul _ := rfl
@@ -188,6 +191,7 @@ theorem nat_smul (π : FinitePerm α) (n : ℕ) : letI : PermType α ℕ := inst
 /-- `ℤ` carries the trivial (discrete) permutation action.
 
 This is a `def` rather than a global `instance` because `α` cannot be inferred from `ℤ` alone (same reason as `instUnit`). Use `letI := instInt` at call sites where `α` is already known. -/
+@[instance_reducible]
 def instInt : PermType α ℤ where
   smul _ z := z
   one_smul _ := rfl

@@ -635,6 +635,43 @@ theorem FCB_of_total (F : NFun α (α × X) Y) (hFresh : ∀ (a : α) (x : X), a
     FCB (F.map some isEquivariant_some) :=
   freshQuantifier_of_forall (fun a x ↦ ⟨F (a, x), by simp, hFresh a x⟩)
 
+/-- If `F : NFun α (α × X) Y` satisfies the pointwise freshness condition and both `a # F`
+and `b # F`, then `⟪a⟫x = ⟪b⟫y → F (a, x) = F (b, y)`.
+
+This is the "total" analogue of `liftFCB_val_indep`: it avoids the `Option` detour by
+combining `FCB_of_total` with `liftFCB_val_indep` and stripping the `some`. -/
+theorem FCB_total_val_indep (F : NFun α (α × X) Y)
+    (hFresh : ∀ (a : α) (x : X), a # F (a, x))
+    {a b : α} (haF : a # F) (hbF : b # F)
+    {x y : X} (habs : ⟪a⟫x = ⟪b⟫y) : F (a, x) = F (b, y) := by
+  have hFCB : FCB (F.map some isEquivariant_some) := FCB_of_total F hFresh
+  have ha' : a # F.map some isEquivariant_some := fresh_of_supp_subset (NFun.supp_map_le _ _ _) haF
+  have hb' : b # F.map some isEquivariant_some := fresh_of_supp_subset (NFun.supp_map_le _ _ _) hbF
+  have := liftFCB_val_indep hFCB ha' rfl hb' habs
+  simp only [NFun.map_apply] at this
+  exact Option.some_injective _ this
+
+/-- Guarded variant of `FCB_total_val_indep`: the freshness condition is gated on `a # A`
+(a finite support set), with `supp F ⊆ A`. Matches the hypothesis shape produced by `RecRel`. -/
+theorem FCB_guarded_val_indep (F : NFun α (α × X) Y)
+    (A : Finset α) (hsupp : supp F ⊆ A)
+    (hFresh : ∀ (a : α) (x : X), a # A → a # F (a, x))
+    {a b : α} (haA : a # A) (hbA : b # A)
+    {x y : X} (habs : ⟪a⟫x = ⟪b⟫y) : F (a, x) = F (b, y) := by
+  -- Build FCB for F.map some using the guarded freshness and support bound
+  have hFCB : FCB (F.map some isEquivariant_some) := by
+    rw [FCB, freshQuantifier_iff_exists_finset]
+    exact ⟨A, fun c hc z => ⟨F (c, z), by simp, hFresh c z (fresh_atom_finset.mpr hc)⟩⟩
+  have haF : a # F.map some isEquivariant_some :=
+    fresh_of_supp_subset (NFun.supp_map_le _ _ _)
+      ((fresh_atom_left a F).mpr (fun hm => (fresh_atom_finset.mp haA) (hsupp hm)))
+  have hbF : b # F.map some isEquivariant_some :=
+    fresh_of_supp_subset (NFun.supp_map_le _ _ _)
+      ((fresh_atom_left b F).mpr (fun hm => (fresh_atom_finset.mp hbA) (hsupp hm)))
+  have := liftFCB_val_indep hFCB haF rfl hbF habs
+  simp only [NFun.map_apply] at this
+  exact Option.some_injective _ this
+
 end FCBTotal
 
 /-! ### Parametric form of Corollary 4.17 (Pitts, equations 4.38–4.39) -/

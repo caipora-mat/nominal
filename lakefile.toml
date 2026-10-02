@@ -1,7 +1,7 @@
 name = "nominal"
 version = "0.1.0"
 keywords = ["math"]
-defaultTargets = ["Nominal"]
+defaultTargets = ["Nominal", "Instances"]
 
 [leanOptions]
 pp.unicode.fun = true # pretty-prints `fun a ↦ b`
@@ -17,3 +17,6 @@ rev = "v4.34.1"
 
 [[lean_lib]]
 name = "Nominal"
+
+[[lean_lib]]
+name = "Instances"

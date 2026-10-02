@@ -187,6 +187,11 @@ theorem fresh_of_supp_subset {a : α} {x : X} {y : Y}
   rw [fresh_atom_left] at ha ⊢
   exact fun hy ↦ ha (hsub hy)
 
+/-- If the support of `y` is contained in a finset `A` of atoms and `a # A`, then `a # y`. -/
+theorem fresh_of_supp_subset_finset {a : α} {A : Finset α} {y : Y}
+    (hsub : supp y ⊆ A) (ha : a # A) : a # y :=
+  fresh_of_supp_subset ((supp_finset A).symm ▸ hsub) ha
+
 /-- If `f` is equivariant and `a # x`, then `a # f x`.
     Pitts Proposition 3.4(iii): equivariant maps preserve freshness. -/
 theorem fresh_of_equivariant {Y : Type*} [Nominal α Y] {f : X → Y} (hf : IsEquivariant α f)
@@ -309,7 +314,7 @@ end Filter
 
 /-- Every element of a nominal set is fresh for `()`. -/
 theorem fresh_unit (x : X) : letI := Nominal.instUnit (α := α); x # () := by
-  letI := Nominal.instUnit (α := α)
+  let := Nominal.instUnit (α := α)
   simp [Fresh]
 
 end Fresh

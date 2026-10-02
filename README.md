@@ -2,7 +2,7 @@
 
 A Lean 4 / Mathlib formalization of nominal set theory following Pitts' *Nominal Sets* (CUP 2013).
 
-See [the assessment and roadmap](docs/roadmap.md) for the current research scope,
+See [the roadmap and progress tracker](docs/roadmap.md) for task status, dependencies,
 nominal-function ergonomics, and the path to a lambda-calculus Church–Rosser case study.
 
 ## Toolchain
@@ -12,7 +12,7 @@ Lean v4.34.1 / Mathlib v4.34.1
 ## Project Structure
 
 ```
-Nominal.lean              # top-level: imports Core + Set + Syntax
+Nominal.lean              # top-level: imports Core + Set
 Nominal/
   Wheels.lean             # utility lemmas; pick_new tactic
   Core.lean               # re-exports Core.*
@@ -32,15 +32,22 @@ Nominal/
     Freshness/
       Basic.lean          # Fresh (#) relation
       Tactic.lean         # choose_fresh tactic
-    NFun.lean             # NFun (finitely supported functions)
+    NFun.lean             # compatibility umbrella for NFun.Basic + NFun.Tactic
+    NFun/
+      Basic.lean         # finitely supported functions and proof-backed constructors
+      Tactic.lean        # support tactic and experimental nfun macro
     FreshQuantifier.lean  # И quantifier; someAny (Pitts 3.9)
     NameAbstraction.lean  # NameAbs ([A]X); abs / ⟪a⟫ x; supp_abs
     Concretion.lean       # concreteAt (⊙); liftAbs; Prop. 4.9; ext
     FCB.lean              # FCB / liftFCB (Thm 4.15); liftFresh (Cor 4.17)
-  Syntax.lean             # re-exports Syntax.*
-  Syntax/
-    LPerm.lean            # swap-list permutations for nominal syntax
-    Terms.lean            # nominal term language
+Instances.lean            # lambda-calculus case-study umbrella
+Instances/
+  LambdaCalculus.lean     # imports all four case-study modules
+  LambdaCalculus/
+    Basic.lean           # alpha quotient, action, support/free variables
+    Induction.lean       # strong induction with fresh binders
+    Recursion.lean       # supported-handler iteration
+    Substitution.lean    # capture-avoiding substitution and composition
 ```
 
 ## Key API
@@ -65,11 +72,25 @@ Nominal/
 
 **Design note:** `PFun α X Y` wraps `X → Y` with the conjugation action to avoid a diamond with Mathlib's `Pi.instSMul`.
 
+The `nfun` macro is experimental: global identifiers and `let`/`match`/nested-function
+scopes have known failures. Its explicit capture syntax is
+`nfun [capturing a b c] fun x => body`. Use `NFun.equivariant`, `NFun.ofSupports`, or
+`NFun.ofCaptures` with explicit proofs when the macro is unsuitable.
+The lambda case study currently reaches substitution; reduction and Church–Rosser
+remain roadmap work.
+
+The separate raw `Nominal.Syntax` sketch is excluded from this branch for now.
+
 ## Build
 
 ```bash
 lake build
+# Explicit equivalent: build both supported libraries.
+lake build Nominal Instances
 ```
+
+The default build covers both `Nominal` and `Instances`, including the NFun tactic
+module and all four lambda-calculus modules.
 
 ## References
 

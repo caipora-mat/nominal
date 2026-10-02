@@ -1,0 +1,4 @@
+import Instances.LambdaCalculus.Basic
+import Instances.LambdaCalculus.Induction
+import Instances.LambdaCalculus.Recursion
+import Instances.LambdaCalculus.Substitution

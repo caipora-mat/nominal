@@ -281,8 +281,7 @@ theorem someAny_forall_of_exists {R : α → X → Prop} {x : X} (hEquiv : Equiv
   intro b hbfresh
   have hfix : swap a₀ b • x = x := fresh_swap ha₀fresh hbfresh
   have := (hEquiv.smul_iff (swap a₀ b) a₀ x).mpr ha₀R
-  rw [hfix, swap_apply_left] at this
-  assumption
+  rwa [hfix, swap_apply_left] at this
 
 /-- **(∀ fresh → И)** If every fresh atom satisfies `R`, then `R a x` holds for all but finitely many `a` -/
 theorem someAny_freshQuantifier_of_forall {R : α → X → Prop} {x : X} (hAll : ∀ a, a # x → R a x) : И a, R a x := by

@@ -104,6 +104,10 @@ basic nominal instances. Support machinery (`supports`, `FinSupported`, `support
 namespace Nominal.Set
 open Core
 
+-- Preserve the public `Nominal.Set.Nominal` name: the library root and the
+-- mathematical class intentionally share a name. Limit the naming exception
+-- to this class and its namespace, including automatically generated declarations.
+set_option linter.dupNamespace false in
 /-- A **nominal set** is a permutation type in which every element is finitely supported.
 
 `α` is an `outParam` (as in `PermType`) so that Lean can infer the atom type from `X` alone.
@@ -112,6 +116,8 @@ class Nominal (α : outParam Type*) [Name α] (X : Type*) extends PermType α X 
   finSupp : ∀ x : X, FinSupported  x
 
 namespace Nominal
+
+set_option linter.dupNamespace false
 
 variable {α : Type*} [Name α]
 
@@ -134,6 +140,7 @@ instance instProd [Nominal α X] [Nominal α Y] : Nominal α (X × Y) where
 /-- `Unit` is a nominal set: the unique element is supported by the empty set.
 
 This is a `def` rather than a global `instance` because `α` cannot be inferred from `Unit` alone (same reason as `PermType.instUnit`). -/
+@[instance_reducible]
 def instUnit : Nominal α Unit where
   __ := PermType.instUnit
   finSupp _ := ⟨∅, fun _ _ ↦ rfl⟩
@@ -199,6 +206,7 @@ instance instNominalSum {X Y : Type*} [Nominal α X] [Nominal α Y] :
 /-- `Bool` is a nominal set with the discrete (trivial) action: every element has empty support.
 
 This is a `def` rather than a global `instance` because `α` cannot be inferred from `Bool` alone (same reason as `instUnit`). -/
+@[instance_reducible]
 def instBool : Nominal α Bool where
   __ := PermType.instBool
   finSupp _ := ⟨∅, fun _ _ ↦ rfl⟩
@@ -366,7 +374,7 @@ theorem supp_eq_empty_iff {x : X} : supp x = ∅ ↔ ∀ π : FinitePerm α, π 
 This uses `Nominal.instUnit` (a `def`, not a global `instance`) because `α` cannot be inferred from `Unit`. -/
 @[simp]
 theorem supp_unit (u : Unit) : @supp α _ Unit Nominal.instUnit u = ∅ := by
-  letI : Nominal α Unit := Nominal.instUnit
+  let : Nominal α Unit := Nominal.instUnit
   exact Finset.subset_empty.mp (supp_le (fun _ _ ↦ rfl))
 
 /-- The support of a pair is the union of the supports. -/
