@@ -213,7 +213,7 @@ theorem movedFinset_swap_subset (a b : α) : movedFinset (swap a b) ⊆ {a, b} :
   simp only [mem_movedFinset] at hc
   simp only [Finset.mem_insert, Finset.mem_singleton]
   by_contra habs
-  push_neg at habs
+  push Not at habs
   exact hc (swap_apply_of_ne' habs.1 habs.2)
 
 /-- The moved-point set of `swap a b` is `{a, b}` when `a ≠ b`. -/
@@ -222,7 +222,7 @@ theorem movedFinset_swap {a b : α} (h : a ≠ b) : movedFinset (swap a b) = {a,
   ext c; simp only [mem_movedFinset, Finset.mem_insert, Finset.mem_singleton]
   constructor
   · intro hc
-    by_contra habs; push_neg at habs
+    by_contra habs; push Not at habs
     exact hc (swap_apply_of_ne' habs.1 habs.2)
   · rintro (rfl | rfl) <;> simp [swap, h, h.symm]
 
@@ -233,9 +233,8 @@ theorem movedFinset_swap_self (a : α) : movedFinset (swap a a) = ∅ := by simp
 /-- Left-composing `swap a (σ a)` strictly shrinks the moved-point set: `movedFinset (swap a (σ a) * σ) ⊆ movedFinset σ`. -/
 theorem movedFinset_swap_smul_subset {σ : FinitePerm α} {a : α} (hmoved : σ a ≠ a) : movedFinset (swap a (σ a) * σ) ⊆ movedFinset σ := by
   intro c hc
-  rw [Set.Finite.mem_toFinset] at hc ⊢
-  simp only [Equiv.Perm.movedPoints, Set.mem_setOf_eq,
-             Subgroup.coe_mul, swap_coe, Equiv.Perm.mul_apply] at hc
+  rw [mem_movedFinset] at hc ⊢
+  change (Equiv.swap a (σ a)) (σ c) ≠ c at hc
   intro heq
   rw [heq, Equiv.swap_apply_def] at hc
   split_ifs at hc with h₁ h₂

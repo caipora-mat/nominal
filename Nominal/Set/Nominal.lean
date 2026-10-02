@@ -4,7 +4,11 @@ import Nominal.Set.PFun
 
 import Mathlib.GroupTheory.GroupAction.Support
 import Mathlib.Data.Set.Finite.Basic
-import Mathlib.Data.Set.Lattice
+import Mathlib.Data.Set.Lattice.Bounded
+import Mathlib.Data.Set.Lattice.Disjoint
+import Mathlib.Data.Set.Lattice.Image
+import Mathlib.Data.Set.Lattice.Indexed
+import Mathlib.Data.Set.Lattice.Order
 import Mathlib.Data.Finset.Card
 import Mathlib.Data.Finset.Empty
 import Mathlib.Data.Finset.Image
@@ -245,7 +249,7 @@ theorem not_mem_supp {x : X} {a : α} : a ∉ supp x ↔ ∃ s, supports s x ∧
   constructor
   · intro h
     rw [mem_supp] at h
-    push_neg at h
+    push Not at h
     exact h
   · rintro ⟨s, hs, ha⟩ hmem
     exact ha (mem_supp.mp hmem s hs)
@@ -261,7 +265,7 @@ theorem supp_supports (x : X) : supports (supp x) x := by
   intro a b ha hb
   -- a ∉ supp x means ∃ s₁ with supports s₁ x and a ∉ s₁
   rw [mem_supp] at ha hb
-  push_neg at ha hb
+  push Not at ha hb
   obtain ⟨s₁, hs₁, ha₁⟩ := ha
   obtain ⟨s₂, hs₂, hb₂⟩ := hb
   -- The intersection s₁ ∩ s₂ also supports x
@@ -354,7 +358,7 @@ theorem supp_eq_empty_iff {x : X} : supp x = ∅ ↔ ∀ π : FinitePerm α, π 
     rw [Finset.eq_empty_iff_forall_notMem]
     intro a
     simp only [mem_supp]
-    push_neg
+    push Not
     exact ⟨∅, fun π _ ↦ h π, Finset.notMem_empty a⟩
 
 /-- The support of the unique element of `Unit` is empty.

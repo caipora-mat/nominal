@@ -79,7 +79,7 @@ instance instCoe {X Y : Type*} : Coe (X → Y) (PFun α X Y) := ⟨PFun.mk⟩
 /-- Apply a `PFun` to an argument. -/
 instance instFunLike {X Y : Type*} : FunLike (PFun α X Y) X Y where
   coe f := f.toFun
-  coe_injective' f g h := by cases f; cases g; congr
+  coe_injective f g h := by cases f; cases g; congr
 
 @[ext]
 theorem ext {X Y : Type*} {f g : PFun α X Y} (h : ∀ x, f x = g x) : f = g := DFunLike.ext f g h

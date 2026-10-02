@@ -2,7 +2,7 @@ import Nominal.Set.Nominal
 
 import Mathlib.Data.Finset.Disjoint
 import Mathlib.Order.Filter.Cofinite
-import Mathlib.Data.Finite.Defs
+import Mathlib.Basic.Finite.Defs
 
 /-!
 # Freshness
@@ -273,7 +273,7 @@ theorem fresh_perm_comm {π σ : FinitePerm α} (h : π # σ) : π * σ = σ * �
     intro a
     simp only [Fresh, supp_finitePerm] at h
     by_contra hc
-    push_neg at hc
+    push Not at hc
     obtain ⟨h₁, h₂⟩ := hc
     have ha₁ : a ∈ PermType.movedFinset π := PermType.mem_movedFinset.mpr h₁
     have ha₂ : a ∈ PermType.movedFinset σ := PermType.mem_movedFinset.mpr h₂
@@ -290,7 +290,7 @@ open Filter
 @[grind =]
 theorem fresh_atom_compl_eq_supp (x : X) : supp x = {a : α | a # x}ᶜ := by
   ext a
-  simp only [Set.mem_compl_iff, Set.mem_setOf_eq, fresh_atom_left, not_not, Finset.mem_coe]
+  simp only [Set.mem_compl_iff, Set.mem_ofPred_eq, fresh_atom_left, not_not, Finset.mem_coe]
 
 /-- The set of atoms fresh for `x` belongs to the cofinite filter. -/
 theorem fresh_cofinite (x : X) : {a : α | a # x} ∈ cofinite := by

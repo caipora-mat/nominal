@@ -124,7 +124,7 @@ Stated at the `Set α` level because the intersection ranges over possibly infin
 theorem supp_quotient_eq_sInter (x : X) :
     (supp (⟦x⟧ : Quotient s) : Set α) = ⋂ x' ∈ {x' | s.r x x'}, (supp x' : Set α) := by
   ext a
-  simp only [Set.mem_iInter, Set.mem_setOf_eq, Finset.mem_coe]
+  simp only [Set.mem_iInter, Set.mem_ofPred_eq, Finset.mem_coe]
   constructor
   · -- ⊆: supp ⟦x⟧ ⊆ supp x' for every x' ≈ x
     intro ha x' hxx'
@@ -139,7 +139,7 @@ theorem supp_quotient_eq_sInter (x : X) :
     set q : Quotient s := ⟦x⟧
     pick_new a' (supp (α := α) a ∪ supp q ∪ supp x)
     simp only [Finset.mem_union, supp_atom, Finset.mem_singleton] at a'New
-    push_neg at a'New
+    push Not at a'New
     obtain ⟨⟨ha'_ne, ha'_q⟩, ha'_x⟩ := a'New
     -- Since a, a' ∉ supp ⟦x⟧, we have swap a a' • ⟦x⟧ = ⟦x⟧
     have hq : swap a a' • q = q :=

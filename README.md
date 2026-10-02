@@ -2,9 +2,12 @@
 
 A Lean 4 / Mathlib formalization of nominal set theory following Pitts' *Nominal Sets* (CUP 2013).
 
+See [the assessment and roadmap](docs/roadmap.md) for the current research scope,
+nominal-function ergonomics, and the path to a lambda-calculus Church–Rosser case study.
+
 ## Toolchain
 
-Lean v4.28.0
+Lean v4.34.1 / Mathlib v4.34.1
 
 ## Project Structure
 
@@ -24,6 +27,7 @@ Nominal/
     Swap.lean             # swap transposition + movedFinset lemmas
     Support.lean          # supports / FinSupported; Pitts Prop. 2.1
     Nominal.lean          # Nominal typeclass; supp; all Nominal instances
+    EquivalenceClass.lean # equivariant quotients and their nominal structure
     Freshness.lean        # re-exports Freshness.*
     Freshness/
       Basic.lean          # Fresh (#) relation
@@ -33,10 +37,9 @@ Nominal/
     NameAbstraction.lean  # NameAbs ([A]X); abs / ⟪a⟫ x; supp_abs
     Concretion.lean       # concreteAt (⊙); liftAbs; Prop. 4.9; ext
     FCB.lean              # FCB / liftFCB (Thm 4.15); liftFresh (Cor 4.17)
-    Structural.lean       # structural isos; SepProd; adjunctions (stubs)
   Syntax.lean             # re-exports Syntax.*
   Syntax/
-    LPerm.lean            # λ-calculus permutation syntax
+    LPerm.lean            # swap-list permutations for nominal syntax
     Terms.lean            # nominal term language
 ```
 
@@ -56,10 +59,9 @@ Nominal/
 | FS functions | `NFun α X Y` | `supp_apply_le`, `fresh_apply` |
 | Name abs. | `NameAbs α X`, `⟪a⟫ x` | `abs_eq_iff` (Lemma 4.3), `supp_abs` (Prop. 4.5), `fresh_abs` |
 | Concretion | `F ⊙ a` | `concreteAt_abs_self/fresh/not_fresh`, `abs_concreteAt_eq` (Prop. 4.9), `nameAbs_ext` (4.16) |
-| Functor | `liftAbs f hf` | `liftAbs_abs`, `liftAbs_unique`, `liftAbs_id`, `liftAbs_comp` |
+| Functor | `liftAbs hf` | `liftAbs_abs`, `liftAbs_unique`, `liftAbs_id`, `liftAbs_comp` |
 | FCB | `FCB F`, `liftFCB` | `liftFCB_abs` (4.33), `liftFCB_abs_of_fresh`, `supp_liftFCB_le`, `liftFCB_unique` |
 | Elim. principle | `liftFresh f` | `liftFresh_abs`, `liftFresh_equivariant`, `liftFresh_unique` |
-| Structural isos | `absAtomEquiv`, `prodEquiv`, `sumEquiv`, `discreteEquiv`, `expEquiv` | (Pitts 4.12–4.18) |
 
 **Design note:** `PFun α X Y` wraps `X → Y` with the conjugation action to avoid a diamond with Mathlib's `Pi.instSMul`.
 

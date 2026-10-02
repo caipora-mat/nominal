@@ -361,6 +361,16 @@ instance instConjFinitePerm : PermType α (FinitePerm α) where
     change π * τ * σ * (π * τ)⁻¹ = π * (τ * σ * τ⁻¹) * π⁻¹
     simp [mul_inv_rev, mul_assoc]
 
+/-- Prefer the nominal conjugation action to Mathlib's multiplication action on a group.
+Mathlib assigns the latter priority 1100, above the inherited action projections. -/
+instance (priority := 1200) instConjFinitePermSMul : SMul (FinitePerm α) (FinitePerm α) :=
+  instConjFinitePerm.toSMul
+
+/-- The group action corresponding to `instConjFinitePermSMul`. -/
+instance (priority := 1200) instConjFinitePermMulAction :
+    MulAction (FinitePerm α) (FinitePerm α) :=
+  instConjFinitePerm.toMulAction
+
 /-- The conjugation action: `π • σ = π * σ * π⁻¹`. -/
 @[simp, grind =]
 theorem conj_smul (π σ : FinitePerm α) : π • σ = π * σ * π⁻¹ := rfl
@@ -463,7 +473,7 @@ omit [Name α] in
 @[simp]
 theorem mem_movedFinset {π : FinitePerm α} {a : α} : a ∈ movedFinset π ↔ π a ≠ a := by
   simp only [movedFinset, Set.Finite.mem_toFinset, Equiv.Perm.movedPoints,
-             Set.mem_setOf_eq, DFunLike.coe]
+             Set.mem_ofPred_eq, DFunLike.coe]
 
 omit [Name α] in
 /-- An atom not in `movedFinset σ` is a fixed point of `σ`. -/
@@ -504,7 +514,7 @@ theorem movedFinset_mul_subset (π σ : FinitePerm α) : movedFinset (π * σ) �
   intro a ha
   simp only [mem_movedFinset, FinitePerm.mul_apply, Finset.mem_union] at ha ⊢
   by_contra h
-  push_neg at h
+  push Not at h
   obtain ⟨h₁, h₂⟩ := h
   exact ha (by rw [h₂, h₁])
 

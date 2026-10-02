@@ -151,7 +151,7 @@ theorem alphaEqv_equivariant {a₁ a₂ : α} {x₁ x₂ : X} (π : FinitePerm �
   -- The bad set for π maps to bad set: {d | ¬…} ⊆ π '' {c | ¬…}
   apply Set.Finite.subset (h.image (π : α → α))
   intro d hd
-  simp only [Set.mem_setOf_eq] at hd
+  simp only [Set.mem_ofPred_eq] at hd
   -- Witness c = π⁻¹ • d, so π • c = d
   refine ⟨π⁻¹ • d, ?_, PermType.smul_inv_smul π d⟩
   intro heq
@@ -174,8 +174,7 @@ theorem alphaEqv_iff_abs_eq {a₁ a₂ : α} {x₁ x₂ : X} : AlphaEqv a₁ x�
 /-- Same-binder injectivity: `⟪a⟫ x₁ = ⟪a⟫ x₂ ↔ x₁ = x₂` (Lemma 4.2). -/
 @[simp]
 theorem abs_same_name_iff {a : α} {x₁ x₂ : X} : ⟪a⟫x₁ = ⟪a⟫x₂ ↔ x₁ = x₂ := by
-  simp only [abs]
-  rw [Quotient.eq]
+  rw [abs_eq_iff_freshQuantifier]
   -- goal: AlphaEqv a x₁ a x₂ ↔ x₁ = x₂
   constructor
   · intro h

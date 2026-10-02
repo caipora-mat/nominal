@@ -119,7 +119,7 @@ instance instCoe : Coe (NFun α X Y) (PFun α X Y) := ⟨NFun.toPFun⟩
 /-- `NFun α X Y` can be applied as a function via `FunLike`. -/
 instance instFunLike : FunLike (NFun α X Y) X Y where
   coe f := f.toPFun
-  coe_injective' f g h := by
+  coe_injective f g h := by
     have hpf : f.toPFun = g.toPFun := PFun.ext (congrFun h)
     cases f; cases g; congr
 
@@ -208,16 +208,17 @@ def id : NFun α X X := ofSupports PFun.id ∅ supports_pfun_id
 @[simp] theorem id_apply (x : X) : (NFun.id : NFun α X X) x = x := rfl
 
 /-- The constant nominal function returning `y`. -/
-def const (y : Y) : NFun α X Y := ofSupports (PFun.const y) (supp y) (supports_pfun_const y)
+def const (y : Y) : NFun α X Y :=
+  ⟨PFun.const y, ⟨supp y, supports_pfun_const y⟩⟩
 
 /-- The constant nominal function always returns `y`. -/
 @[simp] theorem const_apply (y : Y) (x : X) : (NFun.const y : NFun α X Y) x = y := rfl
 
 /-- Composition of nominal functions. -/
 def comp (g : NFun α Y Z) (f : NFun α X Y) : NFun α X Z :=
-  ofSupports (g.toPFun.comp f.toPFun) (supp g ∪ supp f)
-    (supports_pfun_comp (supports_iff_toPFun.mp (supp_supports g))
-                        (supports_iff_toPFun.mp (supp_supports f)))
+  ⟨g.toPFun.comp f.toPFun, ⟨supp g ∪ supp f,
+    supports_pfun_comp (supports_iff_toPFun.mp (supp_supports g))
+                      (supports_iff_toPFun.mp (supp_supports f))⟩⟩
 
 /-- Composition applies by composing the underlying functions. -/
 @[simp] theorem comp_apply (g : NFun α Y Z) (f : NFun α X Y) (x : X) : (g.comp f) x = g (f x) := rfl

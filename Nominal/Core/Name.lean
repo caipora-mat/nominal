@@ -1,4 +1,4 @@
-import Mathlib.Data.Finite.Defs
+import Mathlib.Basic.Finite.Defs
 
 /-!
 # Names (Atoms)

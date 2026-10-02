@@ -189,7 +189,7 @@ theorem concreteAt_abs_fresh {a a' : α} {x : X} (hne : a' ≠ a) (hfresh : a' #
 theorem concreteAt_abs_not_fresh {a a' : α} {x : X} (hne : a' ≠ a) (hmem : a' ∈ supp x) : ⟪a⟫x ⊙ a' = none := by
   unfold concreteAt abs
   simp only [Quotient.liftOn_mk, hne, ↓reduceIte]
-  exact if_neg (not_not.mpr hmem)
+  exact ite_eq_right (not_not.mpr hmem)
 
 /-- **Proposition 4.9, universal version**: for *any* `a # F`, the concretion of `F` at `a`
 gives some `y` and `F = ⟪a⟫ y`. (Same conclusion as `abs_concreteAt_eq` but universally quantified over all fresh atoms.) -/
@@ -252,7 +252,7 @@ theorem concreteAt_abs (a a' : α) (x : X) :
   · simp [h₁]
   · by_cases h₂ : a' ∉ supp x
     · simp [h₁, h₂, concreteAt_abs_fresh h₁ ((fresh_atom_left a' x).mpr h₂)]
-    · push_neg at h₂
+    · push Not at h₂
       simp [h₁, h₂, concreteAt_abs_not_fresh h₁ h₂]
 
 /-- Injectivity of concretion: if two concretions at the same atom give `some`, the results agree. -/
@@ -489,8 +489,7 @@ noncomputable def liftAbs {Y : Type u} [Nominal α Y] {f : X → Y} (hf : IsEqui
 /-- `liftAbs` commutes with `abs`: `liftAbs hf (⟪a⟫ x) = ⟪a⟫ f x`. -/
 @[simp]
 theorem liftAbs_abs {Y : Type u} [Nominal α Y] {f : X → Y} (hf : IsEquivariant α f) (a : α) (x : X) :
-  liftAbs hf ⟪a⟫x = ⟪a⟫(f x) := by
-  simp [liftAbs, abs]
+  liftAbs hf ⟪a⟫x = ⟪a⟫(f x) := rfl
 
 /-- `liftAbs` is equivariant. -/
 @[simp]

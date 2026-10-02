@@ -126,11 +126,16 @@ private def evalChooseFresh (a : TSyntax `ident) (xs : Array (TSyntax `term))
   for h : i in [:xs.size] do
     let x := xs[i]
     let hi := mkIdent <| Name.mkSimple s!"{baseName}{i + 1}"
+    let hmemId : TSyntax `ident := ⟨← withFreshMacroScope `(_hmem_i)⟩
+    -- Embed membership into the left-associated union without simplifying supports.
+    let mut proof : TSyntax `term ← `($hmemId)
+    if i > 0 then
+      proof ← `(Finset.mem_union_right _ $proof)
+    for _ in [i + 1:xs.size] do
+      proof ← `(Finset.mem_union_left _ $proof)
     evalTactic (← `(tactic|
-      have $hi : $a # $x := by
-        refine (Nominal.Set.fresh_atom_left $a $x).mpr ?_
-        intro _hmem_i
-        exact $rawHId (by simp [Finset.mem_union, _hmem_i])))
+      have $hi : $a # $x :=
+        (Nominal.Set.fresh_atom_left $a $x).mpr (fun $hmemId ↦ $rawHId $proof)))
   -- Clean up the internal raw hypothesis
   evalTactic (← `(tactic| clear $rawHId))
 
@@ -249,6 +254,16 @@ example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : Tr
 example {α X Y} [Name α] [Nominal α X] [Nominal α Y] (x x' : X) (y : Y) : True := by
   choose_fresh a from X with hf
   trivial
+
+-- Check the generated facts when supports simplify, including every union position.
+example {α} [Name α] (b : α) : ∃ a : α, a # b := by
+  choose_fresh a from b
+  exact ⟨a, aFresh1⟩
+
+example {α X} [Name α] [Nominal α X] (b c : α) (x : X) :
+    ∃ a : α, a # b ∧ a # x ∧ a # c := by
+  choose_fresh a from b x c with hf
+  exact ⟨a, hf1, hf2, hf3⟩
 
 end CHOOSE_FRESH_TEST
 

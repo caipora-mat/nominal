@@ -94,15 +94,15 @@ theorem movedPoints_one : (1 : Perm α).movedPoints = ∅ := by
 
 theorem movedPoints_mul_subset (π σ : Perm α) : (π * σ).movedPoints ⊆ π.movedPoints ∪ σ.movedPoints := by
   intro a ha
-  simp only [movedPoints, mem_setOf_eq, Perm.mul_apply, mem_union] at *
+  simp only [movedPoints, mem_ofPred_eq, Perm.mul_apply, mem_union] at *
   by_contra h
-  push_neg at h
+  push Not at h
   exact ha (by rw [h.2, h.1])
 
 @[simp]
 theorem movedPoints_inv : π⁻¹.movedPoints = π.movedPoints := by
   ext a
-  simp only [movedPoints, mem_setOf_eq, ne_eq]
+  simp only [movedPoints, mem_ofPred_eq, ne_eq]
   constructor
   · intro h heq
     exact h (by rw [Perm.inv_def, show π.symm a = π.symm (π a) from congrArg π.symm heq.symm,
@@ -197,11 +197,11 @@ def FinitePerm (α : Type*) : Subgroup (Perm α) where
   one_mem' := by simp [Equiv.Perm.IsFinitePerm, Equiv.Perm.movedPoints]
   mul_mem' := by
     intro f g hf hg
-    simp only [Set.mem_setOf_eq, Equiv.Perm.IsFinitePerm] at *
+    simp only [Set.mem_ofPred_eq, Equiv.Perm.IsFinitePerm] at *
     exact (hf.union hg).subset (Equiv.Perm.movedPoints_mul_subset f g)
   inv_mem' := by
     intro f hf
-    simp only [Set.mem_setOf_eq, Equiv.Perm.IsFinitePerm] at *
+    simp only [Set.mem_ofPred_eq, Equiv.Perm.IsFinitePerm] at *
     rwa [Equiv.Perm.movedPoints_inv]
 
 namespace Nominal.Core.FinitePerm
@@ -211,7 +211,7 @@ namespace Nominal.Core.FinitePerm
 `FinitePerm α` elements can be applied directly as functions `α → α` -/
 instance instFunLike {α} : FunLike (FinitePerm α) α α where
   coe π := π.val
-  coe_injective' _ _ h := Subtype.ext (Equiv.Perm.ext (congr_fun h))
+  coe_injective _ _ h := Subtype.ext (Equiv.Perm.ext (congr_fun h))
 
 /-! ### Coercion to `Equiv.Perm`
 
@@ -293,7 +293,7 @@ theorem swap_finite (a b : α) [DecidableEq α] : swap a b ∈ FinitePerm α := 
   simp only [Perm.IsFinitePerm, Perm.movedPoints]
   apply Set.Finite.subset (({a, b} : Finset α).finite_toSet)
   intro x hx
-  simp only [Set.mem_setOf_eq] at hx
+  simp only [Set.mem_ofPred_eq] at hx
   simp only [Finset.mem_coe, Finset.mem_insert, Finset.mem_singleton]
   exact (swap_apply_ne_self_iff.mp hx).2
 

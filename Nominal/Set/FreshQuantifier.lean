@@ -172,7 +172,7 @@ theorem freshQuantifier_iff_exists_finset {p : α → Prop} : (И a, p a) ↔ �
       exact ha (h.mem_toFinset.mpr hp)⟩
   · intro ⟨s, hs⟩
     exact (Finset.finite_toSet s).subset (fun a ha ↦ by
-      simp only [Set.mem_setOf_eq] at ha
+      simp only [Set.mem_ofPred_eq] at ha
       exact Finset.mem_coe.mpr (by by_contra h; exact ha (hs a h)))
 
 omit [Name α] in
@@ -195,7 +195,7 @@ theorem freshQuantifier_or {p q : α → Prop}
   constructor
   · intro h
     by_contra hcon
-    push_neg at hcon
+    push Not at hcon
     obtain ⟨hnp, hnq⟩ := hcon
     have hp_fin : Set.Finite {a | p a} := hp.resolve_right hnp
     have hq_fin : Set.Finite {a | q a} := hq.resolve_right hnq
@@ -204,8 +204,8 @@ theorem freshQuantifier_or {p q : α → Prop}
       have : Set.Finite ({a | ¬ p a}) := by
         apply Set.Finite.subset (hfin.union hq_fin)
         intro a ha
-        simp only [Set.mem_setOf_eq] at ha ⊢
-        simp only [Set.mem_union, Set.mem_setOf_eq]
+        simp only [Set.mem_ofPred_eq] at ha ⊢
+        simp only [Set.mem_union, Set.mem_ofPred_eq]
         by_cases hqa : q a
         · exact Or.inr hqa
         · exact Or.inl (fun h ↦ ha (h.elim id (fun hq ↦ absurd hq hqa)))
@@ -215,11 +215,11 @@ theorem freshQuantifier_or {p q : α → Prop}
     cases h with
     | inl hp =>
       exact hp.subset (fun a ha ↦ by
-        simp only [Set.mem_setOf_eq] at ha ⊢
+        simp only [Set.mem_ofPred_eq] at ha ⊢
         exact fun h ↦ ha (Or.inl h))
     | inr hq =>
       exact hq.subset (fun a ha ↦ by
-        simp only [Set.mem_setOf_eq] at ha ⊢
+        simp only [Set.mem_ofPred_eq] at ha ⊢
         exact fun h ↦ ha (Or.inr h))
 
 /-- For finitely supported predicates: `¬ (И a, p a) ↔ (И a, ¬ p a)`.
@@ -250,14 +250,14 @@ theorem freshQuantifier_imp_iff {p q : α → Prop} (hp : Set.Finite {a | p a} �
     cases hp with
     | inl hp_fin =>
       exact hp_fin.subset (fun a ha ↦ by
-        simp only [Set.mem_setOf_eq] at ha ⊢
+        simp only [Set.mem_ofPred_eq] at ha ⊢
         exact (Classical.not_imp.mp ha).1)
     | inr hnp_fin =>
       have hfqp : (И a, p a) := freshQuantifier_iff.mpr hnp_fin
       have hfqq : (И a, q a) := h hfqp
       rw [freshQuantifier_iff] at hfqq
       exact hfqq.subset (fun a ha ↦ by
-        simp only [Set.mem_setOf_eq] at ha ⊢
+        simp only [Set.mem_ofPred_eq] at ha ⊢
         exact (Classical.not_imp.mp ha).2)
 
 section SomeAny
@@ -271,7 +271,7 @@ theorem someAny_exists_of_freshQuantifier {R : α → X → Prop} {x : X} (h : �
   rw [freshQuantifier_iff] at h
   have hfin : Set.Finite ({a | ¬ R a x} ∪ (supp x)) := h.union (Finset.finite_toSet _)
   pick_new a (hfin.toFinset)
-  simp only [Set.Finite.mem_toFinset, Set.mem_union, Set.mem_setOf_eq,
+  simp only [Set.Finite.mem_toFinset, Set.mem_union, Set.mem_ofPred_eq,
              Finset.mem_coe, not_or, not_not] at aNew
   exact ⟨a, (fresh_atom_left a x).mpr aNew.2, aNew.1⟩
 
@@ -289,7 +289,7 @@ theorem someAny_freshQuantifier_of_forall {R : α → X → Prop} {x : X} (hAll 
   rw [freshQuantifier_iff]
   apply Set.Finite.subset (Finset.finite_toSet (supp x))
   intro a ha
-  simp only [Set.mem_setOf_eq] at ha
+  simp only [Set.mem_ofPred_eq] at ha
   by_contra h
   exact ha (hAll a ((fresh_atom_left a x).mpr h))
 
@@ -325,7 +325,7 @@ theorem fresh_iff_freshQuantifier {a : α} {x : X} : a # x ↔ (И a', swap a a'
     rw [freshQuantifier_iff]
     apply (Finset.finite_toSet (supp x)).subset
     intro b hb
-    simp only [Set.mem_setOf_eq] at hb
+    simp only [Set.mem_ofPred_eq] at hb
     simp only [Finset.mem_coe]
     by_contra hb_supp
     exact hb (fresh_swap ha ((fresh_atom_left b x).mpr hb_supp))
@@ -333,7 +333,7 @@ theorem fresh_iff_freshQuantifier {a : α} {x : X} : a # x ↔ (И a', swap a a'
     rw [freshQuantifier_iff] at h
     have hfin : Set.Finite ({a' | ¬ swap a a' • x = x} ∪ (supp x)) := h.union (Finset.finite_toSet _)
     pick_new b hfin.toFinset
-    simp only [Set.Finite.mem_toFinset, Set.mem_union, Set.mem_setOf_eq,
+    simp only [Set.Finite.mem_toFinset, Set.mem_union, Set.mem_ofPred_eq,
                Finset.mem_coe, not_or, not_not] at bNew
     obtain ⟨hswap_fix, hb_supp⟩ := bNew
     rw [fresh_atom_left]
@@ -525,7 +525,7 @@ theorem FC_smul (π : FinitePerm α) {F : NFun α α (Option X)} (h : FC F) : FC
   have : {a | ¬ ∃ x, (π • F) a = some x ∧ a # x} ⊆
       (fun a ↦ π • a) '' {a | ¬ ∃ x, F a = some x ∧ a # x} := by
     intro a ha
-    simp only [Set.mem_setOf_eq, Set.mem_image] at ha ⊢
+    simp only [Set.mem_ofPred_eq, Set.mem_image] at ha ⊢
     refine ⟨π⁻¹ • a, ?_, by simp⟩
     intro ⟨x, hx, hfresh⟩
     apply ha
@@ -542,7 +542,7 @@ theorem FCT_smul (π : FinitePerm α) {F : NFun α α X} (h : FCT F) : FCT (π �
   rw [freshQuantifier_iff] at *
   have : {a | ¬ a # (π • F) a} ⊆ (fun a ↦ π • a) '' {a | ¬ a # F a} := by
     intro a ha
-    simp only [Set.mem_setOf_eq, Set.mem_image] at ha ⊢
+    simp only [Set.mem_ofPred_eq, Set.mem_image] at ha ⊢
     refine ⟨π⁻¹ • a, ?_, by simp⟩
     intro hfresh
     apply ha
@@ -559,14 +559,14 @@ theorem freshQuantifier_smul_iff (π : FinitePerm α) {p : α → Prop} :
     rw [freshQuantifier_iff] at *
     have : {a | ¬ p (π⁻¹ • a)} ⊆ (fun a ↦ π • a) '' {a | ¬ p a} := by
       intro a ha
-      simp only [Set.mem_setOf_eq, Set.mem_image] at ha ⊢
+      simp only [Set.mem_ofPred_eq, Set.mem_image] at ha ⊢
       exact ⟨π⁻¹ • a, ha, by simp⟩
     exact (h.image _).subset this
   · intro h
     rw [freshQuantifier_iff] at *
     have : {a | ¬ p a} ⊆ (fun a ↦ π⁻¹ • a) '' {a | ¬ p (π⁻¹ • a)} := by
       intro a ha
-      simp only [Set.mem_setOf_eq, Set.mem_image] at ha ⊢
+      simp only [Set.mem_ofPred_eq, Set.mem_image] at ha ⊢
       exact ⟨π • a, by simpa using ha, by simp⟩
     exact (h.image _).subset this
 
