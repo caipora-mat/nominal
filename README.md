@@ -31,7 +31,7 @@ Nominal/
     Freshness.lean        # re-exports Freshness.*
     Freshness/
       Basic.lean          # Fresh (#) relation
-      Tactic.lean         # choose_fresh tactic
+      Tactic.lean         # choose_fresh and split_fresh tactics
     NFun.lean             # compatibility umbrella for NFun.Basic + NFun.Tactic
     NFun/
       Basic.lean         # finitely supported functions and proof-backed constructors
@@ -91,6 +91,29 @@ lake build Nominal Instances
 
 The default build covers both `Nominal` and `Instances`, including the NFun tactic
 module and all four lambda-calculus modules.
+
+## Freshness tactic regressions
+
+```bash
+lake build Examples
+# Directly elaborate the regression file:
+lake env lean Examples/Freshness.lean
+# Validate both supported libraries and the regressions together:
+lake build Nominal Instances Examples
+```
+
+[Examples/Freshness.lean](Examples/Freshness.lean) tests automatic and explicit
+freshness selection, shadowing, derived instances, ambiguity, nested splitting,
+and diagnostics. Its axiom audit rejects admissions and dependencies beyond the
+standard `propext`, `Classical.choice`, and `Quot.sound` foundations.
+
+`choose_fresh a` scans eligible locals using instance synthesis;
+`choose_fresh a from X x` mixes type expansion and explicit terms. Generated names
+are always indexed: `aFresh1`, `aFresh2`, …, or `h1`, `h2`, … with `with h`.
+`split_fresh h` recursively splits products into `h_1`, `h_2`, …, skipping occupied
+names. Its `with` form requires one distinct, unused name per leaf. See the
+[tactic documentation](Nominal/Set/Freshness/Tactic.lean) for ordering, filtering,
+atom-sort selection, and failure behavior.
 
 ## References
 

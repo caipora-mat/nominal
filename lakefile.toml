@@ -20,3 +20,6 @@ name = "Nominal"
 
 [[lean_lib]]
 name = "Instances"
+
+[[lean_lib]]
+name = "Examples"
