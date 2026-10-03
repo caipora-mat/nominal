@@ -1,6 +1,8 @@
-# Nominal Sets in Lean 4
+# Nominal Sets and Nominal Unification in Lean 4
 
-A Lean 4 / Mathlib formalization of nominal set theory following Pitts' *Nominal Sets* (CUP 2013).
+A Lean 4 / Mathlib formalization of nominal set theory following Pitts' *Nominal Sets* (CUP 2013),
+together with nominal terms and an executable nominal unification algorithm, proved sound,
+complete, principal and equivariant.
 
 ## Toolchain
 
@@ -33,11 +35,30 @@ Nominal/
     NameAbstraction.lean  # NameAbs ([A]X); abs / ⟪a⟫ x; supp_abs
     Concretion.lean       # concreteAt (⊙); liftAbs; Prop. 4.9; ext
     FCB.lean              # FCB / liftFCB (Thm 4.15); liftFresh (Cor 4.17)
-    Structural.lean       # structural isos; SepProd; adjunctions (stubs)
+    EquivalenceClass.lean # quotients by equivariant equivalences (Pitts 1.7, 2.9)
   Syntax.lean             # re-exports Syntax.*
   Syntax/
-    LPerm.lean            # λ-calculus permutation syntax
-    Terms.lean            # nominal term language
+    LPerm.lean            # permutations as lists of swaps
+    Terms.lean            # nominal terms (atoms, suspensions, n-ary applications, abstractions)
+    Ds.lean               # difference set ds(π, π')
+    Fresh.lean            # freshness Γ ⊢ a # t, as a Bool-valued function
+    AlphaEquiv/           # α-equivalence Γ ⊢ s ≈α t; equivalence; object-level equivariance
+    Substitution/         # simultaneous substitution, composition, idempotence
+    Problems/             # constraints, problems, entailment
+    Rename.lean           # meta-level renaming of atoms
+    RenameVar.lean        # renaming of metavariables
+    TermsNominal.lean     # nominal terms form a nominal set
+    Unification.lean      # re-exports Unification.*
+    Unification/
+      Basic.lean          # solutions, instantiation ordering (preorder; partial order on the quotient)
+      Algorithm.lean      # unify (first stage), finalizeDeferred (second stage), solve
+      Algorithm/          # one-step function, termination measure, helpers
+      Properties.lean     # soundness
+      Completeness.lean   # completeness and principality
+      Mgu.lean            # solved form; absorption vs. independent witness
+      Equivariance.lean   # solve commutes with renaming of atoms
+      EquivarianceVar.lean # solve commutes with renaming of metavariables
+      NominalSet.lean     # solve as a morphism of nominal sets
 ```
 
 ## Key API
@@ -48,7 +69,7 @@ Nominal/
 | Finite perms | `FinitePerm α` | `swap_factorization`, `eq_closure_isSwap` |
 | Perm-set | `PermType α X` | instances for atoms, products, `Option`, `Finset`, `PFun` |
 | Transposition | `swap a b` | `swap_smul_eq_of_not_mem`, `movedFinset_swap_smul_subset` |
-| Equivariance | `Equivariant α X Y` | `MulActionHom (FinitePerm α) X Y` |
+| Equivariance | `IsEquivariant α f`, `EquivariantRel α R` | `IsEquivariant.comp`, `IsEquivariant.supports_image` |
 | Support | `supports s x` | `supports_iff_swap` (Pitts 2.1), `supports_inter`, `supports_smul` |
 | Nominal set | `Nominal α X`, `supp x` | `supp_supports`, `supp_le`, `supp_equivariant`, `supp_atom`, `supp_prod` |
 | Freshness | `x # y` | `fresh_atom_left`, `fresh_swap`, `fresh_prod_right`, `exists_fresh_atom` |
@@ -59,7 +80,24 @@ Nominal/
 | Functor | `liftAbs f hf` | `liftAbs_abs`, `liftAbs_unique`, `liftAbs_id`, `liftAbs_comp` |
 | FCB | `FCB F`, `liftFCB` | `liftFCB_abs` (4.33), `liftFCB_abs_of_fresh`, `supp_liftFCB_le`, `liftFCB_unique` |
 | Elim. principle | `liftFresh f` | `liftFresh_abs`, `liftFresh_equivariant`, `liftFresh_unique` |
-| Structural isos | `absAtomEquiv`, `prodEquiv`, `sumEquiv`, `discreteEquiv`, `expEquiv` | (Pitts 4.12–4.18) |
+
+## Nominal unification
+
+`UnifProblem.solve` takes a list of equations `s ≈? t` and freshness obligations `a #? t` and
+returns a freshness context and a substitution, or `none`. It runs in two stages: a terminating
+loop that decomposes constraints, instantiates metavariables and defers primitive obligations
+`a # X`, followed by a single application of the accumulated (solved-form) substitution to the
+deferred obligations. The whole specification is executable.
+
+| Property | Theorem |
+|---|---|
+| Soundness | `UnifProblem.solve_satisfies` |
+| Completeness (decision procedure) | `UnifProblem.solve_none_iff_no_solution` |
+| Principality (m.g.u.) | `UnifProblem.solve_principal`, `UnifProblem.solve_le_indep` |
+| ≈α is an equivalence | `alphaEquiv_refl`, `alphaEquiv_symm`, `alphaEquiv_trans` |
+| Equivariance (atoms) | `UnifProblem.solve_rename`, `UnifProblem.mem_solutions_rename` |
+| Equivariance (metavariables) | `UnifProblem.solve_renameVar`, `UnifProblem.solve_rename_renameVar` |
+| Morphism of nominal sets | `UnifProblem.solve_isEquivariant`, `ntm.instNominal` |
 
 **Design note:** `PFun α X Y` wraps `X → Y` with the conjugation action to avoid a diamond with Mathlib's `Pi.instSMul`.
 
@@ -72,5 +110,7 @@ lake build
 ## References
 
 - A. M. Pitts, *Nominal Sets: Names and Symmetry in Computer Science*, CUP 2013.
+- C. Urban, A. M. Pitts, M. J. Gabbay, *Nominal unification*, TCS 323, 2004.
+- M. Fernández, M. J. Gabbay, *Nominal rewriting*, Information and Computation 205, 2007.
 - V. Choudhury, nominal sets in Agda.
 - D. Paranhos, nominal sets in Rocq.
