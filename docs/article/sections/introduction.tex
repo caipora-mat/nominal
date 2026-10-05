@@ -1,0 +1,57 @@
+\section{Purpose and scope}
+\label{sec:introduction}
+
+The intended package supports ordinary Lean proofs about languages with
+binders. A researcher should be able to specify syntax, define operations, and
+reason about judgments using certified renaming and freshness principles.
+The mathematical setting is classical Lean, with one atom sort, actual
+quotients, and eventual least supports. Single binders and nested binders form
+the initial binding scope. Ordinary propositions remain the language of
+theorems; the package is not intended to require a separate object language
+for logic.
+
+Before syntax generation or binder reasoning can be certified, the meaning of
+renaming must be fixed. A carrier alone does not determine an action: the same
+type can carry a trivial action, a canonical atom action, or, for suitable
+carriers, a pointwise or conjugation action. These choices affect every later
+support statement. The foundation described here therefore exposes a small
+permutation and action interface for ordinary Lean proofs.
+The underlying mathematics is standard group-action and nominal-set theory;
+Pitts~\cite[Chapters 1--2]{pitts2013} provides the background.
+
+For each definition or structure that encodes a mathematical concept, we
+state that concept before describing its Lean representation. We identify
+the correspondence between the mathematical object, its operations and
+laws, and the actual declarations. We also check the pinned Mathlib for
+existing constructions before adding package-specific machinery, recording
+what is reused and why a different interface is needed when reuse does not
+fit. Representation helpers without a separate mathematical counterpart
+are described as such, rather than promoted to additional theory.
+
+Declarations use the namespace \texttt{NominalPackage}, under
+\path{Package/}, with \path{Package.lean} as
+the public import. It uses Mathlib directly and preserves the earlier
+\path{Nominal/} and \path{Instances/} development as a reference implementation.
+Analogous results in that development are not evidence that a new package
+declaration has been proved. The design adapts the subgroup construction for
+finite permutations and uses standard \texttt{MulAction} interfaces for the
+new boundary.
+
+\paragraph{Implementation status.}
+This version describes the implemented foundation increment for roadmap tasks
+\texttt{PKG-F02} and the first slice, \texttt{F03a}, of \texttt{PKG-F03}.
+The permutation and action interfaces exported by \texttt{Package} have been
+checked by Lean, and the source-coverage check and production axiom audit pass.
+Section~\ref{sec:evidence} records the verification evidence separately from
+the mathematical exposition.
+
+The support-facing slice \texttt{F03b} remains open under \texttt{PKG-F03}.
+Supported predicates (\texttt{PKG-01}) are also later work. Persistent usage
+examples are reserved for the future case studies.
+
+The present scope includes finite permutations, swaps, actions on atoms,
+products and finite atom sets, explicit discrete data, and equivariance of
+ordinary functions. It does not establish finite-swap factorization, finite
+or least support, freshness, quotient actions, supported predicates, name
+abstraction, induction, recursion, or generated syntax. These are later
+mathematical layers, with their own proof obligations.

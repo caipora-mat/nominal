@@ -23,3 +23,6 @@ name = "Instances"
 
 [[lean_lib]]
 name = "Examples"
+
+[[lean_lib]]
+name = "Package"

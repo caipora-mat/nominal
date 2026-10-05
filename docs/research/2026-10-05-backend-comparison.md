@@ -11,6 +11,14 @@ investigation, not package implementation. This architectural-policy revision
 is a documentation change after `7fed53a2e5fc67379f86f085515e310e7c1fddb7` on
 `fasapa/nominal-package`; it adds no probe runs or new mathematical evidence.
 
+**Subsequent F01 evidence at `76966b1`:** the
+[direct source investigation](2026-10-05-algebraic-source-investigation.md)
+reads both files at the exact pinned revision, checks this assessment against
+their declarations, reruns the three backend probes, and adds a bounded
+predicate-lifting counterexample. Its record distinguishes current-toolchain
+import failures from an unavailable original-toolchain build. The historical
+verification statements in this note are not silently promoted to fresh results.
+
 The [brief](2026-10-05-nominal-package-brief.md) and
 [propositions investigation](2026-10-05-propositions-and-induction.md) supply
 the requirements. The [package roadmap](../nominal-package-roadmap.md) owns

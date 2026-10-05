@@ -11,6 +11,17 @@ branch. This documentation revision starts from
 [architectural freedom policy](README.md#architectural-freedom); it does not
 rerun or rebaseline the experiments below.
 
+**Subsequent F01 session at `76966b1`:** see the
+[readiness and proposed contracts](2026-10-05-pkg01-readiness.md) and
+[new design-probe record](2026-10-05-predicate-design-probes.md). All four existing
+predicate probes were rerun unchanged, including the two previously untracked
+files. A new Mathlib-only direct-predicate experiment checks action/support
+transport and surjective-equivariant pullback with independent universes.
+The direct SPred API remains proposed. The author approved the first F02 + F03a
+specification and its native implementation plan. F02/F03a were subsequently
+implemented and checked; this note's predicate probes still do not certify the
+proposed new support/predicate interface or complete PKG-01.
+
 All new implementation, including any replacement foundations, belongs under
 top-level `Package/`. The existing `Nominal/`, `Instances/` and probes remain
 reference material and evidence. Actions, support, supported functions,

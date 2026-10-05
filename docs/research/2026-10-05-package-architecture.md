@@ -21,6 +21,19 @@ Current task status and acceptance checklists are maintained in the separate
 [nominal-package roadmap](../nominal-package-roadmap.md). The earlier library
 roadmap retains the completed first-deliverable history.
 
+**Current F01 follow-up at `76966b1`:** the
+[readiness proposal](2026-10-05-pkg01-readiness.md) records prerequisite evidence,
+per-layer decisions proposed for review and exact predicate contracts. The
+[source investigation](2026-10-05-algebraic-source-investigation.md) directly
+checks the pinned sketch. The approved first implementation boundary is
+[F02 + F03a](../superpowers/specs/2026-10-05-package-foundation-kernel-design.md),
+not PKG-01 or a full core rewrite. Its native implementation plan was approved
+and the slice implemented; the author also requested concurrent LaTeX article
+development and removed standalone Package examples in favor of future case
+studies. This follow-up
+leaves the historical findings below identifiable and
+does not select the later syntax backend or establish support/predicate theory.
+
 ## Reading order and evidence labels
 
 1. [Requirements and decisions](2026-10-05-nominal-package-brief.md).
@@ -50,6 +63,9 @@ reference evidence, not certification of a future Package implementation.
 - **U:** reuse, adaptation and from-scratch implementation are all allowed for
   every layer; old APIs, instances, universes, seals and proof techniques are
   optional design choices. Backward compatibility is not required.
+- **U:** always investigate and use suitable pinned Mathlib infrastructure first.
+  Freedom from the old nominal implementation does not justify duplicating
+  existing general-purpose theory; record concrete gaps that require new code.
 - **U:** all new implementation belongs in top-level `Package/`, outside
   `Nominal/`. Foundation prerequisites are explicit tasks before PKG-01.
 - **P:** finish the first complete generated workflow with lambda and first-order
@@ -75,6 +91,12 @@ That shared core can be entirely new. Compare the candidate with other designs
 on their proof obligations and user experience, without giving the existing
 implementation automatic preference. `Package/` may choose different action,
 support, function and abstraction interfaces; any reuse is a documented decision.
+
+An independently designed nominal core should still build on appropriate
+Mathlib definitions, instances and lemmas. Apply the
+[Mathlib-first policy](README.md#mathlib-first) when comparing representations
+and proof routes; inspect exact contracts before deciding to introduce a new
+general-purpose construction or proof.
 
 A normalized signature is useful metadata; a universal generic raw term carrier
 is a separate choice. Do not make the latter a prerequisite. Retain it as a
@@ -250,9 +272,10 @@ alternatives and name the evidence that could change the recommendation.
 | AD-05 | Rule certificates before automation; compare per-rule transport with semantic refreshability | ReductionInduction I; Nominal2 and 2025 criterion L | Generic sufficient theorem or generated proof must cover unrestricted beta and FOL eigenvariables |
 | AD-06 | No unconditional supported abstraction map | S counterexample for constant atom output; existing FCB I | Provide equations only at binders fresh for function/parameters; composition laws need proofs |
 | AD-07 | Five-study portfolio U, staged lambda/FOL then let/π/μ P | User selections; each adds a distinct stress test | Precise later semantics selected before their implementation increments |
-| AD-08 | Notes plus claim ledger and evolving article | User research-method requirement U | Local manuscript only; no novelty, venue or publication claim |
+| AD-08 | Concurrent LaTeX article U: each implementation increment delivers its exposition and evidence | User research-method requirement and R13 | Match actual declarations, review mathematics and compile the article before completion; no novelty, venue or publication claim |
 | AD-09 | Architectural freedom U: reuse, adapt or rebuild any layer | User clarified that existing infrastructure is learning material | Preserve reference source and mathematical goals; certify new implementations independently |
 | AD-10 | Top-level Package location U and explicit foundation prerequisites | User selected Package outside Nominal and requested a full roadmap revision | Plan Package targets/imports/audits and missing foundations before PKG-01 |
+| AD-11 | Mathlib-first U: search and reuse suitable pinned APIs before new general-purpose code | User requires avoiding duplicated infrastructure | Record candidates and concrete gaps; preserve hypotheses, action coherence and theorem strength |
 
 ## Dependency-ordered increments
 
@@ -351,15 +374,19 @@ insert an axiom or merge the old branch.
 
 ## Next foundation decision and PKG-01 readiness
 
-Begin with **PKG-F01**, including direct inspection of `Algebraic.lean` and
-`Structural.lean` at `983adeb9b80f75fb7c77c05acfd2fcef16db1d46`, as specified in
-the [roadmap](../nominal-package-roadmap.md#pkg-f01--algebraic-sketch-investigation-and-foundation-contract).
-Record which ideas to adopt, adapt, rederive, defer or reject; the existing
-assessment is evidence to verify, not a substitute for reading the source.
-Review the new Package foundation and its dependency map. Complete or explicitly
-discharge the F02–F05 prerequisites before treating
-PKG-01 as ready. The first design session should identify what is missing and
-propose a bounded next increment; it need not build the entire nominal library.
+The required F01 source investigation and the approved F02/F03a foundation slice
+have been delivered; use the current
+[readiness record](2026-10-05-pkg01-readiness.md) and
+[roadmap](../nominal-package-roadmap.md), preserving their later open choices.
+Do not repeat the first kernel implementation or source investigation merely
+because this original architectural proposal predates them.
+
+The next bounded design is **F03b**: a swap factorization or induction principle
+controlling endpoints by the original moved set, and the consequence for
+permutations fixing an avoidance set. Write its mathematical argument in the
+LaTeX foundations section alongside its Lean development. F04 support/freshness
+and F05's minimal function/predicate inputs then remain before PKG-01. Existing
+group/action laws alone do not discharge those prerequisites.
 
 For PKG-01, compare predicate representations using mathematical contracts and
 ordinary-use examples. Reimplement as much supporting infrastructure as is
@@ -369,15 +396,16 @@ scratch statement can guide a new proof; it need not dictate the implementation.
 
 Focused choices remaining:
 
-1. Which foundational interfaces and reuse/adapt/rebuild choices best serve the
-   predicate task and later clients? Review the concrete next spec and plan.
+1. What exact F03b factorization/induction contract supplies the next support
+   proofs? Review its bounded code-and-article spec and plan, using the delivered
+   F03a interface. Later support/predicate choices remain open.
 2. Which candidate backend and universe policy meets the agreed mathematical
    grammar and interface requirements with manageable proof obligations?
 3. For later pi work, choose transition semantics; for mu work, choose the
    intended variant. These choices need not delay predicate-foundation design.
 
-Architectural freedom and the Package location are settled user decisions, not
-questions to ask again. No permission to commit, push, publish or merge is
+Architectural freedom, the Package location and concurrent LaTeX writing are
+settled user decisions, not questions to ask again. No permission to commit, push, publish or merge is
 inferred from this research. Production implementation follows agreement on its
 concrete scope and plan.
 

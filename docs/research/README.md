@@ -21,6 +21,10 @@ names, module structure, universe restrictions, seals and proof strategies do
 not constrain a new design. Backward compatibility with the old implementation
 is not an acceptance requirement.
 
+This freedom is subject to the author's [Mathlib-first policy](#mathlib-first):
+replace the old nominal implementation as useful, while building on appropriate
+existing Mathlib infrastructure.
+
 Preserve the existing source and completed Church–Rosser development as a
 reference. Learn from its successful clients, failed approaches, counterexamples
 and implementation costs. Preserve intended mathematical guarantees and useful
@@ -39,6 +43,24 @@ constraints in these notes and in general repository guidance for work on the
 new package. It does not authorize deleting or refactoring the reference library.
 Historical findings and source citations remain evidence with their original
 assumptions, dates and verification limits.
+
+## Mathlib-first
+
+**Settled user decision:** always look for and use suitable infrastructure in
+the pinned Mathlib before implementing general-purpose mathematics yourself.
+Search local Mathlib source, inspect the exact declarations and test their
+fit when needed. Prefer existing definitions, instances and lemmas, including
+their specializations or small proof-backed adapters, over duplicate theory.
+
+Custom nominal constructions remain appropriate when existing APIs do not meet
+the mathematical or interface contract. Record the useful candidates and the
+specific gap at the increment level; neither a superficially similar name nor
+one failed search establishes the answer. Check hypotheses, universes and action
+coherence, retain theorem strength, and do not silently change dependency pins.
+Freedom to replace `Nominal/` does not imply rebuilding Mathlib's group/action,
+set, quotient or other general infrastructure. The
+[roadmap](../nominal-package-roadmap.md#mathlib-first-development) makes this a
+design and completion criterion for every increment.
 
 ## Implementation location
 
@@ -89,8 +111,41 @@ acceptance criteria guide architecture without prescribing the old implementatio
 | [Backend comparison](2026-10-05-backend-comparison.md) | Candidate grammar, construction alternatives and historical counterexamples |
 | [Client contracts](2026-10-05-package-contracts.md) | Mathematical user contracts and proposed syntax; old declarations are examples |
 | [Article plan](2026-10-05-article-plan.md) | Research-writing organization and statement-to-proof evidence workflow |
-| [Architecture research prompt](nominal-package-brainstorming-prompt.md) | Reusable prompt updated for current decisions |
 | [PKG-01 start prompt](pkg-01-start-prompt.md) | Fresh-context handoff that checks prerequisites before predicate implementation |
+| [Current foundation readiness](2026-10-05-pkg01-readiness.md) | F01–F05 evidence, representation comparison and exact proposed predicate contracts at `76966b1` |
+| [Pinned algebraic source investigation](2026-10-05-algebraic-source-investigation.md) | Direct declaration review, dispositions and reproduced counterexamples |
+| [Predicate design probes](2026-10-05-predicate-design-probes.md) | Reproducible new scratch sources, including a Mathlib-only action experiment |
+| [Discrete representation investigation](2026-10-05-discrete-representation.md) | Mathematical counterpart, structure/def/abbrev comparison, action inference and concrete Mathlib reuse |
+| [First foundation specification](../superpowers/specs/2026-10-05-package-foundation-kernel-design.md) | Approved F02 + F03a boundary |
+| [First implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md) | Approved native execution; incorporates removal of standalone Package examples |
+| [Package foundation interface](../../Package/README.md) | Working-tree F02/F03a implementation, import policy and validation commands |
+| [LaTeX article](../article/main.tex) | Foundation mathematics, actual public declarations and verification evidence |
+
+The earlier architecture prompt was removed in `76966b1`; the table now points
+to the existing handoff and current review artifacts. F01 is in progress, with
+its required F02 + F03a boundary approved. Later layer proposals remain open.
+The implementation plan was approved for native execution. F02 and F03a now
+have working-tree implementation and validation evidence, with a clean
+independent final review. The author requires all article content in LaTeX under `docs/article/`
+and reserves persistent usage examples for future case studies. The current
+Package foundation has no standalone Examples layer.
+
+## Article and implementation advance together
+
+For every substantive Package increment, its spec/plan includes the corresponding
+LaTeX sections under `docs/article/`. Develop the mathematical statements and
+explanations alongside the Lean proofs, then reconcile hypotheses, declarations,
+limitations and verification evidence and compile the article before closing the
+increment. PKG-11 coordinates this requirement throughout development; manuscript
+writing is not deferred until the package is finished. The
+[article plan](2026-10-05-article-plan.md#concurrent-writing-is-part-of-delivery)
+specifies the completion rule.
+
+F02/F03a are delivered with their article sections. F03b's next proposed slice
+is swap generation with controlled endpoints and its avoidance corollary, with
+a corresponding extension of `docs/article/sections/foundations.tex`. Later
+support, predicate and binder results remain future work. This documentation
+clarification adds no new Lean theorem or manuscript proof.
 
 ## Scratch evidence
 
@@ -105,3 +160,9 @@ untracked work. They were preserved; this documentation edit does not claim a
 new compilation result for either. Inspect current contents and evidence before
 using or promoting any probe. New implementation must receive its own build,
 example and axiom validation under the selected Package structure.
+
+The subsequent F01 session at `76966b1` reran all seven existing probes without
+editing them, including both previously untracked predicate files. The
+[current readiness note](2026-10-05-pkg01-readiness.md) and new probe record
+separate that evidence from the earlier runs. New scratch sources remain
+reproducible in the dated notes and are not Package production modules.

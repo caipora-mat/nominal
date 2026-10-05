@@ -1,0 +1,558 @@
+\section{Finite permutations and actions}
+\label{sec:foundations}
+
+Let $A$ be the atom carrier. In this section $A$ is an arbitrary type:
+neither infinitude nor countability is required. Later existence of fresh
+atoms will require infinitude. In Lean, atoms and other carriers have
+independent universe parameters,
+\[
+  A : \texttt{Type}\ u,\qquad X : \texttt{Type}\ v,
+  \qquad Y : \texttt{Type}\ w.
+\]
+The action interface concerns type-valued carriers; no general interface for
+\texttt{Sort}-valued carriers is promised.
+
+\subsection{The finite-moved subgroup}
+\label{sec:permutations}
+
+\begin{definition}
+For a bijection $\pi:A\to A$, define its \emph{moved-point set} by
+\[
+  \moved(\pi)=\{a\in A\mid \pi(a)\ne a\}.
+\]
+Let $\Perm(A)$ consist of those bijections whose moved-point sets are finite.
+Multiplication is composition in the convention
+$(\pi\sigma)(a)=\pi(\sigma(a))$.
+\end{definition}
+
+The Lean declaration \texttt{permSubgroup A} is the subgroup of
+\texttt{Equiv.Perm A} cut out by this finiteness property, and
+\texttt{Perm A} is its carrier. Both lie in the namespace
+\texttt{NominalPackage}. The property is a proof field; applying
+a permutation does not select a finite enumeration or a least support.
+In particular, $\moved(\pi)$ is a set, rather than a chosen
+\texttt{Finset}. Equality is extensional: if $\pi(a)=\sigma(a)$ for every
+$a$, then $\pi=\sigma$.
+The implementation adapts the elementary subgroup argument from
+\path{Nominal/Core/FinitePerm.lean}, without importing that module. The
+reference revision is recorded in Section~\ref{sec:evidence}.
+
+\begin{proposition}[Subgroup and moved-point laws]
+\label{prop:subgroup}
+Finite-moved permutations form a subgroup of the bijections of $A$. For
+its elements,
+\begin{align}
+  \moved(1)&=\varnothing,\label{eq:moved-one}\\
+  \moved(\pi\sigma)&\subseteq\moved(\pi)\cup\moved(\sigma),
+    \label{eq:moved-mul}\\
+  \moved(\pi^{-1})&=\moved(\pi),\label{eq:moved-inverse}\\
+  \moved(\pi\sigma\pi^{-1})&=\pi[\moved(\sigma)].
+    \label{eq:moved-conj}
+\end{align}
+Here $\pi[S]=\{\pi(a)\mid a\in S\}$ is direct image.
+\end{proposition}
+
+\begin{proof}
+The identity moves no point. If both $\pi$ and $\sigma$ fix $a$, then so
+does $\pi\sigma$, proving~\eqref{eq:moved-mul}. Moreover,
+$\pi^{-1}(a)=a$ if and only if $\pi(a)=a$, proving~\eqref{eq:moved-inverse}.
+These facts give closure under identity, multiplication, and inverse,
+because subsets of finite sets and finite unions are finite. Finally,
+injectivity of $\pi$ gives
+\[
+  (\pi\sigma\pi^{-1})(a)\ne a
+  \quad\Longleftrightarrow\quad
+  \sigma(\pi^{-1}(a))\ne\pi^{-1}(a).
+\]
+This is exactly membership of $a$ in the image on the right
+of~\eqref{eq:moved-conj}.
+\end{proof}
+
+The public application equations are
+\[
+  1(a)=a,\quad (\pi\sigma)(a)=\pi(\sigma(a)),\quad
+  \pi^{-1}(\pi(a))=a,\quad\pi(\pi^{-1}(a))=a.
+\]
+These are \path{Perm.one_apply}, \path{Perm.mul_apply},
+\path{Perm.inv_apply_apply}, and \path{Perm.apply_inv_apply}.
+The conversion \path{Perm.toEquiv} preserves identity, multiplication, and
+inverse by \path{Perm.toEquiv_one}, \path{Perm.toEquiv_mul}, and
+\path{Perm.toEquiv_inv}. Its function application agrees with that of
+\texttt{Perm A} by \path{Perm.toEquiv_apply}. A single \texttt{FunLike}
+instance and the extensionality theorem \path{Perm.ext} allow consumers to
+apply permutations, rewrite, and use \texttt{ext} without unfolding the
+subgroup representation. The coercion to \texttt{Equiv.Perm A} is the
+inherited subgroup coercion.
+
+The finite-set property is \path{Perm.moved_finite}; the four equations in
+Proposition~\ref{prop:subgroup} correspond respectively to
+\path{Perm.moved_one}, \path{Perm.moved_mul_subset},
+\path{Perm.moved_inv}, and \path{Perm.moved_conj}.
+
+\subsection{Transpositions}
+\label{sec:swaps}
+
+Write $\swap a b$ for the permutation interchanging $a$ and $b$ and fixing
+every other atom. An executable definition uses decidable equality on $A$;
+classical reasoning can provide this locally when execution is not required.
+The Lean operation is the qualified \texttt{Perm.swap}; it requires
+\texttt{DecidableEq A}, but neither the permutation group nor its moved-point
+laws require this assumption.
+
+\begin{proposition}[Swap equations]
+\label{prop:swaps}
+For all $a,b,c\in A$,
+\begin{gather*}
+  \swap a b(a)=b,\qquad \swap a b(b)=a,\\
+  c\ne a\ \land\ c\ne b\quad\Longrightarrow\quad\swap a b(c)=c,\\
+  \swap a a=1,\qquad
+  \swap a b^{-1}=\swap a b,\qquad
+  \swap a b\swap a b=1,\\
+  \pi\swap a b\pi^{-1}=\swap{\pi(a)}{\pi(b)}.
+\end{gather*}
+If $a\ne b$, then $\moved(\swap a b)=\{a,b\}$.
+\end{proposition}
+
+\begin{proof}
+The defining cases show that applying a swap twice fixes each atom. They
+also show that its moved-point set is contained in $\{a,b\}$, so it is a
+finite-moved permutation. If $a\ne b$, both endpoints are moved, giving
+the exact set. Conjugation sends $\pi(a)$ to $\pi(b)$ and $\pi(b)$ to
+$\pi(a)$. A point outside those endpoints has inverse image outside
+$\{a,b\}$ and is therefore fixed. Extensionality proves the conjugation
+equation, including the case $a=b$.
+\end{proof}
+
+Within the namespace \texttt{Perm}, the endpoint equations are
+\path{swap_apply_left} and \path{swap_apply_right}; the third-point equation
+is \path{swap_apply_of_ne_of_ne}. The remaining equations are
+\path{swap_self}, \path{swap_inv}, \path{swap_mul_self},
+\path{conj_swap}, and \path{moved_swap}. The last theorem retains
+the hypothesis $a\ne b$; a reflexive swap instead has empty moved-point set.
+The implementation reuses Mathlib's corresponding equations for
+\texttt{Equiv.swap}, including its conjugation equation, with the
+finite-moved certificate proved when constructing \texttt{Perm.swap}.
+
+This argument does not establish that every finite permutation factors into
+swaps, or that an appropriate factorization avoids a specified support.
+Such results, or an alternative route to the support theorems that need
+them, remain obligations of the next permutation increment.
+
+\subsection{Selected actions and canonical data shapes}
+\label{sec:actions}
+
+An action on $X$ consists of an operation $\pi\act x$ satisfying
+\[
+  1\act x=x,\qquad (\pi\sigma)\act x=\pi\act(\sigma\act x).
+\]
+The interface uses \texttt{MulAction (Perm A) X} directly. No additional
+action class or independently competing scalar operation is installed.
+Standard group-action laws give
+\[
+  \pi^{-1}\act(\pi\act x)=x,\qquad
+  \pi\act(\pi^{-1}\act x)=x,\qquad
+  \pi\act x=\pi\act y\ \Longleftrightarrow\ x=y.
+\]
+These equations concern the selected action; a different action on the same
+carrier is different input to subsequent theorems.
+
+The canonical action on atoms is evaluation, $\pi\act a=\pi(a)$,
+as stated by \path{Perm.smul_atom}. It is obtained by restricting Mathlib's
+\path{Equiv.Perm.applyMulAction} to the subgroup \texttt{permSubgroup A}.
+Thus the computation theorem describes an inherited action; it does not
+introduce another action instance on atoms.
+The standard product action is componentwise:
+\[
+  \pi\act(x,y)=(\pi\act x,\pi\act y).
+\]
+Both projections therefore commute with renaming. This construction permits
+the two factors, as well as the atom carrier, to inhabit different universes.
+
+For $S\in\Finset(A)$, the selected action is direct image,
+$\pi\act S=\pi[S]$. Its public equations include
+\begin{align*}
+  a\in\pi\act S&\quad\Longleftrightarrow\quad\pi^{-1}(a)\in S,\\
+  \pi\act\varnothing&=\varnothing,\\
+  \pi\act\{a\}&=\{\pi(a)\},\\
+  \pi\act(S\cup T)&=(\pi\act S)\cup(\pi\act T).
+\end{align*}
+Membership follows from the inverse bijection; the other identities follow
+from the corresponding direct-image identities. In Lean this action reuses
+Mathlib's scoped pointwise action on finite sets. A consumer must explicitly
+write \texttt{open scoped Pointwise}; opening the scope in a dependency is
+not a promise that it is active downstream. Finite-set computations may use
+local classical decidable equality. No overlapping global finite-set action
+is needed. The image and membership equations are \path{Perm.smul_finset}
+and \path{Perm.mem_smul_finset}. The standard action laws and the product,
+empty-set, singleton, and union equations are supplied by Mathlib; the package
+does not duplicate them under fresh names.
+
+\subsection{Explicit discrete data}
+\label{sec:discrete}
+
+\begin{definition}[Discrete permutation set]
+For a group $G$ and a set $X$, the \emph{discrete $G$-set on $X$} has
+underlying set $X$ and action $g\act x=x$ for every $g\in G$ and $x\in X$.
+For $G=\Perm(A)$ we denote this construction by $\Delta_A(X)$.
+\end{definition}
+
+This is the mathematical construction encoded by \texttt{Discrete A X}.
+It is the discrete group action of Pitts~\cite[Example~1.5, p.~15]{pitts2013}
+and, for an infinite atom set, the discrete nominal set of
+\cite[Example~2.5, p.~30]{pitts2013}. The implementation uses a canonically
+bijective copy $\Discrete_A(X)$ of the carrier, with constructor
+$\operatorname{mk}$ and projection $\operatorname{val}$, and action
+\[
+  \pi\act\operatorname{mk}(x)=\operatorname{mk}(x).
+\]
+
+Thus $\operatorname{val}(\operatorname{mk}(x))=x$,
+$\operatorname{mk}(\operatorname{val}(d))=d$, and
+$\operatorname{val}(\pi\act d)=\operatorname{val}(d)$.
+The structure \texttt{Discrete A X} makes the trivial-action
+choice explicit, even when $X=A$. It supports arbitrary type universes,
+including empty and singleton data represented by universe-correct
+\texttt{PEmpty} and \texttt{PUnit}. More precisely, if
+$A:\texttt{Type}\ u$ and $X:\texttt{Type}\ v$, then
+$\Discrete_A(X):\texttt{Type}\ v$: the atom type is a phantom parameter,
+not stored data. This wrapper carries the only new action instance in the
+action module.
+
+In words, $\Discrete_A(X)$ means ``values of $X$ that are unaffected by
+renaming atoms of $A$.'' The parameter $A$ specifies the acting group;
+$X$ specifies the data being carried. For example, $\Discrete_A(\mathbb N)$
+can represent numerical annotations that stay unchanged during renaming.
+The construction also permits $X=A$: the wrapped datum is then treated as
+a fixed label, as detailed in Example~\ref{ex:discrete}. This choice does
+not assert that an action already supplied on $X$ is trivial.
+If $X$ already has an action, the construction forgets that action and
+equips its underlying data with the trivial one. It does not take the
+subset of fixed points or the quotient into orbits.
+
+Every orbit is a singleton. In the usual support terminology, the empty
+set supports each wrapped value: every permutation fixes it, including
+every permutation fixing the empty set pointwise. Since the empty set is
+contained in every other set, it is its least support. This is a
+mathematical consequence of the trivial action; the package's general
+support and freshness interfaces remain later work.
+
+\paragraph{Why a single-field structure?}
+The complete data declaration is
+\begin{verbatim}
+structure Discrete (A : Type u) (X : Type v) : Type v where
+  val : X
+\end{verbatim}
+Only the underlying value must be stored. The name \texttt{val} is a
+conventional projection name with no mathematical significance; it could
+equally be called \texttt{value}. A single field does not mean a single
+inhabitant: each element of $X$ determines one wrapped value. The trivial
+action and its laws are supplied uniformly by a typeclass instance, so
+individual values need not store an action, an atom, or a support certificate.
+
+The structure makes $\Discrete_A(X)$ a separate Lean type, not
+definitionally equal to $X$. Its constructor and projection explicitly
+cross this boundary. This lets the canonical atom action on $A$ and the
+trivial action on $\Discrete_A(A)$ coexist under ordinary instance search.
+
+\paragraph{Alternative declarations.}
+An abbreviation \texttt{abbrev Discrete A X := X} unfolds during reducible
+unification. It therefore does not supply the distinct carrier boundary
+chosen here for selecting a different action. A regular definition
+\texttt{def Discrete A X := X} is a viable type-tag alternative: it is
+still definitionally equal to $X$, while its unfolding behavior differs
+from that of an abbreviation. Mathlib uses this technique for
+\texttt{Additive} and \texttt{Multiplicative} in
+\path{Mathlib/Algebra/Group/TypeTags/Basic.lean}, inspected at the pinned
+Mathlib revision recorded in Section~\ref{sec:evidence}.
+The pinned Lean 4.34.1 instance search does not unfold an ordinary
+semireducible definition. Thus a regular definition can separate the
+tagged and underlying action instances; a structure is not required for
+that purpose alone. This agrees with the general account in the
+\href{https://lean-lang.org/doc/reference/latest/Type-Classes/Instance-Synthesis/}{Lean reference on instance synthesis};
+the installed compiler sources and the probes below determine the
+version-specific claims here.
+
+The definition approach permits direct reuse of underlying values,
+functions, predicates and containers through definitional equality. For
+example, a list of $X$ can also be checked as a list of tagged $X$ without
+mapping a constructor over it. With the structure, that passage is explicit.
+Both approaches already have reflexive conversion round trips. Neither
+automatically supplies every underlying typeclass instance: our probes
+needed explicit forwarding of \texttt{Inhabited} and \texttt{DecidableEq}
+for a regular tag, just as the current structure needs corresponding
+instances when a client requires them.
+
+\paragraph{What the elaboration probes distinguish.}
+Action selection depends on the type Lean infers for an expression, not
+only on a type annotation that it checks against. In a scratch regular-def
+tag \texttt{D}, with the trivial action registered, a variable
+\texttt{d : D Bool Bool} is fixed. Yet an existing raw Boolean value checked
+against that definitionally equal type can still select the raw atom action.
+For the swap $\tau=\swap{\mathrm{false}}{\mathrm{true}}$, the tested expression
+\begin{verbatim}
+  tau • (false : D Bool Bool)
+\end{verbatim}
+elaborates to the raw action and equals \texttt{true}. A named identity-valued
+constructor \texttt{D.mk false}, whose declared result is the tagged type,
+instead selects the trivial action and stays fixed. Named equivalence-based
+conversions and explicitly typed local binders also worked. The Boolean
+carrier deliberately tests the action layer without any infinitude premise.
+
+The same distinction appeared for an existing raw pair and finite set:
+checking either against a definitionally equal tagged container type did
+not necessarily change its inferred action. A named conversion with the
+tagged result type did. Reusing an already elaborated function likewise
+preserves the operations and instances selected in its body. These are
+elaboration choices, not inconsistent proofs or a mathematical failure of
+the discrete construction. They explain why a regular-def interface still
+needs an explicit conversion discipline for predictable action selection.
+
+Another option is to define the trivial action directly on $X$ and select
+it locally or pass it explicitly. That avoids a wrapper, but simultaneous
+reasoning with two actions on the same carrier then requires managing the
+two structures explicitly. The present single-field structure chooses a
+stronger type boundary at the cost of constructor/projection conversions.
+This is an interface decision, not a mathematical necessity or a claim
+that a regular-definition implementation cannot work.
+
+\paragraph{Mathlib reuse and the resulting choice.}
+Mathlib provides precedents for both encodings. Its \texttt{OrderDual}
+tag explicitly recommends conversion functions even though the
+opposite-order carrier is definitionally equal to the original.
+The source is \path{Mathlib/Order/OrderDual.lean}.
+Conversely, the categorical \texttt{Discrete} chooses a one-field structure
+to control passage to the underlying type.\footnote{See
+\path{Mathlib/CategoryTheory/Discrete/Basic.lean}.}
+That declaration encodes a \emph{discrete category}, not a discrete
+permutation set, so its name is not a reason to reuse it as our nominal carrier.
+
+The implementation states the discrete action directly:
+\begin{verbatim}
+instance : MulAction (Perm A) (Discrete A X) where
+  smul _ d := d
+  one_smul _ := rfl
+  mul_smul _ _ _ := rfl
+\end{verbatim}
+The first line of the record ignores the permutation and returns the same
+value. The identity permutation therefore fixes every value. Applying two
+permutations successively and applying their product both return that same
+value, which explains the two \texttt{rfl} proofs. The record supplies the
+standard Mathlib action interface with the operation we want.
+
+We checked Mathlib's alternative action constructors and verified that one
+produces a definitionally equal record. The explicit form above is retained
+for readability: it displays the mathematical action and both laws immediately.
+The alternatives and their exact source references remain in the research
+record. This choice adds no new general theory of group actions.
+
+We retain the present structure: for this action-facing API,
+explicit carrier boundaries currently outweigh the definition's container
+conversion advantage. This conclusion can be revisited when a real client
+demonstrates that conversion costs dominate; it does not prescribe
+structures for all future type tags.
+
+The ordinary type equivalence between $\Discrete_A(X)$ and $X$ does not
+identify their actions. If $X$ already carries an independently selected
+action, its projection is equivariant exactly when every $x\in X$ is fixed
+by every permutation. No automatic discrete action on arbitrary external
+carriers is part of the interface.
+The operation is \path{Discrete.equiv}, with computation equations
+\path{Discrete.equiv_apply} and \path{Discrete.equiv_symm_apply}.
+The trivial-action equations are \path{Discrete.smul_mk} and
+\path{Discrete.smul_val}.
+
+\subsection{Equivariance of ordinary functions}
+\label{sec:equivariance}
+
+\begin{definition}
+Given selected actions on $X$ and $Y$, an ordinary function $f:X\to Y$
+is \emph{equivariant} when
+\[
+  \Equivariant_A(f)\quad\Longleftrightarrow\quad
+  \forall\pi\in\Perm(A)\ \forall x\in X,\quad
+  f(\pi\act x)=\pi\act f(x).
+\]
+\end{definition}
+
+In Lean, this unbundled property is written \texttt{Equivariant A f},
+with the atom type $A$ an explicit input.
+It is not an \texttt{outParam} inferred from the carrier. The domain and
+codomain have independently selected \texttt{MulAction} instances and may
+inhabit different universes. Defining equivariance requires neither a
+supported-function wrapper nor an action on the function type itself.
+No global action on truth values is introduced.
+
+\begin{proposition}[Elementary equivariant maps]
+\label{prop:equivariant}
+Identity maps and product projections are equivariant. If $f:X\to Y$
+and $g:Y\to Z$ are equivariant, so is $g\circ f$. If $f:X\to Y$ and
+$h:X\to Z$ are equivariant, so is $x\mapsto(f(x),h(x))$.
+\end{proposition}
+
+\begin{proof}
+Identity is immediate, and the projection statements follow from the
+componentwise product action. For composition,
+\[
+  (g\circ f)(\pi\act x)
+  =g(\pi\act f(x))
+  =\pi\act g(f(x)).
+\]
+For pairing, apply the two equivariance equations componentwise.
+\end{proof}
+
+The corresponding declarations are \path{Equivariant.id},
+\path{Equivariant.fst}, \path{Equivariant.snd},
+\path{Equivariant.comp}, and \path{Equivariant.pair}.
+Composition takes its certificates in the order
+\texttt{Equivariant.comp hg hf}, yielding equivariance of $g\circ f$.
+Pairing takes the certificates for the first and second components in that
+order. The proofs use ordinary function application and the selected actions;
+no function bundle is needed.
+
+Later supported-map certificates can weaken equivariance by restricting
+the permutations to those fixing a finite set of parameters. Fixing a
+parameter in a jointly equivariant operation need not leave an equivariant
+function. No finite-support closure theorem is claimed in this increment.
+
+\subsection{Three distinctions between actions}
+\label{sec:counterexamples}
+
+The following examples require just two distinct atoms $a\ne b$. Put
+$\tau=\swap a b$, so $\tau(a)=b$ and $\tau\ne1$. They isolate choices
+of action rather than difficulties concerning infinitude or support.
+
+\begin{example}[An atom and a discrete copy]
+\label{ex:discrete}
+The canonical action moves $a$, since $\tau\act a=b\ne a$.
+The discrete action fixes $\operatorname{mk}(a)$, since
+$\tau\act\operatorname{mk}(a)=\operatorname{mk}(a)$.
+Consequently, $\operatorname{val}:\Discrete_A(A)\to A$ is a bijection of
+types but is not equivariant for these actions: applying it after renaming
+gives $a$, whereas renaming its value gives $b$.
+\end{example}
+
+\begin{example}[Left multiplication and conjugation]
+\label{ex:group-actions}
+A group acts on itself by left multiplication, $\pi\act\sigma=\pi\sigma$.
+It also admits the conjugation action $\pi\star\sigma=\pi\sigma\pi^{-1}$.
+These disagree at the identity:
+\[
+  \tau\act1=\tau\ne1,\qquad \tau\star1=1.
+\]
+The bare group $\Perm(A)$ retains its standard left action. The moved-point
+conjugation law in Proposition~\ref{prop:subgroup} is a group equation;
+it does not install conjugation as that group's scalar action.
+\end{example}
+
+\begin{example}[Pointwise and conjugation actions on functions]
+\label{ex:function-actions}
+For ordinary $f:X\to Y$, the pointwise action uses only the codomain action:
+\[
+  (\pi\act_{\mathrm{pt}}f)(x)=\pi\act f(x).
+\]
+When the domain also has an action, the conjugation formula is
+\[
+  (\pi\act_{\mathrm{conj}}f)(x)
+    =\pi\act f(\pi^{-1}\act x).
+\]
+On the identity function of the canonical atom carrier these differ:
+\[
+  (\tau\act_{\mathrm{pt}}\id_A)(a)=b,\qquad
+  (\tau\act_{\mathrm{conj}}\id_A)(a)=a.
+\]
+Equivariance is precisely being fixed by every conjugation operation. Indeed,
+substituting $\pi^{-1}\act x$ in its defining equation gives
+$\pi\act f(\pi^{-1}\act x)=f(x)$; conversely, substitute $\pi\act x$
+in this fixed-point equation. It is not the fixed-point condition for the
+ordinary pointwise action. The interface does not replace Mathlib's
+pointwise action on bare function types or infer that arbitrary functions
+are finitely supported.
+\end{example}
+
+These are manuscript calculations explaining the selected actions. Temporary
+Lean checks confirmed the three distinctions through the public import and
+checked that a structure without a declared action does not acquire one
+automatically. They do not introduce additional public theorems or a
+persistent example library. The absence of an inferred action is an interface
+property, not a claim that no mathematical action can be constructed.
+
+\subsection{Implementation correspondence and evidence}
+\label{sec:evidence}
+
+The foundation contract is divided as follows. The permutation and action
+modules have been checked, together with their source coverage and axiom
+dependencies.
+The declaration references identify the implemented statements; the manuscript
+also explains consequences that are not exported as separate named theorems.
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.37\linewidth}
+  >{\raggedright\arraybackslash}p{0.57\linewidth}@{}}
+\hline
+Contract & File \\
+\hline
+Subgroup, application, moved sets, swaps &
+  \path{Package/Foundations/Permutation.lean} \\
+Canonical actions, discrete data, equivariance &
+  \path{Package/Foundations/Action.lean} \\
+Public import & \path{Package.lean} \\
+Module-origin axiom audit & \path{Package/Tests/AxiomAudit.lean} \\
+Import and source-coverage check & \path{Package/Scripts/check-imports.py} \\
+\hline
+\end{tabular}
+\end{center}
+
+The implementation uses the repository's pinned Lean and Mathlib 4.34.1
+versions. The checks concern an uncommitted package increment over the
+reference development at revision
+\begin{quote}
+\small\texttt{76966b1f2e44f594517442b6572e33abaa9038e0}.
+\end{quote}
+The final verification commands were
+\begin{quote}
+\small
+\begin{verbatim}
+lake build Package +Package.Tests.AxiomAudit
+lake env lean Package/Tests/AxiomAudit.lean
+python3 Package/Scripts/check-imports.py --self-test
+python3 Package/Scripts/check-imports.py
+\end{verbatim}
+\end{quote}
+All commands exited successfully. The direct audit produced no warnings.
+The build used cached dependencies and previously compiled project modules;
+this evidence does not claim a fresh build or dependency bootstrap.
+
+The source-coverage checker reports three production modules: the public
+root and the two foundation modules. The audit category contains one module,
+whose import closure reaches all four Lean source files. The checker validates
+headers using the pinned Lean parser, rejects missing or unclassified package
+sources and forbidden dependencies, and checks reachability from the respective
+roots. Its thirteen self-tests passed. In particular, the production closure
+has no dependency on the earlier nominal library, its clients, or research
+probes. Header discovery complements the full Lean build; it does not replace
+proof elaboration or checking of module bodies.
+
+The axiom audit examines declarations by their originating modules, including
+private and generated declarations, rather than selecting a namespace prefix.
+It checked 77 production declarations from the two foundation modules;
+the public umbrella introduces no declarations of its own. Transitive axiom
+dependencies were confined to \texttt{propext}, \texttt{Classical.choice}, and
+\texttt{Quot.sound}. The audit rejects a count of zero or any additional axiom,
+and checks its rejection logic with simulated axiom names rather than new
+axiom declarations. Its direct invocation repeats the traversal even when
+Lake can reuse a compiled audit module.
+
+The audit also prints representative dependencies for
+\path{Perm.moved_conj}, \path{Perm.conj_swap}, \path{Perm.smul_atom},
+\path{Discrete.smul_val}, and \path{Equivariant.comp}; these likewise
+contain only the permitted standard axioms. These results establish the
+permutation and action layer described here. They do not supply finite
+support, least support, predicates, or the future case studies.
+
+During implementation, temporary public-import checks exercised
+permutation cancellation and extensionality, finite-set transport, equivariant
+composition, independent universes, empty and singleton carriers, and agreement
+between inferred \texttt{SMul} and \texttt{MulAction} operations.
+They elaborated successfully but are not maintained package modules;
+persistent examples belong to the future case studies.

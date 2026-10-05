@@ -7,6 +7,63 @@ Proposed writing workflow for the
 The article should develop alongside proofs and client experience; it should
 not present proposed package contracts as already established results.
 
+**Current author decision:** after approving the F02 + F03a specification, the
+author requested an article under `docs/article/`, entirely in LaTeX, written
+alongside implementation. The initial [main source](../article/main.tex) includes
+[purpose/scope](../article/sections/introduction.tex) and
+[permutation/action foundations](../article/sections/foundations.tex).
+It now contains manuscript proofs, actual F02/F03a declarations and verification
+evidence, while keeping later support/predicate contracts prospective. The bounded
+[implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md)
+assigns article updates to each task. A subsequent author correction reserves
+persistent usage examples for future case studies; the article does not claim
+a separate Package examples or consumer-audit layer.
+
+The author also requested that discussions clarifying mathematical concepts and
+representation choices be incorporated into the corresponding LaTeX sections
+when missing. Record the meaning of an interface, its rationale and viable
+alternatives with their tradeoffs; do not leave that reasoning only in chat or
+present a chosen implementation as a mathematical necessity.
+
+For each new definition or structure with a mathematical counterpart, state
+the mathematical concept explicitly before discussing its Lean encoding, and
+identify the correspondence of carriers, operations and laws. Check Mathlib for
+existing definitions and theorems before introducing package-specific machinery;
+record reuse, adaptation or the concrete reason an available interface does not
+fit. Distinguish implementation helpers from independent mathematical concepts.
+
+## Concurrent writing is part of delivery
+
+The article is written together with the development of the package throughout
+the project. Every substantive implementation increment includes the matching
+LaTeX work in its scope and completion criteria. PKG-11 tracks this continuous
+responsibility; it is not work postponed until the implementation is finished.
+
+Each specification/plan must identify the relevant sections under `docs/article/`
+and the mathematical statements, proof explanations and implementation evidence
+to add or revise. Draft the mathematics while designing/proving it, and update
+the draft as hypotheses, names, representations or proof strategies change.
+Keep prospective results visibly separate from verified Package declarations.
+
+Before closing an increment, require both its code validation and an accurate
+article update: definitions and theorem assumptions match the chosen interface;
+the mathematical argument and limitations are explained; source/declaration
+references and verification evidence are current; and the LaTeX entry point
+compiles. Review the mathematical correspondence as well as PDF compilation.
+Changes confined to build tooling may need only an updated implementation or
+verification account, rather than a new mathematical section. Journal-ready
+polish and publication are not per-increment requirements.
+
+An article subagent may draft in parallel with implementation using agreed
+statements. Reconcile its text against the final declarations and checks before
+delivery; concurrent work does not justify leaving the manuscript behind.
+
+The next concrete application is F03b: develop the swap-factorization theorem,
+control of its endpoints and the avoidance corollary together with the
+extension of [foundations.tex](../article/sections/foundations.tex). Its relation
+to the later support criterion should be explained, while the unimplemented
+F04 support theory remains labeled as future work.
+
 Follow the [architectural-freedom policy](README.md#architectural-freedom):
 the package may develop its entire nominal foundation afresh, including actions,
 support, functions, predicates, abstraction, quotients, and induction. Reuse,
@@ -33,16 +90,17 @@ package's declaration paths or mandatory imports.
 | [Package roadmap](../nominal-package-roadmap.md) | PKG task IDs, dependency/status tracking, delivered verification | Link to notes instead of copying proofs; mark complete only against stated acceptance criteria; keep the prior library roadmap as historical evidence |
 | `Package/` | New foundations, package machinery, and implementation clients | Choose internal paths in the relevant bounded plan; attach evidence to the actual new declarations |
 | Future `docs/research/claims.md` | Statement-to-evidence ledger | Add a row whenever the manuscript makes or changes a substantive claim |
-| Future `docs/article/` | Coherent evolving exposition | Use the ledger; distinguish proved, source-attributed and proposed sections visibly |
-| Per-increment spec/plan | Implementation boundaries, replacement dependencies, and execution checks | Written for the next bounded increment under `Package/`; link its PKG task and any historical evidence separately |
+| `docs/article/`, entry point `main.tex` | Coherent evolving LaTeX exposition | Develop alongside implementation; distinguish manuscript proofs, source-attributed facts and checked Package results visibly |
+| Per-increment spec/plan | Implementation boundaries, replacement dependencies, article section and execution checks | Assign code and LaTeX work to the same bounded increment; link its PKG task and any historical evidence separately |
 
-The ledger/manuscript paths are proposed, and `Package/` is the selected
-implementation destination; this documentation task creates no implementation.
-Use Markdown for the initial article sections so theorem statements and evidence
-can evolve cheaply. Move to a single LaTeX entry point plus included sections and
-a versioned bibliography when the exposition stabilizes or a venue requires it.
-Do not maintain independent Markdown and TeX versions of the same prose.
-No external manuscript repository is modified by this plan.
+The separate claim-ledger path remains proposed, and `Package/` is the selected
+implementation destination. The manuscript now uses a single LaTeX entry point
+and included sections; its initial bibliography is in `main.tex`. This supersedes
+the earlier recommendation to begin article sections in Markdown. All article
+content must remain LaTeX, with no parallel Markdown manuscript. Research notes,
+specifications and implementation plans retain their existing repository formats.
+No external manuscript repository is modified, and creating the manuscript does
+not create a Package implementation or certify its proposed declarations.
 
 ## Claim ledger format
 
@@ -69,7 +127,7 @@ Possible initial entries (examples of the ledger format):
 | CL-008 | Unconditional abstraction mapping for supported functions fails — scratch theorem | [BackendCounterexamples.lean](probes/BackendCounterexamples.lean), `no_unconditional_const_abs_map` | Fresh-binder mapping remains possible research |
 | CL-009 | Generic fresh rule criterion — primary-source theorem | [2025 comparison](2026-10-05-isabelle-comparison.md), Definition 6/Theorem 7 | No Lean port or Isabelle build in this research turn |
 | CL-010 | Complete generated syntax/function/judgment workflow — proposed | PKG-07 acceptance criterion | No implementation/generation result yet |
-| CL-011 | Chosen atom/action/support/function foundations for `Package/` — proposed | Foundation tasks preceding PKG-01 in the package roadmap; actual new declarations to be recorded | Neither the reference implementation nor this writing plan proves the new foundations |
+| CL-011 | Package permutation/action kernel — F02/F03a delivered; support and predicate foundations remain proposed | `Package/Foundations/Permutation.lean`, `Package/Foundations/Action.lean`, their recorded audit and the foundations article section | Later support/freshness/function/predicate claims require their own proofs and article updates |
 
 Record actual declaration names when creating the ledger; a descriptive label is
 not an adequate theorem reference. Re-run audits after a dependency-changing
@@ -252,13 +310,17 @@ dependency with its own statement and evidence, not merely a rename of a
 reference theorem. Subsequent increments may develop additional foundations
 when needed; the roadmap should record that work explicitly.
 
-For every increment: record the question and discriminating test; preserve the
-failed probe if any; review the statement; prove and compile; audit dependencies;
-add a client that consumes the claimed fact; update the ledger and task status;
-then revise the corresponding article section. A theorem rename updates the
-ledger and its links in the same change. A changed hypothesis reopens dependent
-claims. A proposed command becomes a demonstrated command only when the example
-compiles through the supported import boundary.
+For every increment: record the question, discriminating test and article section;
+draft the statement and mathematical explanation while developing its Lean proof;
+preserve important failed approaches and counterexamples; compile and audit the
+code; consume the claimed fact through the public boundary; synchronize and
+compile the LaTeX exposition; then update the evidence and task status. For
+foundation slices, usage checks may remain temporary under the author's policy;
+persistent usage examples belong to case studies. A theorem rename updates its
+article references in the same increment. A changed hypothesis reopens dependent
+claims. A proposed command becomes a demonstrated command only when its example
+compiles through the supported import boundary. Do not mark a mathematical
+increment complete with its article section left for later.
 Use `Package/` paths for new declarations, imports, and implementation plans;
 retain old source paths and revisions when citing historical evidence.
 

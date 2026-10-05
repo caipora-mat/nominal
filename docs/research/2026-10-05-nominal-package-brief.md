@@ -121,8 +121,9 @@ Record obstacles, counterexamples, unsuccessful approaches and remaining proof
 obligations as well as successful results. Separate conjectures, source-reviewed
 claims, scratch experiments and integrated verified results.
 
-Plan for an evolving mathematical article describing the package, uses, theory,
-difficulties and limitations. Publication venue and manuscript organization remain
+Write the evolving mathematical article together with the package development,
+describing the package, uses, theory, difficulties and limitations. R13 specifies
+LaTeX format and concurrent per-increment delivery; publication venue remains
 open. Do not claim novelty, equivalence of architectures, or generality without
 supporting evidence. The future brainstorming prompt must require both an
 architectural roadmap and a sustainable research-writing workflow.
@@ -257,6 +258,10 @@ clients, negative results and engineering experience. Compare reuse, adaptation
 and replacement on their merits; neither importing old code nor rewriting it
 all is obligatory. Backward compatibility is not an acceptance criterion.
 
+R14 refines this freedom: always investigate and use suitable Mathlib facilities
+first. Independence from the old nominal library does not require duplicating
+general mathematics already supplied by Mathlib.
+
 Preserve source/evidence and the intended mathematical theorem strengths. A new
 implementation needs its own proofs and checks; old successful builds do not
 certify it. Any foundational work needed before PKG-01 must be named and scoped
@@ -277,6 +282,42 @@ The [revised package roadmap](../nominal-package-roadmap.md) therefore includes
 foundation-contract, build-boundary and mathematical prerequisites before
 PKG-01. This location decision does not approve a backend or start implementation
 during the documentation revision.
+
+### R13 Concurrent article in LaTeX
+
+After approving the bounded F02 + F03a specification, the author requested an
+article describing the nominal package implementation under `docs/article/`,
+written alongside implementation. All article content must be LaTeX. The author
+explicitly permitted delegation of article writing to subagents.
+
+The entry point is [main.tex](../article/main.tex), with included introduction
+and foundations sections. The delivered F02/F03a exposition refers to actual
+checked declarations and recorded verification; later contracts remain prospective.
+This supersedes the earlier article-plan suggestion to draft the manuscript in
+Markdown. It does not authorize publication or imply completion of later Package
+layers. The requirement applies to every subsequent substantive increment:
+specifications/plans assign the corresponding LaTeX work; statements and proofs
+are written while the code develops; final hypotheses, declaration references,
+limitations and verification evidence are synchronized and the article compiled
+before the increment is marked complete. PKG-11 records this ongoing work rather
+than a writing phase after implementation. Article drafting may be delegated
+in parallel, with reconciliation against the final code before delivery.
+
+### R14 Mathlib-first development
+
+The author requires every increment to look for and make use of appropriate
+Mathlib infrastructure before introducing general-purpose definitions, instances
+or proofs. Inspect the pinned source and exact theorem contracts; prefer reuse,
+specialization, composition or a small proved adapter over rebuilding existing
+theory. This applies to research/design choices as well as implementation.
+
+New nominal theory or representations remain allowed when there is a demonstrated
+mathematical or interface gap. Record the relevant candidates and why they do
+or do not suffice, with attention to hypotheses, universes and action coherence.
+Do not weaken the intended theorem or change dependency pins to make reuse fit.
+This policy refines architectural freedom without requiring compatibility with
+the old `Nominal/` development. Cite inherited Mathlib results appropriately in
+the concurrent article and distinguish them from new Package proofs.
 
 ### Evidence from the initial investigation and current recommendations
 
@@ -311,13 +352,17 @@ its previously unavailable Copello 2016 source has now been retrieved and read.
 
 ### Next review decision
 
-Begin with the foundation-contract and readiness tasks in the
-[package roadmap](../nominal-package-roadmap.md), then develop PKG-01 against the
-chosen Package interfaces once its prerequisites are met. Do not assume the old
-core makes those prerequisites complete. The public representation and exact
-implementation scope still need review; R11/R12 themselves are settled.
+F02 and F03a are delivered in the working tree, with their LaTeX exposition.
+The next bounded specification is F03b: swap generation with control over moved
+atoms and an avoidance corollary, together with its article section. Then develop
+F04 support/freshness and F05's required map/predicate interface before PKG-01.
+The [package roadmap](../nominal-package-roadmap.md) owns the exact task criteria.
+Do not restart the delivered foundation slice or assume that group/action laws
+already prove support. Broader layer choices remain open; architectural freedom,
+Package location and concurrent LaTeX writing are settled.
 
-The initial research and this policy revision made no production-code changes.
-Research material has since been committed in `7fed53a`; the current revision
-is a documentation change on top of that commit. No new commit, push, merge,
-dependency change, CI change or publication is part of this revision.
+The initial research and architectural-freedom revision made no production-code
+changes. Subsequent F02/F03a implementation and article work is recorded in the
+roadmap on the `76966b1` working tree. This follow-up clarifies the next slice and
+concurrent-writing requirement without changing Lean or LaTeX sources, committing,
+pushing, merging, changing dependencies or CI, or publishing anything.
