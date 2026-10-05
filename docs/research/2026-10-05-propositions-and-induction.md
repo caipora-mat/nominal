@@ -6,10 +6,23 @@ Copello and the existing quotient-based Lean development before selecting an
 architecture. The user-facing target is ordinary Lean propositions and judgments,
 supported by nominal theory and dedicated commands.
 
-Date: 2026-10-05. Baseline: `4279ba92efacd77b3b96e507631502272b489999` plus the
+Date: 2026-10-05. Historical baseline: `4279ba92efacd77b3b96e507631502272b489999` plus the
 preserved working tree, on `fasapa/nominal-package`. This is an initial
 investigation, not a complete foundations comparison. No package implementation
 was changed. Isolated Lean experiments are identified separately below.
+
+The current documentation revision, starting from
+`7fed53a2e5fc67379f86f085515e310e7c1fddb7`, applies the
+[architectural freedom policy](README.md#architectural-freedom). New
+implementation belongs under top-level `Package/`; the existing `Nominal/`,
+`Instances/` and probes remain reference material. Actions, support, `NFun`,
+predicate machinery, `NameAbs`, quotients and induction can all be reused,
+adapted or replaced, including implementations from scratch. Their present
+APIs, classes, universes, seals, module structure and representations impose no
+compatibility obligation. Mathematical correctness, theorem strength, ordinary
+Lean `Prop` and the selected case studies remain the goals. Neither reuse nor a
+rewrite is prescribed. This policy update does not change the experimental
+baseline or establish results for any new representation.
 
 ## Distinctions that the architecture must preserve
 
@@ -69,8 +82,11 @@ whether a metaprogram can inspect elaborated expressions.
 A semantic predicate need not be analyzed as formula syntax to define its
 permutation action: precompose it with inverse permutation of the argument.
 Function and propositional extensionality then support reasoning about predicate
-equality. The scratch experiment below confirms this route with the existing
-library. No inspection of a proof's runtime contents is involved.
+equality. The scratch experiment below confirms this route with the reference
+library. It does not require the new package to retain `PFun` or the current
+function instances: the conjugation/pointwise-action distinction must remain
+explicit in whichever action design is chosen. No inspection of a proof's
+runtime contents is involved.
 
 Conversely, a metaprogram may inspect syntax/elaborated expressions to generate
 proofs, but that does not establish finite support of arbitrary functions or
@@ -106,7 +122,9 @@ The existing Lean `Term.strong_ind` and `Term.strong_ind_finset` in
 `Instances/LambdaCalculus/Induction.lean` accept arbitrary predicates on quotient
 terms. Alpha equivalence has become equality of their arguments, so clients
 need no separate alpha-compatibility certificate. The proofs still establish
-fresh induction by strengthening over permutations and contexts.
+fresh induction by strengthening over permutations and contexts. They are
+evidence for the promised strength of user-facing reasoning; their proof bodies,
+theorem names and quotient implementation need not be retained by `Package/`.
 
 Likewise, `Beta.strong_ind` and `Parallel.strong_ind` in
 `Instances/LambdaCalculus/ReductionInduction.lean` accept arbitrary predicates
@@ -115,11 +133,13 @@ transport derivations; this is not a requirement that the user's motive be
 equivariant. Avoidance contexts are not asserted to be the motive's support.
 
 Alpha-compatible raw predicates and quotient predicates therefore offer a
-promising bridge to study. For `Prop`-valued predicates, prove an explicit
-descent/pullback correspondence. For type-valued dependent motives, investigate
-transport and coherence separately; do not claim that the same simple argument
-settles all dependent elimination, or that dependent quotient elimination is
-universally impossible.
+promising bridge to study if that construction route is selected. The later
+[predicate investigation](2026-10-05-predicate-foundations.md) proves a
+`Prop`-valued descent/pullback correspondence in the reference setting. Adapt or
+reprove the relevant correspondence for a different representation. For
+type-valued dependent motives, investigate transport and coherence separately;
+do not claim that the same simple argument settles all dependent elimination,
+or that dependent quotient elimination is universally impossible.
 
 ## Isabelle treats predicate permutations and logic explicitly
 
@@ -141,8 +161,12 @@ Original Isabelle Nominal and Nominal2 must be distinguished in the full
 comparison. Isabelle and Agda were not built here. The exact Copello statements
 above were checked in the 2018 paper; full-text retrieval of the earlier 2016
 paper was unsuccessful, so no exact 2016 theorem correspondence is claimed.
-Web sources were accessed on 2026-10-05; pin the inspected release/source revision
-before relying on these observations in a publication.
+Web sources were accessed on 2026-10-05. The later
+[predicate](2026-10-05-predicate-foundations.md) and
+[Isabelle](2026-10-05-isabelle-comparison.md) notes record the subsequently
+obtained 2016 paper and more precise Isabelle versions. The retrieval failure
+above records this initial investigation's scope; use the pinned later evidence
+before relying on the comparison in a publication.
 
 ## Checked Lean experiments
 
@@ -156,7 +180,9 @@ lake env lean /tmp/NominalPredicateResearch.lean
 It exited successfully. There were style suggestions concerning local instances;
 there were no admissions. Printed dependencies for its named results were only
 `propext`, `Classical.choice`, and `Quot.sound`. This was a direct scratch-file
-check against built imports, not a new full-library build or integrated API.
+check against built imports at the historical baseline, not a new full-library
+build or integrated API. Neither this scratch result nor a reference-library
+build validates new `Package/` code.
 
 The experiment established:
 
@@ -186,17 +212,22 @@ The core of the supported-predicate experiment was:
 --   (π • (PFun.mk P : PFun α X Prop)) x = P (π⁻¹ • x).
 ```
 
-This is not a recommendation to install a global instance immediately. The atom
-`outParam` makes instance inference for a carrier such as `Prop` a real API
-question; the probe used an explicit local instance. Compare explicit wrappers,
-scoped instances and a supported-subset representation before deciding.
+This is evidence about the tested interface, not a recommendation to install a
+global instance. Its atom `outParam` makes instance inference for a carrier such
+as `Prop` an API question; the probe used an explicit local instance. Compare
+explicit actions or parameters, redesigned classes, wrappers, supported subsets
+and alternative supported-function representations. The registration failure
+checked in the later predicate note concerns the old interface and does not
+rule out a differently designed `Prop` interface. Scoped instances alone are
+not evidence of a solution. Each candidate needs its own coherence and usability
+checks; the choices are not limited to adapters around `NFun`.
 
 ## Classical choice needs its own support argument
 
 Using classical choice in the Lean metatheory does not make every chosen
 function nominal. Pitts section 2.7, Theorem 2.29, gives a relevant failure of
 internal choice. The following smaller counterexample passed against the
-current library:
+reference library:
 
 ```lean
 theorem no_supported_fresh_selector {α : Type u} [Name α]
@@ -214,21 +245,27 @@ is a useful source of that proof pattern.
 
 ## Research hypotheses and required next evidence
 
-The current working hypothesis is a layered design: alpha-equated syntax at the
+The semantic working hypothesis is a layered design: alpha-equated syntax at the
 public boundary, arbitrary-predicate fresh induction for clients, and a reusable
 supported-predicate theory for logical operations, Some/Any, definition support
 and automation. Alpha-compatible predicates may remain useful internally when
 constructing or comparing quotients. This is a hypothesis, not an accepted
-architecture or a theorem that all layers can be generated for every signature.
+implementation architecture or a theorem that all layers can be generated for
+every signature. In particular, it does not select the existing action, support,
+function, abstraction or quotient implementations.
 
-Before architecture selection, require:
+Assign the following evidence obligations to the relevant architecture and
+implementation stages, with foundation decisions before the dependent work:
 
 1. Exact source/theorem correspondence for Pitts, Copello, Rocq, original Isabelle
    Nominal, Nominal2 and the current Lean principles, including their assumptions.
-2. A Lean comparison of supported predicates as NFun-to-Prop versus supported
-   subsets, including action/equality, universes, inference and useful logical laws.
-3. A proof of the raw-alpha-compatible/quotient-predicate bridge for the intended
-   generic signature, with a separate analysis of dependent motives.
+2. A Lean comparison of candidate action/support and predicate interfaces,
+   including NFun-to-Prop and supported subsets as reference choices, with
+   action/equality, universes, inference and useful logical laws tested under
+   the selected foundations. Reuse, adaptation and replacement are all open.
+3. For a quotient-based route, a proof of the raw-alpha-compatible/quotient-predicate
+   bridge for the intended generic signature, with a separate analysis of dependent
+   motives; another representation needs its corresponding well-definedness laws.
 4. Explicit criteria for generating relation equivariance and fresh rule induction.
    Successful term induction does not alone establish these criteria.
 5. Tests with fixed parameters, arbitrary motives, unsupported predicates and
@@ -236,6 +273,15 @@ Before architecture selection, require:
 6. A user-facing account of failed automatic obligations and expert escape hatches.
 7. A statement of which predicate facilities are required for the first workflow,
    and which enrich the theory without becoming prerequisites for that workflow.
+   The [package roadmap](../nominal-package-roadmap.md) places PKG-F01–PKG-F05
+   before bounded PKG-01: select foundation contracts, establish `Package/`
+   build/audit coverage, provide the chosen atom/action and support/freshness
+   foundations, and provide only the function/predicate-input machinery that
+   the selected predicate representation needs. This is not an instruction to
+   reconstruct the full existing core or `NFun` catalogue before PKG-01.
+8. Validation for the new declarations in `Package/`, including client proofs and
+   an axiom audit, rather than counting old builds or probes as certification.
+   This documentation-only revision creates no package modules or build targets.
 
 The [research brief](2026-10-05-nominal-package-brief.md) records the requirements
 that motivated this investigation. No conclusion here reintroduces a constructive

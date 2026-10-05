@@ -5,6 +5,18 @@ Read with the [predicate investigation](2026-10-05-predicate-foundations.md),
 [contracts](2026-10-05-package-contracts.md), and
 [architecture proposal](2026-10-05-package-architecture.md).
 
+The documentation revision at
+`7fed53a2e5fc67379f86f085515e310e7c1fddb7` follows the
+[architectural freedom policy](README.md#architectural-freedom). New
+implementation, including replacement foundations, belongs under top-level
+`Package/`. Existing Lean code and the sources below are evidence and possible
+proof material, not required APIs or representations. Reuse, adaptation and
+replacement of actions, support, functions, predicates, abstraction, quotients
+and induction are all available; inherited classes, universes, modules, seals
+and compatibility interfaces impose no mandate. Preserve the mathematical
+contracts and theorem strengths. The recorded source versions and checks below
+remain historical evidence; this revision runs no external build or Lean probe.
+
 ## Versions and verification boundary
 
 | Source | Inspected version | Evidence |
@@ -13,7 +25,7 @@ Read with the [predicate investigation](2026-10-05-predicate-foundations.md),
 | Urban–Kaliszyk, *General Bindings and Alpha-Equivalence in Nominal Isabelle* | LMCS 8(2:14), 2012, DOI `10.2168/LMCS-8(2:14)2012`; PDF SHA-256 `39d67a606e4861fa7205679ac9f3d4c849df6cd4ba1b93d9711d78208213258e` | Published paper, especially §§4–7 |
 | AFP Nominal2 source | Isabelle AFP development mirror commit `0f498441e41026d1f5e677300353f5ba31a77f5a`, commit timestamp 2026-10-05 00:46:51 UTC | Six files downloaded at that exact revision and source-reviewed; not an Isabelle release/build claim |
 | van Brügge–McKinna–Popescu–Traytel, *Barendregt Convenes with Knaster and Tarski* | PACMPL 9, POPL, Article 57, January 2025; DOI `10.1145/3704893`; version-of-record PDF SHA-256 `a15ca78261cf66d9fd90c73f63d331f00ec0bed7691e9684ecca25549a0c6bbf` | Definition 6, Theorem 7, §§6–7 and implementation discussion checked |
-| Lean client | `4279ba92efacd77b3b96e507631502272b489999` plus preserved working tree | Local libraries/examples build, direct tutorial and axiom audit; details in architecture proposal |
+| Reference Lean client | `4279ba92efacd77b3b96e507631502272b489999` plus preserved working tree | Historical local libraries/examples build, direct tutorial and axiom audit; details in architecture proposal; does not validate `Package/` |
 
 Primary links: [original manual](https://isabelle.in.tum.de/nominal/manual/nominal_datatype_manual.pdf),
 [published Nominal2 paper](https://lmcs.episciences.org/813/pdf),
@@ -41,11 +53,13 @@ and explains the resulting equivalence obligation. Section 4.4's
 These are three separate contracts, not consequences of a syntax declaration
 alone. [Manual, §§4.2–4.5 and pp.10–12](https://isabelle.in.tum.de/nominal/manual/nominal_datatype_manual.pdf).
 
-Lean correspondence: preserve `Term.strong_ind` and both reduction
-`strong_ind` theorems with arbitrary motives. The current Lean relations are
-unrestricted; their proofs explicitly rename body premises and use
-`subst_rename`. Adopting an older package's stronger syntactic side conditions
-would require an equivalence theorem, not a silent change to these relations.
+Lean correspondence: preserve the arbitrary-motive strength demonstrated by
+`Term.strong_ind` and both reduction `strong_ind` theorems. Their names, proofs
+and concrete action/quotient implementations are optional references for new
+`Package/` results. The reference Lean relations are unrestricted; their proofs
+explicitly rename body premises and use `subst_rename`. Adopting an older
+package's stronger syntactic side conditions would require an equivalence
+theorem, not a silent weakening of the intended reduction semantics.
 
 ## Nominal2: predicates, generation, and functions
 
@@ -64,8 +78,8 @@ The pinned implementation supplies more precise engineering evidence:
 
 | File/declarations | Source reading | Consequence for this proposal |
 | --- | --- | --- |
-| `Nominal2_Base.thy`: `permute_fun_def`, `permute_bool_def`, `permute_fun_app_eq` | Function action is conjugation; Boolean truth values have trivial action | Compare Lean `PFun α X Prop`, not the ordinary pointwise function action |
-| Same file: `eq_eqvt`, `Not_eqvt`, `conj_eqvt`, `imp_eqvt`, `all_eqvt`, `ex_eqvt`, `Collect_eqvt` | Logical operations have proved permutation laws | Expression-aware proof generation can reuse certified logic rules; it need not interpret a new formula logic |
+| `Nominal2_Base.thy`: `permute_fun_def`, `permute_bool_def`, `permute_fun_app_eq` | Function action is conjugation; Boolean truth values have trivial action | Preserve the conjugation/pointwise distinction in the chosen Lean action interface; `PFun α X Prop` is one reference realization, not a required wrapper |
+| Same file: `eq_eqvt`, `Not_eqvt`, `conj_eqvt`, `imp_eqvt`, `all_eqvt`, `ex_eqvt`, `Collect_eqvt` | Logical operations have proved permutation laws | Expression-aware proof generation needs certified logic rules under the selected foundations; existing proofs may be reused, adapted or replaced without introducing a separate formula logic |
 | `Nominal2.thy` and `nominal_dt_quot.ML`: `define_qtypes`, `lift_raw_const`, `prove_fsupp`, `prove_strong_induct` | Separate metadata/raw/alpha/quotient modules; explicit theorem generation | Keep proof responsibilities modular and kernel checked |
 | `nominal_function_core.ML`: `mk_compat_proof_obligations`, `mk_completeness`, `define_graph`, `mk_uniqueness_case` | Compatibility, coverage and graph uniqueness are distinct proof tasks | Do not infer well-definedness or support merely from equations that look recursive |
 | `nominal_inductive.ML`: `mk_vc_compat`, `prove_strong_inductive`, `fresh_thm` | Generates finiteness and freshness-for-conclusion obligations and constructs a context-generalized proof | Rule metadata must describe which variables can be refreshed while the conclusion is preserved |
@@ -105,11 +119,13 @@ Section 10 reports automation of equivariance while refreshability remains a
 user obligation. This is a source theorem, not a Lean result in this repository.
 [Definition 6, Theorem 7, §10](https://eprints.whiterose.ac.uk/id/eprint/222673/1/3704893.pdf).
 
-**Proposed research application.** Compare two implementations of the judgment
-contract on beta, parallel reduction, and first-order eigenvariable rules:
+**Proposed research application.** Compare at least these two implementations of
+the judgment contract on beta, parallel reduction, and first-order eigenvariable
+rules under the chosen `Package/` foundations:
 
-1. Generate a derivation-induction proof following the current Lean client,
-   with local renaming/transport certificates for each rule.
+1. Generate a derivation-induction proof informed by the reference Lean client,
+   with local renaming/transport certificates for each rule. This route may use
+   a new relation, action or abstraction representation and new proofs.
 2. Prove a general semantic theorem of the above shape and generate its
    operator and certificates. Prove that the generated ordinary inductive
    relation equals the specified least closure.
@@ -119,12 +135,15 @@ and a relation/least-closure correspondence obligation. Neither route permits
 assuming that relation equivariance alone makes every rule binder refreshable.
 The finite rule grammar, restricted to declarations whose certificates are
 discharged, is the proposed automatic subset. Manual certificates could later
-admit more rules without expanding the parser's trusted role.
+admit more rules without expanding the parser's trusted role. Other proof routes
+remain possible if their obligations and resulting theorem strengths are made
+explicit and checked; this comparison does not prescribe a representation.
 
-An important compatibility target is the current unrestricted `Parallel.beta`:
+An important semantic target is the reference unrestricted `Parallel.beta`:
 the body premise changes under a swap, the replacement premise is preserved,
 and substitution renaming preserves the target. An implementation that simply
-adds a freshness premise and never proves equivalence fails the target.
+adds a freshness premise and never proves equivalence fails the target. This
+target preserves reduction behavior, not the old declaration name or API.
 
 ## Cross-source conclusion and remaining evidence
 
@@ -135,9 +154,19 @@ Isabelle's predicate action and automation fit this layered reading. The
 Pitts/Copello/Rocq correspondence and Lean probes; the initial propositions note
 is retained as earlier evidence rather than silently promoted to a design.
 
-Before implementing the judgment generator, require one of the two rule proof
-routes to pass both reduction and eigenvariable examples. A broader survey of
-binding-aware datatype work (including bounded natural functors) belongs in the
+Before implementing the judgment generator, require the selected rule proof
+route to pass both reduction and eigenvariable examples in `Package/`. The
+earlier Lean proofs provide comparison material, not certification for a new
+representation. Name any foundational requirements in the
+[package roadmap](../nominal-package-roadmap.md): PKG-F01–PKG-F05 precede bounded
+predicate task PKG-01, and later judgment work must list additional dependencies
+explicitly. This is neither an implicit full rewrite nor a requirement to retain
+the current core. New package build targets and an audit reaching the new
+declarations must be established; the reference-library audit cannot stand in
+for them. This documentation revision creates no implementation or build setup.
+
+A broader survey of binding-aware datatype work (including bounded natural
+functors) belongs in the
 article's related-work record; no exhaustiveness or novelty claim is made here.
 The selected five case studies are tests of this package's promised contracts,
 not evidence that those contracts have already been generated.

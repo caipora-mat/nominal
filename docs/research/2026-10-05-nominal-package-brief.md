@@ -10,6 +10,11 @@ Date: 2026-10-05.
 Research branch: `fasapa/nominal-package`.
 Starting commit: `4279ba92efacd77b3b96e507631502272b489999` on `fasapa/next`.
 
+Current policy includes the author's later decisions **R11** (all infrastructure
+may be reimplemented) and **R12** (new implementation lives in top-level
+`Package/`). See the [research guide](README.md). These decisions supersede
+earlier reuse-first wording; the source evidence retains its original baseline.
+
 The branch was created at that commit with the existing working tree preserved.
 It includes pre-existing modified README content and untracked instructions,
 documentation, examples and validation scripts. Those files are not all part of
@@ -25,7 +30,7 @@ practice. The internal account must be grounded in nominal theory, with generate
 proofs checked by Lean's kernel.
 
 The completed lambda-calculus Church–Rosser development provides experience,
-reusable theory, and a reference case study. The target is a specified general
+proved examples and a reference case study. Reusing its code is optional. The target is a specified general
 class of first-order languages with binders, not a generator specialized to
 lambda calculus. Here “first-order languages” describes the languages studied by
 package users; it does not settle the package's internal term representation.
@@ -59,10 +64,10 @@ judgments, generated term and rule induction/recursion facilities, and meaningfu
 proofs using them. A syntax-only generator is insufficient as the milestone's
 completion criterion, although smaller implementation increments are expected.
 
-Lambda calculus and replaying Church–Rosser through the package are intended
-case-study targets. Generality must be tested beyond lambda calculus. A second
-example involving terms and quantified formulas has been proposed, but its exact
-language and theorem have not yet been selected.
+Lambda calculus and replaying Church–Rosser through the package are required
+case-study targets. The selected second workflow is first-order logic with
+substitution admissibility; R10 records the full five-study portfolio. The
+earlier brief left this second example open; that choice has since been resolved.
 
 ### R4 Initial binding scope
 
@@ -88,12 +93,15 @@ This settles the user-facing direction; it does not decide whether the backend
 interprets a generic signature, generates a separate construction for each
 declaration, or combines these approaches.
 
-### R6 Reuse nominal theory throughout
+### R6 Nominal justification without a prescribed implementation
 
 Investigate the role of supported functions, name abstraction, concretion, FCB,
 fresh quantification, nominal predicates/propositions, and fresh induction and
-recursion in the generated package. Reuse and extend the existing proved theory
-where appropriate. The author clarified that predicates and judgments should
+recursion in the generated package. Compare existing results with independently
+designed alternatives. The original recommendation to reuse and extend the
+existing implementation is superseded by R11: any necessary layer may be rebuilt,
+and mathematical concepts do not mandate the current Lean encodings. The author
+clarified that predicates and judgments should
 primarily inhabit ordinary Lean `Prop`; a separately interpreted formula logic
 is not the current objective. The underlying nominal-predicate theory still
 requires detailed research, as recorded in R9 below.
@@ -124,8 +132,10 @@ architectural roadmap and a sustainable research-writing workflow.
 Develop this research on the new branch and preserve the completed core and
 Church–Rosser case study as a reference. Preserve existing dirty work. The earlier
 preferences for no deadline, correctness first, and no CI remain in force unless
-the author changes them. There is no authorization here to merge the old
-algebraic sketch or silently replace the established representations.
+the author changes them. Keep the reference source available while developing
+new representations independently under `Package/`; no backward compatibility
+with old APIs is required. This does not authorize overwriting the reference
+library or merging the old algebraic sketch.
 
 ### R9 Investigate propositions before selecting the architecture
 
@@ -138,12 +148,14 @@ The author's constructive Rocq experience with setoids and `Prop` is a research
 motivation. Identify exactly which assumptions and representations produced each
 limitation, and which transfer to classical Lean. Separate proof elimination,
 extensional equality, quotient descent, finite support, equivariance and
-metaprogram inspection. In particular, do not weaken the current induction API
-by requiring all user motives to be finitely supported.
+metaprogram inspection. Preserve arbitrary-motive induction as a mathematical
+goal without requiring the new package to retain current API names, signatures
+or implementation. Do not require all user motives to be finitely supported.
 
 The [initial propositions investigation](2026-10-05-propositions-and-induction.md)
 records checked sources, scratch evidence and unresolved work. It does not choose
-a public predicate representation or authorize replacing the working theory.
+a public predicate representation. New proofs are required for a redesigned
+theory even when the old implementation establishes an analogous statement.
 
 ## Primary reference observations
 
@@ -182,18 +194,21 @@ existing [research correspondence](../research-correspondence.md) remain relevan
 - What generic conditions justify fresh induction for user-defined judgments?
 - What happens when an attempted definition is not alpha-compatible, not finitely
   supported, outside the binding grammar, or beyond available automation?
-- Which second language and nontrivial theorem best test generality?
+- Which additional demands do the five selected studies place on the candidate
+  foundation, beyond the completed reference lambda example?
 - How should the research journal, mathematical exposition, implementation plan,
   experiments and current roadmap refer to one another without duplicating claims?
 
-These questions are deliberately unresolved. The next deliverable is a
-brainstorming prompt grounded in this brief, followed by an evidence-based
-architecture comparison and dependency-ordered roadmap. No particular backend
-or command grammar has yet been selected.
+The representation, backend and command-grammar questions remain unresolved.
+The architecture comparison and roadmap below record the research already
+delivered; their recommendations must now be assessed under R11/R12 rather
+than treated as commitments to the old core.
 
 ## 2026-10-05 architectural investigation: decisions and review artifact
 
-The sections above preserve the brief as it stood before the investigation.
+The sections above express the current requirements, with superseded reuse and
+case-study choices identified explicitly. The original source investigation was
+performed before R11/R12; its evidence is retained below.
 The requested investigation is now recorded in the
 [architecture and roadmap proposal](2026-10-05-package-architecture.md), with
 separate [predicate foundations](2026-10-05-predicate-foundations.md),
@@ -225,14 +240,48 @@ with let over the alternative imperative-local language:
    author-selected semantic specification.
 
 This supersedes R3's statement that the second example has not been chosen.
-The proposed delivery order is the complete lambda/FOL workflow first, then
+The proposed case-study delivery order is the complete lambda/FOL workflow first, then
 let, π and μ as explicit later milestones. All five remain part of the research
 program; no proof or implementation of the later studies is claimed.
 
-### Investigated evidence and recommendations
+### R11 Architectural freedom: existing infrastructure is optional
 
-- The supported baseline passes the 1,033-job library/example build, direct
-  tutorial compilation, and direct 1,859-declaration axiom audit. This turn's
+The author clarified that the entire new infrastructure may be developed from
+scratch. Atoms, permutations, actions, support, freshness, supported functions,
+predicates, abstraction, quotients, induction, recursion and metaprogramming are
+all open to a new implementation. Existing APIs, typeclasses, module boundaries,
+universe restrictions, seals and proof strategies are not requirements.
+
+Use the existing development as learning material: proved mathematics, realistic
+clients, negative results and engineering experience. Compare reuse, adaptation
+and replacement on their merits; neither importing old code nor rewriting it
+all is obligatory. Backward compatibility is not an acceptance criterion.
+
+Preserve source/evidence and the intended mathematical theorem strengths. A new
+implementation needs its own proofs and checks; old successful builds do not
+certify it. Any foundational work needed before PKG-01 must be named and scoped
+in the roadmap instead of being hidden inside the predicate task. This decision
+supersedes the earlier reuse-first recommendation in R6 and any interpretation
+of R8 as requiring the new package to retain the old representations.
+
+### R12 New implementation under Package
+
+The author selected top-level `Package/`, outside `Nominal/`, for the new
+development. Put newly authored foundations and package facilities there.
+Retain `Nominal/` and `Instances/` as the reference development. Optional imports
+from them require an explicit design decision; an import-free rewrite is also
+permitted. Decide internal subdirectories, namespace/entry-point conventions,
+Lake targets, example coverage and axiom audits during foundation planning.
+
+The [revised package roadmap](../nominal-package-roadmap.md) therefore includes
+foundation-contract, build-boundary and mathematical prerequisites before
+PKG-01. This location decision does not approve a backend or start implementation
+during the documentation revision.
+
+### Evidence from the initial investigation and current recommendations
+
+- The initial investigation's supported baseline passed the 1,033-job library/example build, direct
+  tutorial compilation, and direct 1,859-declaration axiom audit. That
   build reused existing project/dependency artifacts; the earlier fresh-build
   record is not restated as a new fresh build.
 - New standalone probes establish Prop predicate descent and support reflection,
@@ -245,9 +294,11 @@ program; no proof or implementation of the later studies is claimed.
 - Counterexamples reject unconditional supported abstraction mapping and fixed-
   substitution equivariance. The old algebraic sketch remains historical input;
   its false/misleading statements were audited, not merged or repaired.
-- The recommended direction is a staged hybrid with generated raw syntax/alpha
+- A candidate direction is a staged hybrid with generated raw syntax/alpha
   quotients, shared verified certificates and ordinary public functions/Prop
-  judgments. A generic signature carrier remains an evaluated alternative.
+  judgments. Its shared core may be newly authored. A generic signature carrier
+  and independently designed foundations remain alternatives; familiarity with
+  the old core does not select this architecture.
 - Supported predicate theory, alpha-compatible raw predicates and arbitrary-
   motive induction are complementary layers. Generic rule induction still needs
   a proved transport/refreshability criterion; relation equivariance alone does
@@ -260,11 +311,13 @@ its previously unavailable Copello 2016 source has now been retrieved and read.
 
 ### Next review decision
 
-Review AD-01–AD-08 in the proposal and PKG-00–PKG-11 in the
-[package roadmap](../nominal-package-roadmap.md). The recommended first
-implementation increment is **PKG-01**, the narrowly scoped predicate-foundations
-API, followed by its written implementation plan and execution agreement.
-PKG-02, the manual carrier-certificate experiment, is an alternative first
-increment. The author has not yet approved either implementation increment.
-No production code, existing theorem, dependency, branch, external repository,
-CI configuration, commit, push or publication was changed by this research.
+Begin with the foundation-contract and readiness tasks in the
+[package roadmap](../nominal-package-roadmap.md), then develop PKG-01 against the
+chosen Package interfaces once its prerequisites are met. Do not assume the old
+core makes those prerequisites complete. The public representation and exact
+implementation scope still need review; R11/R12 themselves are settled.
+
+The initial research and this policy revision made no production-code changes.
+Research material has since been committed in `7fed53a`; the current revision
+is a documentation change on top of that commit. No new commit, push, merge,
+dependency change, CI change or publication is part of this revision.

@@ -1,19 +1,44 @@
 # Client contracts for the proposed nominal package
 
-Date: 2026-10-05. Source baseline: `4279ba92efacd77b3b96e507631502272b489999`
-on `fasapa/nominal-package`, including the preserved working-tree documentation.
-This note records source inspection and proposed contracts. It adds no commands,
+Date: 2026-10-05. Original source-inspection baseline:
+`4279ba92efacd77b3b96e507631502272b489999` on `fasapa/nominal-package`.
+Architectural-policy revision: working-tree documentation after
+`7fed53a2e5fc67379f86f085515e310e7c1fddb7` on that branch.
+This note records earlier source evidence and revised proposed contracts. It adds no commands,
 generated declarations, recursors, judgment packages, or new proved mathematics
 to the library. All command examples below are **non-compiling design sketches**.
 Their spelling is illustrative; their mathematical obligations are the subject
 of the proposal.
 
+The [architectural-freedom policy](README.md#architectural-freedom) governs these
+contracts. Actions, support, functions, predicates, abstraction, quotients,
+induction, and every other required foundation may be developed from scratch.
+Reuse, adaptation, and replacement are choices to justify on their merits.
+Existing API names, typeclasses, module boundaries, seal boundaries, universe
+restrictions, and backward compatibility impose no package requirement. The
+contracts concern correct mathematics and usable proof interfaces in classical
+Lean with ordinary `Prop`; arbitrary proof motives remain unrestricted.
+
+All new implementation belongs under top-level `Package/`, as required by the
+[implementation-location policy](README.md#implementation-location).
+`Nominal/` and `Instances/` remain preserved reference implementations. Links
+to them below identify evidence, not destinations for new declarations or
+mandatory imports. An equivalence with the old `Term` may help validate a new
+carrier; it is an optional method, not a compatibility deliverable.
+
 Read this with the [research brief](2026-10-05-nominal-package-brief.md),
 [propositions investigation](2026-10-05-propositions-and-induction.md),
 [tutorial](../tutorial.md), and [release assessment](../release-assessment.md).
-The relevant existing roadmap tasks are L-01–L-03, R-01–R-07, A-01–A-03,
-P-01–P-03, and M-02–M-04. A source inventory here does not change their statuses
-or make the package implementation complete.
+The [package roadmap](../nominal-package-roadmap.md) owns PKG implementation
+scope. Older L-01–L-03, R-01–R-07, A-01–A-03, P-01–P-03, and M-02–M-04
+provide historical context. A source inventory here does not complete those
+tasks or any PKG task. The roadmap places foundation design, build/import/audit
+setup, atoms/permutations/actions, support/freshness, and the selected function/
+predicate inputs before PKG-01. PKG-01 remains a bounded predicate-foundations
+increment after its actual prerequisites: name any additional replacement
+dependencies and their acceptance checks in its plan. Freedom to build
+foundations neither makes the old core a prerequisite nor requires completing
+all package machinery in that one increment.
 
 The user selected first-order logic with substitution admissibility as a second
 case study, and subsequently selected a five-example portfolio: lambda calculus,
@@ -27,9 +52,10 @@ implementation increment.
 
 ## 1. What the completed lambda client actually requires
 
-The current development already proves Church–Rosser for arbitrary open quotient
-terms and full contextual beta reduction. Its successful client boundary should
-be reproduced by a generator before replacing any manual construction. The
+The reference development proves Church–Rosser for arbitrary open quotient
+terms and full contextual beta reduction. The new package should demonstrate
+the same mathematical strength through its own chosen public interface. Neither
+replacing the reference implementation nor preserving its API is required. The
 [2026-10-02 review](../reviews/2026-10-02-development-review.md) describes an
 earlier snapshot: its claims that integration, reduction, fresh rule induction,
 or Church–Rosser are absent are historical. Its distinctions between iteration,
@@ -39,7 +65,7 @@ primitive recursion, and fresh rule induction remain relevant.
 | --- | --- | --- |
 | [Basic.lean](../../Instances/LambdaCalculus/Basic.lean): `Term`, `var`, `app`, `lam`, `var_inj`, `app_inj`, `lam_inj`, constructor disjointness | Alpha equality is ordinary quotient equality. Same-binder lambda injectivity is available; equality of different binders uses abstraction equality. | Export ordinary constructors, injectivity/disjointness, and binder-aware equality. Do not expose a false pair-style injectivity law for binders. |
 | Basic: `supp_eq_fv`, `supp_term_var`, `supp_term_app`, `supp_term_lam`, `fresh_term_lam` | Supports are exact free-variable sets; abstraction removes its binder. In particular `a # lam a t` even when `a` occurs freely in `t`. | Give useful support/freshness equations for the canonical action. Distinguish freshness for an abstraction from freshness for its body. |
-| Basic: `term_lam_eq_iff`, `lam_eq_swap`, `lam_eq_iff_at_fresh`, `exists_lam_eq_at_fresh`, `lam_eq_iff_common_fresh` | Quotient constructors connect to `NameAbs`; a chosen fresh binder has a unique body; two abstractions can be aligned at one binder. | Reuse abstraction theory and expose chosen/common-binder views. Clients should not unfold raw alpha equivalence. |
+| Basic: `term_lam_eq_iff`, `lam_eq_swap`, `lam_eq_iff_at_fresh`, `exists_lam_eq_at_fresh`, `lam_eq_iff_common_fresh` | Quotient constructors connect to `NameAbs`; a chosen fresh binder has a unique body; two abstractions can be aligned at one binder. | Prove chosen/common-binder views using the selected abstraction theory. Give clients a public interface to these facts. |
 | [Induction.lean](../../Instances/LambdaCalculus/Induction.lean): `strong_ind`, `strong_ind_finset` | An arbitrary motive `P : Term α → Z → Prop`, a nominal context `Z`, and hypotheses at every recursive context; lambda binders avoid the chosen context. | Preserve arbitrary predicates and context-generalized induction hypotheses. An avoidance context is not a support certificate for the motive. |
 | [Recursion.lean](../../Instances/LambdaCalculus/Recursion.lean): `recNoContext`, `recNoContextNFun` | Supported **iteration** through three handlers, with common finite support bound and guarded fresh-result condition for the binder handler. | Do not relabel the existing iterator as primitive recursion or dependent elimination. Hide proof packaging only when it can be justified. |
 | Recursion: constructor equations, `recNoContext_unique`, `recNoContext_independent`, `recNoContext_supports`, `supp_recNoContextNFun_le` | Public equations, functional uniqueness, independence of a valid avoidance bound, and support of the returned function. | Generate theorem-level equations and uniqueness/support contracts, not only a function and an opaque graph. |
@@ -61,11 +87,12 @@ the fixed-parameter bound, `rebuildUnique` uses ordinary function equality,
 support premise. `substituteRelatedInputs` and `diamondForDuplication` exercise
 the reductions rather than merely invoking tactics in a proof of `True`.
 
-The client has one atom sort; `Name α` requires infinitude and decidable equality,
-not countability. Current term induction and iteration use the atom universe for
-their context/result; fresh rule induction permits a separate context universe.
-A package proposal must choose and document its universes rather than silently
-claiming unrestricted ones.
+The reference client has one atom sort; `Name α` requires infinitude and
+decidable equality, not countability. Its term induction and iteration use the
+atom universe for their context/result; fresh rule induction permits a separate
+context universe. These are observations about the reference. Choose and prove
+the package's atom assumptions and universe parameters independently; the old
+typeclass and universe bounds are neither requirements nor a ceiling.
 
 ## 2. Four principles that must remain separate
 
@@ -76,7 +103,7 @@ quotient makes alpha-compatible argument replacement ordinary equality; the
 freshness theorem still needs its own proof. A nested use can instantiate an IH
 at a context extended by the enclosing binder.
 
-**Supported iteration.** Write the handlers as
+**Supported iteration.** In the reference notation, write the handlers as
 `fᵥ : NFun α α Y`, `fₐ : NFun α (Y × Y) Y`, and
 `fL : NFun α (α × Y) Y`. The current theorem requires all three supports to
 lie in `A`, together with `∀ a y, a # A → a # fL (a,y)`.
@@ -86,7 +113,10 @@ when `a # A`. The existing construction proves graph totality and uniqueness
 before extracting a function by classical choice. Its support lies in `A`;
 a nonempty bound does not prove equivariance. The uniqueness theorem even
 accepts an ordinary candidate function, without first assuming that candidate
-is supported.
+is supported. This describes one proved sufficient admissibility theorem. A
+new iterator may use different handler representations, weaker justified
+admissibility conditions, or a different construction, provided its support,
+representative independence, equations, and claimed uniqueness are proved.
 
 **Primitive recursion.** A primitive handler receives the original child and
 the value computed for that child. For lambda syntax, proposed handler inputs
@@ -95,8 +125,8 @@ into `Term × Y`, with a proof that its first projection reconstructs the input,
 is a candidate derivation; a dedicated relational graph is another. Neither
 route has been delivered as a public primitive-recursion interface. Support,
 binder compatibility, constructor equations, and uniqueness must be proved for
-the actual route. A weakened FCB premise applying only to reachable pairs would
-be a new theorem, not an undocumented use of the current iterator.
+the actual route. A binder premise applying only to reachable pairs may be
+developed as a new theorem; it is not supplied by the reference FCB/iterator.
 
 **Dependent elimination.** A data-valued family `C : Term α → Type v` adds
 transport between fibers when alpha-equal presentations of the input are used.
@@ -120,7 +150,7 @@ Every code block in this section is pseudocode. In particular, `nominal_datatype
 ### 3.1 Syntax with single and nested binders
 
 ```text
-nominal_datatype Term (Atom : Type u) [Name Atom] where
+nominal_datatype Term (Atom : Type u) [AtomAssumptions Atom] where
   | var (a : Atom)
   | app (left right : Term)
   | lam (a : Atom) (body : Term) binds a in body
@@ -136,6 +166,10 @@ theorem property (t : Term) (external : X) (A : Finset Atom) : P t external A :=
     -- ih can be used at (external, insert a A).
     ...
 ```
+
+`AtomAssumptions` is a placeholder for the chosen atom interface, not an
+existing class or a required replacement name. Generated implementation and
+its client declarations will live under `Package/`.
 
 `binds a in body` specifies exactly the scope of one atom. Nesting repeats that
 construction; it is not simultaneous set/list/pattern binding. A let constructor
@@ -172,10 +206,12 @@ nominal_function subst (x : Atom) (replacement : Term) : Term → Term
 ```
 
 The user writes equations and relevant mathematical freshness. The command
-must infer or ask the user to prove that its handlers are supported and that
-the binder output is fresh. It must then justify a total, representative-
-independent operation. The generated lambda equation is guarded; the notation
-does not grant arbitrary raw pattern matching on quotient representatives.
+must justify a total, representative-independent operation and every advertised
+support bound. It may discharge admissibility with a fresh-output theorem for
+the scoped binder handler, a direct descent proof, or another proved principle.
+Missing obligations require explicit proofs. The generated lambda equation is
+guarded; the notation does not grant arbitrary raw pattern matching on quotient
+representatives or impose the old FCB certificate format.
 
 Required outputs include ordinary application, the guarded equations, a renaming
 equation, functional uniqueness, and a supported view satisfying
@@ -288,11 +324,13 @@ on occurrences of `x` in `Γ`, `φ`, or `s`. The proof must consume fresh
 composition is a prerequisite and a smaller acceptance test; it does not by
 itself satisfy this selected judgment-level theorem.
 
-The current core supplies nominal finite **atom** sets, not a general nominal
+The reference core supplies nominal finite **atom** sets, not a general nominal
 instance for arbitrary `List X` or `Finset X`; see `PermType.instFinset` in
 [PermType.lean](../../Nominal/Set/PermType.lean) and `Nominal.instFinsetNominal` in
-[Nominal.lean](../../Nominal/Set/Nominal.lean). The finite-list context choice
-therefore requires a focused, coherent List action/nominality/support interface.
+[Nominal.lean](../../Nominal/Set/Nominal.lean). Independently of that inventory,
+the selected finite-list context needs a coherent List action/nominality/support
+interface in the new package, supplied by its chosen foundations or developed
+when this client requires it.
 An explicit generated `Context.nil`/`Context.cons Formula Context` category is
 an alternative. This dependency must be implemented and verified, not assumed
 from `List.map` working on ordinary functions. It does not require recursive
@@ -387,7 +425,7 @@ available from proposed theorem targets. No row claims a generated implementatio
 
 | Example | Candidate deliverable | Specific pressure on the package |
 | --- | --- | --- |
-| Lambda calculus | Replay the existing open-term Church–Rosser proof with generated syntax/functions/judgments and ordinary closure lemmas. | Establish the reference interface and preserve both contraction IHs, common-binder inversion, and supported fixed parameters. |
+| Lambda calculus | Prove open-term Church–Rosser through generated syntax/functions/judgments and ordinary closure lemmas under `Package/`. | Demonstrate both contraction IHs, common-binder inversion, and supported fixed parameters; the old proof is a mathematical benchmark. |
 | First-order logic | The substitution-admissibility theorem specified above, including universal introduction and existential elimination. | Multiple categories, finite formula contexts, discharged assumptions, eigenvariable transport in several premises. |
 | Lambda calculus with let | Let-expansion correctness for `let x := t in u`, whose binder scopes only `u`; fix the exact equality/reduction semantics before implementing the theorem. | Mixed scoped and unscoped recursive fields in one constructor; substitution must protect the body binder while still substituting into the right-hand side. Expansion should agree with application of an abstraction and preserve alpha equality. |
 | Monadic π-calculus | Candidate: alpha-invariance and equivariance of transitions, with a substantive scope-extrusion/fresh-rule-induction client. | An input binder scopes its continuation but not its channel; a restriction binder scopes a process. Bound-output residuals can bind an atom jointly across a label and target, so process syntax alone does not settle judgment binding. |
@@ -415,10 +453,11 @@ chosen semantics; it does not assert a proved reflection or bisimulation law.
 
 The correct support equation is
 `supp (letE a rhs body) = supp rhs ∪ (supp body \ {a})`. The original binder
-may occur freely in `rhs`. Consequently a blanket FCB obligation demanding
-`a # expand (letE a rhs body)` would be false. Binder lifting must first act on
-the scoped body, then combine its result with the untouched right-hand-side
-component. Renaming the binder changes `body` and preserves `rhs`, including
+may occur freely in `rhs`. Consequently a blanket binder-output obligation demanding
+`a # expand (letE a rhs body)` would be false. Descent must respect the scoped
+body while preserving the unscoped right-hand side. Lifting the body first and
+then combining results is one implementation strategy. Renaming the binder
+changes `body` and preserves `rhs`, including
 free occurrences of the old binder in `rhs`. This is a useful first test beyond
 constructors where every recursive field lies inside the same binder scope.
 
@@ -517,8 +556,8 @@ half-generated public declarations after command failure.
 
 | Facility | User supplies | Generator/automation must justify | Explicit escape hatch |
 | --- | --- | --- | --- |
-| Datatype | Categories, fields, atom sort, lexical binding scopes, fixed data actions if not discrete by declaration. | Accepted grammar and positivity; coherent raw/quotient construction or other carrier; action laws; alpha equality; canonical nominal instance; support equations; constructor discrimination/inversion; induction/iteration contracts. | A proved external nominal carrier/action and registered constructor interface. Unsupported signatures require another construction, not an unchecked annotation. |
-| Function | Equations, explicit parameters, intended freshness side conditions, requested recursion mode and result. | Recursive-call admissibility or termination; handler support; alpha compatibility/guarded FCB; totality and uniqueness; equations and renaming; ordinary and NFun views with exact advertised bounds. | Local Lean proofs of support/FCB/transport/termination; direct proved graph or quotient lift; existing `NFun.ofFun`, `ofSupports`, `ofCaptures`, `equivariant`, or `fromParam` as appropriate. |
+| Datatype | Categories, fields, atom sort, lexical binding scopes, fixed data actions if not discrete by declaration. | Accepted grammar and positivity; coherent raw/quotient construction or other carrier; action laws; alpha equality; the intended nominal structure; support equations; constructor discrimination/inversion; induction/iteration contracts. | A proved external nominal carrier/action and registered constructor interface. Unsupported signatures require another construction, not an unchecked annotation. |
+| Function | Equations, explicit parameters, intended freshness side conditions, requested recursion mode and result. | Recursive-call admissibility or termination; finite support; alpha compatibility and scoped binder descent; totality and advertised uniqueness; equations and renaming; ordinary application and a supported-function interface with proved bounds. | Local Lean proofs of support/descent/transport/termination, a direct proved graph or quotient lift, or proof-backed constructors in the selected function representation. No existing `NFun` constructor is mandatory. |
 | Judgment | Prop-valued rule signatures, side conditions, rule-binder scopes, semantics of eigenvariables. | Positivity; relation equivariance or accurately stated support-relative law; per-rule freshening certificates; IH transport; fresh induction and inversion preserving every rule alternative. | Supply missing action/binder-transport lemmas in ordinary Lean. A handwritten relation/principle can be registered only with its checked theorem, not by trust in its name. |
 | Proof automation | Selected avoidance context and optional local lemmas/certificates. | Fresh existence for eligible nominal objects; every split freshness fact; support/action rewriting justified by proved rules; complete elaborated proof terms. | Show the unsolved goal and relevant captured parameters; accept a direct proof or a smaller explicit avoidance set. An unsupported motive remains permitted for ordinary induction. |
 
@@ -538,12 +577,14 @@ the current automation simply cannot solve.
 
 ## 8. Sound support automation and expression identity
 
-The existing [`NFun.Basic`](../../Nominal/Set/NFun/Basic.lean) and
+As optional reference implementations, [`NFun.Basic`](../../Nominal/Set/NFun/Basic.lean) and
 [`NFun.Tactic`](../../Nominal/Set/NFun/Tactic.lean) provide proof-backed
 constructors, `supports_nfun`, and `nfun_simp`. The `nfun` macro is documented as
-experimental; the package must not assume it already handles arbitrary globals,
+experimental; reusing it would require checking arbitrary globals,
 shadowing, `let`, `match`, or nested functions. This note performs no fresh macro
-failure reproduction and makes no new defect claim about those cases.
+failure reproduction and makes no new defect claim about those cases. New
+automation under `Package/` can use a different function representation,
+registry, tactic, or elaborator; these old names are not its API contract.
 
 A future implementation should elaborate first and inspect local-variable
 identities (`FVarId`s) and expression structure, preserving binder scopes,
@@ -558,8 +599,9 @@ transport lemma. Registration must validate the theorem's shape. Applying a
 registry entry must instantiate and kernel-check that theorem for the actual
 elaborated expression. A string tag such as “equivariant” without a corresponding
 proof must not discharge an obligation. Equal types with different action
-instances must not be conflated; preserve the separation of `PFun` conjugation
-from ordinary pointwise function actions.
+instances must not be conflated. Distinguish conjugation on function objects
+from ordinary pointwise function actions in whichever representation is chosen;
+the existing `PFun` wrapper is one solution, not a required implementation.
 
 Initial search should be compositional and bounded: variables with proved
 support, constants with certificates, constructor application, products,
@@ -583,7 +625,10 @@ reduction, both parallel-substitution inputs varying, ordinary quotient equality
 arbitrary motives, nested avoidance contexts, fresh inversion, and actual
 Church–Rosser/normal-form-uniqueness consumers. No normal-form-existence or
 termination theorem is required. A generated proof of a weakened closed-term
-statement does not reproduce the reference client.
+statement does not meet the mathematical contract. The public names, proofs,
+carrier representation, and module organization may all differ. A correspondence
+with the old `Term` is optional validation; an independently checked package
+development can establish the same theorem strength directly.
 
 For FOL, require formula support/alpha/substitution equations and the unrestricted
 admissibility theorem above. Persistent consumers should include substitution
@@ -598,15 +643,18 @@ theorems. This is an additional package requirement, not a missing proof step in
 the completed Church–Rosser argument. Dependent data-valued elimination requires
 its own stated scope and validation plan.
 
-Before implementing the command grammar, settle: mutual syntax/relations; nested
-recursive containers; the exact primitive-recursion admissibility theorem;
-public universe bounds; judgment binder-certificate types; finite context
-representation; and the remaining portfolio language/semantics choices. Keep
+At each roadmap stage, settle only the choices needed by that increment:
+mutual syntax/relations, recursive containers, primitive-recursion admissibility,
+universe bounds, judgment binder certificates and finite contexts at their
+respective gates. Later π/μ semantics do not block the first command grammar
+or predicate-foundation work. Keep
 user-facing declarations independent of the selected generic, per-declaration,
 or hybrid backend wherever their mathematical contracts agree.
 
-This note was checked against current local source declarations and the listed
-research/release documents. Historical correspondence is taken from the pinned
+The original investigation checked local source declarations and the listed
+research/release documents at the source baseline above. This policy revision
+changes documentation only and reports no new Lean validation. Historical
+correspondence is taken from the pinned
 [research correspondence](../research-correspondence.md); no external source was
 rebuilt or newly certified here. No Lean files or production code were edited,
 and no new DSL example was compiled. Local link and whitespace checks validate

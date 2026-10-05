@@ -1,12 +1,30 @@
 # Predicate foundations for the nominal package
 
-Date: 2026-10-05. Research baseline: `fasapa/nominal-package`, commit
+Date: 2026-10-05. Historical research baseline: `fasapa/nominal-package`, commit
 `4279ba92efacd77b3b96e507631502272b489999`, with the pre-existing working tree
 preserved. This note develops R6/R9 of the [research brief](2026-10-05-nominal-package-brief.md)
 and extends the [initial investigation](2026-10-05-propositions-and-induction.md).
 It is research evidence and an architectural recommendation, not an implemented
-package or a replacement for the current library. No library source, dependency,
-branch, or existing documentation was changed by this investigation.
+package. The original investigation changed no library source, dependency or
+branch. This documentation revision starts from
+`7fed53a2e5fc67379f86f085515e310e7c1fddb7` and applies the current
+[architectural freedom policy](README.md#architectural-freedom); it does not
+rerun or rebaseline the experiments below.
+
+All new implementation, including any replacement foundations, belongs under
+top-level `Package/`. The existing `Nominal/`, `Instances/` and probes remain
+reference material and evidence. Actions, support, supported functions,
+predicates, abstraction, quotients and induction may each be reused, adapted or
+implemented afresh on their merits. No inherited API, typeclass, module layout,
+universe restriction, seal boundary, representation or compatibility interface
+is required. This freedom does not weaken the mathematical contracts or require
+a rewrite: PKG-01 stays bounded, with its selected foundational dependencies
+named explicitly and broader work tracked separately.
+The [package roadmap](../nominal-package-roadmap.md) places PKG-F01–PKG-F05
+before it: contract selection, `Package/` build/audit coverage, atom/action
+foundations, support/freshness, and the minimal function/predicate-input
+foundations required by the chosen representation. These are explicit
+prerequisites, not a mandate to reproduce every reference-core feature.
 
 The evidence supports three complementary layers: ordinary `Prop` judgments and
 arbitrary-predicate fresh induction for users; a supported-predicate calculus for
@@ -24,7 +42,7 @@ new integrated theorems.
 
 | Source | Exact evidence |
 | --- | --- |
-| Current Lean library | Baseline above; Lean `v4.34.1`, Mathlib `v4.34.1`; affected sources inspected directly |
+| Reference Lean library | Historical baseline above; Lean `v4.34.1`, Mathlib `v4.34.1`; affected sources inspected directly |
 | Lean foundations | Installed `leanprover--lean4---v4.34.1/src/lean/Init/Core.lean`, especially `Quotient.rec`, `recOn`, `recOnSubsingleton`, `hrecOn`, lines 2031–2106; corroborated by the [official quotient reference](https://lean-lang.org/doc/reference/latest/The-Type-System/Quotients/) |
 | Pitts | Andrew M. Pitts, *Nominal Sets: Names and Symmetry in Computer Science*, Cambridge University Press, 2013; complete local [PDF](../../ref/nominalsets.pdf), SHA-256 `546104434ce6388d2aed248428cc8bde653bf98780cee55265f686e7290f0794` |
 | Copello et al. 2016 | Published version, ENTCS **323**, 109–124, DOI `10.1016/j.entcs.2016.06.008`; [author-institution repository PDF](https://publications.lib.chalmers.se/records/fulltext/247760/local_247760.pdf), retrieved successfully |
@@ -186,13 +204,15 @@ supports S (PFun.mk P) ↔
   supports S (PFun.mk (fun x => P (Quotient.mk s x)))
 ```
 
-Thus pullback preserves and reflects support; quotienting does not manufacture
-finite support for arbitrary predicates. This action-level theorem uses the
-library's same-universe quotient instances. The predicate descent equivalence
-itself has no such atom/carrier restriction. The current lambda `Term` defines
-its action manually, so automatic instance elaboration for that concrete
-quotient is a separate interface issue; this probe does not register a new
-lambda instance.
+Thus pullback preserves and reflects support in the tested representation;
+quotienting does not manufacture finite support for arbitrary predicates. This
+action-level theorem uses the reference library's same-universe quotient
+instances. That restriction is not a requirement for `Package/`; the predicate
+descent equivalence itself has no such atom/carrier restriction. The reference
+lambda `Term` defines its action manually, so automatic instance elaboration for
+that concrete quotient is a separate interface issue; this probe does not
+register a new lambda instance. A different quotient/action implementation must
+establish its own corresponding laws.
 
 **Checked negative result.** On current raw lambda terms, the predicate “the
 root binder is named `a`” cannot descend. The probe uses distinct `a,b` and
@@ -236,16 +256,23 @@ no syntax inspection. These foundational mechanisms must not be conflated.
 
 ## Supported predicates: representations and laws
 
-There is no observed mathematical obstruction to `NFun α X Prop` under an
-explicit discrete truth-value instance. The initial note already checked this;
-the new work tests its relationship to subsets and operations.
+There is no observed mathematical obstruction to the reference `NFun α X Prop`
+under an explicit discrete truth-value instance. The initial note checked this;
+the later probes tested its relationship to subsets and operations. Those
+results make it a candidate, not the required foundation for the new package.
 
 | Choice | Advantages | Unresolved or costly part |
 | --- | --- | --- |
-| `NFun α X Prop` with an explicit instance | Reuses support, application, composition, curry/uncurry and evaluation | `Prop` alone cannot determine the atom `outParam`; public elaboration needs a policy |
-| A supported-subset wrapper | Natural membership, Boolean/order vocabulary; avoids promising every subset nominal | Needs a coherent lifted action, support API and conversions; avoid a second independent theory |
+| Reference `NFun α X Prop` with an explicit instance | Can reuse support, application, composition, curry/uncurry and evaluation | In that interface, `Prop` alone cannot determine the atom `outParam`; public elaboration needs a policy |
+| A supported-subset representation | Natural membership, Boolean/order vocabulary; avoids promising every subset nominal | Needs a coherent action and support API; conversions are required only for interfaces actually chosen |
 | A dedicated atom-indexed truth wrapper | Atom type appears in the carrier and helps instance inference | Coercion/`Iff` rewriting becomes additional user-facing work unless hidden well |
-| Bare predicates with `LogicalSupports S P` proofs | Keeps ordinary `Prop` statements and supports automation certificates | Not itself a nominal carrier with `supp P`; bundling is needed for higher-order nominal arguments |
+| Bare predicates with explicit logical-support proofs | Keeps ordinary `Prop` statements and supports automation certificates | Must specify how support evidence and higher-order nominal arguments are carried; existing `NFun` bundling is one option |
+| A newly designed action/support and predicate interface | Can make atom/action parameters explicit, redesign typeclass inference, or use structures instead of inherited classes | Must prove its action, support and logical laws and test its own universes and elaboration; old probes do not certify it |
+
+These alternatives are illustrative, not an exhaustive list or a restriction to
+wrappers around the current API. They may include replacing the underlying
+function, support or quotient machinery. Compare ordinary-use clients and proof
+costs; neither reuse nor replacement is the default obligation.
 
 **Checked representation bridge.** The probe defines logical support by
 invariance `P (π • x) ↔ P x` for permutations fixing `S`. It proves this
@@ -272,19 +299,26 @@ unknown and `α` is an output parameter. The persistent diagnostic probe checks
 that failure with `#guard_msgs`. The working probes use an explicit `letI`
 selection. A scoped instance declaration does not, by itself, establish that
 this registration problem has been solved. This is an elaboration limitation
-of that declaration, not a failure of the discrete mathematical action.
+of that declaration under the tested `Nominal`/`Name`/`outParam` interface, not a
+failure of the discrete mathematical action or a universal restriction on
+possible `Prop` interfaces. A redesigned parameter or class discipline is open
+for investigation in `Package/`.
 
 **Checked action warning.** Under the discrete truth action, Mathlib's ordinary
 pointwise action on `X → Prop` fixes every function pointwise. The NFun/PFun
 action uses inverse precomposition. The probes exhibit both equations. Reusing
 the bare function action for predicate support would certify the wrong property.
 `Set X` is also function-represented, and Mathlib has scoped pointwise set-image
-instances: any future integration must make its action choice explicit and test
-coherence. Keep the existing `PFun` boundary.
+instances: any future design must make its action choice explicit and test
+coherence. Preserve the mathematical distinction between conjugation and
+pointwise action. The existing `PFun` wrapper is optional; a new action interface,
+an alternative wrapper or explicit action parameters may enforce the distinction.
 
-The following is the appropriate law contract. “Checked” identifies new probe
-evidence; other rows follow directly from current interfaces or are proposed
-derived API rather than claims of new exported declarations.
+The following is a candidate semantic law contract independent of inherited
+declaration names. “Checked” identifies historical probe evidence; other rows
+follow directly from reference interfaces or are proposed derived API rather
+than claims of new exported declarations. Any selected `Package/` representation
+needs its own verified versions of the promised laws.
 
 | Operation | Support contract | Status |
 | --- | --- | --- |
@@ -300,16 +334,17 @@ derived API rather than claims of new exported declarations.
 Bounds are not asserted to be exact least supports. For instance, conjunction
 with `False` can discard all dependence on a parameter.
 
-**New checked Some/Any bridge.** The probe proves that every bundled supported
+**Checked Some/Any bridge.** The historical probe proves that every bundled supported
 atom predicate has a finite or cofinite truth set, then derives its fresh-negation
 law through current `freshQuantifier_neg`. It also proves both the lack of finite
 support and the failure of fresh-negation self-duality for any predicate with
 infinite truth and falsehood sets. Together with the initial note's checked
-Some/Any evaluation wrapper, these provide a small reusable core for the desired
-predicate API. No fresh selector is introduced; the earlier nonexistence result
-for supported fresh selectors remains applicable.
+Some/Any evaluation wrapper, these provide evidence and possible proof material
+for the desired predicate API. They do not validate a different representation.
+No fresh selector is introduced; the earlier nonexistence result for supported
+fresh selectors remains applicable under that finite-support contract.
 
-## What current induction already guarantees
+## What the reference induction already guarantees
 
 [`Term.strong_ind`](../../Instances/LambdaCalculus/Induction.lean) has an
 arbitrary motive `P : Term α → Z → Prop` and a nominal avoidance context `Z`.
@@ -328,10 +363,11 @@ renaming also uses quotient constructor equality, freshness preservation and
 The contraction cases expose freshness for argument terms as well as the
 context, and never require the binder fresh for its own body.
 
-There is a small current universe distinction: term strong induction uses its
-context in the atom/term universe, whereas reduction strong induction allows a
-separate context universe. This is an actual theorem-interface difference to
-consider in generation, not a proposition-level impossibility.
+There is a small reference-interface universe distinction: term strong induction
+uses its context in the atom/term universe, whereas reduction strong induction
+allows a separate context universe. This is an observed difference to consider
+when selecting and testing the new theorem contracts, not a proposition-level
+impossibility or an inherited restriction on generation.
 
 For a user-defined judgment, the package must establish its own rule
 transport/renaming criterion. A rule's side condition may inspect a distinguished
@@ -345,11 +381,15 @@ equivalent to it.
 
 ## Recommendations and open obligations
 
-**Recommended architecture boundary, not yet selected implementation.** Keep
-arbitrary-motive quotient induction as the user contract. Add supported-predicate
-theory as reusable semantic infrastructure, with ordinary `Prop` at its boundary.
-Use alpha-compatible raw predicates to construct and compare quotients. Prove
-the bridges once; avoid forcing every proof through a supported predicate wrapper.
+**Recommended semantic boundary, with implementation open.** Preserve the
+strength of arbitrary-motive fresh induction for alpha-equated syntax and
+ordinary `Prop` judgments. Investigate supported-predicate theory for logical
+operations and Some/Any without forcing every client proof through a supported
+predicate wrapper. Raw alpha-compatible predicates and quotient descent are one
+construction route; the existing `NameAbs`, quotient and induction machinery are
+optional implementations of relevant contracts. Reuse, adapt or reprove the
+needed bridges for the chosen representation in `Package/`, with explicit
+foundational dependencies and no implicit full-core rewrite in PKG-01.
 
 For the proposed first lambda-plus-FOL workflow, object-language formulas should
 be generated syntax, while satisfaction, substitution lemmas, typing and
@@ -361,17 +401,21 @@ semantic model automatically nominal. The larger selected portfolio—lambda
 calculus with `let`, π-calculus and μ-binders—should stress the eventual rule and
 recursion contracts; these probes do not certify them in advance.
 
-Before production implementation, resolve:
+Resolve the following in the corresponding roadmap stages; later induction and
+generation obligations are not all prerequisites for predicate task PKG-01:
 
-1. **Public representation and elaboration.** Choose the explicit-atom/scoped/
-   wrapper policy by small ordinary-use clients, including two different atom
-   carriers in separate scopes. Preserve directed `simp`, `Iff` rewriting and
-   higher-order NFun application. Do not choose a representation only because
-   one raw instance declaration is convenient.
+1. **Public representation and elaboration.** Compare explicit actions, redesigned
+   classes, wrappers, subsets and supported-function representations by small
+   ordinary-use clients, including two different atom carriers in separate scopes.
+   Require directed `simp`, `Iff` rewriting and useful higher-order application,
+   without requiring compatibility with `NFun`. Do not choose a representation
+   only because one raw instance declaration is convenient.
 2. **Theory sufficient for the first workflow.** Export support certificates for
    logical operations, fixed parameters, evaluation and Some/Any before building
    a general reflection engine. Most zero-support relation operations already
-   exist in `Equivariant.lean`; extend rather than duplicate them.
+   exist in the reference `Equivariant.lean`; evaluate reuse, adaptation or
+   replacement against the selected foundations. Declare which laws PKG-01
+   actually needs; a complete predicate calculus is not an implicit prerequisite.
 3. **Generated arbitrary induction.** Prove a theorem for the actual selected
    signature grammar, including the promised multiple categories. Pitts' supported
    theorem and Copello's restricted universe are evidence, not substitutes for
@@ -390,10 +434,15 @@ Before production implementation, resolve:
    alongside each implemented certificate; retain counterexamples and failed
    designs as tests of scope. This note is evidence for the architecture decision,
    not a completion mark for a package roadmap task.
+8. **New implementation validation.** Plan `Package/` targets, client tests and
+   an axiom audit that reaches its declarations, including replacement foundations.
+   Reference-library builds and probes provide comparison evidence only; they
+   do not validate new code. This documentation revision adds no such code or
+   build configuration.
 
 ## Reproduction and limits
 
-New persistent research probes:
+Persistent research probes recorded by the original investigation:
 
 - [PredicateFoundations.lean](probes/PredicateFoundations.lean): descent,
   dependent elimination, subset bridge, logical support, support reflection,
@@ -401,7 +450,7 @@ New persistent research probes:
 - [PredicateInstanceProbe.lean](probes/PredicateInstanceProbe.lean): an expected
   instance-registration rejection checked with `#guard_msgs`.
 
-Commands run from the repository root:
+Commands run from the repository root during that investigation:
 
 ```sh
 pdftotext -layout ref/nominalsets.pdf /tmp/predicate-nominalsets.txt
@@ -414,11 +463,13 @@ git diff --no-index --check /dev/null docs/research/probes/PredicateFoundations.
 git diff --no-index --check /dev/null docs/research/probes/PredicateInstanceProbe.lean
 ```
 
-The new files are untracked research artifacts. Their explicit `--no-index`
-checks emitted no whitespace diagnostics (exit 1 denotes the new-file diff).
-Local Markdown link targets were also checked for existence.
+At that investigation's baseline the new files were untracked research artifacts.
+Their explicit `--no-index` checks emitted no whitespace diagnostics (exit 1
+denotes the new-file diff). Local Markdown link targets were also checked for
+existence. This is historical provenance, not a statement of their present Git
+status or a new verification run.
 
-The Lean checks use the current built imports and pinned dependencies, not a new
+Those Lean checks used the then-built imports and pinned dependencies, not a new
 full build, fresh project-artifact rebuild or dependency bootstrap. Representative
 `#print axioms` commands are retained in the probe. The descent equivalence reports
 `propext` and `Quot.sound`; the dependent recursor witnesses report `Quot.sound`;
