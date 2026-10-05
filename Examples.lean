@@ -3,3 +3,7 @@ import Examples.NFun
 import Examples.NFunSupport
 import Examples.NFunLambda
 import Examples.LambdaReduction
+import Examples.LambdaFreshReduction
+import Examples.LambdaParallelSubstitution
+import Examples.LambdaParallelDiamond
+import Examples.LambdaChurchRosser

@@ -9,3 +9,4 @@ import Instances.LambdaCalculus.ReductionInversion
 import Instances.LambdaCalculus.ParallelSubstitution
 import Instances.LambdaCalculus.ParallelDiamond
 import Instances.LambdaCalculus.ReductionClosure
+import Instances.LambdaCalculus.ChurchRosser
