@@ -4,4 +4,6 @@ import Instances.LambdaCalculus.Recursion
 import Instances.LambdaCalculus.Substitution
 import Instances.LambdaCalculus.Beta
 import Instances.LambdaCalculus.Parallel
+import Instances.LambdaCalculus.ReductionInduction
+import Instances.LambdaCalculus.ReductionInversion
 import Instances.LambdaCalculus.ReductionClosure

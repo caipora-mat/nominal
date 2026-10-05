@@ -17,8 +17,8 @@ renaming of a contraction's body premise explicit.
 
 The nominal properties below use ordinary induction on a derivation. The
 constructor inversion lemmas retain the binders occurring in those rules; they
-do not choose binders fresh for an arbitrary context. Fresh rule induction and
-inversion are separate work (R-03), not consequences of quotient indices alone.
+do not choose binders fresh for an arbitrary context. `ReductionInduction` and
+`ReductionInversion` derive those stronger interfaces separately.
 -/
 
 namespace LambdaCalculus

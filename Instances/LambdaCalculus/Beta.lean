@@ -15,7 +15,8 @@ containing either binder freely. `Beta.beta_of_lam_eq` exposes this compatibilit
 
 The nominal properties below use ordinary induction on derivations and the
 public constructor/substitution laws. This recursor does **not** supply binders
-fresh for an external context; fresh rule induction remains separate work.
+fresh for an external context; `ReductionInduction` and `ReductionInversion`
+provide the separate fresh rule induction and inversion interfaces.
 -/
 
 namespace LambdaCalculus
