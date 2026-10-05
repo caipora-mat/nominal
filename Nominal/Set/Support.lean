@@ -12,8 +12,8 @@ This file introduces the `supports` relation and `FinSupported` predicate, and p
 
 The central result is the swap characterisation of supports (Pitts, Prop. 2.1): a finite
 set `s` supports `x` if and only if every transposition of two atoms outside `s` fixes `x`.
-The proof uses the `swap` and `movedFinset` machinery from `NominalSets.Swap` and
-`NominalSets.PermType` via strong induction on the number of moved points.
+The proof uses the `swap` and `movedFinset` machinery from `Nominal.Set.Swap` and
+`Nominal.Set.PermType` via strong induction on the number of moved points.
 
 ## Main definitions
 

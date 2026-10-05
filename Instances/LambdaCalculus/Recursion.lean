@@ -33,6 +33,26 @@ respects alpha-equivalence without a separate respectfulness proof. The relation
 swap-equivariance proof is still essential for uniqueness below. The resulting
 `recNoContext` is an iterator: handlers receive recursive results, not original subterms.
 
+## Client contract
+
+The three handlers are `NFun α α Y`, `NFun α (Y × Y) Y`, and
+`NFun α (α × Y) Y`. Their least supports must lie in one finite set `A`.
+The binder handler must satisfy the guarded freshness condition
+`∀ a y, a # A → a # f_L (a, y)`. This is a condition on every result `y`,
+not just results already known to arise from a recursive call.
+
+Use `recNoContext_var`, `recNoContext_app`, and `recNoContext_lam` to compute;
+the lambda equation requires `a # A`. `recNoContext_lam_rename` transports
+an abstraction to a fresh binder first. `recNoContext_unique` characterizes the
+ordinary function by those equations, and `recNoContext_independent` proves
+that changing the valid avoidance bound has no effect. `recNoContextNFun`
+returns the same iterator as an `NFun`, with support bounded by `A` through
+`supp_recNoContextNFun_le`. Clients need not inspect `RecRel` or its witnesses.
+
+The result uses classical choice and is noncomputable. The atom type, result
+type, and `Term α` share the same universe in this interface. A nonempty handler
+bound gives finite support; it does not imply the iterator is equivariant.
+
 ## Structure of this file
 
 1. `RecRel` — the inductive relation on `Term α`, parameterised by three `NFun`s
@@ -42,6 +62,8 @@ swap-equivariance proof is still essential for uniqueness below. The resulting
 4. Equivariance — swaps fixing `A` preserve `RecRel` derivations (Urban's Lemma 13).
 5. Uniqueness — at most one value per term (Urban's Lemma 14).
 6. Extraction — `recNoContext` via `Classical.choose`, with computation lemmas.
+7. Public contract — functional uniqueness, avoidance-set independence, and
+   a supported-function result.
 
 ## References
 
@@ -193,9 +215,7 @@ theorem RecRel.swap_equiv {Y : Type u} [Nominal α Y]
   have freshA_b : ∀ {X : Type u} [Nominal α X] {F : X}, supp F ⊆ A → b # F := fun hF => fresh_of_supp_subset_finset hF hb
   have nfun_equiv : ∀ {X W : Type u} [Nominal α X] [Nominal α W] (F : NFun α X W), supp F ⊆ A → ∀ x, F (swap a b • x) = swap a b • F x := by
     intro X W _ _ F hF x
-    calc F (swap a b • x)
-        _ = (swap a b • F) (swap a b • x) := by rw [fresh_swap (freshA_a hF) (freshA_b hF)]
-        _ = swap a b • F x := NFun.smul_apply_smul ..
+    exact F.apply_smul_of_fixed _ (fresh_swap (freshA_a hF) (freshA_b hF)) x
   have hA_fix : swap a b • A = A := fresh_swap ha hb
   induction h with
   | @var c =>
@@ -276,7 +296,9 @@ With totality and uniqueness in hand, we extract the recursion function via
 `recNoContext_spec` to conclude equality.
 -/
 
-/-- The context-free recursion combinator, defined as `Classical.choose (RecRel.total ...)`. -/
+/-- Context-free iterator with supported handlers and a guarded FCB condition.
+Use the public constructor equations to compute and `recNoContext_unique` to
+identify the resulting function. `recNoContextNFun` provides its supported form. -/
 noncomputable def recNoContext
     {Y : Type u} [Nominal α Y]
     (fᵥ : NFun α α Y) (fₐ : NFun α (Y × Y) Y) (f_L : NFun α (α × Y) Y)
@@ -335,7 +357,7 @@ theorem recNoContext_lam
 
 /-- Binder renaming: `b # t → rec (lam a t) = rec (lam b (swap a b • t))`.
 
-A pure consequence of alpha-equivalence (`term_lam_eq_iff` + `abs_eq_swap`). -/
+A pure consequence of the public quotient lambda equality `lam_eq_swap`. -/
 theorem recNoContext_lam_rename
     {Y : Type u} [Nominal α Y]
     (fᵥ : NFun α α Y) (fₐ : NFun α (Y × Y) Y) (f_L : NFun α (α × Y) Y)
@@ -344,7 +366,87 @@ theorem recNoContext_lam_rename
     (a b : α) (t : Term α) (hb : b # t) :
     recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB (Term.lam a t) =
       recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB (Term.lam b (swap a b • t)) := by
-  congr 1; rw [term_lam_eq_iff]; exact NameAbs.abs_eq_swap hb
+  exact congrArg (recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB)
+    (lam_eq_swap (fresh_term_lam_of_fresh b a t hb))
+
+/-!
+## Public result contract
+
+The constructor equations determine the iterator uniquely, even if a competing
+function uses a different finite avoidance set. The result is supported by `A`
+under the conjugation action on functions. `recNoContextNFun` packages that result
+for composition, partial application, and higher-order use; its application lemma
+keeps the relational implementation out of client proofs.
+-/
+
+section ResultContract
+
+variable {Y : Type u} [Nominal α Y]
+  (fᵥ : NFun α α Y) (fₐ : NFun α (Y × Y) Y) (f_L : NFun α (α × Y) Y)
+  (A : Finset α) (hᵥ : supp fᵥ ⊆ A) (hₐ : supp fₐ ⊆ A) (h_L : supp f_L ⊆ A)
+  (hFCB : ∀ (a : α) (y : Y), a # A → a # f_L (a, y))
+
+/-- The constructor equations characterize the iterator as an ordinary function.
+The candidate's lambda equation may use any finite avoidance set `B`; no support
+or equivariance assumption on the candidate function is required. -/
+theorem recNoContext_unique (g : Term α → Y) (B : Finset α)
+    (hvar : ∀ a, g (Term.var a) = fᵥ a)
+    (happ : ∀ t s, g (Term.app t s) = fₐ (g t, g s))
+    (hlam : ∀ a t, a # B → g (Term.lam a t) = f_L (a, g t)) :
+    recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB = g := by
+  funext t
+  induction t using strong_ind_finset (A ∪ B) with
+  | hVar a => rw [recNoContext_var, hvar]
+  | hApp t s iht ihs => rw [recNoContext_app, happ, iht, ihs]
+  | hLam a t ha ih =>
+    have hab : a ∉ A ∧ a ∉ B := by simpa only [Finset.mem_union, not_or] using ha
+    rw [recNoContext_lam _ _ _ _ _ _ _ _ a t (fresh_atom_finset.mpr hab.1),
+      hlam a t (fresh_atom_finset.mpr hab.2), ih]
+
+/-- Enlarging or changing a valid avoidance set does not change the iterator.
+Each bound must support the handlers and satisfy its own guarded FCB condition. -/
+theorem recNoContext_independent (B : Finset α)
+    (hᵥB : supp fᵥ ⊆ B) (hₐB : supp fₐ ⊆ B) (h_LB : supp f_L ⊆ B)
+    (hFCB_B : ∀ (a : α) (y : Y), a # B → a # f_L (a, y)) :
+    recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB =
+      recNoContext fᵥ fₐ f_L B hᵥB hₐB h_LB hFCB_B :=
+  recNoContext_unique fᵥ fₐ f_L A hᵥ hₐ h_L hFCB _ B
+    (fun a => recNoContext_var _ _ _ _ _ _ _ _ a)
+    (fun t s => recNoContext_app _ _ _ _ _ _ _ _ t s)
+    (fun a t ha => recNoContext_lam _ _ _ _ _ _ _ _ a t ha)
+
+/-- The common handler bound supports the resulting function under conjugation.
+This is finite support, not equivariance when `A` is nonempty. -/
+theorem recNoContext_supports :
+    supports A (⟨recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB⟩ : PFun α (Term α) Y) := by
+  apply supports_iff_swap.mpr
+  intro a b ha hb
+  apply PFun.ext
+  intro t
+  change swap a b • recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB ((swap a b)⁻¹ • t) = _
+  apply RecRel.unique fᵥ fₐ f_L A hᵥ hₐ h_L hFCB
+    (h₂ := recNoContext_spec fᵥ fₐ f_L A hᵥ hₐ h_L hFCB t)
+  simpa only [swap_inv, swap_smul_swap_smul] using
+    RecRel.swap_equiv fᵥ fₐ f_L A hᵥ hₐ h_L hFCB
+      (fresh_atom_finset.mpr ha) (fresh_atom_finset.mpr hb)
+      (recNoContext_spec fᵥ fₐ f_L A hᵥ hₐ h_L hFCB ((swap a b)⁻¹ • t))
+
+/-- Supported form of `recNoContext`. Handlers still receive only recursive
+results, not the original subterms; this is an iterator, not primitive recursion. -/
+noncomputable def recNoContextNFun : NFun α (Term α) Y :=
+  NFun.ofSupports ⟨recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB⟩ A
+    (recNoContext_supports fᵥ fₐ f_L A hᵥ hₐ h_L hFCB)
+
+@[simp] theorem recNoContextNFun_apply (t : Term α) :
+    recNoContextNFun fᵥ fₐ f_L A hᵥ hₐ h_L hFCB t =
+      recNoContext fᵥ fₐ f_L A hᵥ hₐ h_L hFCB t := rfl
+
+/-- The iterator's least support is bounded by the supplied handler bound. -/
+theorem supp_recNoContextNFun_le :
+    supp (recNoContextNFun fᵥ fₐ f_L A hᵥ hₐ h_L hFCB) ⊆ A :=
+  NFun.supp_ofSupports_le ..
+
+end ResultContract
 
 end Term
 

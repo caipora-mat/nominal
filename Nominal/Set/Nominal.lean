@@ -22,7 +22,7 @@ there exists a finite set of atoms that supports it in the sense of `MulAction.S
 
 This file defines the `Nominal` typeclass, the least-support function `supp`, and the
 basic nominal instances. Support machinery (`supports`, `FinSupported`, `supports_iff_swap`,
-`supports_inter`, `supports_smul`) is imported from `NominalSets.Support`.
+`supports_inter`, `supports_smul`) is imported from `Nominal.Set.Support`.
 
 ## Main definitions
 
@@ -111,7 +111,9 @@ set_option linter.dupNamespace false in
 /-- A **nominal set** is a permutation type in which every element is finitely supported.
 
 `α` is an `outParam` (as in `PermType`) so that Lean can infer the atom type from `X` alone.
-This lets callers write `supp x` rather than `supp  x`. The trade-off is that each type `X` may have at most one `Nominal` instance (one atom type `α`) -/
+This lets callers write `supp x` without specifying the atom type. Instance search
+therefore selects a default atom sort/action for each `X`; local instances can
+select another, but competing defaults are not a multiple-sort interface. -/
 class Nominal (α : outParam Type*) [Name α] (X : Type*) extends PermType α X where
   finSupp : ∀ x : X, FinSupported  x
 

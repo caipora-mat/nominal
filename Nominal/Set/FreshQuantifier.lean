@@ -20,6 +20,12 @@ relation `R` and a nominal-set element `x`, the following are equivalent:
 3. `И a, R a x`           ("cofinitely many atoms satisfy `R`")
 
 This equivalence justifies reading `И a, ϕ a` as "for some/any fresh `a`, `ϕ a`".
+Keep every nominal parameter in the relation's context (a product if needed).
+The basic cofinite quantifier accepts arbitrary predicates, but its Boolean
+laws below require the explicit finite/cofinite hypotheses they state; it is
+not self-dual for arbitrary predicates. `freshF` and `freshFT` select values
+classically and have cofinite computation theorems, not executable fresh-name
+algorithms. Their support theorems give upper bounds, not arbitrary equalities.
 
 ## Main definitions
 
@@ -82,10 +88,10 @@ This equivalence justifies reading `И a, ϕ a` as "for some/any fresh `a`, `ϕ 
 * `supp_freshF_le` — `supp (freshF F hFC) ⊆ supp F`.
 * `freshF_unique` — if `И a, F a = some x`, then `x = freshF F hFC`.
 * `freshnessTheorem_total` — total version: `(И a, a # F a) → ∃ x, (И a, F a = x) ∧ supp x ⊆ supp F`.
-* `freshFTotal` — the unique element determined by the total freshness theorem.
-* `freshFTotal_spec` — `И a, F a = freshFTotal F hFC`.
-* `supp_freshFTotal_le` — `supp (freshFTotal F hFC) ⊆ supp F`.
-* `freshFTotal_unique` — if `И a, F a = x`, then `x = freshFTotal F hFC`.
+* `freshFT` — the unique element determined by the total freshness theorem.
+* `freshFTotal_spec` — `И a, F a = freshFT F hFC`.
+* `supp_freshFTotal_le` — `supp (freshFT F hFC) ⊆ supp F`.
+* `freshFTotal_unique` — if `И a, F a = x`, then `x = freshFT F hFC`.
 
 ### Equivariance of freshness conditions and fresh operations
 * `freshQuantifier_smul_iff` — `(И a, p a) ↔ (И a, p (π⁻¹ • a))`.
@@ -232,7 +238,7 @@ theorem freshQuantifier_neg {p : α → Prop} (hfs : Set.Finite {a | p a} ∨ Se
   · intro hfin hneg
     exact (hfin.infinite_compl).elim hneg
 
-/-- If `И a, ¬ p a` then `¬ (И a, p a)`, unconditionally. Forward direction of
+/-- If `И a, ¬ p a` then `¬ (И a, p a)`, unconditionally. Reverse direction of
     `freshQuantifier_neg` without the finite-support hypothesis. -/
 theorem freshQuantifier_not_of_freshQuantifier_neg {p : α → Prop} (h : И a, ¬ p a) : ¬ (И a, p a) := by
   intro hp
@@ -395,7 +401,7 @@ theorem freshQuantifier_some_unique {F : NFun α α (Option X)} {x x' : X} (hx :
   obtain ⟨a, ha, ha'⟩ := freshQuantifier_exists (freshQuantifier_and.mpr ⟨hx, hx'⟩)
   exact Option.some.inj (ha ▸ ha')
 
-/-- **Freshness Theorem — partial version** (Pitts, Theorem 3.11). If `F : α →ᶠˢ Option X` satisfies the freshness condition —
+/-- **Freshness Theorem — partial version** (Pitts, Theorem 3.11). If `F : α ⟶ₙ[α] Option X` satisfies the freshness condition —
 for cofinitely many atoms `a`, `F a` is defined and `a` is fresh for the value — then there is a unique `x : X` with `И a, F a = some x`, and `supp x ⊆ supp F`. -/
 theorem freshnessTheorem (F : NFun α α (Option X)) (hFC : FC F) : ∃ fresh : X, (И a, F a = some fresh) ∧ supp fresh ⊆ supp F := by
   -- Intersect with (И a, a # F) to get both conditions
@@ -430,7 +436,7 @@ theorem freshnessTheorem (F : NFun α α (Option X)) (hFC : FC F) : ∃ fresh : 
     exact this.elim id fun h ↦ absurd (h ▸ hc) ((fresh_atom_left a₀ x₀).mp ha₀x₀)
 
 /-- The unique element determined by the freshness theorem (partial version, Notation 3.12):
-given `F : α →ᶠˢ Option X` satisfying the freshness condition, `freshF F` is the unique `x`
+given `F : α ⟶ₙ[α] Option X` satisfying the freshness condition, `freshF F` is the unique `x`
 with `И a, F a = some x`.
 
 In informal notation (Pitts, Notation 3.12), this is written `fresh a in F a`. -/
@@ -459,7 +465,7 @@ theorem freshQuantifier_eq_unique {F : NFun α α X} {x x' : X} (hx : И a, F a 
   obtain ⟨a, ha, ha'⟩ := freshQuantifier_exists (freshQuantifier_and.mpr ⟨hx, hx'⟩)
   exact ha ▸ ha'
 
-/-- **Freshness Theorem — total version** (Pitts, Theorem 3.11). If `F : α →ᶠˢ X` satisfies `И a, a # F a`, then there is a unique `x : X`
+/-- **Freshness Theorem — total version** (Pitts, Theorem 3.11). If `F : α ⟶ₙ[α] X` satisfies `И a, a # F a`, then there is a unique `x : X`
 with `И a, F a = x`, and `supp x ⊆ supp F`. -/
 theorem freshnessTheorem_total (F : NFun α α X) (hFC : FCT F) : ∃ x : X, (И a, F a = x) ∧ supp x ⊆ supp F := by
   -- Intersect with (И a, a # F)
@@ -492,7 +498,7 @@ theorem freshnessTheorem_total (F : NFun α α X) (hFC : FCT F) : ∃ x : X, (И
     exact this.elim id fun h ↦ absurd (h ▸ hc) ((fresh_atom_left a₀ (F a₀)).mp ha₀Fa₀)
 
 /-- The unique element determined by the freshness theorem (total version, Notation 3.12):
-given `F : α →ᶠˢ X` with `И a, a # F a`, `freshFT F` is the unique `x` with `И a, F a = x`.
+given `F : α ⟶ₙ[α] X` with `И a, a # F a`, `freshFT F` is the unique `x` with `И a, F a = x`.
 
 In informal notation (Pitts, Notation 3.12), this is written `fresh a in F a`. -/
 noncomputable def freshFT (F : NFun α α X) (hFC : FCT F) : X := (freshnessTheorem_total F hFC).choose
@@ -501,15 +507,15 @@ noncomputable def freshFT (F : NFun α α X) (hFC : FCT F) : X := (freshnessTheo
 by a finitely supported function `F` satisfying the freshness condition `h`. -/
 scoped notation "freshT[" F " | " h "]" => freshFT F h
 
-/-- The defining property: `F a = freshFTotal F hFC` for cofinitely many `a`. -/
+/-- The defining property: `F a = freshFT F hFC` for cofinitely many `a`. -/
 theorem freshFTotal_spec (F : NFun α α X) (hFC : FCT F) : И a, F a = freshFT F hFC :=
   (freshnessTheorem_total F hFC).choose_spec.1
 
-/-- Support bound: `supp (freshFTotal F hFC) ⊆ supp F`. -/
+/-- Support bound: `supp (freshFT F hFC) ⊆ supp F`. -/
 theorem supp_freshFTotal_le (F : NFun α α X) (hFC : FCT F) : supp (freshFT F hFC) ⊆ supp F :=
   (freshnessTheorem_total F hFC).choose_spec.2
 
-/-- Uniqueness: if `И a, F a = x`, then `x = freshFTotal F hFC`. -/
+/-- Uniqueness: if `И a, F a = x`, then `x = freshFT F hFC`. -/
 theorem freshFTotal_unique (F : NFun α α X) (hFC : FCT F) {x : X} (hx : И a, F a = x) : x = freshFT F hFC :=
   freshQuantifier_eq_unique hx (freshFTotal_spec F hFC)
 

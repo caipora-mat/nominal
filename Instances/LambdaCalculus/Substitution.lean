@@ -10,7 +10,7 @@ substitution `t[x := s]` on `Term α` and prove its standard properties.
 
 Substitution is `recNoContext` with:
 
-| Parameter | Value                                 | Support        |
+| Parameter | Value                                 | Support bound  |
 |-----------|---------------------------------------|----------------|
 | `fᵥ`      | `fun a => if a = x then s else var a` | `{x} ∪ supp s` |
 | `fₐ`      | `fun (r₁, r₂) => app r₁ r₂`           | `∅`            |
@@ -18,8 +18,8 @@ Substitution is `recNoContext` with:
 | `A`       | `{x} ∪ supp s`                        | —              |
 |-----------|---------------------------------------|----------------|
 
-The app and lam constructor NFuns are fully equivariant (empty support). Only `fᵥ` has
-non-empty support, since it inspects `x` and returns `s`. The FCB condition holds because
+The app and lam constructor NFuns are fully equivariant (empty support). Only `fᵥ` may
+have non-empty support, since it inspects `x` and returns `s`. The FCB condition holds because
 `a # lam a r` (the binder is always fresh for its own abstraction).
 
 ## Theorems
@@ -64,7 +64,7 @@ namespace Term
 
 /-- Variable-case NFun: `fun a => if a = x then s else var a`.
 
-The only constructor function with non-empty support (`{x} ∪ supp s`). -/
+Its support is bounded by `{x} ∪ supp s`; this bound need not be least. -/
 private theorem substFv_supports (x : α) (s : Term α) :
     supports ({x} ∪ supp s) (⟨fun a ↦ if a = x then s else Term.var a⟩ : PFun α α (Term α)) := by
   supports_nfun from x s
@@ -141,15 +141,16 @@ A pure consequence of alpha-equivalence — does not require `b # (x, s)`. -/
 theorem subst_lam_rename (a b : α) (t : Term α) (x : α) (s : Term α) (hb : b # t) :
     (Term.lam a t)[x := s] = (Term.lam b (swap a b • t))[x := s] := by
   exact congrArg (fun u : Term α ↦ u[x := s])
-    (term_lam_eq_iff.mpr (NameAbs.abs_eq_swap hb))
+    (lam_eq_swap (fresh_term_lam_of_fresh b a t hb))
 
 seal subst
 
 /-!
 ## §10. Substitution theorems
 
-The four main theorems about substitution. Each is proved by `strong_ind_finset` on the
-term, with an avoidance set covering the free names of all relevant terms.
+The basic laws are proved by `strong_ind_finset` on the term, with an avoidance
+set covering the free names of all relevant parameters. Binder-compatibility
+corollaries reuse these laws and the public quotient lambda equations.
 -/
 
 /-- **Forget lemma** (Urban's Lemma 16): substituting a fresh variable has no effect.

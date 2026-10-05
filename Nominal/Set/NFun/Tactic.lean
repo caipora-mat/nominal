@@ -42,11 +42,6 @@ private theorem support_product {α X Y : Type*} [Name α]
     [Nominal α X] [Nominal α Y] (p : X × Y) :
     supp p = supp p.1 ∪ supp p.2 := supp_prod p.1 p.2
 
-private theorem fixed_nfun_apply {α X Y : Type*} [Name α]
-    [Nominal α X] [Nominal α Y] (π : FinitePerm α) (f : NFun α X Y)
-    (hf : π • f = f) (x : X) : f (π • x) = π • f x := by
-  simpa only [hf] using NFun.smul_apply_smul π f x
-
 private theorem fixed_eq_iff {α X : Type*} [Name α] [Nominal α X]
     (π : FinitePerm α) (c : X) (hc : π • c = c) (x : X) :
     π • x = c ↔ x = c := by
@@ -108,7 +103,7 @@ elab_rules : tactic
         let cExpr ← Term.elabTerm c none
         let cType ← whnf (← inferType cExpr)
         if cType.isAppOf ``NFun then
-          facts := facts.push (← `(fixed_nfun_apply $pi $c $hf))
+          facts := facts.push (← `(NFun.apply_smul_of_fixed $c $pi $hf))
       let factRules ← facts.mapM fun r => `(Parser.Tactic.simpLemma| $r:term)
       let allRules := factRules ++ rules
       evalTactic (← `(tactic| simp -failIfUnchanged only [nfun_simp, $allRules,*]))

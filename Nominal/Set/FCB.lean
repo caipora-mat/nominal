@@ -7,13 +7,14 @@ import Nominal.Set.Concretion
 This file contains Theorem 4.15 (the general freshness condition for binders, FCB) and
 Corollary 4.17 (its equivariant specialisation).
 
-Structural isomorphisms of the name abstraction functor, the separated product, and
-the adjunctions are in `NominalSets.Structural`.
+The public elimination interfaces are `liftFCB`, `liftFresh`, and
+`liftFreshParam`, with computation and uniqueness theorems below. Structural
+adjunctions and generic algebraic constructions are outside this release.
 
 ## Main definitions
 
 * `NameAbs.FCB F` — the freshness condition for binders predicate: `И a, ∀ x, ∃ y, F (a, x) = some y ∧ a # y` (equation 4.32).
-* `NameAbs.liftFCB F hFCB` — the unique finitely supported function `[A]X →ᶠˢ Y` extending `F` (Theorem 4.15).
+* `NameAbs.liftFCB F hFCB` — the unique finitely supported function `[A]X ⟶ₙ[α] Y` extending `F` (Theorem 4.15).
 * `NameAbs.liftFresh f hEquiv hFresh` — the equivariant elimination principle `[A]X → Y` (Corollary 4.17).
 * `NameAbs.liftFresh_NFun f hEquiv hFresh` — `liftFresh` packaged as an `NFun` with empty support.
 * `NameAbs.liftFreshParam f hEquiv hFresh` — parametric form of Corollary 4.17 with a parameter `z : Z`.
@@ -21,7 +22,7 @@ the adjunctions are in `NominalSets.Structural`.
 ## Main results
 
 ### Freshness condition for binders (Pitts, Theorem 4.15)
-* `liftFCB_abs` — `И a, ∀ x, liftFCB F hFCB (⟪a⟫ x) = F (a, x)` (property 4.33).
+* `liftFCB_abs` — `И a, ∀ x, some (liftFCB F hFCB (⟪a⟫ x)) = F (a, x)` (property 4.33).
 * `liftFCB_abs_of_fresh` — `a # F → some (liftFCB F hFCB (⟪a⟫ x)) = F (a, x)` (from 4.36).
 * `liftFCB_abs_of_fresh_eq` — `a # F → F (a, x) = some y → liftFCB F hFCB (⟪a⟫ x) = y`.
 * `liftFCB_abs_unwrap` — cofinite form: `И a, ∀ x y, F (a, x) = some y → liftFCB F hFCB (⟪a⟫ x) = y`.
@@ -40,7 +41,7 @@ the adjunctions are in `NominalSets.Structural`.
 * `liftFCB_congr` — if `F = G` then `liftFCB F hF = liftFCB G hG`.
 
 ### FCB for total functions
-* `FCB_of_total` — a total `F : (α × X) →ᶠˢ Y` with `∀ a x, a # F (a, x)` satisfies FCB after composing with `some`.
+* `FCB_of_total` — a total `F : (α × X) ⟶ₙ[α] Y` with `∀ a x, a # F (a, x)` satisfies FCB after composing with `some`.
 
 ### Equivariant specialisation (Pitts, Corollary 4.17)
 * `liftFresh_abs` — `liftFresh f _ _ (⟪a⟫ x) = f a x`.
@@ -50,7 +51,7 @@ the adjunctions are in `NominalSets.Structural`.
 * `liftFresh_ext` — `liftFresh f _ _ = liftFresh g _ _ ↔ ∀ a x, f a x = g a x`.
 * `liftFresh_congr` — pointwise-equal inputs give the same lift.
 * `liftFresh_comp_equivariant` — post-composing with equivariant `g` commutes with `liftFresh`.
-* `liftFresh_proj` — the lift of `(a, x) ↦ x` extracts the body.
+* `liftFresh_proj` — the lift of `(a, x) ↦ x` extracts the body when every atom is fresh for every `x`.
 * `liftFresh_NFun_apply` — `liftFresh_NFun f _ _ z = liftFresh f _ _ z`.
 * `liftFresh_NFun_unique` — uniqueness of `liftFresh_NFun`.
 * `supp_liftFresh_NFun` — `supp (liftFresh_NFun f _ _) = ∅`.
@@ -88,18 +89,17 @@ variable {Y : Type u} [Nominal α Y]
 `F (π • a, π • x) = π • F (a, x)`. Wraps `NFun.smul_apply_smul` + the fixpoint rewrite. -/
 private theorem smul_nfun_pair_apply {Z : Type u} [Nominal α Z]
     (π : FinitePerm α) (F : NFun α (α × X) Z) (hπF : π • F = F) (a : α) (x : X) :
-    F (π • a, π • x) = π • F (a, x) := by
-  have := NFun.smul_apply_smul π F (a, x)
-  rwa [hπF, PermType.prod_smul] at this
+    F (π • a, π • x) = π • F (a, x) :=
+  F.apply_smul_of_fixed π hπF (a, x)
 
 /- **Theorem 4.15 (Pitts, Section 4.5)**
 
 **Freshness condition for binders**: Given a finitely supported function
-`F : (α × X) →ᶠˢ Y` satisfying
+`F : (α × X) ⟶ₙ[α] Y` satisfying
 
     (Иa)(∀x) a # F(a, x)              — condition (4.32)
 
-there is a unique finitely supported function `F̄ : [A]X →ᶠˢ Y` satisfying
+there is a unique finitely supported function `F̄ : [A]X ⟶ₙ[α] Y` satisfying
 
     (Иa)(∀x) F(a, x) = F̄(⟨a⟩x)       — property (4.33)
 
@@ -111,7 +111,7 @@ def FCB (F : NFun α (α × X) (Option Y)) : Prop := И a, ∀ x : X, ∃ y : Y,
 
 /-- **Independence of representative** (well-definedness of `liftFCB`).
 
-Given `F : (α × X) →ᶠˢ Option Y` (partial) satisfying the FCB condition, and two representations
+Given `F : (α × X) ⟶ₙ[α] Option Y` (partial) satisfying the FCB condition, and two representations
 of the same abstraction `z = ⟪c₁⟫y₁ = ⟪c₂⟫y₂` with `c₁ # F` and `c₂ # F`, then `F(c₁, y₁) = F(c₂, y₂)`.
 
 **Proof outline:**
@@ -160,7 +160,7 @@ private theorem liftFCB_val_indep {F : NFun α (α × X) (Option Y)} (hFCB : FCB
 
 /-- **Auxiliary NFun for `liftFCB`** (Pitts, equation 4.34).
 
-For fixed `F : (α × X) →ᶠˢ Option Y` and `z : [A]X`, defines the finitely supported partial function `G : α →ᶠˢ Option Y` by
+For fixed `F : (α × X) ⟶ₙ[α] Option Y` and `z : [A]X`, defines the finitely supported partial function `G : α ⟶ₙ[α] Option Y` by
 
     `G(a) = z ⊙ a >>= (fun x ↦ F(a, x))`
 
@@ -212,7 +212,7 @@ private theorem liftFCB_nfun_fc (F : NFun α (α × X) (Option Y)) (hFCB : FCB F
 
 /-- **The underlying function for `liftFCB`** (Pitts, equation 4.34).
 
-Given `F : (α × X) →ᶠˢ Option Y` satisfying FCB, defines `F̄ : [A]X → Y` by
+Given `F : (α × X) ⟶ₙ[α] Option Y` satisfying FCB, defines `F̄ : [A]X → Y` by
 
     `F̄(z) = freshF (liftFCB_nfun F z) (liftFCB_nfun_fc F hFCB z)`
 
@@ -253,10 +253,10 @@ private theorem liftFCB_fun_eq {F : NFun α (α × X) (Option Y)} (hFCB : FCB F)
   change some (freshF (liftFCB_nfun F z) (liftFCB_nfun_fc F hFCB z)) = F (a, x)
   rw [← hb_goal, hb_spec]
 
-/-- **Theorem 4.15** (Pitts, Section 4.5): the **lifted function** `F̄ : [A]X →ᶠˢ Y`.
+/-- **Theorem 4.15** (Pitts, Section 4.5): the **lifted function** `F̄ : [A]X ⟶ₙ[α] Y`.
 
-Given `F : (α × X) →ᶠˢ Option Y` satisfying the FCB condition (4.32), `liftFCB F hFCB`
-is the unique finitely supported function `F̄ : [A]X →ᶠˢ Y` with `(Иa)(∀x) F̄(⟪a⟫x) = F(a, x)` (property 4.33) and `supp F̄ ⊆ supp F`.
+Given `F : (α × X) ⟶ₙ[α] Option Y` satisfying the FCB condition (4.32), `liftFCB F hFCB`
+is the unique finitely supported function `F̄ : [A]X ⟶ₙ[α] Y` with `(Иa)(∀x) F̄(⟪a⟫x) = F(a, x)` (property 4.33) and `supp F̄ ⊆ supp F`.
 
 **Construction:** Wraps `liftFCB_fun` (which computes `F̄(z) = freshF(liftFCB_nfun F z)`) into an `NFun` via `NFun.ofSupports` with support set `supp F`.
 
@@ -307,7 +307,7 @@ theorem supp_liftFCB_le (F : NFun α (α × X) (Option Y)) (hFCB : FCB F) : supp
   -- liftFCB is defined via NFun.ofSupports with support set `supp F`, so `supports (supp F) (liftFCB F hFCB)` holds by construction.
   supp_le (NFun.ofSupports_supports _ _ _)
 
-/-- Uniqueness of `liftFCB`: any finitely supported function `G : [A]X →ᶠˢ Y` satisfying property (4.33) must equal `liftFCB F hFCB`. -/
+/-- Uniqueness of `liftFCB`: any finitely supported function `G : [A]X ⟶ₙ[α] Y` satisfying property (4.33) must equal `liftFCB F hFCB`. -/
 theorem liftFCB_unique (F : NFun α (α × X) (Option Y)) (hFCB : FCB F)
     (G : NFun α (NameAbs α X) Y) (hG : И a, ∀ x : X, G ⟪a⟫x = F (a, x)) : G = liftFCB F hFCB := by
   ext z
@@ -609,8 +609,9 @@ theorem liftFresh_comp_equivariant {Z : Type u} [Nominal α Z]
   induction z using NameAbs.ind with | h a x =>
     simp only [Function.comp, liftFresh_abs]
 
-/-- The lift of the projection `(a, x) ↦ x` recovers the concretion value:
-for any `z : [A]X`, `liftFresh (fun _ x => x) ... z` extracts the body. -/
+/-- The lift of the projection `(a, x) ↦ x` extracts the body under the strong
+hypothesis that every atom is fresh for every `x : X`. This applies to discrete
+nominal sets; it is not a general operation for discarding a binding atom. -/
 theorem liftFresh_proj
     (hEquiv : IsEquivariant₂ α (fun (_ : α) (x : X) => x)) (hFresh : ∀ (a : α) (x : X), a # x)
     (a : α) (x : X) : liftFresh (fun _ x => x) hEquiv hFresh ⟪a⟫x = x := by
@@ -629,7 +630,7 @@ section FCBTotal
 
 variable {Y : Type u} [Nominal α Y]
 
-/-- A total finitely supported function `F : (α × X) →ᶠˢ Y` satisfying
+/-- A total finitely supported function `F : (α × X) ⟶ₙ[α] Y` satisfying
 `∀ a x, a # F(a,x)` automatically satisfies FCB when composed with `some`. -/
 theorem FCB_of_total (F : NFun α (α × X) Y) (hFresh : ∀ (a : α) (x : X), a # F (a, x)) :
     FCB (F.map some isEquivariant_some) :=

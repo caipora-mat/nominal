@@ -74,9 +74,8 @@ theorem supp_le {t s : Term α} (h : Beta t s) : supp s ⊆ supp t := by
       Finset.sdiff_subset_sdiff ih (Finset.Subset.refl {a})
 
 /-- Atoms fresh for the source stay fresh for its reduct. -/
-theorem fresh {t s : Term α} (h : Beta t s) {a : α} (ha : a # t) : a # s := by
-  rw [fresh_atom_left] at ha ⊢
-  exact fun hs => ha (h.supp_le hs)
+theorem fresh {t s : Term α} (h : Beta t s) {a : α} (ha : a # t) : a # s :=
+  fresh_of_supp_subset h.supp_le ha
 
 /-- Use any equal abstraction to compute the result of an unrestricted redex. -/
 theorem beta_of_lam_eq (a b : α) (t u s : Term α) (h : Term.lam a t = Term.lam b u) :

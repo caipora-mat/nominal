@@ -69,9 +69,12 @@ timings are sensitive to filesystem warming; compare medians and retain outliers
 -/
 
 /-!
-The raw `NFun.mk` coercion example below deliberately takes a typed
+The constructor coercion examples below deliberately take a typed
 `hf : FinSupported f`. Passing a literal existential witness directly to `mk`
-can expose a transparency mismatch to `simp`; public `ofSupports` avoids it.
+or `ofFun` can expose a transparency mismatch to `simp`. A named theorem with
+the `FinSupported` type avoids it; see the conditional handler in the tutorial.
+`ofSupports` also avoids this mismatch, but passing a noncomputable support set
+as its data argument may require a noncomputable definition.
 -/
 
 open Nominal.Core Nominal.Set
@@ -85,6 +88,12 @@ variable [Nominal α P] [Nominal α X] [Nominal α Y] [Nominal α Z]
 
 theorem application (f : NFun α X Y) (g : NFun α Y Z) (x : X) :
     (g.comp f) x = g (f x) := by simp
+
+/-- A supported function commutes with swaps outside its support, even when it
+is not globally equivariant. This is the iterator's handler-renaming step. -/
+theorem freshSwapApplication (f : NFun α X Y) (a b : α) (x : X)
+    (ha : a # f) (hb : b # f) : f (swap a b • x) = swap a b • f x :=
+  f.apply_smul_of_fixed (swap a b) (fresh_swap ha hb) x
 
 theorem higherOrder (f : NFun α X Y) (g : NFun α Y Z) (xs : List X) :
     xs.map (g.comp f) = (xs.map f).map g := by simp [List.map_map]
@@ -266,7 +275,8 @@ end NFunExamples
 open Lean Elab Command in
 run_cmd do
   let publicResults := #[``NFun.curry_uncurry, ``NFun.uncurry_curry,
-    ``NFun.supp_curry, ``NFun.supp_uncurry, ``NFun.supp_fromParam_le]
+    ``NFun.supp_curry, ``NFun.supp_uncurry, ``NFun.supp_fromParam_le,
+    ``NFun.apply_smul_of_fixed]
   for (name, _) in (← getEnv).constants.toList do
     if name.toString.startsWith "NFunExamples." || publicResults.contains name then
       let axioms ← collectAxioms name

@@ -79,8 +79,12 @@ binder name is irrelevant up to consistent renaming.
 * `abs_injective` — `abs a` is injective.
 * `abs_surjective` — the uncurried constructor `abs` is surjective.
 
-The freshness condition for binders (Theorem 4.15, Corollary 4.17) and structural
-properties of `[A]_` live in `FCB.lean`.
+Concretion and equivariant maps of abstractions live in `Concretion.lean`;
+the freshness condition for binders (Theorem 4.15, Corollary 4.17) and its
+parameterized elimination interfaces live in `FCB.lean`. Use these public
+interfaces without choosing quotient representatives. The current abstraction,
+concretion, and FCB modules use a single atom sort and a shared universe for
+atoms and nominal carriers; iterating `NameAbs` handles nested single binders.
 
 ## References
 

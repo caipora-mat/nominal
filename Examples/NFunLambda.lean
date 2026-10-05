@@ -11,7 +11,9 @@ import Lean.Util.CollectAxioms
 
 Compile with `lake build Examples` or `lake env lean Examples/NFunLambda.lean`.
 These examples consume supported handlers through the iterator's public equations,
-then use substitution as an ordinary function with fixed nominal parameters.
+functional uniqueness, and avoidance-set independence. The returned `NFun` is
+used by ordinary higher-order functions. Substitution supplies a second client
+with fixed nominal parameters. The final audit checks all example dependencies.
 -/
 
 namespace NFunLambdaExamples
@@ -20,6 +22,11 @@ open Nominal.Core Nominal.Set LambdaCalculus LambdaCalculus.Term
 
 universe u
 variable {α : Type u} [Name α]
+
+/-- The quotient's action agrees definitionally with its nominal projection. -/
+theorem termActionCoherent :
+    (inferInstance : SMul (FinitePerm α) (Term α)) =
+      (inferInstance : Nominal α (Term α)).toPermType.toSMul := rfl
 
 def varHandler : NFun α α (Term α) :=
   NFun.equivariant var (fun π a => (smul_var π a).symm)
@@ -48,6 +55,37 @@ theorem rebuild_lam (a : α) (t : Term α) : rebuild (lam a t) = lam a (rebuild 
   unfold rebuild
   rw [recNoContext_lam _ _ _ _ _ _ _ _ a t (by simp)]
   rfl
+
+/-- The same handlers return an ordinary usable NFun, with any finite bound. -/
+noncomputable def rebuildSupported (A : Finset α) : NFun α (Term α) (Term α) :=
+  recNoContextNFun varHandler appHandler lamHandler A
+    (by simp [varHandler]) (by simp [appHandler]) (by simp [lamHandler])
+    (lamHandler_fcb A)
+
+/-- Constructor equations identify the rebuilt term without graph witnesses. -/
+theorem rebuildSupported_apply (A : Finset α) (t : Term α) :
+    rebuildSupported A t = t := by
+  have h := recNoContext_unique varHandler appHandler lamHandler A
+    (by simp [varHandler]) (by simp [appHandler]) (by simp [lamHandler])
+    (lamHandler_fcb A) id ∅ (fun _ => rfl) (fun _ _ => rfl) (fun _ _ _ => rfl)
+  exact congrFun h t
+
+/-- Different avoidance sets yield the same function, with no subset premise. -/
+theorem rebuildSupported_independent (A B : Finset α) :
+    (rebuildSupported A : Term α → Term α) = rebuildSupported B := by
+  exact recNoContext_independent varHandler appHandler lamHandler A
+    (by simp [varHandler]) (by simp [appHandler]) (by simp [lamHandler])
+    (lamHandler_fcb A) B
+    (by simp [varHandler]) (by simp [appHandler]) (by simp [lamHandler])
+    (lamHandler_fcb B)
+
+/-- The iterator result can be supplied directly to an ordinary higher-order API. -/
+theorem rebuildSupported_map (A : Finset α) (ts : List (Term α)) :
+    ts.map (rebuildSupported A) = ts := by
+  calc
+    ts.map (rebuildSupported A) = ts.map id :=
+      List.map_congr_left (fun t _ => rebuildSupported_apply A t)
+    _ = ts := List.map_id ts
 
 theorem app_partial_support (s : Term α) :
     supp (NFun.curry appHandler s) ⊆ supp s := by

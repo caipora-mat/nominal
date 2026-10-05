@@ -7,8 +7,8 @@ import Mathlib.Logic.Equiv.Basic
 # Transpositions in `FinitePerm α`
 
 This file introduces the **swap** (transposition) as a bundled element of `FinitePerm α`
-and proves the structural lemmas about the moved-point set `movedFinset` (defined in `NominalSets.PermType`)
-that are needed for the swap characterisation of supports (Pitts, Prop. 2.1), proved in `NominalSets.Support`.
+and proves the structural lemmas about the moved-point set `movedFinset` (defined in `Nominal.Set.PermType`)
+that are needed for the swap characterisation of supports (Pitts, Prop. 2.1), proved in `Nominal.Set.Support`.
 
 ## Main definitions
 

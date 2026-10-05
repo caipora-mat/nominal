@@ -54,6 +54,7 @@ of finitely supported functions.
 * `NFun.smul_toPFun` — `(π • f).toPFun = π • f.toPFun`.
 * `NFun.smul_apply` — `(π • f) x = π • f (π⁻¹ • x)`.
 * `NFun.smul_apply_smul` — `(π • f) (π • x) = π • f x`.
+* `NFun.apply_smul_of_fixed` — `f (π • x) = π • f x` when `π • f = f`.
 * `NFun.smul_const` — `π • const y = const (π • y)`.
 * `NFun.smul_comp` — action distributes over composition.
 * `NFun.smul_map` — action distributes over `map`.
@@ -150,7 +151,11 @@ theorem ext {f g : NFun α X Y} (h : ∀ x, f x = g x) : f = g :=
 /-- Applying an `NFun` built with `mk` reduces to the underlying `PFun`. -/
 @[simp] theorem mk_apply (f : PFun α X Y) (h : FinSupported f) (x : X) : (NFun.mk f h : NFun α X Y) x = f x := rfl
 
-/-- Construct an `NFun` from a bare function and a finite-support proof. -/
+/-- Construct an `NFun` from a bare function and a finite-support proof.
+Keep a noncomputable support witness inside this proof to preserve a computable
+function body. A named proof with type `FinSupported (f : PFun α X Y)` also keeps
+application/coercion simp predictable: a literal existential witness can be
+extracted at its unfolded type and fail matching under implicit transparency. -/
 def ofFun (f : X → Y) (hf : FinSupported (f : PFun α X Y)) : NFun α X Y := ⟨(f : PFun α X Y), hf⟩
 
 /-- Construct an `NFun` from a `PFun` and an explicit support set. -/
@@ -188,6 +193,13 @@ instance instPermType : PermType α (NFun α X Y) where
 
 /-- Applying `π • f` to `π • x` equals `π • (f x)`. -/
 @[simp] theorem smul_apply_smul (π : FinitePerm α) (f : NFun α X Y) (x : X) : (π • f) (π • x) = π • f x := by simp
+
+/-- A permutation fixing a supported function commutes with its application.
+This is equivariance for this particular permutation, not a claim that `f` has
+empty support. For a fresh swap, supply `fresh_swap ha hb` as the fixed-point proof. -/
+theorem apply_smul_of_fixed (f : NFun α X Y) (π : FinitePerm α)
+    (hf : π • f = f) (x : X) : f (π • x) = π • f x := by
+  simpa only [hf] using smul_apply_smul π f x
 
 /-- Support for an `NFun` is equivalent to support for its underlying `PFun`. -/
 theorem supports_iff_toPFun {s : Finset α} {f : NFun α X Y} : supports s f ↔ supports s (f : PFun α X Y) := by

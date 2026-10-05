@@ -10,7 +10,7 @@ A **name permutation type** (also called a *nominal set without the finite-suppo
 * `PermType α X` — typeclass asserting that `X` carries a `FinitePerm α`-action.
 * `PermType.movedFinset π` — the finite set of atoms moved by `π`, as a `Finset α`.
 
-The function-space action and its newtype wrapper `PFun α X Y` live in `NominalSets.PFun`.
+The function-space action and its newtype wrapper `PFun α X Y` live in `Nominal.Set.PFun`.
 
 ## Instances
 
@@ -245,7 +245,7 @@ theorem option_smul_eq_some_iff (π : FinitePerm α) (o : Option X) (y : X) : π
 
 /-! ### Function space
 
-The permutation action on functions is defined in `NominalSets.PFun` via the newtype `PFun α X Y`
+The permutation action on functions is defined in `Nominal.Set.PFun` via the newtype `PFun α X Y`
 to avoid a diamond with Mathlib's `Pi.instSMul`. See that module for details. -/
 
 /-! ### Finite sets of atoms -/

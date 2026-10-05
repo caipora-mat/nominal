@@ -4,8 +4,9 @@ import Nominal.Set.NameAbstraction
 # Concretion for Name Abstractions
 
 Given a name abstraction `F : NameAbs α X`, the **concretion** `F ⊙ a` attempts to
-extract the body of `F` at atom `a`. It returns `some x` when `a` is the binder or
-is fresh for the body, and `none` otherwise.
+extract the body of `F` at atom `a`. At the displayed binder of `⟪b⟫ x` it returns
+`some x`; at a different atom fresh for `x` it returns the renamed body
+`some (swap b a • x)`. It returns `none` precisely when `a` is not fresh for `F`.
 
 This file also provides the **functorial map** `liftAbs` that lifts an equivariant
 function `f : X → Y` to `NameAbs α X → NameAbs α Y`, and proves the **extensionality**
@@ -17,7 +18,7 @@ principle for name abstractions (equation 4.16).
 * `concreteAt_val F a ha` — noncomputable accessor extracting the body at a fresh atom.
 * `liftAbs hf` — functorial map `⟪a⟫ x ↦ ⟪a⟫ f x` for equivariant `f : X → Y`.
 * `liftAbsEquiv hf hg hfg hgf` — equivalence `NameAbs α X ≃ NameAbs α Y` from an equivariant bijection.
-* `concreteAt_nfun F` — package concretion as `α →ᶠˢ Option X`.
+* `concreteAt_nfun F` — package concretion as `α ⟶ₙ[α] Option X`.
 
 ## Notation
 
@@ -96,11 +97,11 @@ principle for name abstractions (equation 4.16).
 * `concreteAt_bind_of_fix` — simplified form when `π` fixes `F` and `g` is equivariant.
 
 ### Concretion as a finitely-supported function (Pitts, equation 4.13)
-* `concreteAt_nfun` — package concretion as `α →ᶠˢ Option X`.
+* `concreteAt_nfun` — package concretion as `α ⟶ₙ[α] Option X`.
 * `concreteAt_nfun_apply` — `concreteAt_nfun F a = F ⊙ a`.
 * `concreteAt_nfun_equivariant` — `π • concreteAt_nfun F = concreteAt_nfun (π • F)`.
 * `isEquivariant_concreteAt_nfun` — `concreteAt_nfun` is equivariant (packaged).
-* `concreteAt_nfun_injective` — the embedding `[A]X → (A →ᶠˢ Option X)` is injective.
+* `concreteAt_nfun_injective` — the embedding `[A]X → (A ⟶ₙ[α] Option X)` is injective.
 * `supp_concreteAt_nfun` — `supp (concreteAt_nfun F) = supp F`.
 
 ## References
@@ -121,8 +122,9 @@ namespace NameAbs
 
 /-! ### Concretion (Pitts, Definition 4.7 / Proposition 4.9) -/
 
-/-- **Concretion** of a name abstraction at atom `a`: if `a` is the binder, returns the body;
-otherwise returns `none`. -/
+/-- **Concretion** of a name abstraction at an atom: at the displayed binder it
+returns the body; at a different atom fresh for the body it returns the swapped
+body. It returns `none` exactly at atoms not fresh for the abstraction. -/
 noncomputable def concreteAt (F : NameAbs α X) (a' : α) : Option X :=
   Quotient.liftOn F
     (fun ⟨a, x⟩ ↦
@@ -703,7 +705,7 @@ theorem concreteAt_bind_of_fix {Y : Type u} [Nominal α Y]
 
 /-! ### Concretion as a finitely-supported function (Pitts, equation 4.13) -/
 
-/-- Package concretion as a finitely-supported function `α →ᶠˢ Option X`,
+/-- Package concretion as a finitely-supported function `α ⟶ₙ[α] Option X`,
 realizing the inclusion `[A]X ⊆ (A ⇀_fs X)` from equation 4.13. -/
 noncomputable def concreteAt_nfun (F : NameAbs α X) : NFun α α (Option X) :=
   NFun.ofSupports ⟨fun a ↦ F ⊙ a⟩ (supp F) (by

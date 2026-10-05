@@ -6,6 +6,8 @@ import Nominal.Set.Freshness
 
 Given a nominal set `X` and an **equivariant equivalence relation** `∼` on `X`,
 the quotient `X/∼` inherits a permutation action and is itself a nominal set.
+The current quotient instances share a universe between the atom type and `X`.
+This is an interface restriction, not a mathematical restriction on quotients.
 
 ## Main definitions
 

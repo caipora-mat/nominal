@@ -2,8 +2,13 @@ import Examples.Freshness
 import Examples.NFun
 import Examples.NFunSupport
 import Examples.NFunLambda
+import Examples.LambdaConstructors
+import Examples.LambdaInterface
 import Examples.LambdaReduction
 import Examples.LambdaFreshReduction
 import Examples.LambdaParallelSubstitution
 import Examples.LambdaParallelDiamond
 import Examples.LambdaChurchRosser
+import Examples.CoreContracts
+import Examples.Tutorial
+import Examples.AxiomAudit

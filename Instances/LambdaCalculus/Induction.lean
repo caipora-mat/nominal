@@ -48,7 +48,8 @@ variable {α : Type u} [Name α]
 
 namespace Term
 
-/-- Strengthened induction: for all permuted representatives `⟦π • t⟧`. -/
+/-- Implementation lemma for strong induction on all permuted representatives
+`⟦π • t⟧`. Quotient clients should use `strong_ind` or `strong_ind_finset`. -/
 theorem strong_indperm {Z : Type u} [Nominal α Z]
     {P : Term α → Z → Prop}
     (hVar : ∀ a z, P (Term.var a) z)
@@ -81,7 +82,8 @@ theorem strong_indperm {Z : Type u} [Nominal α Z]
 /-- Strong structural induction for `Term α`. In the lambda case, the binder
 may be assumed fresh for the induction context `z : Z`.
 
-See §9 above for the proof strategy and comparison with constructive approaches. -/
+The predicate is arbitrary; no support or equivariance assumption on `P` is needed.
+See the module documentation for the proof strategy. -/
 @[elab_as_elim]
 theorem strong_ind {Z : Type u} [Nominal α Z]
     {P : Term α → Z → Prop}
@@ -122,8 +124,11 @@ The recursion combinators and substitution are developed in companion files:
 - **`Instances/LambdaCalculus/Recursion.lean`** — Urban's inductive relation approach.
 - **`Instances/LambdaCalculus/Substitution.lean`** — Capture-avoiding substitution.
 
-See those files for the discussion of why direct `liftFCB`-based recursion fails
-for the parametric case and how the relational approach resolves the equivariance obstacle.
+The iterator handles finitely supported constructor functions through a relation
+on quotient terms, with public equations, uniqueness, and a supported result.
+Its handlers receive recursive results, not the original subterms. Term induction
+does not replace induction on reduction derivations: the separate
+`ReductionInduction` module supplies fresh binders for those derivations.
 -/
 
 end Term
