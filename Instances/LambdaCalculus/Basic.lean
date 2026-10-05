@@ -9,8 +9,12 @@ approach of Pitts (2006) and Urban (2008). The construction proceeds in four sta
 1. **Raw terms** (`LamTerm α`) — concrete syntax with explicit binder names.
 2. **Alpha-equivalence** (`AEq`) — identifying terms that differ only in bound names.
 3. **The quotient** (`Term α`) — alpha-equivalence classes, forming a nominal set.
-4. **Strong induction** — an induction principle on `Term` with a built-in freshness
-   side-condition in the lambda case.
+4. **Public syntax interface** — constructor injectivity and disjointness,
+   abstraction equality, and inversion at a chosen fresh binder.
+
+Clients should use `Term.var`, `Term.app`, and `Term.lam` together with their
+public equality and freshness lemmas. Strong induction is provided separately in
+`Instances.LambdaCalculus.Induction`; ordinary syntax inversion only needs this module.
 
 The key design choice is using `Bind α X` (a plain binder-body pair) in the `lam`
 constructor instead of `NameAbs α X` (which is itself a quotient). This makes
@@ -530,16 +534,65 @@ def lam (a : α) : Term α → Term α := Quotient.map (fun t ↦ LamTerm.lam �
 @[simp] theorem app_mk (t s : LamTerm α) : ⟦t ◃ s⟧ = Term.app ⟦t⟧ ⟦s⟧ := rfl
 @[simp] theorem lam_mk (a : α) (t : LamTerm α) : ⟦ƛ[a]t⟧ = Term.lam a ⟦t⟧ := rfl
 
-@[simp] theorem smul_var (π : FinitePerm α) (a : α) :
+@[simp, nfun_simp] theorem smul_var (π : FinitePerm α) (a : α) :
     π • Term.var a = Term.var (π • a) := rfl
 
-@[simp] theorem smul_app (π : FinitePerm α) (t s : Term α) :
+@[simp, nfun_simp] theorem smul_app (π : FinitePerm α) (t s : Term α) :
     π • Term.app t s = Term.app (π • t) (π • s) := by
   induction t, s using Quotient.ind₂ with | _ t s => rfl
 
-@[simp] theorem smul_lam (π : FinitePerm α) (a : α) (t : Term α) :
+@[simp, nfun_simp] theorem smul_lam (π : FinitePerm α) (a : α) (t : Term α) :
     π • Term.lam a t = Term.lam (π • a) (π • t) := by
   induction t using Quotient.ind with | _ t => rfl
+
+/-! ### Constructor injectivity and disjointness
+
+These results concern equality in `Term`, so clients never need to inspect raw
+alpha-equivalence witnesses. Lambda injectivity, which uses `NameAbs`, appears
+with the abstraction interface below.
+-/
+
+@[simp] theorem var_inj {a b : α} : Term.var a = Term.var b ↔ a = b := by
+  constructor
+  · intro h
+    exact AEq.var_iff.mp (Quotient.exact h)
+  · rintro rfl
+    rfl
+
+@[simp] theorem app_inj {t₁ t₂ s₁ s₂ : Term α} :
+    Term.app t₁ t₂ = Term.app s₁ s₂ ↔ t₁ = s₁ ∧ t₂ = s₂ := by
+  induction t₁, t₂ using Quotient.ind₂ with | _ r₁ r₂ =>
+  induction s₁, s₂ using Quotient.ind₂ with | _ u₁ u₂ =>
+  constructor
+  · intro h
+    have ⟨h₁, h₂⟩ := AEq.app_iff.mp (Quotient.exact h)
+    exact ⟨Quotient.sound h₁, Quotient.sound h₂⟩
+  · rintro ⟨h₁, h₂⟩
+    exact congrArg₂ Term.app h₁ h₂
+
+@[simp] theorem var_ne_app (a : α) (t₁ t₂ : Term α) : Term.var a ≠ Term.app t₁ t₂ := by
+  induction t₁, t₂ using Quotient.ind₂ with | _ s₁ s₂ =>
+    intro h; have := Quotient.exact h; cases this
+
+@[simp] theorem var_ne_lam (a : α) (b : α) (t : Term α) : Term.var a ≠ Term.lam b t := by
+  induction t using Quotient.ind with | _ s =>
+    intro h; have := Quotient.exact h; cases this
+
+@[simp] theorem app_ne_lam (t₁ t₂ : Term α) (a : α) (s : Term α) :
+    Term.app t₁ t₂ ≠ Term.lam a s := by
+  induction t₁, t₂ using Quotient.ind₂ with | _ r₁ r₂ =>
+    induction s using Quotient.ind with | _ r =>
+      intro h; have := Quotient.exact h; cases this
+
+@[simp] theorem app_ne_var (t₁ t₂ : Term α) (a : α) : Term.app t₁ t₂ ≠ Term.var a :=
+  (var_ne_app a t₁ t₂).symm
+
+@[simp] theorem lam_ne_var (b : α) (t : Term α) (a : α) : Term.lam b t ≠ Term.var a :=
+  (var_ne_lam a b t).symm
+
+@[simp] theorem lam_ne_app (a : α) (s t₁ t₂ : Term α) :
+    Term.lam a s ≠ Term.app t₁ t₂ :=
+  (app_ne_lam t₁ t₂ a s).symm
 
 /-! ### Free variables on the quotient
 
@@ -752,6 +805,47 @@ theorem term_lam_eq_iff {a₁ a₂ : α} {t₁ t₂ : Term α} :
     · -- (←) И on Term quotient → AEq cofinite
       intro h
       exact Quotient.sound (AEq.lam_iff.mpr (h.mono fun c hc ↦ Quotient.exact hc))
+
+/-! ### Fresh-binder inversion and alignment
+
+Freshness here concerns the lambda term, hence its free variables. In particular,
+a chosen atom may equal the current binder; it need not be fresh for the body.
+No distinct-binder or freshness-of-bound-names assumptions are required.
+-/
+
+/-- At a fixed binder, equality of lambda terms is equality of their bodies. -/
+@[simp] theorem lam_inj {a : α} {t s : Term α} :
+    Term.lam a t = Term.lam a s ↔ t = s := by
+  rw [term_lam_eq_iff, NameAbs.abs_same_name_iff]
+
+/-- Rename a binder to any atom fresh for the lambda term. The atom can be the
+original binder, even when it occurs freely in the body. -/
+theorem lam_eq_swap {a b : α} {t : Term α} (hb : b # Term.lam a t) :
+    Term.lam a t = Term.lam b (swap a b • t) := by
+  rcases (fresh_term_lam b a t).mp hb with rfl | hb
+  · simp
+  · exact term_lam_eq_iff.mpr (NameAbs.abs_eq_swap hb)
+
+/-- Invert a lambda equality at a prescribed fresh binder: the body is exactly
+obtained by swapping the original binder with the chosen one. -/
+theorem lam_eq_iff_at_fresh {a c : α} {t s : Term α}
+    (hc : c # Term.lam a t) :
+    Term.lam a t = Term.lam c s ↔ swap a c • t = s := by
+  rw [lam_eq_swap hc, lam_inj]
+
+/-- Every atom fresh for a lambda term determines a unique body representing it. -/
+theorem exists_lam_eq_at_fresh {a c : α} {t : Term α}
+    (hc : c # Term.lam a t) : ∃! s, Term.lam a t = Term.lam c s := by
+  refine ⟨swap a c • t, lam_eq_swap hc, ?_⟩
+  intro s hs
+  exact ((lam_eq_iff_at_fresh hc).mp hs).symm
+
+/-- Align two lambda terms at any atom fresh for both lambda terms. Freshness
+for their bodies or original binders is not required. -/
+theorem lam_eq_iff_common_fresh {a b c : α} {t s : Term α}
+    (hc₁ : c # Term.lam a t) (hc₂ : c # Term.lam b s) :
+    Term.lam a t = Term.lam b s ↔ swap a c • t = swap b c • s := by
+  rw [lam_eq_swap hc₁, lam_eq_swap hc₂, lam_inj]
 
 end Term
 

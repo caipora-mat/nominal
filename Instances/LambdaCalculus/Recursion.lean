@@ -125,28 +125,9 @@ theorem RecRel.total {Y : Type u} [Nominal α Y]
 
 `RecRel` is indexed by `Term α` (a quotient type), so Lean's `cases` tactic cannot
 directly invert a derivation at a specific constructor. We prove inversion lemmas
-using `generalize` + `induction` on the derivation, discharging impossible branches
-via `Quotient.exact` and raw-term constructor discrimination.
-
-The discrimination lemmas `var_ne_app`, `var_ne_lam`, `app_ne_lam` establish that
-the three `Term` constructors are pairwise distinguishable on the quotient. These are
-proved by reducing to raw terms via `Quotient.exact` and case-splitting on the
-(impossible) alpha-equivalence derivation.
+using `generalize` + `induction` on the derivation. Constructor injectivity and
+disjointness come from the public quotient interface in `Basic`.
 -/
-
-theorem var_ne_app (a : α) (t₁ t₂ : Term α) : Term.var a ≠ Term.app t₁ t₂ := by
-  induction t₁, t₂ using Quotient.ind₂ with | _ s₁ s₂ =>
-    intro h; have := Quotient.exact h; cases this
-
-theorem var_ne_lam (a : α) (b : α) (t : Term α) : Term.var a ≠ Term.lam b t := by
-  induction t using Quotient.ind with | _ s =>
-    intro h; have := Quotient.exact h; cases this
-
-theorem app_ne_lam (t₁ t₂ : Term α) (a : α) (s : Term α) :
-    Term.app t₁ t₂ ≠ Term.lam a s := by
-  induction t₁, t₂ using Quotient.ind₂ with | _ r₁ r₂ =>
-    induction s using Quotient.ind with | _ r =>
-      intro h; have := Quotient.exact h; cases this
 
 /-- Inversion for `var`: the only `RecRel` derivation at `var a` uses the `var` rule. -/
 theorem RecRel.inv_var {Y : Type u} [Nominal α Y]
@@ -156,8 +137,7 @@ theorem RecRel.inv_var {Y : Type u} [Nominal α Y]
   generalize hteq : Term.var a = t' at h
   induction h with
   | var a' =>
-    change ⟦LamTerm.var a⟧ = ⟦LamTerm.var a'⟧ at hteq
-    have := AEq.var_iff.mp (Quotient.exact hteq)
+    have := var_inj.mp hteq
     subst this; rfl
   | app _ _ _ _ => exact absurd hteq (var_ne_app _ _ _)
   | lam _ _ _ => exact absurd hteq (var_ne_lam _ _ _)
@@ -172,12 +152,7 @@ private theorem RecRel.inv_app {Y : Type u} [Nominal α Y]
   induction h with
   | var _ => exact absurd hteq.symm (var_ne_app _ _ _)
   | @app s₁ s₂ q₁ q₂ hs₁ hs₂ _ _ =>
-    induction t₁, t₂ using Quotient.ind₂ with | _ r₁ r₂ =>
-    induction s₁, s₂ using Quotient.ind₂ with | _ u₁ u₂ =>
-    have haeq : (r₁ ◃ r₂) ≈α (u₁ ◃ u₂) := Quotient.exact hteq
-    have ⟨haeq₁, haeq₂⟩ := AEq.app_iff.mp haeq
-    have heq₁ : (⟦r₁⟧ : Term α) = ⟦u₁⟧ := Quotient.sound haeq₁
-    have heq₂ : (⟦r₂⟧ : Term α) = ⟦u₂⟧ := Quotient.sound haeq₂
+    obtain ⟨heq₁, heq₂⟩ := app_inj.mp hteq
     exact ⟨q₁, q₂, heq₁ ▸ hs₁, heq₂ ▸ hs₂, rfl⟩
   | lam _ _ _ => exact absurd hteq (app_ne_lam _ _ _ _)
 

@@ -24,7 +24,7 @@ non-empty support, since it inspects `x` and returns `s`. The FCB condition hold
 
 ## Theorems
 
-We prove six standard properties:
+The public interface includes:
 
 1. **Computation rules**: `subst_var`, `subst_app`, `subst_lam` — the defining equations.
 2. **Forget lemma** (`subst_fresh`): `x # t → t[x := s] = t` — Urban's Lemma 16.
@@ -33,10 +33,14 @@ We prove six standard properties:
 5. **Substitution lemma** (`subst_subst`): Barendregt's substitution lemma,
    `x ≠ y → x # L → M[x := N][y := L] = M[y := L][x := N[y := L]]`.
 6. **Support bound** (`supp_subst_le`): `supp (t[x := s]) ⊆ (supp t \ {x}) ∪ supp s`.
+7. **Binder compatibility** (`subst_rename`, `subst_eq_of_lam_eq`): the substituted
+   body used in contraction is independent of the presentation of its abstraction.
+   The replacement is arbitrary, including terms containing either binder freely.
+8. **Identity and variable renaming** (`subst_var_self`, `subst_var_eq_swap`).
 
-Each proof follows the same pattern: induction on `t` via `strong_ind_finset`, with an
-avoidance set covering the free names of all relevant terms. The lam case derives the
-needed freshness conditions directly from `c ∉ A`.
+The inductive proofs use `strong_ind_finset`, with an avoidance set covering the
+free names of all relevant terms. The lam case derives the needed freshness
+conditions directly from `c ∉ A`; the interface corollaries reuse these results.
 
 ## References
 
@@ -63,32 +67,20 @@ namespace Term
 The only constructor function with non-empty support (`{x} ∪ supp s`). -/
 private theorem substFv_supports (x : α) (s : Term α) :
     supports ({x} ∪ supp s) (⟨fun a ↦ if a = x then s else Term.var a⟩ : PFun α α (Term α)) := by
-    rw [supports_pfun_iff]
-    intro π hπ a
-    have hx : π • x = x := by rw [PermType.atoms_smul]; exact hπ (Finset.mem_union_left _ (Finset.mem_singleton_self x))
-    have hs : π • s = s := supp_supports s π (fun b hb ↦ hπ (Finset.mem_union_right _ hb))
-    simp only [PFun.coe_mk]
-    by_cases ha : a = x
-    · subst ha; simp [hx, hs]
-    · have hne : π • a ≠ x := fun heq ↦ ha (PermType.smul_injective π (heq.trans hx.symm))
-      rw [ite_eq_right hne, ite_eq_right ha, smul_var]
+  supports_nfun from x s
 
+-- The least support occurs only in the proof argument, keeping the handler computable.
 private def substFv (x : α) (s : Term α) : NFun α α (Term α) :=
-  ⟨⟨fun a ↦ if a = x then s else Term.var a⟩, ⟨{x} ∪ supp s, substFv_supports x s⟩⟩
+  NFun.ofFun (fun a ↦ if a = x then s else Term.var a)
+    ⟨{x} ∪ supp s, substFv_supports x s⟩
 
 /-- App-case NFun: `fun (r₁, r₂) => app r₁ r₂`. Fully equivariant (empty support). -/
 private def substFa : NFun α (Term α × Term α) (Term α) :=
-  NFun.ofSupports ⟨fun p => Term.app p.1 p.2⟩ ∅ (by
-    rw [supports_pfun_iff]
-    intro π _ p
-    simp [smul_app])
+  NFun.equivariant (fun p => Term.app p.1 p.2) (by intro π p; simp)
 
 /-- Lam-case NFun: `fun (a, r) => lam a r`. Fully equivariant (empty support). -/
 private def substFL : NFun α (α × Term α) (Term α) :=
-  NFun.ofSupports ⟨fun p => Term.lam p.1 p.2⟩ ∅ (by
-    rw [supports_pfun_iff]
-    intro π _ p
-    simp [smul_lam])
+  NFun.equivariant (fun p => Term.lam p.1 p.2) (by intro π p; simp)
 
 @[simp] private theorem substFv_apply (x : α) (s : Term α) (a : α) :
     substFv x s a = if a = x then s else Term.var a := rfl
@@ -111,15 +103,13 @@ noncomputable def subst (t : Term α) (x : α) (s : Term α) : Term α :=
     (substFv_supp_le x s) (substFa_supp_le x s) (substFL_supp_le x s) (substFL_fcb x s) t
 where
   substFv_supp_le (x : α) (s : Term α) : supp (substFv x s) ⊆ {x} ∪ supp s :=
-    supp_le (NFun.supports_iff_toPFun.mpr (substFv_supports x s))
-  substFa_supp_le (x : α) (s : Term α) : supp (substFa : NFun α (Term α × Term α) (Term α)) ⊆ {x} ∪ supp s :=
-    (supp_le (NFun.ofSupports_supports _ _ _)).trans (Finset.empty_subset _)
-  substFL_supp_le (x : α) (s : Term α) : supp (substFL : NFun α (α × Term α) (Term α)) ⊆ {x} ∪ supp s :=
-    (supp_le (NFun.ofSupports_supports _ _ _)).trans (Finset.empty_subset _)
-  substFL_fcb (x : α) (s : Term α) : ∀ (a : α) (y : Term α), a # ({x} ∪ supp s : Finset α) → a # substFL (a, y) := by
-    intro a y _
-    simp only [substFL_apply, fresh_atom_left, supp_term_lam]
-    exact Finset.notMem_sdiff_of_mem_right (Finset.mem_singleton_self a)
+    NFun.supp_ofSupports_le _ _ (substFv_supports x s)
+  substFa_supp_le (x : α) (s : Term α) : supp (substFa : NFun α (Term α × Term α) (Term α)) ⊆ {x} ∪ supp s := by
+    simp [substFa]
+  substFL_supp_le (x : α) (s : Term α) : supp (substFL : NFun α (α × Term α) (Term α)) ⊆ {x} ∪ supp s := by
+    simp [substFL]
+  substFL_fcb (x : α) (s : Term α) : ∀ (a : α) (y : Term α), a # ({x} ∪ supp s : Finset α) → a # substFL (a, y) :=
+    NFun.fcb_of_binder substFL fresh_term_lam_of_eq ({x} ∪ supp s)
 
 scoped notation:max t "[" x " := " s "]" => subst t x s
 
@@ -150,8 +140,8 @@ theorem subst_lam (a : α) (t : Term α) (x : α) (s : Term α) (ha : a # (x, s)
 A pure consequence of alpha-equivalence — does not require `b # (x, s)`. -/
 theorem subst_lam_rename (a b : α) (t : Term α) (x : α) (s : Term α) (hb : b # t) :
     (Term.lam a t)[x := s] = (Term.lam b (swap a b • t))[x := s] := by
-  simp only [subst]
-  exact recNoContext_lam_rename _ _ _ _ _ _ _ _ a b t hb
+  exact congrArg (fun u : Term α ↦ u[x := s])
+    (term_lam_eq_iff.mpr (NameAbs.abs_eq_swap hb))
 
 seal subst
 
@@ -290,6 +280,71 @@ theorem subst_subst (x y : α) (M N L : Term α)
     have hcxNyL : c # (x, N[y := L]) := fresh_prod_right.mpr ⟨(fresh_atoms c x).mpr hcx, hcNyL⟩
     rw [subst_lam c M x N hcxN, subst_lam c (M[x := N]) y L hcyL,
         subst_lam c M y L hcyL, subst_lam c (M[y := L]) x _ hcxNyL, ih]
+
+/-!
+## Binder compatibility for contraction
+
+`subst_lam_rename` above rewrites substitution of an entire lambda. The results
+here instead compare substitutions of its *body* at its bound atom, as needed
+for beta contraction. Neither binder needs to be fresh for the replacement.
+-/
+
+/-- Substitution of a variable by itself is the identity on every quotient term. -/
+@[simp] theorem subst_var_self (t : Term α) (a : α) : t[a := var a] = t := by
+  induction t using strong_ind_finset {a} with
+  | hVar b => by_cases h : b = a <;> simp [h]
+  | hApp t u iht ihu => simp [iht, ihu]
+  | hLam b t hb ih =>
+    have hba : b ≠ a := by simpa using hb
+    rw [subst_lam b t a (var a) (fresh_prod_right.mpr
+      ⟨(fresh_atoms b a).mpr hba, (fresh_term_var b a).mpr hba⟩), ih]
+
+private theorem subst_rename_of_fresh (a b : α) (t s : Term α) (hb : b # t) :
+    t[a := s] = (swap a b • t)[b := s] := by
+  induction t using strong_ind_finset ({a, b} ∪ supp s) with
+  | hVar c =>
+    have hcb : c ≠ b := ((fresh_term_var b c).mp hb).symm
+    by_cases hca : c = a
+    · subst c; simp
+    · rw [smul_var, swap_apply_of_ne hca hcb]
+      simp [hca, hcb]
+  | hApp t u iht ihu =>
+    obtain ⟨hbt, hbu⟩ := (fresh_term_app b t u).mp hb
+    simp only [smul_app, subst_app, iht hbt, ihu hbu]
+  | hLam c t hc ih =>
+    simp only [Finset.mem_union, Finset.mem_insert, Finset.mem_singleton, not_or] at hc
+    obtain ⟨⟨hca, hcb⟩, hcs⟩ := hc
+    have hcs : c # s := (fresh_atom_left c s).mpr hcs
+    have hcas : c # (a, s) := fresh_prod_right.mpr ⟨(fresh_atoms c a).mpr hca, hcs⟩
+    have hcbs : c # (b, s) := fresh_prod_right.mpr ⟨(fresh_atoms c b).mpr hcb, hcs⟩
+    have hbt : b # t := ((fresh_term_lam b c t).mp hb).resolve_left (Ne.symm hcb)
+    rw [smul_lam, swap_apply_of_ne hca hcb,
+      subst_lam c t a s hcas, subst_lam c (swap a b • t) b s hcbs, ih hbt]
+
+/-- Renaming a binder and its body preserves the substituted body used in
+contraction. The new binder `b` need only be fresh for `lam a t`, equivalently
+`b = a ∨ b # t`; no freshness assumption on the replacement `s` is needed. -/
+theorem subst_rename (a b : α) (t s : Term α) (hb : b # lam a t) :
+    t[a := s] = (swap a b • t)[b := s] := by
+  rcases (fresh_term_lam b a t).mp hb with h | h
+  · subst b; simp
+  · exact subst_rename_of_fresh a b t s h
+
+/-- Substituting a variable for the bound atom agrees with swapping, provided
+its atom is fresh for the abstraction. This includes the case `a = b`. -/
+theorem subst_var_eq_swap (a b : α) (t : Term α) (hb : b # lam a t) :
+    t[a := var b] = swap a b • t := by
+  rw [subst_rename a b t (var b) hb, subst_var_self]
+
+/-- Equal abstractions give equal substituted bodies for every replacement.
+This is the representative-independence equation needed for beta contraction,
+including same binders, shadowing, and replacements with free binder atoms. -/
+theorem subst_eq_of_lam_eq (a b : α) (t u s : Term α) (h : lam a t = lam b u) :
+    t[a := s] = u[b := s] := by
+  have hb : b # lam a t := by
+    rw [h]
+    exact fresh_term_lam_of_eq b u
+  rw [subst_rename a b t s hb, (lam_eq_iff_at_fresh hb).mp h]
 
 /-!
 ## §11. Support bound for substitution

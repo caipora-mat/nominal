@@ -3,13 +3,14 @@ import Nominal.Set.NFun.Basic
 /-!
 # NFun construction tactics and experimental macro
 
-* `supports_nfun` — discharge `supports S (PFun.mk f)` goals by parsing the support set `S`,
-  auto-deriving fixpoint facts `π • cᵢ = cᵢ` for each component, and finishing with `simp`.
-  Implements Urban's "free variables heuristic" (JAR 2008, Section 5).
+* `supports_nfun [rules] from c₁ ... cₙ` — prove capture-support inclusions,
+  derive fixpoint facts, and discharge the action equation with proved simp rules.
+  Implements a certified form of the free-variables heuristic.
 
 * `nfun` is an experimental syntax-only macro. Simple projections, identity, and
-  captures have examples below; global identifiers and `let`/`match`/nested-function
-  scopes have known failures. Use `NFun.equivariant`, `NFun.ofSupports`, or
+  captures have examples below. Automatic capture mode rejects `let`, `match`,
+  nested functions, and multiple binders; global identifiers remain unsupported.
+  Use `NFun.equivariant`, `NFun.ofSupports`, or
   `NFun.ofCaptures` with explicit support evidence for reliable construction.
 -/
 
@@ -17,97 +18,107 @@ namespace Nominal.Set
 
 open Core
 
-/-! ### `supports_nfun` tactic
+/-! ### Explicit support certificates
 
-The tactic works via `supports_pfun_iff` + auto-derived fixpoint facts + `simp_all`.
-
-Two modes:
-* `supports_nfun` — just does `rw [supports_pfun_iff]; intro π hπ x; simp only [PFun.coe_mk]; simp_all [PermType.atoms_smul]`
-* `supports_nfun from x₁ x₂ ...` — additionally derives `π • xᵢ = xᵢ` for each `xᵢ`
-  via `supp_supports` (for nominal values) before the final `simp_all`.
-
-The `from` clause uses the same membership-path construction as `choose_fresh`
-(see `Nominal/Set/Freshness/Tactic.lean`).
+`supports_nfun [rules] from c₁ ... cₙ` proves a `supports S (PFun.mk f)`
+goal. Each capture must have its least support contained in `S`; unions may be
+reordered or reassociated, atoms may use singleton supports, and local inclusion
+or support hypotheses are accepted. The optional rules use ordinary simp-lemma
+syntax, including `← hf.map_smul` to move actions into an equivariant operation
+before simplifying fixed captures.
+The tactic is transactional and either closes the goal or reports the remaining
+obligation. Use `rw [supports_pfun_iff]` for a fully explicit proof.
 -/
 
-/-- `supports_nfun` discharges goals of the form `supports S (PFun.mk f)`.
+attribute [nfun_simp] PFun.coe_mk PFun.coe_apply
+  PermType.prod_smul PermType.prod_smul_fst PermType.prod_smul_snd
+  NFun.smul_apply_smul NFun.id_apply NFun.const_apply NFun.comp_apply
+  NFun.prod_apply NFun.eval_apply NFun.map_apply NFun.comap_apply
+  NFun.curry_apply_apply NFun.uncurry_apply NFun.fromParam_apply
+  NFun.smul_const NFun.smul_comp NFun.smul_prod NFun.smul_map NFun.smul_comap
+  NFun.smul_curry NFun.smul_uncurry NFun.smul_fromParam smul_ite
 
-Without arguments, it rewrites via `supports_pfun_iff`, introduces `π`, `hπ`, `x`,
-and closes with `simp_all [PermType.atoms_smul]`.
+private theorem support_product {α X Y : Type*} [Name α]
+    [Nominal α X] [Nominal α Y] (p : X × Y) :
+    supp p = supp p.1 ∪ supp p.2 := supp_prod p.1 p.2
 
-With `supports_nfun from c₁ c₂ ...`, it additionally derives `π • cᵢ = cᵢ` for each
-captured nominal value, making them available for the final `simp_all`. The support set
-must be of the form `supp c₁ ∪ supp c₂ ∪ ... ∪ {a₁} ∪ ...` for the derivation to work.
+private theorem fixed_nfun_apply {α X Y : Type*} [Name α]
+    [Nominal α X] [Nominal α Y] (π : FinitePerm α) (f : NFun α X Y)
+    (hf : π • f = f) (x : X) : f (π • x) = π • f x := by
+  simpa only [hf] using NFun.smul_apply_smul π f x
 
-See Urban, *Nominal Techniques in Isabelle/HOL*, JAR 2008, Section 5. -/
-syntax "supports_nfun" (" from " (colGt term:max)+)? : tactic
+private theorem fixed_eq_iff {α X : Type*} [Name α] [Nominal α X]
+    (π : FinitePerm α) (c : X) (hc : π • c = c) (x : X) :
+    π • x = c ↔ x = c := by
+  simpa only [hc] using (PermType.smul_eq_smul_iff_eq π (x := x) (y := c))
 
-open Lean Meta Elab Elab.Tactic in
-/-- Build a membership path for index `i` in a left-associated union of `n` elements.
-    Same algorithm as `choose_fresh` in `Freshness/Tactic.lean`. -/
-private def mkMembershipPath (hmemId : TSyntax `ident) (i n : Nat) : MacroM (TSyntax `term) := do
-  let mut directions : Array Bool := #[]
-  let mut remaining := n
-  while remaining > 1 do
-    if i == remaining - 1 then
-      directions := directions.push true
-      remaining := 1
-    else
-      directions := directions.push false
-      remaining := remaining - 1
-  let mut proof : TSyntax `term := ⟨hmemId.raw⟩
-  for dir in directions.reverse do
-    if dir then
-      proof ← `(Finset.mem_union_right _ $proof)
-    else
-      proof ← `(Finset.mem_union_left _ $proof)
-  return proof
+private theorem fixed_eq_iff_left {α X : Type*} [Name α] [Nominal α X]
+    (π : FinitePerm α) (c : X) (hc : π • c = c) (x : X) :
+    c = π • x ↔ c = x := by
+  simpa only [eq_comm] using fixed_eq_iff π c hc x
 
-open Lean Meta Elab Elab.Tactic in
-/-- Emit fixpoint facts for a list of captured nominal values.
-    For each `cᵢ` in `cs`, emits:
-    `have _hfix_i : π • cᵢ = cᵢ := supp_supports cᵢ π (fun _a _ha => hπ (path _ha))`
-    where `path` embeds `_ha : _a ∈ supp cᵢ` into `_a ∈ S` (the full support set).
-
-    Additionally, for FunLike-typed captures (e.g., `NFun`), derives the application form:
-    `have _hfix_app_i : ∀ y, cᵢ (π • y) = π • cᵢ y`
-    This is needed because `simp_all` can't automatically derive this from `π • cᵢ = cᵢ`. -/
-private def emitFixpointFacts (cs : Array (TSyntax `term)) : TacticM Unit := do
-  let n := cs.size
-  for h : i in [:n] do
-    let c := cs[i]
-    let hfixId := mkIdent <| Name.mkSimple s!"_hfix_{i + 1}"
-    let haId : TSyntax `ident := ⟨← withFreshMacroScope `(_ha_supp)⟩
-    let hmemId : TSyntax `ident := ⟨← withFreshMacroScope `(_hmem_supp)⟩
-    let pathProof ← liftMacroM <| mkMembershipPath hmemId i n
-    evalTactic (← `(tactic|
-      have $hfixId : π • $c = $c :=
-        Nominal.Set.supp_supports $c π (fun $haId $hmemId ↦ hπ ($pathProof))))
-    -- For FunLike-typed captures, also derive the application form
-    let hfixAppId := mkIdent <| Name.mkSimple s!"_hfix_app_{i + 1}"
-    try
-      evalTactic (← `(tactic|
-        have $hfixAppId : ∀ y, $c (π • y) = π • $c y := fun y => by
-          have := congrArg (· (π • y)) $hfixId
-          simp [NFun.smul_apply_smul] at this
-          exact this.symm))
-    catch _ => pure ()  -- Not FunLike — skip silently
+syntax "supports_nfun" (" [" Lean.Parser.Tactic.simpLemma,* "]")?
+  (" from " (colGt term:max)+)? : tactic
 
 open Lean Meta Elab Elab.Tactic in
 elab_rules : tactic
-  | `(tactic| supports_nfun $[from $cs:term*]?) => do
-    -- Phase 1: Rewrite and introduce
-    evalTactic (← `(tactic| rw [supports_pfun_iff]))
-    evalTactic (← `(tactic| intro π hπ x))
-    evalTactic (← `(tactic| simp only [PFun.coe_mk]))
-    -- Phase 2: Derive fixpoint facts if captures provided
-    if let some cs := cs then
-      if cs.size > 0 then
-        emitFixpointFacts cs
-    -- Phase 3: Close the goal (if not already closed by simp only [PFun.coe_mk]).
-    let goals ← Tactic.getUnsolvedGoals
-    if !goals.isEmpty then
-      evalTactic (← `(tactic| simp_all [PermType.atoms_smul, NFun.smul_apply_smul]))
+  | `(tactic| supports_nfun $[[$rules,*]]? $[from $cs:term*]?) => focus <| withMainContext do
+    let saved ← saveState
+    try
+      let target ← getMainTarget
+      unless target.isAppOf ``supports do
+        throwError "supports_nfun: expected a supports S (PFun.mk f) goal"
+      let support ← Term.exprToSyntax target.getAppArgs[target.getAppArgs.size - 2]!
+      -- Resolve captures before introducing any new locals. `exprToSyntax` retains
+      -- expression identities, including shadowed locals and compound captures.
+      let captures ← (cs.getD #[]).mapM fun c => do
+        let e ← Term.elabTerm c none
+        Term.synthesizeSyntheticMVarsNoPostponing
+        return (c, ← Term.exprToSyntax (← instantiateMVars e))
+      let rules := rules.map (·.getElems) |>.getD #[]
+      let pi := mkIdent (← mkFreshUserName `π)
+      let hp := mkIdent (← mkFreshUserName `hπ)
+      let input := mkIdent (← mkFreshUserName `x)
+      evalTactic (← `(tactic| rw [supports_pfun_iff]))
+      evalTactic (← `(tactic| intro $pi $hp $input))
+      let mut facts : Array (TSyntax `term) := #[]
+      for (source, c) in captures do
+        let hf := mkIdent (← mkFreshUserName `capture_fixed)
+        try
+          withoutRecover <| evalTactic (← `(tactic|
+            have $hf : $pi • $c = $c := by
+              apply supp_supports $c $pi
+              intro a ha
+              refine $hp ?_
+              have inclusion : supp $c ⊆ $support := by
+                first
+                | assumption
+                | exact Finset.Subset.refl _
+                | exact supp_le (by assumption)
+                | intro b hb
+                  simp only [supp_atom, support_product, Finset.mem_union,
+                    Finset.mem_singleton] at hb ⊢
+                  tauto
+              exact inclusion ha))
+        catch _ =>
+          throwError "supports_nfun: cannot prove the support of capture {source} is contained in the supplied set; provide a local inclusion or support hypothesis"
+        facts := facts.push (← `($hf))
+        facts := facts.push (← `(fixed_eq_iff $pi $c $hf))
+        facts := facts.push (← `(fixed_eq_iff_left $pi $c $hf))
+        let cExpr ← Term.elabTerm c none
+        let cType ← whnf (← inferType cExpr)
+        if cType.isAppOf ``NFun then
+          facts := facts.push (← `(fixed_nfun_apply $pi $c $hf))
+      let factRules ← facts.mapM fun r => `(Parser.Tactic.simpLemma| $r:term)
+      let allRules := factRules ++ rules
+      evalTactic (← `(tactic| simp -failIfUnchanged only [nfun_simp, $allRules,*]))
+      unless (← getUnsolvedGoals).isEmpty do
+        let remaining ← withMainContext do
+          return (← ppExpr (← getMainTarget)).pretty
+        throwError "supports_nfun: remaining action equation; supply proved rules in [rules], or use `rw [supports_pfun_iff]` for an explicit proof\n{remaining}"
+    catch ex =>
+      saved.restore
+      throw ex
 
 /-! ### Experimental `nfun` macro — free variable collection
 
@@ -213,9 +224,10 @@ private def collectCaptureSyntax (fnStx : Syntax) : Array Name :=
   | none => #[]
 
 /-- Experimental syntax-only macro for constructing an `NFun` from candidate
-captures and a generated support proof. Capture detection has known failures for
-globals, `let`, `match`, and nested functions; ordinary multiple binders do not
-automatically become a curried `NFun`.
+captures and a generated support proof. Automatic capture mode rejects `let`,
+`match`, nested functions, and multiple binders. Globals are not distinguished
+from captures by this syntax-only prototype. Explicit captures skip the scope
+guards, but still require the generated support certificate to succeed.
 
 Syntax variants:
 - `nfun fun x => body` — automatic capture detection
@@ -248,12 +260,39 @@ private def mkNFunSyntax (captureIdents : Array Lean.Ident) (fn : TSyntax `term)
     `(NFun.ofCaptures ⟨$fn⟩ $unionTerm (by supports_nfun from $fromArgs*))
 
 open Lean in
+/-- Typed groups `(x y : X)` elaborate to several arguments, unlike one tuple pattern. -/
+private def binderArity (binder : Syntax) : Nat :=
+  if binder.isOfKind ``Lean.Parser.Term.typeAscription then
+    let pattern := binder[1]
+    if pattern.isOfKind ``Lean.Parser.Term.app then
+      1 + pattern[1].getArgs.size
+    else 1
+  else 1
+
+open Lean in
+/-- Reject lexical scopes that the prototype's name collection cannot model.
+Explicit capture lists skip this check and still require a support certificate. -/
+private partial def hasUnsupportedScope (stx : Syntax) : Bool :=
+  stx.getKind == ``Lean.Parser.Term.let ||
+  stx.getKind == ``Lean.Parser.Term.letDecl ||
+  stx.getKind == ``Lean.Parser.Term.match ||
+  stx.getKind == ``Lean.Parser.Term.fun ||
+  stx.getArgs.any hasUnsupportedScope
+
+open Lean in
 macro_rules
   | `(nfun $[[capturing $caps*]]? $fn:term) => do
     match caps with
     | some cs =>
       mkNFunSyntax cs fn
     | none =>
+      if let some pf := parseFunTerm fn.raw then
+        if pf.binderStxs.foldl (fun n binder => n + binderArity binder) 0 != 1 then
+          Macro.throwError "nfun: automatic construction accepts one binder; use NFun.curry for curried nominal functions"
+        if hasUnsupportedScope pf.body then
+          Macro.throwError "nfun: automatic captures do not support let, match, or nested functions; use explicit [capturing ...] or NFun.ofCaptures with a proof"
+      else
+        Macro.throwError "nfun: automatic construction expects a single lambda; use NFun.ofCaptures with a proof"
       let freeNames := collectCaptureSyntax fn.raw
       let captureIdents := freeNames.map (fun n => mkIdent n)
       mkNFunSyntax captureIdents fn

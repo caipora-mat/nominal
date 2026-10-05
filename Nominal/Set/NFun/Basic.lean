@@ -22,7 +22,9 @@ of finitely supported functions.
 * `NFun.comap` — pre-composition with an equivariant function.
 * `NFun.prod` — pairing of nominal functions.
 * `NFun.eval` — the evaluation map `(f, x) ↦ f x`.
-* `NFun.curry` — currying an equivariant function into a nominal function.
+* `NFun.curry` / `NFun.uncurry` — convert pair-based and curried nominal functions.
+* `IsEquivariant.toNFun` — bundle a proved equivariant ordinary function.
+* `NFun.fromParam` — fix a nominal parameter of a jointly equivariant operation.
 
 ## Instances
 
@@ -240,6 +242,11 @@ instance instNominal : Nominal α (NFun α X Y) where
 Tag freshness lemmas for binder constructors (e.g., `fresh_term_lam_of_eq`) with `@[fcb]`
 so that `simp with fcb` can close FCB goals automatically. -/
 register_simp_attr fcb
+
+/-- Proved action and computation equations used by `supports_nfun`. Register
+constructor equivariance equations here; arbitrary global functions receive no
+equivariance assumption. Support inequalities are used as proofs, not simp rules. -/
+register_simp_attr nfun_simp
 
 /-- When the function output binds its first argument, FCB follows trivially.
 The hypothesis `a # A` is unused — freshness of `a` in `f (a, y)` holds unconditionally. -/
@@ -602,8 +609,31 @@ theorem isEquivariant_eval : IsEquivariant α (fun p : NFun α X Y × X ↦ p.1 
 @[simp] theorem eval_curry (f : NFun α (Z × X) Y) (z : Z) (x : X) :
     (eval : NFun α (NFun α X Y × X) Y) ((NFun.curry f) z, x) = f (z, x) := rfl
 
+/-- Uncurry a nominal-function-valued nominal function. The least-support witness
+is confined to the proof field, so evaluation remains computable. -/
+def uncurry (g : NFun α Z (NFun α X Y)) : NFun α (Z × X) Y :=
+  ⟨⟨fun p ↦ g p.1 p.2⟩, ⟨supp g, by
+    rw [supports_pfun_iff]
+    intro π hπ ⟨z, x⟩
+    have hg : π • g = g := supp_supports g π hπ
+    calc g (π • z) (π • x)
+      _ = (π • g) (π • z) (π • x) := by rw [hg]
+      _ = π • g z x := by simp⟩⟩
+
+@[simp] theorem uncurry_apply (g : NFun α Z (NFun α X Y)) (p : Z × X) :
+    g.uncurry p = g p.1 p.2 := rfl
+
+@[simp] theorem uncurry_curry (f : NFun α (Z × X) Y) : f.curry.uncurry = f := by
+  ext p
+  rfl
+
+@[simp] theorem curry_uncurry (g : NFun α Z (NFun α X Y)) : g.uncurry.curry = g := by
+  ext z x
+  rfl
+
 /-- The η law: currying the evaluation of `g` recovers `g`.
-    Pitts Thm 2.19 (CCC adjunction, uniqueness direction). -/
+    Pitts Thm 2.19 (CCC adjunction, uniqueness direction).
+    Retained with its original statement for compatibility; prefer `curry_uncurry`. -/
 theorem curry_eval (g : NFun α Z (NFun α X Y)) :
     NFun.curry (NFun.mk (PFun.mk (fun p : Z × X ↦ g p.1 p.2))
       ⟨supp g, by
@@ -613,10 +643,190 @@ theorem curry_eval (g : NFun α Z (NFun α X Y)) :
         calc g (π • z) (π • x)
           _ = (π • g) (π • z) (π • x) := by rw [hg]
           _ = (π • (g z (π⁻¹ • (π • x)))) := by simp
-          _ = π • g z x := by simp⟩) = g := by
-  ext z x; rfl
+          _ = π • g z x := by simp⟩) = g := curry_uncurry g
 
 end CCCLaws
+
+/-! ### Ordinary-function normalization
+
+Applied combinators simplify to applications; explicitly coerced combinators
+simplify to ordinary functions. There are no reverse rules. In particular these
+rules never unfold finite-support certificates. For pointwise consequences of
+NFun equality use `DFunLike.congr_fun`; nested equality uses `ext x y`.
+-/
+
+section Coercions
+
+variable {X Y Z : Type*} [Nominal α X] [Nominal α Y] [Nominal α Z]
+
+@[simp] theorem coe_mk (f : PFun α X Y) (h : FinSupported f) :
+    (NFun.mk f h : X → Y) = f := rfl
+
+@[simp] theorem coe_ofFun (f : X → Y) (h : FinSupported (f : PFun α X Y)) :
+    (ofFun f h : X → Y) = f := rfl
+
+@[simp] theorem coe_ofSupports (f : PFun α X Y) (s : Finset α) (h : supports s f) :
+    (ofSupports f s h : X → Y) = f := rfl
+
+@[simp] theorem coe_ofCaptures (f : PFun α X Y) (s : Finset α) (h : supports s f) :
+    (ofCaptures f s h : X → Y) = f := rfl
+
+@[simp] theorem coe_equivariant (f : X → Y)
+    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) :
+    (equivariant f hf : X → Y) = f := rfl
+
+@[simp] theorem coe_id : (NFun.id : X → X) = _root_.id := rfl
+
+@[simp] theorem coe_const (y : Y) : (NFun.const y : X → Y) = Function.const X y := rfl
+
+@[simp] theorem coe_comp (g : NFun α Y Z) (f : NFun α X Y) :
+    (g.comp f : X → Z) = g ∘ f := rfl
+
+@[simp] theorem coe_map (g : Y → Z) (hg : IsEquivariant α g) (f : NFun α X Y) :
+    (f.map g hg : X → Z) = g ∘ f := rfl
+
+@[simp] theorem coe_comap (g : Z → X) (hg : IsEquivariant α g) (f : NFun α X Y) :
+    (f.comap g hg : Z → Y) = f ∘ g := rfl
+
+@[simp] theorem coe_prod (f : NFun α X Y) (g : NFun α X Z) :
+    (f.prod g : X → Y × Z) = fun x ↦ (f x, g x) := rfl
+
+@[simp] theorem coe_eval :
+    (eval : (NFun α X Y × X) → Y) = fun p ↦ p.1 p.2 := rfl
+
+@[simp] theorem coe_curry_apply (f : NFun α (Z × X) Y) (z : Z) :
+    (f.curry z : X → Y) = Function.curry (f : Z × X → Y) z := rfl
+
+/-- The explicit lambda adapts the NFun-valued codomain to an ordinary function. -/
+@[simp] theorem coe_uncurry (f : NFun α Z (NFun α X Y)) :
+    (f.uncurry : Z × X → Y) = Function.uncurry (fun z ↦ (f z : X → Y)) := rfl
+
+end Coercions
+
+/-! ### Curry/uncurry action, support, and partial application -/
+
+section CurrySupport
+
+variable {X Y Z : Type*} [Nominal α X] [Nominal α Y] [Nominal α Z]
+
+@[simp] theorem smul_curry (π : FinitePerm α) (f : NFun α (Z × X) Y) :
+    π • f.curry = (π • f).curry := by ext z x; simp
+
+@[simp] theorem smul_uncurry (π : FinitePerm α) (f : NFun α Z (NFun α X Y)) :
+    π • f.uncurry = (π • f).uncurry := by ext p; simp
+
+theorem isEquivariant_curry :
+    IsEquivariant α (NFun.curry : NFun α (Z × X) Y → NFun α Z (NFun α X Y)) :=
+  ⟨fun π f ↦ (smul_curry π f).symm⟩
+
+theorem isEquivariant_uncurry :
+    IsEquivariant α (NFun.uncurry : NFun α Z (NFun α X Y) → NFun α (Z × X) Y) :=
+  ⟨fun π f ↦ (smul_uncurry π f).symm⟩
+
+theorem supp_uncurry_le (f : NFun α Z (NFun α X Y)) : supp f.uncurry ⊆ supp f :=
+  Nominal.Set.supp_map_le isEquivariant_uncurry f
+
+/-- Currying preserves support even when either domain is empty. -/
+@[simp] theorem supp_curry (f : NFun α (Z × X) Y) : supp f.curry = supp f := by
+  apply Finset.Subset.antisymm (supp_curry_le f)
+  simpa using supp_uncurry_le f.curry
+
+@[simp] theorem supp_uncurry (f : NFun α Z (NFun α X Y)) : supp f.uncurry = supp f := by
+  simpa using (supp_curry f.uncurry).symm
+
+@[simp] theorem fresh_curry {a : α} {f : NFun α (Z × X) Y} : a # f.curry ↔ a # f := by
+  simp only [fresh_atom_left, supp_curry]
+
+@[simp] theorem fresh_uncurry {a : α} {f : NFun α Z (NFun α X Y)} : a # f.uncurry ↔ a # f := by
+  simp only [fresh_atom_left, supp_uncurry]
+
+/-- Fixing an argument may add its support, but need not retain all of it. -/
+theorem supp_curry_apply_le (f : NFun α (Z × X) Y) (z : Z) :
+    supp (f.curry z) ⊆ supp f ∪ supp z := by
+  simpa using supp_apply_le f.curry z
+
+theorem fresh_curry_apply {a : α} {f : NFun α (Z × X) Y} {z : Z}
+    (hf : a # f) (hz : a # z) : a # f.curry z :=
+  fresh_apply (fresh_curry.mpr hf) hz
+
+end CurrySupport
+
+section AdapterSupport
+
+variable {X Y : Type*} [Nominal α X] [Nominal α Y]
+
+@[simp] theorem supp_equivariant (f : X → Y)
+    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) :
+    supp (equivariant f hf) = ∅ := supp_eq_empty_iff'.mpr hf
+
+@[simp] theorem fresh_equivariant (a : α) (f : X → Y)
+    (hf : ∀ (π : FinitePerm α) (x : X), f (π • x) = π • f x) :
+    a # equivariant f hf := fresh_of_supp_empty (supp_equivariant f hf) a
+
+theorem supp_ofSupports_le (f : PFun α X Y) (s : Finset α) (h : supports s f) :
+    supp (ofSupports f s h) ⊆ s := supp_le (ofSupports_supports f s h)
+
+theorem supp_ofCaptures_le (f : PFun α X Y) (s : Finset α) (h : supports s f) :
+    supp (ofCaptures f s h) ⊆ s := supp_ofSupports_le f s h
+
+theorem fresh_ofSupports {a : α} (f : PFun α X Y) (s : Finset α) (h : supports s f)
+    (ha : a ∉ s) : a # ofSupports f s h := by
+  rw [fresh_atom_left]
+  exact fun hm ↦ ha (supp_ofSupports_le f s h hm)
+
+theorem fresh_ofCaptures {a : α} (f : PFun α X Y) (s : Finset α) (h : supports s f)
+    (ha : a ∉ s) : a # ofCaptures f s h := fresh_ofSupports f s h ha
+
+end AdapterSupport
+
+end NFun
+
+namespace IsEquivariant
+
+variable {X Y : Type*} [Nominal α X] [Nominal α Y] {f : X → Y}
+
+/-- Turn a proved equivariant ordinary function into a nominal function. -/
+def toNFun (hf : IsEquivariant α f) : NFun α X Y := NFun.equivariant f hf.map_smul
+
+@[simp] theorem toNFun_apply (hf : IsEquivariant α f) (x : X) : hf.toNFun x = f x := rfl
+
+@[simp] theorem coe_toNFun (hf : IsEquivariant α f) : (hf.toNFun : X → Y) = f := rfl
+
+@[simp] theorem supp_toNFun (hf : IsEquivariant α f) : supp hf.toNFun = ∅ :=
+  NFun.supp_equivariant f hf.map_smul
+
+@[simp] theorem fresh_toNFun (hf : IsEquivariant α f) (a : α) : a # hf.toNFun :=
+  fresh_of_supp_empty hf.supp_toNFun a
+
+end IsEquivariant
+
+namespace NFun
+
+variable {P X Y : Type*} [Nominal α P] [Nominal α X] [Nominal α Y]
+
+/-- Fix a nominal parameter of a jointly equivariant operation. The resulting
+function is supported by the parameter; it need not itself be equivariant. -/
+def fromParam (f : P → X → Y) (hf : IsEquivariant₂ α f) (p : P) : NFun α X Y :=
+  hf.curry.toNFun.curry p
+
+@[simp] theorem fromParam_apply (f : P → X → Y) (hf : IsEquivariant₂ α f) (p : P) (x : X) :
+    fromParam f hf p x = f p x := rfl
+
+@[simp] theorem coe_fromParam (f : P → X → Y) (hf : IsEquivariant₂ α f) (p : P) :
+    (fromParam f hf p : X → Y) = f p := rfl
+
+@[simp] theorem smul_fromParam (π : FinitePerm α) (f : P → X → Y)
+    (hf : IsEquivariant₂ α f) (p : P) :
+    π • fromParam f hf p = fromParam f hf (π • p) := by
+  ext x
+  simpa using (hf.map_smul π p (π⁻¹ • x)).symm
+
+theorem supp_fromParam_le (f : P → X → Y) (hf : IsEquivariant₂ α f) (p : P) :
+    supp (fromParam f hf p) ⊆ supp p := by
+  simpa [fromParam] using supp_curry_apply_le hf.curry.toNFun p
+
+theorem fresh_fromParam {a : α} (f : P → X → Y) (hf : IsEquivariant₂ α f) {p : P}
+    (hp : a # p) : a # fromParam f hf p := fresh_of_supp_subset (supp_fromParam_le f hf p) hp
 
 end NFun
 
