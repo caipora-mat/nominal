@@ -58,11 +58,20 @@ An article subagent may draft in parallel with implementation using agreed
 statements. Reconcile its text against the final declarations and checks before
 delivery; concurrent work does not justify leaving the manuscript behind.
 
-The next concrete application is F03b: develop the swap-factorization theorem,
-control of its endpoints and the avoidance corollary together with the
-extension of [foundations.tex](../article/sections/foundations.tex). Its relation
-to the later support criterion should be explained, while the unimplemented
+F03b applies this rule to controlled swap factorization, arbitrary-set avoidance
+and the selected-action criterion in [foundations.tex](../article/sections/foundations.tex).
+The mathematics and LaTeX were developed together. The four public Lean results
+are checked, the article is reconciled and compiled, and independent review
+found no issues. F03b is delivered.
 F04 support theory remains labeled as future work.
+
+The [F03b written specification](../superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
+assigns the controlled-factorization, avoidance and action-invariance propositions,
+their Mathlib/Package proof correspondence and final manuscript verification to
+this increment. The specification is approved. The
+[implementation plan](../superpowers/plans/2026-10-05-package-controlled-swaps.md)
+was approved for native execution. It assigns article drafting to its first two
+mathematical tasks and final evidence reconciliation/compilation to its third task.
 
 Follow the [architectural-freedom policy](README.md#architectural-freedom):
 the package may develop its entire nominal foundation afresh, including actions,
@@ -127,7 +136,7 @@ Possible initial entries (examples of the ledger format):
 | CL-008 | Unconditional abstraction mapping for supported functions fails — scratch theorem | [BackendCounterexamples.lean](probes/BackendCounterexamples.lean), `no_unconditional_const_abs_map` | Fresh-binder mapping remains possible research |
 | CL-009 | Generic fresh rule criterion — primary-source theorem | [2025 comparison](2026-10-05-isabelle-comparison.md), Definition 6/Theorem 7 | No Lean port or Isabelle build in this research turn |
 | CL-010 | Complete generated syntax/function/judgment workflow — proposed | PKG-07 acceptance criterion | No implementation/generation result yet |
-| CL-011 | Package permutation/action kernel — F02/F03a delivered; support and predicate foundations remain proposed | `Package/Foundations/Permutation.lean`, `Package/Foundations/Action.lean`, their recorded audit and the foundations article section | Later support/freshness/function/predicate claims require their own proofs and article updates |
+| CL-011 | Package permutation/action kernel — F02/F03a/F03b delivered; support and predicate foundations remain proposed | `Package/Foundations/Permutation.lean`, `Package/Foundations/SwapFactorization.lean`, `Package/Foundations/Action.lean`, their recorded audit and the foundations article section | Later support/freshness/function/predicate claims require their own proofs and article updates |
 
 Record actual declaration names when creating the ledger; a descriptive label is
 not an adequate theorem reference. Re-run audits after a dependency-changing

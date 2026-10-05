@@ -31,6 +31,10 @@
 \begin{abstract}
 We describe the first foundation layer of a proposed nominal package for Lean:
 finite permutations, coherent actions, and equivariant ordinary functions.
+Controlled swap factorization keeps every endpoint in the original moved
+set and yields factorization avoiding an arbitrary pointwise fixed set.
+For any selected action, invariance under swaps outside a set is equivalent
+to invariance under all finite permutations fixing that set pointwise.
 The design uses Mathlib's group and action interfaces, separates atom and
 carrier universes, and makes trivial actions on external data explicit.
 Three small counterexamples distinguish actions that have the same underlying

@@ -10,9 +10,10 @@ implementation plan.** Inspected checkout: `fasapa/nominal-package`, HEAD
 and requested a LaTeX article under `docs/article/` maintained alongside its
 implementation. The [implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md)
 was approved for native execution. The broader predicate/support contracts below
-remain proposals. The initial assessment is retained below; the current delivery
-is F02 plus F03a, with three production source modules, one audit module and 77
-audited production declarations. The author removed the standalone Package
+remain proposals. The initial assessment is retained below. F02/F03a originally
+delivered three production source modules and 77 audited declarations; the
+working-tree F03b extension now has four production source modules, one audit
+module and 81 audited production declarations. The author removed the standalone Package
 examples layer during execution; persistent usage examples are reserved for
 future case studies. Temporary public-import checks are scratch evidence only.
 
@@ -32,19 +33,29 @@ No branch switch, merge, commit, dependency change, production implementation,
 or CI change belongs to this session. The active tracker is the
 [package roadmap](../nominal-package-roadmap.md), not the historical roadmap.
 
-## Current next step after F02/F03a
+## Current next step after F03b
 
 The current Package source supplies the permutation/action kernel and its
-production audit. The next slice is **F03b**, providing swap generation with
-control over endpoints (or an equivalent induction principle) and the resulting
-avoidance guarantee for permutations fixing a set pointwise. This can be proved
-without an infinite-atom assumption; F04 introduces the support/freshness theory
-and its required hypotheses. F05 and PKG-01 follow those foundations.
+production audit. **F03b** now proves swap generation with endpoints in the
+original moved set, arbitrary-set avoidance, and the selected-action criterion.
+All four results are kernel-checked without an infinite-atom assumption. F03b's
+independent final review is clean. F04 next introduces support/freshness and its required hypotheses;
+F05 and PKG-01 follow those foundations.
+
+The [F03b specification](../superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
+and [implementation plan](../superpowers/plans/2026-10-05-package-controlled-swaps.md)
+were approved for native execution. `Perm.swap_factorization` specializes pinned
+Mathlib's restricted-swap closure theorem and extracts a controlled list.
+`Perm.swap_factorization_avoiding` derives avoidance for arbitrary `Set A`;
+`Perm.smul_eq_of_swap_smul_eq` and `Perm.forall_smul_eq_iff_swap_smul_eq` consume
+it for any selected action. Production coverage and the direct standard-axiom
+audit pass, and the independent final review found no issues.
 
 Every next increment includes its LaTeX work in the same scope and completion
-criteria. For F03b, extend `docs/article/sections/foundations.tex` with the theorem,
-proof strategy and avoidance consequence while developing the Lean result;
-synchronize references and evidence and compile before marking the slice done.
+criteria. F03b extends `docs/article/sections/foundations.tex` with the controlled
+factorization, avoidance and action-invariance propositions and proof explanations.
+Its references/evidence are synchronized and the article compiles; the independent
+review also performed a fresh manuscript build. F03b is complete.
 See the [current roadmap](../nominal-package-roadmap.md) for acceptance details.
 
 ## Initial readiness against the proposed design (historical)

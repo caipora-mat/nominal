@@ -38,20 +38,27 @@ finite permutations and uses standard \texttt{MulAction} interfaces for the
 new boundary.
 
 \paragraph{Implementation status.}
-This version describes the implemented foundation increment for roadmap tasks
-\texttt{PKG-F02} and the first slice, \texttt{F03a}, of \texttt{PKG-F03}.
+This version describes the implemented foundation increments for roadmap tasks
+\texttt{PKG-F02} and both slices, \texttt{F03a/F03b}, of \texttt{PKG-F03}.
 The permutation and action interfaces exported by \texttt{Package} have been
 checked by Lean, and the source-coverage check and production axiom audit pass.
 Section~\ref{sec:evidence} records the verification evidence separately from
 the mathematical exposition.
 
-The support-facing slice \texttt{F03b} remains open under \texttt{PKG-F03}.
+Sections~\ref{sec:controlled-swaps} and~\ref{sec:swap-invariance} describe
+the support-facing permutation input supplied by \texttt{F03b}: controlled
+swap factorization, avoidance of an arbitrary pointwise fixed set, and the
+corresponding criterion for invariance in any selected action. All four
+public results have been checked by Lean. The support construction itself,
+\texttt{PKG-F04}, remains later work.
 Supported predicates (\texttt{PKG-01}) are also later work. Persistent usage
 examples are reserved for the future case studies.
 
-The present scope includes finite permutations, swaps, actions on atoms,
+The present scope includes finite permutations, controlled swap factorization,
+arbitrary-set avoidance, actions on atoms,
 products and finite atom sets, explicit discrete data, and equivariance of
-ordinary functions. It does not establish finite-swap factorization, finite
+ordinary functions, together with the selected-action swap criterion.
+It does not establish finite
 or least support, freshness, quotient actions, supported predicates, name
 abstraction, induction, recursion, or generated syntax. These are later
 mathematical layers, with their own proof obligations.

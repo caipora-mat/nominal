@@ -118,15 +118,18 @@ acceptance criteria guide architecture without prescribing the old implementatio
 | [Discrete representation investigation](2026-10-05-discrete-representation.md) | Mathematical counterpart, structure/def/abbrev comparison, action inference and concrete Mathlib reuse |
 | [First foundation specification](../superpowers/specs/2026-10-05-package-foundation-kernel-design.md) | Approved F02 + F03a boundary |
 | [First implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md) | Approved native execution; incorporates removal of standalone Package examples |
-| [Package foundation interface](../../Package/README.md) | Working-tree F02/F03a implementation, import policy and validation commands |
+| [F03b controlled-swap specification](../superpowers/specs/2026-10-05-package-controlled-swaps-design.md) | Approved public statements, Mathlib proof route, article obligations and acceptance checks |
+| [F03b implementation plan](../superpowers/plans/2026-10-05-package-controlled-swaps.md) | Completed native execution with concurrent LaTeX work and clean independent review |
+| [Package foundation interface](../../Package/README.md) | F02/F03a kernel plus working-tree F03b results, import policy and validation commands |
 | [LaTeX article](../article/main.tex) | Foundation mathematics, actual public declarations and verification evidence |
 
 The earlier architecture prompt was removed in `76966b1`; the table now points
 to the existing handoff and current review artifacts. F01 is in progress, with
 its required F02 + F03a boundary approved. Later layer proposals remain open.
-The implementation plan was approved for native execution. F02 and F03a now
-have working-tree implementation and validation evidence, with a clean
-independent final review. The author requires all article content in LaTeX under `docs/article/`
+The implementation plan was approved for native execution. F02 and F03a have
+implementation and validation evidence, with a clean independent final review;
+that preceding work was committed at `3d2196a` during F03b design review.
+The author requires all article content in LaTeX under `docs/article/`
 and reserves persistent usage examples for future case studies. The current
 Package foundation has no standalone Examples layer.
 
@@ -141,11 +144,13 @@ writing is not deferred until the package is finished. The
 [article plan](2026-10-05-article-plan.md#concurrent-writing-is-part-of-delivery)
 specifies the completion rule.
 
-F02/F03a are delivered with their article sections. F03b's next proposed slice
-is swap generation with controlled endpoints and its avoidance corollary, with
-a corresponding extension of `docs/article/sections/foundations.tex`. Later
-support, predicate and binder results remain future work. This documentation
-clarification adds no new Lean theorem or manuscript proof.
+F02/F03a are delivered with their article sections. F03b now implements controlled
+swap factorization, avoidance for arbitrary `Set A`, and the selected-action
+implication/equivalence, with corresponding LaTeX exposition. The author approved
+native execution; independent final review found no issues. The direct production audit covers
+81 declarations in three defining modules with only standard axioms. Coverage
+reaches four production source modules and one audit module. F04 support/freshness,
+F05 interfaces and PKG-01 remain future work; the new results add no action instance.
 
 ## Scratch evidence
 

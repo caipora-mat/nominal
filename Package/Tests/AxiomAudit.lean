@@ -36,6 +36,10 @@ run_cmd do
 
 #print axioms NominalPackage.Perm.moved_conj
 #print axioms NominalPackage.Perm.conj_swap
+#print axioms NominalPackage.Perm.swap_factorization
+#print axioms NominalPackage.Perm.swap_factorization_avoiding
+#print axioms NominalPackage.Perm.smul_eq_of_swap_smul_eq
+#print axioms NominalPackage.Perm.forall_smul_eq_iff_swap_smul_eq
 #print axioms NominalPackage.Perm.smul_atom
 #print axioms NominalPackage.Discrete.smul_val
 #print axioms NominalPackage.Equivariant.comp

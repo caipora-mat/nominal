@@ -3,7 +3,7 @@ Copyright (c) 2026 Nominal contributors. All rights reserved.
 Released under Apache 2.0 license as described in the file LICENSE.
 Authors: Nominal contributors
 -/
-import Package.Foundations.Permutation
+import Package.Foundations.SwapFactorization
 import Mathlib.Algebra.Group.Action.End
 import Mathlib.Algebra.Group.Subgroup.Actions
 import Mathlib.Algebra.Group.Action.Prod
@@ -19,6 +19,8 @@ open the `Pointwise` scope. No action on an arbitrary external carrier is inferr
 `Discrete A X` makes the trivial action a distinct carrier. Bare permutation
 groups retain left multiplication, and bare functions retain pointwise action.
 `Equivariant A f` is an unbundled property and names its atom type explicitly.
+Invariance under swaps outside an arbitrary set is equivalent to invariance
+under finite permutations fixing that set pointwise, for any selected action.
 -/
 
 namespace NominalPackage
@@ -31,6 +33,45 @@ variable {A : Type u}
 
 /-- The inherited canonical action on atoms computes by application. -/
 @[simp] theorem smul_atom (π : Perm A) (a : A) : π • a = π a := rfl
+
+section SwapInvariance
+
+variable [DecidableEq A] {X : Type v} [MulAction (Perm A) X]
+
+/-- Outside-swap invariance implies invariance under any finite permutation
+fixing the arbitrary set `S` pointwise. No support or nominality is assumed. -/
+theorem smul_eq_of_swap_smul_eq (S : Set A) (x : X)
+    (hswap : ∀ a b : A, a ∉ S → b ∉ S → swap a b • x = x)
+    (π : Perm A) (hfix : ∀ a ∈ S, π a = a) :
+    π • x = x := by
+  obtain ⟨l, hl, hs⟩ := swap_factorization_avoiding π S hfix
+  rw [← hl]
+  suffices ∀ l : List (A × A),
+      (∀ p ∈ l, p.1 ≠ p.2 ∧ p.1 ∉ S ∧ p.2 ∉ S) →
+      (l.map (fun p => swap p.1 p.2)).prod • x = x from this l hs
+  intro l
+  induction l with
+  | nil => simp
+  | cons p l ih =>
+    intro h
+    rw [List.map_cons, List.prod_cons, mul_smul,
+      ih (fun q hq => h q (List.mem_cons_of_mem _ hq))]
+    exact hswap p.1 p.2 (h p (by simp)).2.1 (h p (by simp)).2.2
+
+/-- The pointwise-fixing permutation criterion is equivalent to checking swaps
+outside `S`. Equal-endpoint swaps are allowed, since they are identity. -/
+theorem forall_smul_eq_iff_swap_smul_eq (S : Set A) (x : X) :
+    (∀ π : Perm A, (∀ a ∈ S, π a = a) → π • x = x) ↔
+      (∀ a b : A, a ∉ S → b ∉ S → swap a b • x = x) := by
+  constructor
+  · intro h a b ha hb
+    apply h (swap a b)
+    intro c hc
+    exact swap_apply_of_ne_of_ne (fun he => ha (he ▸ hc)) (fun he => hb (he ▸ hc))
+  · intro h π hfix
+    exact smul_eq_of_swap_smul_eq S x h π hfix
+
+end SwapInvariance
 
 section Finsets
 

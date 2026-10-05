@@ -1,6 +1,6 @@
 # Package foundation kernel
 
-This is the F02 + F03a increment of the new nominal package. It uses the pinned
+This contains F02 and both F03 slices of the new nominal package. It uses the pinned
 Lean/Mathlib 4.34.1 and imports Mathlib directly. The reference `Nominal/` and
 `Instances/` development remains separate.
 
@@ -20,6 +20,8 @@ nor decidable equality; `Perm.swap` takes `[DecidableEq A]`.
 | Group/application | `Perm.ext`, `one_apply`, `mul_apply`, `inv_apply_apply`, `apply_inv_apply`, `toEquiv_*` |
 | Moved points | `Perm.moved`, `moved_finite`, `moved_mul_subset`, `moved_inv`, `moved_conj` |
 | Swaps | `Perm.swap`, `swap_apply_left/right`, `swap_apply_of_ne_of_ne`, `swap_self`, `swap_inv`, `swap_mul_self`, `conj_swap`, `moved_swap` |
+| Controlled factorization | `Perm.swap_factorization`, `Perm.swap_factorization_avoiding` |
+| Swap invariance criterion | `Perm.smul_eq_of_swap_smul_eq`, `Perm.forall_smul_eq_iff_swap_smul_eq` |
 | Canonical atom action | `Perm.smul_atom`; inherited from Mathlib, with no competing atom instance |
 | Products | Standard componentwise Mathlib action and projection equations |
 | Finite atom sets | `Perm.smul_finset`, `Perm.mem_smul_finset`; requires the consumer's `Pointwise` scope and decidable equality |
@@ -32,10 +34,25 @@ an independently chosen action on X. Bare permutation groups keep their usual
 left-multiplication action; bare functions keep the pointwise codomain action.
 Neither is silently changed to conjugation.
 
+`Perm.swap_factorization π` provides a list `l : List (A × A)` with
+`(l.map (fun p => Perm.swap p.1 p.2)).prod = π`. Every pair has distinct endpoints
+in the **original** `π.moved`. The rightmost swap acts first; the empty list
+represents identity. The witness is nonunique, with no chosen factorization algorithm.
+
+For arbitrary `S : Set A`, `Perm.swap_factorization_avoiding π S hfix` gives
+factors whose endpoints lie outside S when `hfix : ∀ a ∈ S, π a = a`.
+For any selected `MulAction (Perm A) X`, `Perm.smul_eq_of_swap_smul_eq S x hswap π hfix`
+then proves `π • x = x`, where `hswap` says every swap outside S fixes x.
+`Perm.forall_smul_eq_iff_swap_smul_eq S x` gives the equivalence with invariance
+under all permutations fixing S pointwise. Equal-endpoint swaps are harmless.
+These four results require decidable equality for swaps but no infinitude,
+countability, finite avoidance set, or nominality of X. Pointwise fixation of S
+is essential; setwise preservation is a different condition.
+
 Persistent usage examples are reserved for future case studies. This increment
 contains the foundation modules and their audit, without a `Package/Examples`
 layer. It supplies no support, freshness, quotient, binder or recursion theory;
-F03b retains the support-facing permutation obligations, and PKG-01 is later work.
+F03b supplies the permutation input to F04, followed by F05 and PKG-01.
 
 ## Verification
 
@@ -47,7 +64,7 @@ python3 Package/Scripts/check-imports.py
 git diff --check
 ```
 
-The public root imports both foundation modules. The coverage script inventories
+The public root imports all three foundation modules. The coverage script inventories
 all Package Lean sources and checks the separate production and audit closures.
 It rejects unclassified sources, missing local imports, production-to-audit
 imports and reference-library dependencies. Its header parser is pinned Lean's

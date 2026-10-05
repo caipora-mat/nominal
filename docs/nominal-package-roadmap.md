@@ -2,8 +2,10 @@
 
 Last updated: 2026-10-05. Branch: `fasapa/nominal-package`.
 Research baseline: `7fed53a2e5fc67379f86f085515e310e7c1fddb7`.
-Current F01 assessment: `76966b1f2e44f594517442b6572e33abaa9038e0`, with
-uncommitted research/design artifacts linked below.
+F01 assessment snapshot: `76966b1f2e44f594517442b6572e33abaa9038e0`.
+Current F03b implementation: `3d2196a57b8964084dd58a65a0cb1c0be50b1592`, with
+uncommitted F03b implementation/article/design updates linked below. The preceding
+foundation implementation, article and research artifacts are now committed.
 The original investigation started at
 `4279ba92efacd77b3b96e507631502272b489999`; its verification remains historical
 evidence, as recorded below.
@@ -121,7 +123,8 @@ research or implementation, without implying design approval. Use checked boxes
 only for delivered results. F02 and F03a now have working-tree implementation,
 verification evidence and a clean independent final review. F01 remains open
 for later per-layer choices.
-F03b, F04–F06 and PKG-01 remain unimplemented.
+F03b is delivered with matching LaTeX exposition and a clean independent review.
+F04–F06 and PKG-01 remain unimplemented.
 
 Distinguish user decisions, integrated theorems, standalone probes, source
 readings, mathematical analyses and proposed interfaces. Record revision and
@@ -146,7 +149,7 @@ an increment, but an accurate, current exposition is.
 | PKG-00 | DONE — historical research proposal; revised design pending | Completed core/Church–Rosser as research evidence | Architecture comparison, contracts, probes and article outline |
 | PKG-F01 | IN PROGRESS — first foundation spec approved; later layer choices remain proposed | Current user decisions; PKG-00 evidence; pinned algebraic source | Algebraic-sketch investigation, foundation/API contract and per-layer adoption/adaptation/reconstruction decisions |
 | PKG-F02 | DONE — verified working-tree delivery | Approved F01 boundary for F02/F03a; approved native plan | `Package/` root, Lake/import boundary and production audit coverage |
-| PKG-F03 | IN PROGRESS — F03a implemented; F03b remains open | Approved F01 boundary; F02 | Atoms, finite permutations, actions and equivariance |
+| PKG-F03 | DONE — F03a and F03b verified; F03b uncommitted | Approved F01 boundary; F02; approved F03b native plan | Atoms, finite permutations, actions and equivariance |
 | PKG-F04 | TODO | PKG-F03 | Finite/least support, freshness and required products/quotients |
 | PKG-F05 | TODO | PKG-F04 | Minimal function-space and predicate-input interface |
 | PKG-F06 | TODO | PKG-F04/F05 | Abstraction, concretion or equivalent certified binder-descent facility |
@@ -160,12 +163,12 @@ an increment, but an accurate, current exposition is.
 | PKG-08 | TODO | PKG-07 and a scoped let specification | Lambda with let and expansion correctness |
 | PKG-09 | TODO | PKG-07 and a residual-binding/transition specification | π-calculus case study |
 | PKG-10 | TODO | PKG-07 and a positivity/semantic specification | μ-calculus case study |
-| PKG-11 | IN PROGRESS — F02/F03a LaTeX exposition and evidence delivered | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
+| PKG-11 | IN PROGRESS — F02/F03a/F03b LaTeX exposition and evidence delivered | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
 
 The implementation dependency spine is
 `F01 → F02 → F03a → F03b → F04 → F05 → PKG-01`, with concurrent
-LaTeX work tracked under PKG-11 at each step. F02/F03a are delivered; F03b is
-the next bounded design/implementation slice. These steps can be small where reviewed
+LaTeX work tracked under PKG-11 at each step. F02/F03a/F03b are delivered,
+with F04 next. These steps can be small where reviewed
 dependencies already discharge the contract; none prescribes a complete rewrite
 or a full catalogue of nominal constructions.
 
@@ -298,7 +301,7 @@ the existing reference helper must not be reported as Package validation.
 
 - [x] Supply the finite-permutation group and swaps without unnecessary
   infinitude or countability assumptions; retain their stated equality requirements.
-- [ ] Prove the remaining permutation laws needed for the selected support
+- [x] Prove the remaining permutation laws needed for the selected support
   construction. Introduce infinite-atom assumptions only where later results need them.
 - [x] Prove or review adopted action laws, equivariance and canonical actions
   on atoms and the initial data shapes; document universe and instance choices.
@@ -314,29 +317,38 @@ requires it. No support or fresh-name theorem follows from group laws alone.
 
 The approved **F03a** includes finite-moved permutations, swaps, canonical atom
 action, standard product/Finset actions, discrete data and equivariance.
-**F03b** retains the remaining support-facing permutation obligations, such as
-swap generation/characterization prerequisites or a reviewed equivalent proof
-route. These are slices of PKG-F03. The implemented F03a slice alone cannot mark
-PKG-F03 DONE. Its public-import compatibility and action distinctions were
-checked in temporary files; persistent usage examples are deferred to case studies.
+**F03b** supplies controlled swap factorization, arbitrary-set avoidance and the
+selected-action criterion through `Perm.swap_factorization`,
+`Perm.swap_factorization_avoiding`, `Perm.smul_eq_of_swap_smul_eq`, and
+`Perm.forall_smul_eq_iff_swap_smul_eq`. Both slices use temporary public-import
+checks; persistent usage examples remain deferred to case studies.
 
-#### F03b — Proposed next contract: swaps preserving an avoidance set
+#### F03b — Controlled swaps preserving an avoidance set
 
-- [ ] Investigate Mathlib's permutation factorization/induction and finite-set
+The [bounded F03b specification](superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
+is approved by the author. It specifies four public results, arbitrary-set
+avoidance, a restricted-generator Mathlib proof route and concurrent LaTeX work.
+The [implementation plan](superpowers/plans/2026-10-05-package-controlled-swaps.md)
+was approved for native execution. All four public results are implemented and
+kernel-checked; the accompanying article is reconciled and compiled. Independent
+final review found no Critical, Important or Minor issues. See the delivery log
+for commands, counts and preservation evidence.
+
+- [x] Investigate Mathlib's permutation factorization/induction and finite-set
   results before writing a new proof. Check whether they provide the required
   control over endpoints directly or through a small specialization/adapter.
-- [ ] Prove that each finite permutation is a finite product of swaps whose
+- [x] Prove that each finite permutation is a finite product of swaps whose
   distinct endpoints lie in that permutation's moved set, or give an equivalent
   induction principle with the same control over endpoints.
-- [ ] Derive the avoidance consequence: if the permutation fixes a set S
+- [x] Derive the avoidance consequence: if the permutation fixes a set S
   pointwise, the factorization uses swaps with both endpoints outside S.
-- [ ] Consume the result through `import Package`: for an arbitrary selected
+- [x] Consume the result through `import Package`: for an arbitrary selected
   `MulAction (Perm A) X`, invariance of x under all swaps outside S implies
   invariance under every finite permutation fixing S pointwise.
-- [ ] Cover identity/empty factorization and finite atom carriers; no
+- [x] Cover identity/empty factorization and finite atom carriers; no
   `Infinite A` hypothesis is needed for this factorization. Use temporary
   public-import checks, preserving the author's case-study-only examples policy.
-- [ ] Extend `docs/article/sections/foundations.tex` concurrently with the
+- [x] Extend `docs/article/sections/foundations.tex` concurrently with the
   factorization statement, proof strategy and avoidance corollary. At delivery,
   connect them to the actual declarations and verification evidence and compile LaTeX.
 
@@ -628,7 +640,7 @@ successful external builds.
 The author now requires the article entirely in LaTeX under `docs/article/`,
 written alongside implementation. The [initial manuscript](article/main.tex)
 contains introduction and permutation/action sections with mathematical proofs,
-actual F02/F03a declaration references and verification evidence. Later support,
+actual F02/F03a/F03b declaration references and verification evidence. Later support,
 predicate and binder results remain prospective. This supersedes the earlier
 Markdown-first suggestion; the article's mathematical content and implementation
 correspondence must advance with each new slice.
@@ -678,15 +690,18 @@ Lean rebuild. A successful document check is never package proof evidence.
 1. F02 + F03a passed independent final review and is delivered in the working
    tree. The [native plan](superpowers/plans/2026-10-05-package-foundation-kernel.md)
    records completion and the author's removal of standalone Package examples.
-2. Review and implement the bounded F03b contract above: endpoint-controlled
-   swap generation and the avoidance corollary, with its concurrent LaTeX
-   section. Then proceed to F04/F05 before PKG-01. The present subgroup/action
-   laws do not prove least support.
+2. F03b is delivered. Next specify F04 support/freshness, followed by
+   F05 before PKG-01. The [approved F03b specification](superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
+   and [native plan](superpowers/plans/2026-10-05-package-controlled-swaps.md)
+   supply its bounded contract. The swap criterion supplies permutation input;
+   it does not implement support or prove least support.
 3. Settle syntax/backend, direct-mutual, finite-context and binder-descent choices
    at their own tasks. Later π/μ semantics remain separate decisions.
 
-The implementation and accompanying LaTeX article are uncommitted working-tree
-changes. Persistent usage examples belong to future case studies. The current
+The F02/F03a implementation and accompanying LaTeX article are committed at
+`3d2196a`; the F03b implementation, article, specification, plan and tracker
+updates remain uncommitted.
+Persistent usage examples belong to future case studies. The current
 Package audit covers production declarations directly; the reference examples
 remain unchanged. The candidate direct SPred interface is still a proposal and
 requires no complete general supported-function library as a hidden prerequisite.
@@ -699,6 +714,8 @@ requires no complete general supported-function library as a hidden prerequisite
 - [Independent and comparative predicate design probes](research/2026-10-05-predicate-design-probes.md).
 - [First bounded foundation written specification](superpowers/specs/2026-10-05-package-foundation-kernel-design.md).
 - [F02 + F03a implementation plan](superpowers/plans/2026-10-05-package-foundation-kernel.md).
+- [Approved F03b controlled-swap specification](superpowers/specs/2026-10-05-package-controlled-swaps-design.md).
+- [Completed F03b native implementation plan](superpowers/plans/2026-10-05-package-controlled-swaps.md).
 - [LaTeX manuscript](article/main.tex).
 - [Current research policy and reading guide](research/README.md).
 - [Requirements and author decisions](research/2026-10-05-nominal-package-brief.md).
@@ -1161,3 +1178,198 @@ without warnings or layout/reference diagnostics; `git diff --check` passed.
 The production action file exactly matches its saved pre-refactor bytes. No
 commits, dependency changes, new persistent examples or other production edits
 were made.
+
+### 2026-10-05 — F03b specification prepared for review
+
+Started the selected F03b increment by rechecking branch, status, relevant history,
+current Package sources, prior approvals and article. Initial HEAD was
+`76966b1f2e44f594517442b6572e33abaa9038e0` on `fasapa/nominal-package`. During
+review it advanced externally to `3d2196a57b8964084dd58a65a0cb1c0be50b1592`,
+committing the preceding implementation/research/article work. Source contents
+were preserved; this design session made no commit, push or branch change.
+
+The [new specification](superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
+proposes controlled endpoint-pair list factorization, arbitrary-set avoidance,
+the selected-action consequence and its converse. Products apply the rightmost
+swap first. It retains decidable equality for swaps and introduces no atom
+infinitude, ambient finiteness, nominality or finite-avoidance-set hypothesis.
+It assigns the corresponding LaTeX propositions, mathematical proof explanation,
+source correspondence and manuscript compilation to the same implementation
+increment. F03b remains unimplemented and awaits written-spec agreement, then
+a reviewed implementation plan and execution agreement. F04/F05/PKG-01 remain
+later work, and PKG-11 remains ongoing.
+
+Two read-only investigations compared proof routes and article obligations.
+Pinned Mathlib at `d13f23b723b8a846827a245b89c10fc7d3f11612` supplies
+`mem_closure_isSwap` for a restricted set of swap generators. The recommended
+adapter restricts endpoints to the original moved set and uses
+`Subgroup.closure_induction_left` to extract an ordered list. Finite-subtype
+induction is an alternative; a new moved-set cardinality induction would repeat
+an argument already in Mathlib. Unrestricted generation alone is not accepted
+as endpoint-control evidence.
+
+Commands actually run during design:
+
+- `lake build Package +Package.Tests.AxiomAudit` passed: 821 jobs with cached
+  artifacts and replayed audit output.
+- Direct `lake env lean Package/Tests/AxiomAudit.lean` passed: 77 production
+  declarations from two defining modules; only `propext`, `Classical.choice`
+  and `Quot.sound`.
+- `python3 Package/Scripts/check-imports.py` passed: three production source
+  modules and one audit module.
+- `lake env lean /tmp/nominal-f03b-design-_hmdmsu4/MathlibBoundary.lean` passed
+  without diagnostics after removing an unnecessary probe section variable.
+  The original version, which passed with unused-variable warnings, is retained
+  beside it. The probe checks the ambient fixed-point-complement bridge, exact
+  Mathlib signatures and atom/group/function action coherence after the proposed
+  imports. It does not prove F03b factorization or its action consequence.
+
+This is baseline verification and design evidence, not a fresh project build,
+dependency bootstrap or new mathematical delivery. No Package, article, reference
+source, dependency, configuration, checker or persistent example was changed.
+No article compilation was needed for this specification-only step; manuscript
+development and compilation remain explicit F03b implementation obligations.
+
+Specification self-review and an independent read-only review found no
+mathematical or scope issue. The review's one documentation finding was the
+externally advanced HEAD; the specification and current tracker now distinguish
+the initial snapshot from the committed baseline. Documentation checks passed
+for five changed/new Markdown files, 98 local links and their anchors, fences
+and whitespace; `git diff --check` passed. A 106-file content snapshot confirmed
+102 files unchanged, with only the four intended existing documentation files
+modified and the new F03b specification added. The specification awaits author
+agreement; no implementation plan has yet been prepared.
+
+### 2026-10-05 — F03b specification approved; implementation plan prepared
+
+The author approved the F03b written specification. Recorded that approval
+without extending it to production edits. The
+[implementation plan](superpowers/plans/2026-10-05-package-controlled-swaps.md)
+is now prepared for review and execution-method agreement, at unchanged HEAD
+`3d2196a57b8964084dd58a65a0cb1c0be50b1592` on `fasapa/nominal-package`.
+
+Its three tasks deliver controlled/avoiding factorization, selected-action
+consequences, and final audit/article/documentation evidence. Tasks 1 and 2
+include concurrent LaTeX development and compilation; Task 3 reconciles exact
+statements, proof explanations and measured verification evidence. The plan
+retains all four approved signatures, arbitrary `Set A`, independent universes,
+the original moved-set endpoint bound and the rightmost-first convention.
+
+A read-only planning investigation identified reuse of the existing temporary
+F03a action/coherence checks, plus concrete new checks for empty/singleton atom
+carriers, empty controlled identity lists, noncommuting `Fin 3` factors and a
+nonidentity swap avoiding the infinite set `({0,1} : Set ℕ)ᶜ`. These are planned
+acceptance assertions, not newly implemented proofs. The coordinator self-reviewed
+the plan against the approved spec, including its article obligations and all
+five Review Focus cases.
+
+Native execution is recommended with root-owned Lean/tests, exclusive article
+ownership for a parallel worker and one fresh final reviewer. This recommendation
+is not execution approval. No production, article, reference, dependency or
+configuration content was changed during planning; no new Lean build, axiom
+audit, checker self-test or LaTeX compilation was needed or claimed. F03b remains
+unimplemented, and F04/F05/PKG-01 remain later work.
+
+Planning validation passed for six changed/new Markdown files: 107 local links,
+seven anchors, balanced fences and whitespace. All four plan signatures match
+the approved specification exactly after whitespace normalization;
+`git diff --check` passed. A 107-file planning snapshot confirmed 102 existing
+files unchanged; only the five intended existing design/documentation files
+were edited, with the new implementation plan added. The plan and approval
+records remain uncommitted.
+
+### 2026-10-05 — Native F03b delivery: controlled swaps and action criterion
+
+The author approved the implementation plan by selecting native execution.
+Root implemented the Lean proofs and temporary consumers; an article worker
+owned the three LaTeX sources during development. Work remained on
+`fasapa/nominal-package` at `3d2196a57b8964084dd58a65a0cb1c0be50b1592`.
+The increment is verified, uncommitted working-tree work; no commit, push,
+merge, branch switch, dependency upgrade or CI change was performed.
+
+Delivered exact public declarations:
+
+- `Perm.swap_factorization` in `Package/Foundations/SwapFactorization.lean`:
+  an endpoint-pair list with product π and distinct endpoints in the original
+  `π.moved`. The rightmost swap acts first.
+- `Perm.swap_factorization_avoiding`: the same existential product guarantee
+  with endpoints outside arbitrary `S : Set A` when π fixes S pointwise.
+- `Perm.smul_eq_of_swap_smul_eq` and
+  `Perm.forall_smul_eq_iff_swap_smul_eq` in `Package/Foundations/Action.lean`:
+  the selected-action implication and converse, with independent atom/carrier
+  universes and no nominality assumption.
+
+The proof specializes pinned Mathlib's `mem_closure_isSwap` to generators whose
+endpoints lie in the original moved set. Identity/swap orbit witnesses establish
+closure membership; `Subgroup.closure_induction_left` extracts the list. The
+local predicate tracks ambient product equality using `toEquiv_mul` at each
+cons, then `Subtype.ext`; this implements the planned product transport without
+a separate `map_list_prod` rewrite. No statement was weakened, no action instance
+was added, and no countability, infinitude, ambient finiteness or finite-avoidance
+hypothesis was introduced.
+
+Verification actually performed:
+
+- Observed the factorization consumers fail at the missing factorization names
+  before implementation, then pass; likewise observed the action consumers fail
+  at the two missing action names before implementing them. Temporary fixture
+  corrections and failing versions are retained under
+  `/tmp/nominal-f03b-execution/`, including the finite-pair lemma-name correction
+  and explicit complement simplification. These were elaboration issues, not
+  counterexamples or weakened mathematical contracts.
+- Iterative `lake build Package` calls rebuilt the changed Package modules
+  using cached dependencies. The final
+  `lake build Package +Package.Tests.AxiomAudit` passed **967 jobs**, rebuilding
+  the audit while reusing those modules. The independent review reran it cached.
+- Direct `lake env lean Package/Tests/AxiomAudit.lean` passed: **81 production
+  declarations from three defining modules**, with only `propext`,
+  `Classical.choice`, and `Quot.sound`. All four new declarations are printed
+  explicitly, and the module-origin traversal retains whole-production coverage.
+- `python3 Package/Scripts/check-imports.py` passed: **four production source
+  modules and one audit module**. The checker is unchanged; its historical
+  self-test evidence is not reported as a new run.
+- Direct Lean checks passed for the new `FactorizationContracts.lean` and
+  `ActionContracts.lean` under `/tmp/nominal-f03b-execution/`, and the retained
+  F03a `ActionContracts.lean` and `NegativeContracts.lean` under
+  `/tmp/nominal-f02-f03a-execution/`. All import only Package. New consumers
+  cover the original endpoint bound, identity/empty/singleton carriers,
+  finite nonidentity swaps, noncommuting three-point composition order,
+  the infinite avoidance set `({0,1} : Set ℕ)ᶜ`, arbitrary-set action invariance,
+  both equivalence directions, independent-universe products, empty/universal
+  sets, and a distinct-endpoint-only premise. The previous action-coherence
+  and expected missing-action checks remain passing.
+- `PublicSignatures.lean` directly checked all four signatures with universes
+  printed. Only the approved decidable equality and selected action assumptions
+  occur. No persistent examples or new harness entered Package.
+- The article contains `sec:controlled-swaps`,
+  `prop:controlled-factorization`, `prop:avoidance-factorization`, and
+  `prop:swap-invariance`, with the actual proof route, exact hypotheses,
+  original-set control, strict decrease explanation and declaration references.
+  Its introduction, abstract and `sec:evidence` match the delivered scope.
+- From `docs/article/`,
+  `latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=/tmp/nominal-package-article-build main.tex`
+  passed, producing **17 pages**. Root checked correspondence, confirmed/rebuilt
+  the final manuscript and inspected extracted text and the final log. The fresh
+  reviewer independently compiled into `/tmp/nominal-f03b-final-review-article/`.
+  Both final logs had no warnings, unresolved references or layout diagnostics.
+- Independent final review found **no Critical, Important or Minor issues** and
+  no declined-to-judge items. It independently reran the Package build, direct
+  audit, new/retained consumers, signature check, import checker, whitespace/hash/
+  linked-path checks and fresh manuscript compilation. No fix pass was needed.
+
+These are checked source elaborations and builds with cached Lean dependencies,
+plus a fresh manuscript build; no fresh full Lean project build or dependency
+bootstrap is claimed. The reference source, historical roadmap, original probes,
+base permutation module, checker, shared configuration and dependency pins are
+unchanged. No shared integration change required a separate reference rebuild.
+
+Final documentation checks passed for seven Markdown files, 109 local links and
+seven anchors, balanced fences and tracked/untracked whitespace;
+`git diff --check` passed. The 108-file execution snapshot confirms 95 original
+files unchanged, with only the 13 intended implementation/article/documentation
+files edited and one new Lean module added.
+
+**F03b and PKG-F03 are DONE.** PKG-11 remains ongoing across later increments;
+F04 support/freshness, F05 interfaces and PKG-01 remain TODO. Moved points are
+not identified with support of an arbitrary action element, and no support,
+least-support or freshness implementation is supplied by this delivery.
