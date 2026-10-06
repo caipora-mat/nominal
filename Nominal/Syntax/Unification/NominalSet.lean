@@ -24,18 +24,18 @@ variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 /-! ### Action laws -/
 
 lemma UnifConstraint.rename_one (c : UnifConstraint F X 𝔸) : c.rename 1 = c := by
-  cases c <;> simp [UnifConstraint.rename, ntm.rename_one]
+  cases c <;> simp [UnifConstraint.relabel, ntm.relabel_one]
 
 lemma UnifConstraint.rename_mul (ρ ρ' : Equiv.Perm 𝔸) (c : UnifConstraint F X 𝔸) :
     c.rename (ρ * ρ') = (c.rename ρ').rename ρ := by
-  cases c <;> simp [UnifConstraint.rename, ntm.rename_mul]
+  cases c <;> simp [UnifConstraint.relabel, ntm.rename_mul]
 
 lemma UnifProblem.rename_one (Pr : UnifProblem F X 𝔸) : Pr.rename 1 = Pr := by
   induction Pr <;> simp_all [UnifConstraint.rename_one]
 
 lemma UnifProblem.rename_mul (ρ ρ' : Equiv.Perm 𝔸) (Pr : UnifProblem F X 𝔸) :
     Pr.rename (ρ * ρ') = (Pr.rename ρ').rename ρ := by
-  simp [UnifProblem.rename, UnifConstraint.rename_mul, Function.comp_def]
+  simp [UnifProblem.relabel, UnifConstraint.rename_mul, Function.comp_def]
 
 /-! ### Permutation-type instances -/
 
@@ -66,11 +66,11 @@ lemma UnifConstraint.rename_eq_self (ρ : Equiv.Perm 𝔸) (c : UnifConstraint F
   cases c with
   | fresh a t =>
     simp only [UnifConstraint.atoms, Finset.mem_insert] at h
-    simp only [UnifConstraint.rename, UnifConstraint.fresh.injEq]
+    simp only [UnifConstraint.relabel, UnifConstraint.fresh.injEq]
     exact ⟨h a (Or.inl rfl), ntm.rename_eq_self ρ t fun b hb => h b (Or.inr hb)⟩
   | unif s t =>
     simp only [UnifConstraint.atoms, Finset.mem_union] at h
-    simp only [UnifConstraint.rename, UnifConstraint.unif.injEq]
+    simp only [UnifConstraint.relabel, UnifConstraint.unif.injEq]
     exact ⟨ntm.rename_eq_self ρ s fun b hb => h b (Or.inl hb),
       ntm.rename_eq_self ρ t fun b hb => h b (Or.inr hb)⟩
 
@@ -80,7 +80,7 @@ lemma UnifProblem.rename_eq_self (ρ : Equiv.Perm 𝔸) (Pr : UnifProblem F X �
   | nil => rfl
   | cons c Pr ih =>
     simp only [UnifProblem.atoms, List.foldr_cons, Finset.mem_union] at h ih
-    simp only [UnifProblem.rename_cons, List.cons.injEq]
+    simp only [UnifProblem.relabel_cons, List.cons.injEq]
     exact ⟨UnifConstraint.rename_eq_self ρ c fun a ha => h a (Or.inl ha),
       ih fun a ha => h a (Or.inr ha)⟩
 

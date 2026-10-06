@@ -45,8 +45,7 @@ Nominal/
     AlphaEquiv/           # α-equivalence Γ ⊢ s ≈α t; equivalence; object-level equivariance
     Substitution/         # simultaneous substitution, composition, idempotence
     Problems/             # constraints, problems, entailment
-    Rename.lean           # meta-level renaming of atoms
-    RenameVar.lean        # renaming of metavariables
+    Rename.lean           # meta-level renaming of atoms and metavariables (relabel)
     TermsNominal.lean     # terms, contexts and substitutions form nominal sets
     Unification.lean      # re-exports Unification.*
     Unification/
@@ -56,8 +55,7 @@ Nominal/
       Properties.lean     # soundness
       Completeness.lean   # completeness and principality
       Mgu.lean            # solved form; absorption vs. independent witness
-      Equivariance.lean   # solve commutes with renaming of atoms
-      EquivarianceVar.lean # solve commutes with renaming of metavariables
+      Equivariance.lean   # solve commutes with renaming of atoms and metavariables
       NominalSet.lean     # solve as a morphism of nominal sets
 ```
 
@@ -95,6 +93,7 @@ deferred obligations. The whole specification is executable.
 | Completeness (decision procedure) | `UnifProblem.solve_none_iff_no_solution` |
 | Principality (m.g.u.) | `UnifProblem.solve_principal`, `UnifProblem.solve_le_indep` |
 | ≈α is an equivalence | `alphaEquiv_refl`, `alphaEquiv_symm`, `alphaEquiv_trans` |
+| Equivariance (atoms and metavariables) | `UnifProblem.solve_relabel`, `UnifProblem.mem_solutions_relabel` |
 | Equivariance (atoms) | `UnifProblem.solve_rename`, `UnifProblem.mem_solutions_rename` |
 | Equivariance (metavariables) | `UnifProblem.solve_renameVar`, `UnifProblem.solve_rename_renameVar` |
 | Morphism of nominal sets | `UnifProblem.solve_isEquivariant`, `ntm.instNominal` |

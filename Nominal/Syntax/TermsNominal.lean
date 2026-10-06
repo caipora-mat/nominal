@@ -48,13 +48,13 @@ mutual
     match t with
     | .atm a => simp [h a (by simp [ntm.atoms])]
     | .mvar π x =>
-      simp only [ntm.rename_mvar, ntm.mvar.injEq, and_true]
+      simp only [ntm.relabel_mvar, Equiv.Perm.coe_one, id_eq, ntm.mvar.injEq, and_true]
       exact LPerm.rename_eq_self ρ π fun a ha => h a ha
     | .fapp f ts =>
-      simp only [ntm.rename_fapp, ntm.fapp.injEq, true_and]
+      simp only [ntm.relabel_fapp, ntm.fapp.injEq, true_and]
       exact ntmList.rename_eq_self ρ ts fun a ha => h a (by simpa [ntm.atoms] using ha)
     | .abs a t =>
-      simp only [ntm.rename_abs, ntm.abs.injEq]
+      simp only [ntm.relabel_abs, ntm.abs.injEq]
       exact ⟨h a (by simp [ntm.atoms]),
         ntm.rename_eq_self ρ t fun b hb => h b (by simp [ntm.atoms, hb])⟩
 
@@ -71,7 +71,7 @@ end
 /-- Finite permutations act on nominal terms by meta-level renaming. -/
 instance ntm.instPermType : Set.PermType 𝔸 (ntm F X 𝔸) where
   smul π t := t.rename (π : Equiv.Perm 𝔸)
-  one_smul t := ntm.rename_one t
+  one_smul t := ntm.relabel_one t
   mul_smul π σ t := ntm.rename_mul (π : Equiv.Perm 𝔸) σ t
 
 lemma ntm.smul_def (π : FinitePerm 𝔸) (t : ntm F X 𝔸) :
@@ -85,18 +85,18 @@ instance ntm.instNominal : Set.Nominal 𝔸 (ntm F X 𝔸) where
 /-! ### Contexts and substitutions -/
 
 lemma Context.rename_one (Γ : Context 𝔸 X) : Context.rename 1 Γ = Γ := by
-  ext p; simp [Context.rename, Finset.mem_map_equiv]
+  ext p; simp [Context.relabel, Finset.mem_map_equiv]
 
 lemma Context.rename_mul (ρ ρ' : Equiv.Perm 𝔸) (Γ : Context 𝔸 X) :
     Context.rename (ρ * ρ') Γ = Context.rename ρ (Context.rename ρ' Γ) := by
-  ext ⟨a, x⟩; simp [Context.rename, Finset.mem_map_equiv, Equiv.Perm.mul_def]
+  ext ⟨a, x⟩; simp [Context.relabel, Finset.mem_map_equiv, Equiv.Perm.mul_def]
 
 lemma Subst.rename_one (σ : Subst F X 𝔸) : Subst.rename 1 σ = σ := by
-  simp [Subst.rename, ntm.rename_one]
+  simp [Subst.relabel, ntm.relabel_one]
 
 lemma Subst.rename_mul (ρ ρ' : Equiv.Perm 𝔸) (σ : Subst F X 𝔸) :
     Subst.rename (ρ * ρ') σ = Subst.rename ρ (Subst.rename ρ' σ) := by
-  simp [Subst.rename, ntm.rename_mul, Function.comp_def]
+  simp [Subst.relabel, ntm.rename_mul, Function.comp_def]
 
 instance Context.instPermType : Set.PermType 𝔸 (Context 𝔸 X) where
   smul π Γ := Context.rename (π : Equiv.Perm 𝔸) Γ
@@ -125,8 +125,8 @@ lemma Context.rename_eq_self (ρ : Equiv.Perm 𝔸) (Γ : Context 𝔸 X)
   have hfix : ∀ a x, (a, x) ∈ Γ → ρ a = a := fun a x hp =>
     h a (Finset.mem_image.mpr ⟨(a, x), hp, rfl⟩)
   ext ⟨a, x⟩
-  simp only [Context.rename, Finset.mem_map_equiv]
-  simp only [Equiv.prodCongr_symm, Equiv.prodCongr_apply, Equiv.refl_symm, Equiv.coe_refl,
+  simp only [Context.relabel, Finset.mem_map_equiv]
+  simp only [Equiv.prodCongr_symm, Equiv.prodCongr_apply, Equiv.Perm.one_symm, Equiv.Perm.coe_one,
     Prod.map_apply, id_eq]
   constructor
   · intro hp
@@ -144,7 +144,8 @@ lemma Subst.rename_eq_self (ρ : Equiv.Perm 𝔸) (σ : Subst F X 𝔸)
   | cons p σ ih =>
     obtain ⟨x, t⟩ := p
     simp only [Subst.atoms, List.foldr_cons, Finset.mem_union] at h ih
-    simp only [Subst.rename_cons, List.cons.injEq, Prod.mk.injEq, true_and]
+    simp only [Subst.relabel_cons, Equiv.Perm.coe_one, id_eq, List.cons.injEq, Prod.mk.injEq,
+      true_and]
     exact ⟨ntm.rename_eq_self ρ t fun a ha => h a (Or.inl ha),
       ih fun a ha => h a (Or.inr ha)⟩
 
