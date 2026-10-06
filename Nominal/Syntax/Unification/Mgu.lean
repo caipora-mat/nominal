@@ -458,189 +458,24 @@ lemma unifStep_next_binding_props
     (hdisj : σ.disjointPr (c :: rest)) :
     σ_next = σ ∨ ∃ (x : X) (u : ntm F X 𝔸), σ_next = σ.comp [(x, u)] ∧
       x ∉ σ.dom ∧ u.subst σ = u ∧ u.occursIn x = false := by
-  cases c with
-  | fresh a t =>
-    cases t with
-    | mvar π x => simp [unifStep] at h
-    | atm b =>
-      simp only [unifStep, simplifyFresh] at h
-      by_cases hab : a = b
-      · rw [if_pos hab] at h; cases h
-      · simp only [if_neg hab, List.map_nil, List.append_nil,
-                   StepResult.next.injEq] at h
-        obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
-    | fapp f ts =>
-      simp only [unifStep, simplifyFresh] at h
-      cases hcs : simplifyFreshList a ts with
-      | none => rw [hcs] at h; cases h
-      | some cs =>
-        rw [hcs] at h; simp only [StepResult.next.injEq] at h
-        obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
-    | abs b t =>
-      simp only [unifStep, simplifyFresh] at h
-      by_cases hab : a = b
-      · simp only [if_pos hab, List.map_nil, List.append_nil,
-                   StepResult.next.injEq] at h
-        obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
-      · rw [if_neg hab] at h
-        cases hcs : simplifyFresh a t with
-        | none => rw [hcs] at h; cases h
-        | some cs =>
-          rw [hcs] at h; simp only [StepResult.next.injEq] at h
-          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
-  | unif s t =>
-    cases s with
-    | atm a =>
-      cases t with
-      | atm b =>
-        simp only [unifStep] at h
-        by_cases hab : a = b
-        · simp only [if_pos hab, StepResult.next.injEq] at h
-          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
-        · simp only [if_neg hab] at h; cases h
-      | mvar π x =>
-        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
-                   StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        refine Or.inr ⟨x, (ntm.atm (X := X) (F := F) a).permute π.reverse, rfl,
-          instantiation_binding_props σ rest
-            (UnifConstraint.unif (ntm.atm a) (ntm.mvar π x)) x
-            ((ntm.atm (X := X) (F := F) a).permute π.reverse) hdisj ?_ ?_ ?_⟩
-        · simp [UnifConstraint.metavars, ntm.metavars]
-        · intro z hz; simp [ntm.permute, ntm.metavars] at hz
-        · simp [ntm.permute, ntm.occursIn]
-      | fapp _ _ | abs _ _ => simp [unifStep] at h
-    | mvar π x =>
-      cases t with
-      | atm a =>
-        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
-                   StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        refine Or.inr ⟨x, (ntm.atm (X := X) (F := F) a).permute π.reverse, rfl,
-          instantiation_binding_props σ rest
-            (UnifConstraint.unif (ntm.mvar π x) (ntm.atm a)) x
-            ((ntm.atm (X := X) (F := F) a).permute π.reverse) hdisj ?_ ?_ ?_⟩
-        · simp [UnifConstraint.metavars, ntm.metavars]
-        · intro z hz; simp [ntm.permute, ntm.metavars] at hz
-        · simp [ntm.permute, ntm.occursIn]
-      | mvar π' y =>
-        simp only [unifStep] at h
-        by_cases hxy : x = y
-        · subst hxy
-          simp only [if_pos rfl, StepResult.next.injEq] at h
-          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
-        · simp only [if_neg hxy, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          refine Or.inr ⟨x, (ntm.mvar (F := F) π' y).permute π.reverse, rfl,
-            instantiation_binding_props σ rest
-              (UnifConstraint.unif (ntm.mvar π x) (ntm.mvar π' y)) x
-              ((ntm.mvar (F := F) π' y).permute π.reverse) hdisj ?_ ?_ ?_⟩
-          · simp [UnifConstraint.metavars, ntm.metavars]
-          · intro z hz
-            simp [UnifConstraint.metavars, ntm.metavars]
-            right
-            rw [ntm.permute_metavars] at hz
-            simp [ntm.metavars] at hz; exact hz
-          · rw [ntm.occursIn_permute]
-            simp only [ntm.occursIn, beq_eq_false_iff_ne]
-            exact hxy
-      | fapp g ts =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        refine Or.inr ⟨x, (ntm.fapp (X := X) (𝔸 := 𝔸) g ts).permute π.reverse, rfl,
-          instantiation_binding_props σ rest
-            (UnifConstraint.unif (ntm.mvar π x) (ntm.fapp g ts)) x
-            ((ntm.fapp (X := X) (𝔸 := 𝔸) g ts).permute π.reverse) hdisj ?_ ?_ ?_⟩
-        · simp [UnifConstraint.metavars, ntm.metavars]
-        · intro z hz
-          simp [UnifConstraint.metavars, ntm.metavars]
-          right
-          rw [ntm.permute_metavars] at hz
-          exact hz
-        · rw [ntm.occursIn_permute]; exact hocc
-      | abs b t =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        refine Or.inr ⟨x, (ntm.abs (X := X) b t).permute π.reverse, rfl,
-          instantiation_binding_props σ rest
-            (UnifConstraint.unif (ntm.mvar π x) (ntm.abs b t)) x
-            ((ntm.abs (X := X) b t).permute π.reverse) hdisj ?_ ?_ ?_⟩
-        · simp [UnifConstraint.metavars, ntm.metavars]
-        · intro z hz
-          simp [UnifConstraint.metavars, ntm.metavars]
-          right
-          rw [ntm.permute_metavars] at hz
-          exact hz
-        · rw [ntm.occursIn_permute]; exact hocc
-    | fapp f ss =>
-      cases t with
-      | atm _    => simp [unifStep] at h
-      | mvar π' y =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        refine Or.inr ⟨y, (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse, rfl,
-          instantiation_binding_props σ rest
-            (UnifConstraint.unif (ntm.fapp f ss) (ntm.mvar π' y)) y
-            ((ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse) hdisj ?_ ?_ ?_⟩
-        · show y ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
-              (ntm.fapp f ss) (ntm.mvar π' y)).metavars
-          simp only [UnifConstraint.metavars]
-          exact Finset.mem_union_right _ (by simp [ntm.metavars])
-        · intro z hz
-          rw [ntm.permute_metavars] at hz
-          show z ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
-              (ntm.fapp f ss) (ntm.mvar π' y)).metavars
-          simp only [UnifConstraint.metavars]
-          exact Finset.mem_union_left _ hz
-        · rw [ntm.occursIn_permute]; exact hocc
-      | abs _ _  => simp [unifStep] at h
-      | fapp g ts =>
-        simp only [unifStep] at h
-        by_cases hfg : f = g ∧ ss.length = ts.length
-        · simp only [if_pos hfg, StepResult.next.injEq] at h
-          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
-        · simp only [if_neg hfg] at h; cases h
-    | abs a s' =>
-      cases t with
-      | atm _    => simp [unifStep] at h
-      | fapp _ _ => simp [unifStep] at h
-      | mvar π' y =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        refine Or.inr ⟨y, (ntm.abs (F := F) a s').permute π'.reverse, rfl,
-          instantiation_binding_props σ rest
-            (UnifConstraint.unif (ntm.abs a s') (ntm.mvar π' y)) y
-            ((ntm.abs (F := F) a s').permute π'.reverse) hdisj ?_ ?_ ?_⟩
-        · show y ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
-              (ntm.abs a s') (ntm.mvar π' y)).metavars
-          simp only [UnifConstraint.metavars]
-          exact Finset.mem_union_right _ (by simp [ntm.metavars])
-        · intro z hz
-          rw [ntm.permute_metavars] at hz
-          show z ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
-              (ntm.abs a s') (ntm.mvar π' y)).metavars
-          simp only [UnifConstraint.metavars]
-          exact Finset.mem_union_left _ hz
-        · rw [ntm.occursIn_permute]; exact hocc
-      | abs b t' =>
-        simp only [unifStep] at h
-        by_cases hab : a = b
-        · simp only [if_pos hab, StepResult.next.injEq] at h
-          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
-        · simp only [if_neg hab, StepResult.next.injEq] at h
-          obtain ⟨_, rfl⟩ := h; exact Or.inl rfl
+  cases UnifRule.of_unifStep h with
+  | instL π x u hocc =>
+    refine Or.inr ⟨x, u.permute π.reverse, rfl,
+      instantiation_binding_props σ rest _ x (u.permute π.reverse) hdisj ?_ ?_ ?_⟩
+    · simp [UnifConstraint.metavars, ntm.metavars]
+    · intro z hz
+      rw [ntm.permute_metavars] at hz
+      simp [UnifConstraint.metavars, hz]
+    · rw [ntm.occursIn_permute]; exact hocc
+  | instR π x u hocc =>
+    refine Or.inr ⟨x, u.permute π.reverse, rfl,
+      instantiation_binding_props σ rest _ x (u.permute π.reverse) hdisj ?_ ?_ ?_⟩
+    · simp [UnifConstraint.metavars, ntm.metavars]
+    · intro z hz
+      rw [ntm.permute_metavars] at hz
+      simp [UnifConstraint.metavars, hz]
+    · rw [ntm.occursIn_permute]; exact hocc
+  | _ => exact Or.inl rfl
 
 /-- `unifStep` preserves `MovesDom` under the idempotence/disjointness invariant. -/
 lemma unifStep_next_movesDom

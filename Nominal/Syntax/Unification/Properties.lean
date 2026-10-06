@@ -154,106 +154,10 @@ lemma unifStep_σ_extends (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 
     (σ : Subst F X 𝔸) (Pr' : UnifProblem F X 𝔸) (σ_next : Subst F X 𝔸)
     (h : unifStep c rest σ = .next Pr' σ_next) :
     ∃ ε, ∀ t : ntm F X 𝔸, t.subst σ_next = (t.subst σ).subst ε := by
-  cases c with
-  | fresh a t =>
-    cases t with
-    | mvar _ _ => simp [unifStep] at h
-    | atm b =>
-      simp only [unifStep] at h
-      cases hcs : simplifyFresh a (ntm.atm (X := X) (F := F) b) with
-      | none => rw [hcs] at h; cases h
-      | some _ =>
-        rw [hcs] at h
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
-    | fapp f ts =>
-      simp only [unifStep] at h
-      cases hcs : simplifyFresh a (ntm.fapp (X := X) (𝔸 := 𝔸) f ts) with
-      | none => rw [hcs] at h; cases h
-      | some _ =>
-        rw [hcs] at h
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
-    | abs b t =>
-      simp only [unifStep] at h
-      cases hcs : simplifyFresh a (ntm.abs (X := X) (F := F) b t) with
-      | none => rw [hcs] at h; cases h
-      | some _ =>
-        rw [hcs] at h
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
-  | unif s t =>
-    cases s with
-    | atm a => cases t with
-      | atm b =>
-        simp only [unifStep] at h
-        by_cases hab : a = b
-        · simp only [if_pos hab] at h
-          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-          exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
-        · simp only [if_neg hab] at h; cases h
-      | mvar π x =>
-        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false] at h
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[(x, (ntm.atm (X := X) (F := F) a).permute π.reverse)], fun t => ntm.subst_comp t σ _⟩
-      | fapp _ _ | abs _ _ => simp [unifStep] at h
-    | mvar π x => cases t with
-      | atm a =>
-        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false] at h
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[(x, (ntm.atm (X := X) (F := F) a).permute π.reverse)], fun t => ntm.subst_comp t σ _⟩
-      | mvar π' y =>
-        simp only [unifStep] at h
-        by_cases hxy : x = y
-        · subst hxy
-          simp at h
-          obtain ⟨_, rfl⟩ := h
-          exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
-        · simp only [if_neg hxy] at h
-          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-          exact ⟨[(x, (ntm.mvar (F := F) π' y).permute π.reverse)], fun t => ntm.subst_comp t σ _⟩
-      | fapp f ts =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[(x, (ntm.fapp (X := X) (𝔸 := 𝔸) f ts).permute π.reverse)], fun t => ntm.subst_comp t σ _⟩
-      | abs b t =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[(x, (ntm.abs (X := X) (F := F) b t).permute π.reverse)], fun t => ntm.subst_comp t σ _⟩
-    | fapp f ss => cases t with
-      | atm _ => simp [unifStep] at h
-      | mvar π' y =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[(y, (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse)], fun t => ntm.subst_comp t σ _⟩
-      | fapp g ts =>
-        simp only [unifStep] at h
-        by_cases hfg : f = g ∧ ss.length = ts.length
-        · simp only [if_pos hfg] at h
-          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-          exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
-        · simp only [if_neg hfg] at h; cases h
-      | abs _ _ => simp [unifStep] at h
-    | abs a s' => cases t with
-      | atm _ => simp [unifStep] at h
-      | mvar π' y =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-        exact ⟨[(y, (ntm.abs (X := X) (F := F) a s').permute π'.reverse)], fun t => ntm.subst_comp t σ _⟩
-      | fapp _ _ => simp [unifStep] at h
-      | abs b t' =>
-        simp only [unifStep] at h
-        by_cases hab : a = b
-        · simp only [if_pos hab] at h
-          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-          exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
-        · simp only [if_neg hab] at h
-          simp only [StepResult.next.injEq] at h; obtain ⟨_, rfl⟩ := h
-          exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
+  cases UnifRule.of_unifStep h with
+  | instL π x u _ | instR π x u _ =>
+    exact ⟨[(x, u.permute π.reverse)], fun t => ntm.subst_comp t σ _⟩
+  | _ => exact ⟨[], fun t => (ntm.subst_nil _).symm⟩
 
 /-- `unify` extends σ at the level of the action: `t.subst σ' = (t.subst σ).subst τ`
     for some `τ` and every `t`.  (Action-level form of "σ' extends σ", the
@@ -608,291 +512,83 @@ lemma unifStep_next_idempotent_and_disjoint
     (hσ : σ.IsIdempotent)
     (hdisj : σ.disjointPr (c :: rest)) :
     σ_next.IsIdempotent ∧ σ_next.disjointPr Pr' := by
-  cases c with
-  | fresh a t =>
-    cases t with
-    | mvar π x => simp [unifStep] at h  -- gives .ctx, not .next
-    | atm b =>
-      simp only [unifStep, simplifyFresh] at h
-      by_cases hab : a = b
-      · rw [if_pos hab] at h; cases h
-      · simp only [if_neg hab, List.map_nil, List.append_nil,
-                   StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
-    | fapp f ts =>
-      simp only [unifStep, simplifyFresh] at h
-      cases hcs : simplifyFreshList a ts with
-      | none => rw [hcs] at h; cases h
-      | some cs =>
-        rw [hcs] at h
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        refine ⟨hσ, ?_⟩
-        apply Subst.disjointPr_append_of (Subst.disjointPr_cons hdisj)
-        apply Subst.disjointPr_subset
-          (allMetavars_map_toUnif_subset cs (UnifProblem.allMetavars
-            (UnifConstraint.fresh a (.fapp (X := X) (𝔸 := 𝔸) f ts) :: rest))
-            (fun c' hc' x hx => by
-              simp only [UnifProblem.allMetavars_cons, Finset.mem_union]
-              left
-              simp only [UnifConstraint.metavars, ntm.metavars]
-              exact simplifyFreshList_metavars_subset a ts cs hcs c' hc' x hx))
-        exact hdisj
-    | abs b t =>
-      simp only [unifStep, simplifyFresh] at h
-      by_cases hab : a = b
-      · simp only [if_pos hab, List.map_nil, List.append_nil,
-                   StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
-      · rw [if_neg hab] at h
-        cases hcs : simplifyFresh a t with
-        | none => rw [hcs] at h; cases h
-        | some cs =>
-          rw [hcs] at h
-          simp only [StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          refine ⟨hσ, ?_⟩
-          apply Subst.disjointPr_append_of (Subst.disjointPr_cons hdisj)
-          apply Subst.disjointPr_subset
-            (allMetavars_map_toUnif_subset cs (UnifProblem.allMetavars
-              (UnifConstraint.fresh a (.abs (X := X) (F := F) b t) :: rest))
-              (fun c' hc' x hx => by
-                simp only [UnifProblem.allMetavars_cons, Finset.mem_union]
-                left
-                simp only [UnifConstraint.metavars, ntm.metavars]
-                exact simplifyFresh_metavars_subset a t cs hcs c' hc' x hx))
-          exact hdisj
-  | unif s t =>
-    cases s with
-    | atm a =>
-      cases t with
-      | atm b =>
-        simp only [unifStep] at h
-        by_cases hab : a = b
-        · simp only [if_pos hab, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
-        · simp only [if_neg hab] at h; cases h
-      | mvar π x =>
-        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
-                   StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        have hx_c : x ∈ UnifProblem.allMetavars
-            (UnifConstraint.unif (X := X) (𝔸 := 𝔸) (ntm.atm a) (ntm.mvar π x) :: rest) := by
-          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars]
-        have hx_dom : x ∉ Subst.dom σ := hdisj x hx_c
-        have hu_fixed : ((ntm.atm (X := X) (F := F) a).permute π.reverse).subst σ =
-            (ntm.atm a).permute π.reverse := by simp [ntm.permute, ntm.subst_atm]
-        have hxu : ((ntm.atm (X := X) (F := F) a).permute π.reverse).occursIn x = false := by
-          simp [ntm.permute, ntm.occursIn]
-        refine ⟨Subst.IsIdempotent.comp_singleton hσ hu_fixed hxu, ?_⟩
-        intro y hy
-        have := UnifProblem.applySubst_singleton_metavars_subset rest x
-          ((ntm.atm (X := X) (F := F) a).permute π.reverse) hy
-        simp only [Finset.mem_union, Finset.mem_sdiff, Finset.mem_singleton,
-                   ntm.permute, ntm.metavars] at this
-        rw [Subst.dom_comp, Subst.dom_singleton]
-        intro hmem
-        simp only [Finset.mem_union, Finset.mem_singleton] at hmem
-        rcases this with ⟨hy_rest, hy_ne⟩ | hy_empty
-        · rcases hmem with hmem | hmem
-          · exact hdisj y (by
-              simp [UnifProblem.allMetavars_cons]; right; exact hy_rest) hmem
-          · exact hy_ne hmem
-        · simp at hy_empty
-      | fapp _ _ | abs _ _ => simp [unifStep] at h
-    | mvar π x =>
-      cases t with
-      | atm a =>
-        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
-                   StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        have hx_c : x ∈ UnifProblem.allMetavars
-            (UnifConstraint.unif (X := X) (𝔸 := 𝔸) (ntm.mvar π x) (ntm.atm a) :: rest) := by
-          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars]
-        have hx_dom : x ∉ Subst.dom σ := hdisj x hx_c
-        have hu_fixed : ((ntm.atm (X := X) (F := F) a).permute π.reverse).subst σ =
-            (ntm.atm a).permute π.reverse := by simp [ntm.permute, ntm.subst_atm]
-        have hxu : ((ntm.atm (X := X) (F := F) a).permute π.reverse).occursIn x = false := by
-          simp [ntm.permute, ntm.occursIn]
-        refine ⟨Subst.IsIdempotent.comp_singleton hσ hu_fixed hxu, ?_⟩
-        intro y hy
-        have := UnifProblem.applySubst_singleton_metavars_subset rest x
-          ((ntm.atm (X := X) (F := F) a).permute π.reverse) hy
-        simp only [Finset.mem_union, Finset.mem_sdiff, Finset.mem_singleton,
-                   ntm.permute, ntm.metavars] at this
-        rw [Subst.dom_comp, Subst.dom_singleton]
-        intro hmem
-        simp only [Finset.mem_union, Finset.mem_singleton] at hmem
-        rcases this with ⟨hy_rest, hy_ne⟩ | hy_empty
-        · rcases hmem with hmem | hmem
-          · exact hdisj y (by
-              simp [UnifProblem.allMetavars_cons]; right; exact hy_rest) hmem
-          · exact hy_ne hmem
-        · simp at hy_empty
-      | mvar π' y =>
-        simp only [unifStep] at h
-        by_cases hxy : x = y
-        · subst hxy
-          simp only [if_pos rfl, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          refine ⟨hσ, ?_⟩
-          apply Subst.disjointPr_append_of (Subst.disjointPr_cons hdisj)
-          apply Subst.disjointPr_subset
-            (allMetavars_map_subset (dsList π π')
-              (fun a => UnifConstraint.fresh a (ntm.mvar [] x))
-              (UnifProblem.allMetavars
-                (UnifConstraint.unif (ntm.mvar π x) (ntm.mvar (X := X) π' x) :: rest))
-              (fun a _ z hz => by
-                simp only [UnifConstraint.metavars, ntm.metavars,
-                           Finset.mem_singleton] at hz
-                subst hz
-                simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                      ntm.metavars]))
-          exact hdisj
-        · simp only [if_neg hxy, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          refine instantiation_invariant σ rest
-            (UnifConstraint.unif (ntm.mvar π x) (ntm.mvar π' y)) x
-            ((ntm.mvar (F := F) π' y).permute π.reverse) hσ hdisj ?_ ?_ ?_
-          · simp [UnifConstraint.metavars, ntm.metavars]
-          · intro z hz
-            simp [UnifConstraint.metavars, ntm.metavars]
-            right
-            rw [ntm.permute_metavars] at hz
-            simp [ntm.metavars] at hz; exact hz
-          · rw [ntm.occursIn_permute]
-            simp only [ntm.occursIn, beq_eq_false_iff_ne]
-            exact hxy
-      | fapp g ts =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        refine instantiation_invariant σ rest
-          (UnifConstraint.unif (ntm.mvar π x) (ntm.fapp g ts)) x
-          ((ntm.fapp (X := X) (𝔸 := 𝔸) g ts).permute π.reverse) hσ hdisj ?_ ?_ ?_
-        · simp [UnifConstraint.metavars, ntm.metavars]
-        · intro z hz
-          simp [UnifConstraint.metavars, ntm.metavars]
-          right
-          rw [ntm.permute_metavars] at hz
-          exact hz
-        · rw [ntm.occursIn_permute]; exact hocc
-      | abs b t =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        refine instantiation_invariant σ rest
-          (UnifConstraint.unif (ntm.mvar π x) (ntm.abs b t)) x
-          ((ntm.abs (X := X) b t).permute π.reverse) hσ hdisj ?_ ?_ ?_
-        · simp [UnifConstraint.metavars, ntm.metavars]
-        · intro z hz
-          simp [UnifConstraint.metavars, ntm.metavars]
-          right
-          rw [ntm.permute_metavars] at hz
-          exact hz
-        · rw [ntm.occursIn_permute]; exact hocc
-    | fapp f ss =>
-      cases t with
-      | atm _    => simp [unifStep] at h
-      | mvar π' y =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        refine instantiation_invariant σ rest
-          (UnifConstraint.unif (ntm.fapp f ss) (ntm.mvar π' y)) y
-          ((ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse) hσ hdisj ?_ ?_ ?_
-        · show y ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
-              (ntm.fapp f ss) (ntm.mvar π' y)).metavars
-          simp only [UnifConstraint.metavars]
-          exact Finset.mem_union_right _ (by simp [ntm.metavars])
-        · intro z hz
-          rw [ntm.permute_metavars] at hz
-          show z ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
-              (ntm.fapp f ss) (ntm.mvar π' y)).metavars
-          simp only [UnifConstraint.metavars]
-          exact Finset.mem_union_left _ hz
-        · rw [ntm.occursIn_permute]; exact hocc
-      | abs _ _  => simp [unifStep] at h
-      | fapp g ts =>
-        simp only [unifStep] at h
-        by_cases hfg : f = g ∧ ss.length = ts.length
-        · simp only [if_pos hfg, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          obtain ⟨rfl, hlen⟩ := hfg
-          refine ⟨hσ, ?_⟩
-          apply Subst.disjointPr_append_of
-          · apply Subst.disjointPr_subset
-              (allMetavars_map_subset (ss.zip ts)
-                (fun p => UnifConstraint.unif p.1 p.2)
-                (UnifProblem.allMetavars
-                  (UnifConstraint.unif (ntm.fapp (X := X) (𝔸 := 𝔸) f ss)
-                                       (ntm.fapp (X := X) (𝔸 := 𝔸) f ts) :: rest))
-                (fun p hp z hz => by
-                  obtain ⟨hp1, hp2⟩ := List.of_mem_zip hp
-                  simp only [UnifConstraint.metavars, Finset.mem_union] at hz
-                  simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                             ntm.metavars, Finset.mem_union]
-                  left
-                  rcases hz with hz | hz
-                  · left; exact ntmList.mem_metavars_of_mem hp1 hz
-                  · right; exact ntmList.mem_metavars_of_mem hp2 hz))
-            exact hdisj
-          · exact Subst.disjointPr_cons hdisj
-        · simp only [if_neg hfg] at h; cases h
-    | abs a s' =>
-      cases t with
-      | atm _    => simp [unifStep] at h
-      | fapp _ _ => simp [unifStep] at h
-      | mvar π' y =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        refine instantiation_invariant σ rest
-          (UnifConstraint.unif (ntm.abs a s') (ntm.mvar π' y)) y
-          ((ntm.abs (F := F) a s').permute π'.reverse) hσ hdisj ?_ ?_ ?_
-        · show y ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
-              (ntm.abs a s') (ntm.mvar π' y)).metavars
-          simp only [UnifConstraint.metavars]
-          exact Finset.mem_union_right _ (by simp [ntm.metavars])
-        · intro z hz
-          rw [ntm.permute_metavars] at hz
-          show z ∈ (UnifConstraint.unif (X := X) (𝔸 := 𝔸)
-              (ntm.abs a s') (ntm.mvar π' y)).metavars
-          simp only [UnifConstraint.metavars]
-          exact Finset.mem_union_left _ hz
-        · rw [ntm.occursIn_permute]; exact hocc
-      | abs b t' =>
-        simp only [unifStep] at h
-        by_cases hab : a = b
-        · simp only [if_pos hab, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          refine ⟨hσ, ?_⟩
-          intro y hy
-          exact hdisj y (by
+  cases UnifRule.of_unifStep h with
+  | fresh a t cs ht hcs =>
+    refine ⟨hσ, ?_⟩
+    apply Subst.disjointPr_append_of (Subst.disjointPr_cons hdisj)
+    apply Subst.disjointPr_subset
+      (allMetavars_map_toUnif_subset cs (UnifProblem.allMetavars
+        (UnifConstraint.fresh a t :: rest))
+        (fun c' hc' x hx => by
+          simp only [UnifProblem.allMetavars_cons, Finset.mem_union]
+          left
+          exact simplifyFresh_metavars_subset a t cs hcs c' hc' x hx))
+    exact hdisj
+  | atm a => exact ⟨hσ, Subst.disjointPr_cons hdisj⟩
+  | mvarSame π π' x =>
+    refine ⟨hσ, ?_⟩
+    apply Subst.disjointPr_append_of (Subst.disjointPr_cons hdisj)
+    apply Subst.disjointPr_subset
+      (allMetavars_map_subset (dsList π π')
+        (fun a => UnifConstraint.fresh a (ntm.mvar [] x))
+        (UnifProblem.allMetavars
+          (UnifConstraint.unif (ntm.mvar π x) (ntm.mvar (X := X) π' x) :: rest))
+        (fun a _ z hz => by
+          simp only [UnifConstraint.metavars, ntm.metavars,
+                     Finset.mem_singleton] at hz
+          subst hz
+          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                ntm.metavars]))
+    exact hdisj
+  | instL π x u hocc =>
+    refine instantiation_invariant σ rest _ x (u.permute π.reverse) hσ hdisj ?_ ?_ ?_
+    · simp [UnifConstraint.metavars, ntm.metavars]
+    · intro z hz
+      rw [ntm.permute_metavars] at hz
+      simp [UnifConstraint.metavars, hz]
+    · rw [ntm.occursIn_permute]; exact hocc
+  | instR π x u hocc =>
+    refine instantiation_invariant σ rest _ x (u.permute π.reverse) hσ hdisj ?_ ?_ ?_
+    · simp [UnifConstraint.metavars, ntm.metavars]
+    · intro z hz
+      rw [ntm.permute_metavars] at hz
+      simp [UnifConstraint.metavars, hz]
+    · rw [ntm.occursIn_permute]; exact hocc
+  | fapp f ss ts hlen =>
+    refine ⟨hσ, ?_⟩
+    apply Subst.disjointPr_append_of
+    · apply Subst.disjointPr_subset
+        (allMetavars_map_subset (ss.zip ts)
+          (fun p => UnifConstraint.unif p.1 p.2)
+          (UnifProblem.allMetavars
+            (UnifConstraint.unif (ntm.fapp (X := X) (𝔸 := 𝔸) f ss)
+                                 (ntm.fapp (X := X) (𝔸 := 𝔸) f ts) :: rest))
+          (fun p hp z hz => by
+            obtain ⟨hp1, hp2⟩ := List.of_mem_zip hp
+            simp only [UnifConstraint.metavars, Finset.mem_union] at hz
             simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                       ntm.metavars] at hy ⊢
-            exact hy)
-        · simp only [if_neg hab, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          refine ⟨hσ, ?_⟩
-          intro y hy
-          exact hdisj y (by
-            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                       ntm.metavars, ntm.permute_metavars,
-                       Finset.mem_union] at hy ⊢
-            tauto)
-
+                       ntm.metavars, Finset.mem_union]
+            left
+            rcases hz with hz | hz
+            · left; exact ntmList.mem_metavars_of_mem hp1 hz
+            · right; exact ntmList.mem_metavars_of_mem hp2 hz))
+      exact hdisj
+    · exact Subst.disjointPr_cons hdisj
+  | absSame a s t =>
+    refine ⟨hσ, ?_⟩
+    intro y hy
+    exact hdisj y (by
+      simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                 ntm.metavars] at hy ⊢
+      exact hy)
+  | absDiff a b s t hab =>
+    refine ⟨hσ, ?_⟩
+    intro y hy
+    exact hdisj y (by
+      simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
+                 ntm.metavars, ntm.permute_metavars,
+                 Finset.mem_union] at hy ⊢
+      tauto)
 
 /-! ### Soundness of one step -/
 
@@ -994,6 +690,61 @@ lemma ntm.alphaEquiv_permute_reverse_permute_self (Γ : Context 𝔸 X)
   rw [LPermApply_append, LPermApply_reverse_right]
   rfl
 
+/-- `Entails` distributes over the append of two unification problems. -/
+lemma UnifProblem.entails_applySubst_append {Γ : Context 𝔸 X} {τ : Subst F X 𝔸}
+    {Pr Pr' : UnifProblem F X 𝔸} :
+    Problem.Entails Γ (UnifProblem.toConstraint (UnifProblem.applySubst (Pr ++ Pr') τ)) ↔
+      Problem.Entails Γ (UnifProblem.toConstraint (UnifProblem.applySubst Pr τ)) ∧
+      Problem.Entails Γ (UnifProblem.toConstraint (UnifProblem.applySubst Pr' τ)) := by
+  simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_append,
+    Problem.Entails_append_iff]
+
+/-- Entailment of `cs` seen as unification constraints is entailment of `cs`. -/
+lemma Problem.entails_applySubst_of_toUnif {Γ : Context 𝔸 X} {τ : Subst F X 𝔸}
+    {cs : Problem F X 𝔸}
+    (h : Problem.Entails Γ (UnifProblem.toConstraint
+      (UnifProblem.applySubst (cs.map (·.toUnif)) τ))) :
+    Problem.Entails Γ (Problem.applySubst cs τ) := by
+  intro c hc
+  simp only [Problem.applySubst, List.mem_map] at hc
+  obtain ⟨c0, hc0, rfl⟩ := hc
+  have heq : (c0.toUnif.applySubst τ).toConstraint = c0.applySubst τ := by
+    cases c0 <;> simp [Constraint.toUnif, UnifConstraint.applySubst,
+                       UnifConstraint.toConstraint, Constraint.applySubst]
+  have hin : c0.applySubst τ ∈
+      UnifProblem.toConstraint (UnifProblem.applySubst (cs.map (·.toUnif)) τ) := by
+    simp only [UnifProblem.toConstraint, UnifProblem.applySubst, List.map_map,
+               List.mem_map, Function.comp_apply]
+    exact ⟨c0, hc0, heq⟩
+  exact h _ hin
+
+/-- Soundness of an instantiation step `x ↦ π⁻¹ · u`: the rest of the problem is still
+    entailed, and `π · x` and `u` become α-equivalent under `τ`. -/
+lemma instantiation_sound (rest : UnifProblem F X 𝔸) {σ τ σ_extra : Subst F X 𝔸}
+    (Γ : Context 𝔸 X) (π : LPerm 𝔸) (x : X) (u : ntm F X 𝔸)
+    (hσ : Subst.IsIdempotent σ) (hx_dom : x ∉ Subst.dom σ)
+    (hu : ∀ z ∈ u.metavars, z ∉ Subst.dom σ) (hxu : u.occursIn x = false)
+    (hτ_act : ∀ t : ntm F X 𝔸,
+      t.subst τ = (t.subst (σ.comp [(x, u.permute π.reverse)])).subst σ_extra)
+    (hΓ : Problem.Entails Γ (UnifProblem.toConstraint
+      (UnifProblem.applySubst (rest.applySubst [(x, u.permute π.reverse)]) τ))) :
+    Problem.Entails Γ (UnifProblem.toConstraint (UnifProblem.applySubst rest τ)) ∧
+      alphaEquiv Γ ((ntm.mvar π x).subst τ) (u.subst τ) = true := by
+  have hu_fixed : (u.permute π.reverse).subst σ = u.permute π.reverse := by
+    apply ntm.subst_of_disjoint_dom
+    intro z hz
+    rw [ntm.occursIn_false_iff_not_mem_metavars, ntm.permute_metavars]
+    exact fun hz_in => hu z hz_in hz
+  have hxu' : (u.permute π.reverse).occursIn x = false := by
+    rw [ntm.occursIn_permute]; exact hxu
+  have hresolve : (ntm.mvar (F := F) [] x).subst τ = (u.permute π.reverse).subst τ :=
+    mvar_subst_eq_binding hσ hx_dom hu_fixed hxu'
+      (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
+  rw [UnifProblem.applySubst_singleton_subst_eq rest x _ τ hresolve] at hΓ
+  refine ⟨hΓ, ?_⟩
+  rw [ntm.subst_mvar π x τ, hresolve, ntm.subst_permute]
+  exact ntm.alphaEquiv_permute_reverse_permute_self Γ (u.subst τ) π
+
 /-- Soundness of `.next` outcomes: if `Γ` entails `Pr'.applySubst τ` for ANY
     target substitution `τ`, then `Γ` entails `(c :: rest).applySubst τ`.
     `τ` is independent of the `.next` output `σ'` so this lemma composes with
@@ -1008,428 +759,90 @@ lemma unifStep_next_sound
     (hτ_act : ∀ t : ntm F X 𝔸, t.subst τ = (t.subst σ').subst σ_extra)
     (hΓ : Problem.Entails Γ (UnifProblem.toConstraint (UnifProblem.applySubst Pr' τ))) :
     Problem.Entails Γ (UnifProblem.toConstraint (UnifProblem.applySubst (c :: rest) τ)) := by
-  cases c with
-  | fresh a t =>
-    cases t with
-    | mvar π x =>
-      simp [unifStep] at h
-    | atm b =>
-      simp only [unifStep, simplifyFresh] at h
-      by_cases hab : a = b
-      · simp only [if_pos hab] at h
-        exact absurd h (by simp)
-      · simp only [if_neg hab, List.map_nil, List.append_nil, StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hΓ⟩
-        simp [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-              Constraint.Entails, fresh_atm, hab]
-    | fapp f ts =>
-      simp only [unifStep, simplifyFresh] at h
-      cases hcs : simplifyFreshList a ts with
-      | none => rw [hcs] at h; cases h
-      | some cs =>
-        rw [hcs] at h
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [UnifProblem.applySubst, List.map_append, ← UnifProblem.applySubst,
-            ← UnifProblem.applySubst,
-            UnifProblem.toConstraint, List.map_append, ← UnifProblem.toConstraint,
-            ← UnifProblem.toConstraint,
-            Problem.Entails_append_iff] at hΓ
-        obtain ⟨hrest, hcsE⟩ := hΓ
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hrest⟩
-        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                   Constraint.Entails, ntm.subst_fapp, fresh, decide_eq_true_eq]
-        have hcs' : Problem.Entails Γ (Problem.applySubst cs τ) := by
-          intro c hc
-          simp only [Problem.applySubst, List.mem_map] at hc
-          obtain ⟨c0, hc0, rfl⟩ := hc
-          have heq : (c0.toUnif.applySubst τ).toConstraint = c0.applySubst τ := by
-            cases c0 <;> simp [Constraint.toUnif, UnifConstraint.applySubst,
-                               UnifConstraint.toConstraint, Constraint.applySubst]
-          have hin : c0.applySubst τ ∈
-              UnifProblem.toConstraint (UnifProblem.applySubst (cs.map (·.toUnif)) τ) := by
-            simp only [UnifProblem.toConstraint, UnifProblem.applySubst, List.map_map,
-                       List.mem_map, Function.comp_apply]
-            exact ⟨c0, hc0, heq⟩
-          exact hcsE _ hin
-        exact freshList_subst_of_simplifyFreshList_entails Γ a τ ts cs hcs hcs'
-    | abs b t =>
-      simp only [unifStep, simplifyFresh] at h
-      by_cases hab : a = b
-      · simp only [if_pos hab, List.map_nil, List.append_nil, StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        subst hab
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hΓ⟩
-        simp [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-              Constraint.Entails, fresh_abs_same]
-      · simp only [if_neg hab] at h
-        cases hcs : simplifyFresh a t with
-        | none => rw [hcs] at h; cases h
-        | some cs =>
-          rw [hcs] at h
-          simp only [StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          rw [UnifProblem.applySubst, List.map_append, ← UnifProblem.applySubst,
-              ← UnifProblem.applySubst,
-              UnifProblem.toConstraint, List.map_append, ← UnifProblem.toConstraint,
-              ← UnifProblem.toConstraint,
-              Problem.Entails_append_iff] at hΓ
-          obtain ⟨hrest, hcsE⟩ := hΓ
-          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                     Problem.Entails_cons]
-          refine ⟨?_, hrest⟩
-          simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                     Constraint.Entails, ntm.subst_abs, fresh,
-                     Bool.decide_or, Bool.or_eq_true, decide_eq_true_eq]
-          right
-          have hcs' : Problem.Entails Γ (Problem.applySubst cs τ) := by
-            intro c hc
-            simp only [Problem.applySubst, List.mem_map] at hc
-            obtain ⟨c0, hc0, rfl⟩ := hc
-            have heq : (c0.toUnif.applySubst τ).toConstraint = c0.applySubst τ := by
-              cases c0 <;> simp [Constraint.toUnif, UnifConstraint.applySubst,
-                                 UnifConstraint.toConstraint, Constraint.applySubst]
-            have hin : c0.applySubst τ ∈
-                UnifProblem.toConstraint (UnifProblem.applySubst (cs.map (·.toUnif)) τ) := by
-              simp only [UnifProblem.toConstraint, UnifProblem.applySubst, List.map_map,
-                         List.mem_map, Function.comp_apply]
-              exact ⟨c0, hc0, heq⟩
-            exact hcsE _ hin
-          exact fresh_subst_of_simplifyFresh_entails Γ a τ t cs hcs hcs'
-  | unif s t =>
-    cases s with
-    | atm a =>
-      cases t with
-      | atm b =>
-        simp only [unifStep] at h
-        by_cases hab : a = b
-        · simp only [if_pos hab, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          subst hab
-          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                     Problem.Entails_cons]
-          refine ⟨?_, hΓ⟩
-          simp [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                Constraint.applySubst, Constraint.Entails, alphaEquiv]
-        · simp only [if_neg hab] at h
-          exact absurd h (by simp)
-      | mvar π x =>
-        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
-                   StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        set u_perm := (ntm.atm (X := X) (F := F) a).permute π.reverse with hu_perm_def
-        have hx_dom : x ∉ Subst.dom σ := hdisj x (by
-          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                ntm.metavars])
-        have hu_fixed : u_perm.subst σ = u_perm := by
-          simp [u_perm, ntm.permute, ntm.subst_atm]
-        have hxu : u_perm.occursIn x = false := by
-          simp [u_perm, ntm.permute, ntm.occursIn]
-        have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
-          mvar_subst_eq_binding hσ hx_dom hu_fixed hxu (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
-        rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hΓ⟩
-        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                   Constraint.Entails]
-        rw [ntm.subst_mvar, hresolve]
-        show alphaEquiv Γ ((ntm.atm (X := X) (F := F) a).subst τ)
-             ((u_perm.subst τ).permute π) = true
-        simp [u_perm, ntm.permute, ntm.subst_atm, alphaEquiv,
-              LPermApply, LPermApply_reverse_right]
-      | fapp _ _ | abs _ _ => simp [unifStep] at h
-    | mvar π x =>
-      cases t with
-      | atm a =>
-        simp only [unifStep, ntm.occursIn, Bool.false_eq_true, if_false,
-                   StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        set u_perm := (ntm.atm (X := X) (F := F) a).permute π.reverse with hu_perm_def
-        have hx_dom : x ∉ Subst.dom σ := hdisj x (by
-          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                ntm.metavars])
-        have hu_fixed : u_perm.subst σ = u_perm := by
-          simp [u_perm, ntm.permute, ntm.subst_atm]
-        have hxu : u_perm.occursIn x = false := by
-          simp [u_perm, ntm.permute, ntm.occursIn]
-        have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
-          mvar_subst_eq_binding hσ hx_dom hu_fixed hxu (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
-        rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hΓ⟩
-        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                   Constraint.Entails]
-        rw [ntm.subst_mvar, hresolve]
-        show alphaEquiv Γ ((u_perm.subst τ).permute π)
-             ((ntm.atm (X := X) (F := F) a).subst τ) = true
-        simp [u_perm, ntm.permute, ntm.subst_atm, alphaEquiv,
-              LPermApply, LPermApply_reverse_right]
-      | mvar π' y =>
-        simp only [unifStep] at h
-        by_cases hxy : x = y
-        · subst hxy
-          simp at h
-          obtain ⟨rfl, rfl⟩ := h
-          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                     Problem.Entails_cons]
-          rw [UnifProblem.applySubst, List.map_append, ← UnifProblem.applySubst,
-              ← UnifProblem.applySubst,
-              UnifProblem.toConstraint, List.map_append, ← UnifProblem.toConstraint,
-              ← UnifProblem.toConstraint,
-              Problem.Entails_append_iff] at hΓ
-          obtain ⟨hrest, hfresh⟩ := hΓ
-          refine ⟨?_, hrest⟩
-          simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                     Constraint.Entails]
-          have heq1 : (ntm.mvar π x : ntm F X 𝔸).subst τ =
-              ((ntm.mvar (F := F) [] x : ntm F X 𝔸).subst τ).permute π :=
-            ntm.subst_mvar π x τ
-          have heq2 : (ntm.mvar π' x : ntm F X 𝔸).subst τ =
-              ((ntm.mvar (F := F) [] x : ntm F X 𝔸).subst τ).permute π' :=
-            ntm.subst_mvar π' x τ
-          rw [heq1, heq2]
-          apply ntm.alphaEquiv_of_perm_fresh
-          intro n hn
-          have hmem : n ∈ dsList π π' := (mem_dsList_iff_mem_ds n π π').mpr hn
-          have hcfresh : Constraint.fresh n (((ntm.mvar (F := F) [] x : ntm F X 𝔸).subst τ)) ∈
-              UnifProblem.toConstraint
-                ((UnifProblem.applySubst
-                  ((dsList π π').map (fun a => UnifConstraint.fresh a (ntm.mvar [] x))) τ)) := by
-            simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_map,
-                       List.mem_map, Function.comp_def]
-            exact ⟨n, hmem, by simp [UnifConstraint.applySubst, UnifConstraint.toConstraint]⟩
-          have := hfresh _ hcfresh
-          simp only [Constraint.Entails] at this
-          exact this
-        · -- mvar-mvar diff: x ≠ y
-          simp only [if_neg hxy, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          set u_perm := (ntm.mvar (F := F) π' y).permute π.reverse with hu_perm_def
-          have hx_dom : x ∉ Subst.dom σ := hdisj x (by
-            simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
-          have hu_fixed : u_perm.subst σ = u_perm := by
-            apply ntm.subst_of_disjoint_dom
-            intro z hz
-            rw [ntm.occursIn_false_iff_not_mem_metavars]
-            intro hz_in
-            have : z ∈ u_perm.metavars := hz_in
-            rw [hu_perm_def, ntm.permute_metavars] at this
-            simp [ntm.metavars] at this
-            subst this
-            exact hdisj z (by
-              simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                    ntm.metavars]) hz
-          have hxu : u_perm.occursIn x = false := by
-            rw [hu_perm_def, ntm.occursIn_permute]
-            simp only [ntm.occursIn, beq_eq_false_iff_ne]
-            exact hxy
-          have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
-            mvar_subst_eq_binding hσ hx_dom hu_fixed hxu (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
-          rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
-          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                     Problem.Entails_cons]
-          refine ⟨?_, hΓ⟩
-          simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                     Constraint.Entails]
-          rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
-          exact ntm.alphaEquiv_permute_reverse_permute_self Γ
-            ((ntm.mvar π' y).subst τ) π
-      | fapp f ts =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        set u_perm := (ntm.fapp (X := X) (𝔸 := 𝔸) f ts).permute π.reverse with hu_perm_def
-        have hx_dom : x ∉ Subst.dom σ := hdisj x (by
-          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
-        have hu_fixed : u_perm.subst σ = u_perm := by
-          apply ntm.subst_of_disjoint_dom
-          intro z hz
-          rw [ntm.occursIn_false_iff_not_mem_metavars]
-          intro hz_in
-          have : z ∈ u_perm.metavars := hz_in
-          rw [hu_perm_def, ntm.permute_metavars] at this
-          exact hdisj z (by
-            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                       ntm.metavars, Finset.mem_union]
-            left; right; exact this) hz
-        have hxu : u_perm.occursIn x = false := by
-          rw [hu_perm_def, ntm.occursIn_permute]; exact hocc
-        have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
-          mvar_subst_eq_binding hσ hx_dom hu_fixed hxu (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
-        rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hΓ⟩
-        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                   Constraint.Entails]
-        rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
-        exact ntm.alphaEquiv_permute_reverse_permute_self Γ
-          ((ntm.fapp f ts).subst τ) π
-      | abs b t =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        set u_perm := (ntm.abs (X := X) (F := F) b t).permute π.reverse with hu_perm_def
-        have hx_dom : x ∉ Subst.dom σ := hdisj x (by
-          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
-        have hu_fixed : u_perm.subst σ = u_perm := by
-          apply ntm.subst_of_disjoint_dom
-          intro z hz
-          rw [ntm.occursIn_false_iff_not_mem_metavars]
-          intro hz_in
-          have : z ∈ u_perm.metavars := hz_in
-          rw [hu_perm_def, ntm.permute_metavars] at this
-          exact hdisj z (by
-            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                       ntm.metavars, Finset.mem_union]
-            left; right; exact this) hz
-        have hxu : u_perm.occursIn x = false := by
-          rw [hu_perm_def, ntm.occursIn_permute]; exact hocc
-        have hresolve : (ntm.mvar (F := F) [] x).subst τ = u_perm.subst τ :=
-          mvar_subst_eq_binding hσ hx_dom hu_fixed hxu (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
-        rw [UnifProblem.applySubst_singleton_subst_eq rest x u_perm τ hresolve] at hΓ
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hΓ⟩
-        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                   Constraint.Entails]
-        rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
-        exact ntm.alphaEquiv_permute_reverse_permute_self Γ
-          ((ntm.abs b t).subst τ) π
-    | fapp f ss =>
-      cases t with
-      | fapp g ts =>
-        simp only [unifStep] at h
-        split_ifs at h with hfg
-        · obtain ⟨rfl, rfl⟩ := h
-          obtain ⟨rfl, hlen⟩ := hfg
-          rw [UnifProblem.applySubst, List.map_append, ← UnifProblem.applySubst,
-              ← UnifProblem.applySubst,
-              UnifProblem.toConstraint, List.map_append, ← UnifProblem.toConstraint,
-              ← UnifProblem.toConstraint,
-              Problem.Entails_append_iff] at hΓ
-          obtain ⟨hzip, hrest⟩ := hΓ
-          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                     Problem.Entails_cons]
-          refine ⟨?_, hrest⟩
-          simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                     Constraint.Entails, ntm.subst_fapp, alphaEquiv,
-                     Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq]
-          refine ⟨trivial, ?_⟩
-          apply alphaEquivList_of_zip_subst_entails Γ τ ss ts hlen
-          simp only [UnifProblem.applySubst, UnifProblem.toConstraint,
-                     List.map_map, Function.comp_def,
-                     UnifConstraint.applySubst, UnifConstraint.toConstraint] at hzip
-          exact hzip
-      | mvar π' y =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        set u_perm := (ntm.fapp (X := X) (𝔸 := 𝔸) f ss).permute π'.reverse with hu_perm_def
-        have hy_dom : y ∉ Subst.dom σ := hdisj y (by
-          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
-        have hu_fixed : u_perm.subst σ = u_perm := by
-          apply ntm.subst_of_disjoint_dom
-          intro z hz
-          rw [ntm.occursIn_false_iff_not_mem_metavars]
-          intro hz_in
-          have : z ∈ u_perm.metavars := hz_in
-          rw [hu_perm_def, ntm.permute_metavars] at this
-          exact hdisj z (by
-            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                       ntm.metavars, Finset.mem_union]
-            left; left; exact this) hz
-        have hxu : u_perm.occursIn y = false := by
-          rw [hu_perm_def, ntm.occursIn_permute]; exact hocc
-        have hresolve : (ntm.mvar (F := F) [] y).subst τ = u_perm.subst τ :=
-          mvar_subst_eq_binding hσ hy_dom hu_fixed hxu (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
-        rw [UnifProblem.applySubst_singleton_subst_eq rest y u_perm τ hresolve] at hΓ
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hΓ⟩
-        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                   Constraint.Entails]
-        rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
-        exact alphaEquiv_symm Γ _ _ (ntm.alphaEquiv_permute_reverse_permute_self Γ
-          ((ntm.fapp f ss).subst τ) π')
-      | atm _ | abs _ _ => simp [unifStep] at h
-    | abs a s' =>
-      cases t with
-      | abs b t' =>
-        simp only [unifStep] at h
-        by_cases hab : a = b
-        · subst hab
-          simp only [if_pos rfl, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                     Problem.Entails_cons] at hΓ ⊢
-          obtain ⟨hst, hrest⟩ := hΓ
-          refine ⟨?_, hrest⟩
-          simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                     Constraint.Entails, ntm.subst_abs, alphaEquiv,
-                     decide_eq_true_eq, if_pos rfl] at hst ⊢
-          exact hst
-        · simp only [if_neg hab, StepResult.next.injEq] at h
-          obtain ⟨rfl, rfl⟩ := h
-          simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                     Problem.Entails_cons] at hΓ ⊢
-          obtain ⟨hperm, hfresh, hrest⟩ := hΓ
-          refine ⟨?_, hrest⟩
-          simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                     Constraint.Entails, ntm.subst_abs, alphaEquiv,
-                     decide_eq_true_eq, if_neg hab] at hperm hfresh ⊢
-          refine ⟨?_, hfresh⟩
-          rw [ntm.subst_permute] at hperm
-          exact hperm
-      | mvar π' y =>
-        simp only [unifStep] at h
-        split_ifs at h with hocc
-        simp only [StepResult.next.injEq] at h
-        obtain ⟨rfl, rfl⟩ := h
-        rw [Bool.not_eq_true] at hocc
-        set u_perm := (ntm.abs (X := X) (F := F) a s').permute π'.reverse with hu_perm_def
-        have hy_dom : y ∉ Subst.dom σ := hdisj y (by
-          simp [UnifProblem.allMetavars_cons, UnifConstraint.metavars, ntm.metavars])
-        have hu_fixed : u_perm.subst σ = u_perm := by
-          apply ntm.subst_of_disjoint_dom
-          intro z hz
-          rw [ntm.occursIn_false_iff_not_mem_metavars]
-          intro hz_in
-          have : z ∈ u_perm.metavars := hz_in
-          rw [hu_perm_def, ntm.permute_metavars] at this
-          exact hdisj z (by
-            simp only [UnifProblem.allMetavars_cons, UnifConstraint.metavars,
-                       ntm.metavars, Finset.mem_union]
-            left; left; exact this) hz
-        have hxu : u_perm.occursIn y = false := by
-          rw [hu_perm_def, ntm.occursIn_permute]; exact hocc
-        have hresolve : (ntm.mvar (F := F) [] y).subst τ = u_perm.subst τ :=
-          mvar_subst_eq_binding hσ hy_dom hu_fixed hxu (fun t => (hτ_act t).trans (by rw [ntm.subst_comp]))
-        rw [UnifProblem.applySubst_singleton_subst_eq rest y u_perm τ hresolve] at hΓ
-        simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
-                   Problem.Entails_cons]
-        refine ⟨?_, hΓ⟩
-        simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
-                   Constraint.Entails]
-        rw [ntm.subst_mvar, hresolve, hu_perm_def, ntm.subst_permute]
-        exact alphaEquiv_symm Γ _ _ (ntm.alphaEquiv_permute_reverse_permute_self Γ
-          ((ntm.abs a s').subst τ) π')
-      | atm _ | fapp _ _ => simp [unifStep] at h
+  have hmv : ∀ z ∈ c.metavars, z ∉ Subst.dom σ := fun z hz =>
+    hdisj z (by simp [UnifProblem.allMetavars_cons, hz])
+  cases UnifRule.of_unifStep h with
+  | fresh a t cs ht hcs =>
+    obtain ⟨hrest, hcsE⟩ := UnifProblem.entails_applySubst_append.mp hΓ
+    simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+               Problem.Entails_cons]
+    exact ⟨fresh_subst_of_simplifyFresh_entails Γ a τ t cs hcs
+      (Problem.entails_applySubst_of_toUnif hcsE), hrest⟩
+  | atm a =>
+    simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+               Problem.Entails_cons]
+    refine ⟨?_, hΓ⟩
+    simp [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+          Constraint.applySubst, Constraint.Entails, alphaEquiv]
+  | mvarSame π π' x =>
+    obtain ⟨hrest, hfresh⟩ := UnifProblem.entails_applySubst_append.mp hΓ
+    simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+               Problem.Entails_cons]
+    refine ⟨?_, hrest⟩
+    simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+               Constraint.Entails]
+    rw [ntm.subst_mvar π x τ, ntm.subst_mvar π' x τ]
+    apply ntm.alphaEquiv_of_perm_fresh
+    intro n hn
+    have hmem : n ∈ dsList π π' := (mem_dsList_iff_mem_ds n π π').mpr hn
+    have hcfresh : Constraint.fresh n (((ntm.mvar (F := F) [] x : ntm F X 𝔸).subst τ)) ∈
+        UnifProblem.toConstraint
+          ((UnifProblem.applySubst
+            ((dsList π π').map (fun a => UnifConstraint.fresh a (ntm.mvar [] x))) τ)) := by
+      simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.map_map,
+                 List.mem_map, Function.comp_def]
+      exact ⟨n, hmem, by simp [UnifConstraint.applySubst, UnifConstraint.toConstraint]⟩
+    have := hfresh _ hcfresh
+    simp only [Constraint.Entails] at this
+    exact this
+  | instL π x u hocc =>
+    obtain ⟨hrest, hα⟩ := instantiation_sound rest Γ π x u hσ
+      (hmv x (by simp [UnifConstraint.metavars, ntm.metavars]))
+      (fun z hz => hmv z (by simp [UnifConstraint.metavars, hz])) hocc hτ_act hΓ
+    simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+               Problem.Entails_cons]
+    exact ⟨hα, hrest⟩
+  | instR π x u hocc =>
+    obtain ⟨hrest, hα⟩ := instantiation_sound rest Γ π x u hσ
+      (hmv x (by simp [UnifConstraint.metavars, ntm.metavars]))
+      (fun z hz => hmv z (by simp [UnifConstraint.metavars, hz])) hocc hτ_act hΓ
+    simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+               Problem.Entails_cons]
+    exact ⟨alphaEquiv_symm Γ _ _ hα, hrest⟩
+  | fapp f ss ts hlen =>
+    obtain ⟨hzip, hrest⟩ := UnifProblem.entails_applySubst_append.mp hΓ
+    simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+               Problem.Entails_cons]
+    refine ⟨?_, hrest⟩
+    simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+               Constraint.Entails, ntm.subst_fapp, alphaEquiv,
+               Bool.decide_and, Bool.and_eq_true, decide_eq_true_eq]
+    refine ⟨trivial, ?_⟩
+    apply alphaEquivList_of_zip_subst_entails Γ τ ss ts hlen
+    simp only [UnifProblem.applySubst, UnifProblem.toConstraint,
+               List.map_map, Function.comp_def,
+               UnifConstraint.applySubst, UnifConstraint.toConstraint] at hzip
+    exact hzip
+  | absSame a s t =>
+    simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+               Problem.Entails_cons] at hΓ ⊢
+    obtain ⟨hst, hrest⟩ := hΓ
+    refine ⟨?_, hrest⟩
+    simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+               Constraint.Entails, ntm.subst_abs, alphaEquiv,
+               decide_eq_true_eq, if_pos rfl] at hst ⊢
+    exact hst
+  | absDiff a b s t hab =>
+    simp only [UnifProblem.applySubst_cons, UnifProblem.toConstraint_cons,
+               Problem.Entails_cons] at hΓ ⊢
+    obtain ⟨hperm, hfresh, hrest⟩ := hΓ
+    refine ⟨?_, hrest⟩
+    simp only [UnifConstraint.applySubst, UnifConstraint.toConstraint,
+               Constraint.Entails, ntm.subst_abs, alphaEquiv,
+               decide_eq_true_eq, if_neg hab] at hperm hfresh ⊢
+    refine ⟨?_, hfresh⟩
+    rw [ntm.subst_permute] at hperm
+    exact hperm
 
 
 /-! ### Soundness of `finalizeDeferred` -/
