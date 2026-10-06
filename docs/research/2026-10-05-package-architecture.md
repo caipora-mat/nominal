@@ -272,7 +272,7 @@ alternatives and name the evidence that could change the recommendation.
 | AD-05 | Rule certificates before automation; compare per-rule transport with semantic refreshability | ReductionInduction I; Nominal2 and 2025 criterion L | Generic sufficient theorem or generated proof must cover unrestricted beta and FOL eigenvariables |
 | AD-06 | No unconditional supported abstraction map | S counterexample for constant atom output; existing FCB I | Provide equations only at binders fresh for function/parameters; composition laws need proofs |
 | AD-07 | Five-study portfolio U, staged lambda/FOL then let/π/μ P | User selections; each adds a distinct stress test | Precise later semantics selected before their implementation increments |
-| AD-08 | Concurrent LaTeX article U: each implementation increment delivers its exposition and evidence | User research-method requirement and R13 | Match actual declarations, review mathematics and compile the article before completion; no novelty, venue or publication claim |
+| AD-08 | Selective research article in LaTeX U, developed alongside implementation; operational evidence stays in roadmap/research notes | User publication-content clarification and R13 | Explain central mathematics, system choices and grounded comparisons; check correspondence and compile internally; exclude stage IDs, work logs, approvals, review verdicts and build/audit records; no invented novelty |
 | AD-09 | Architectural freedom U: reuse, adapt or rebuild any layer | User clarified that existing infrastructure is learning material | Preserve reference source and mathematical goals; certify new implementations independently |
 | AD-10 | Top-level Package location U and explicit foundation prerequisites | User selected Package outside Nominal and requested a full roadmap revision | Plan Package targets/imports/audits and missing foundations before PKG-01 |
 | AD-11 | Mathlib-first U: search and reuse suitable pinned APIs before new general-purpose code | User requires avoiding duplicated infrastructure | Record candidates and concrete gaps; preserve hypotheses, action coherence and theorem strength |
@@ -300,7 +300,10 @@ for **PKG-03** induction and iteration. It may be developed alongside predicates
 when dependencies allow. **PKG-02** builds the actual syntax-carrier contract;
 **PKG-04** extends categories; **PKG-05/06** produce definition and judgment
 facilities; **PKG-07** validates the complete lambda/FOL workflow. **PKG-08–10**
-cover let, pi and mu, while **PKG-11** maintains the article/evidence record.
+cover let, pi and mu, while **PKG-11** coordinates the research article and the
+separate internal evidence record. The [publication content policy](2026-10-05-article-plan.md#publication-content-policy)
+governs selection: the manuscript explains research insights rather than every
+API and routine proof; operational history remains outside it.
 
 Existing PKG IDs retain their meaning; foundation tasks are new prerequisites,
 not claims of completed work. Reusing a layer may discharge a task after its

@@ -43,6 +43,21 @@ run_cmd do
 #print axioms NominalPackage.Perm.smul_atom
 #print axioms NominalPackage.Discrete.smul_val
 #print axioms NominalPackage.Equivariant.comp
+#print axioms NominalPackage.supports_smul
+#print axioms NominalPackage.supports_iff_swap
+#print axioms NominalPackage.supports_inter
+#print axioms NominalPackage.supports_map
+#print axioms NominalPackage.supports_prod
+#print axioms NominalPackage.FinitelySupported.smul
+#print axioms NominalPackage.FinitelySupported.prod
+#print axioms NominalPackage.FinitelySupported.exists_least_support
+#print axioms NominalPackage.FinitelySupported.support
+#print axioms NominalPackage.FinitelySupported.supports_support
+#print axioms NominalPackage.FinitelySupported.supports_iff_support_subset
+#print axioms NominalPackage.FinitelySupported.support_smul
+#print axioms NominalPackage.FinitelySupported.support_eq_empty_iff
+#print axioms NominalPackage.FinitelySupported.support_map_subset
+#print axioms NominalPackage.support_eq
 
 set_option maxHeartbeats 0 in
 -- This budget applies only to the inspection traversal, not mathematical proofs.

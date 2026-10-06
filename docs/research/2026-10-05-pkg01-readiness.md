@@ -12,8 +12,10 @@ implementation. The [implementation plan](../superpowers/plans/2026-10-05-packag
 was approved for native execution. The broader predicate/support contracts below
 remain proposals. The initial assessment is retained below. F02/F03a originally
 delivered three production source modules and 77 audited declarations; the
-working-tree F03b extension now has four production source modules, one audit
-module and 81 audited production declarations. The author removed the standalone Package
+historical F03b extension had four production source modules, one audit
+module and 81 audited production declarations. The subsequent checked F04a extension
+has five production source modules, one audit and 104 audited declarations.
+The author removed the standalone Package
 examples layer during execution; persistent usage examples are reserved for
 future case studies. Temporary public-import checks are scratch evidence only.
 
@@ -33,14 +35,46 @@ No branch switch, merge, commit, dependency change, production implementation,
 or CI change belongs to this session. The active tracker is the
 [package roadmap](../nominal-package-roadmap.md), not the historical roadmap.
 
-## Current next step after F03b
+## Current status after F04b implementation
 
 The current Package source supplies the permutation/action kernel and its
 production audit. **F03b** now proves swap generation with endpoints in the
 original moved set, arbitrary-set avoidance, and the selected-action criterion.
 All four results are kernel-checked without an infinite-atom assumption. F03b's
-independent final review is clean. F04 next introduces support/freshness and its required hypotheses;
-F05 and PKG-01 follow those foundations.
+independent final review is clean. F04a supplies the finite support calculus,
+and F04b now supplies nominality and least support; F04c/F04d and F05 still
+precede PKG-01.
+
+**F04b implementation update (2026-10-06):** the author approved the
+[least-support specification](../superpowers/specs/2026-10-06-package-least-support-design.md)
+and [native plan](../superpowers/plans/2026-10-06-package-least-support.md).
+All 19 declarations and six temporary consumers/signature files pass.
+Nominality is a proof-only certificate for the selected action, without atom
+assumptions. Under `Infinite A`, least support is available for an individual
+`hx : FinitelySupported A x`, with a convenient carrier interface and proof
+independence. Decidable equality is confined to the finite-set transport
+equation. Images give inclusions, without carrier-wide assumptions in the
+elementwise result. Coverage reaches six production source modules and one
+audit; the direct audit checks 132 declarations in five defining modules with
+standard axioms only. The matching LaTeX section compiles. Independent final
+review found no Critical, Important or Minor issues, with independent code,
+article and preservation checks. F04b is delivered; changes remain uncommitted. Canonical nominal instances,
+freshness, quotients and function/predicate interfaces remain later work.
+
+**F04a design update:** the current inspection is at committed F03b revision
+`34a83358739ab962e2b9d2035a21d67b2a896071`, initially with a clean tree. The
+[F04a specification](../superpowers/specs/2026-10-05-package-finite-support-design.md)
+is approved and selects finite-bound support as an abbreviation of pinned Mathlib's
+`MulAction.Supports`, elementary support laws and infinite-atom finite
+intersection. Its [implementation plan](../superpowers/plans/2026-10-05-package-finite-support.md)
+was approved for native execution. All 18 public declarations, temporary consumers
+and whole-production audit now pass; the matching LaTeX mathematics is written and
+compiled, with a clean independent final review. F04a is delivered in the working
+tree, uncommitted. The active
+tracker records `F04a → F04b → F04c/F04d`. The F04b update above discharges
+the nominality/least-support interface; freshness and canonical quotients
+remain F04c/F04d, and map/predicate bundles remain F05/PKG-01. This refines the older combined proposals below without
+reopening F02/F03 or treating historical probe checks as new-package proofs.
 
 The [F03b specification](../superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
 and [implementation plan](../superpowers/plans/2026-10-05-package-controlled-swaps.md)

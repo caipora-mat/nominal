@@ -1,0 +1,394 @@
+\section{Finite support calculus}
+\label{sec:finite-support}
+
+Fix an atom carrier $A$ and selected actions of $\Perm(A)$ on $X$ and $Y$.
+The atom action is canonical, $\pi\act a=\pi(a)$, and the universes of
+all three carriers are independent. Finite support is a property of an
+individual element; it does not require every element of its carrier to
+have finite support. Infinitude enters the calculus only at intersection.
+
+\subsection{Supporting bounds}
+\label{sec:finite-support-definition}
+
+\begin{definition}
+A finite set $S\subseteq A$ \emph{supports} $x\in X$ when
+\[
+  \operatorname{Supports}(S,x)
+  \quad\Longleftrightarrow\quad
+  \forall\pi\in\Perm(A),\quad
+  \bigl(\forall a\in S,\ \pi(a)=a\bigr)
+  \Longrightarrow \pi\act x=x.
+\]
+The element $x$ is \emph{finitely supported} if such a finite $S$ exists.
+\end{definition}
+
+The definition makes a supporting set a sufficient bound, without choosing
+one or asserting minimality. It requires pointwise fixation of $S$;
+setwise preservation may permute its members. Nor does fixation of $x$
+imply pointwise fixation of a supporting set. That reverse implication
+belongs to the stronger notion of strong support. Support also depends on
+the action: for example, support on bare $\Perm(A)$ refers to left
+multiplication, not silently to conjugation
+(Example~\ref{ex:group-actions}).
+
+The Lean predicate \texttt{Supports S x}, with \texttt{S : Finset A},
+is an abbreviation for Mathlib's two-carrier predicate
+\begin{verbatim}
+  MulAction.Supports (Perm A) (S : Set A) x
+\end{verbatim}
+This reuses its pointwise-fixer semantics with the canonical action on
+atoms and the selected action on values. The atom sort is determined by
+$S$, whereas \texttt{FinitelySupported A x} takes it explicitly.
+Both predicates inhabit \texttt{Prop}, so neither supplies an observable
+choice of bound. Neither definition requires decidable equality
+or infinitude of $A$.
+
+\subsection{Elementary bounds and equivariant images}
+\label{sec:finite-support-basic}
+\label{sec:finite-support-products}
+
+\begin{proposition}[Elementary support bounds]
+\label{prop:support-basic}
+\label{prop:support-products}
+\label{prop:finitely-supported-basic}
+For finite bounds $S,T\subseteq A$:
+\begin{enumerate}
+\item If $S$ supports $x$ and $S\subseteq T$, then $T$ supports $x$.
+\item The empty set supports $x$ exactly when every permutation fixes $x$.
+\item If $f:X\to Y$ is equivariant and $S$ supports $x$, then $S$ supports
+  $f(x)$.
+\item Under the componentwise action, $S$ supports $(x,y)$ exactly when it
+  supports both components. If $S$ supports $x$ and $T$ supports $y$,
+  then $S\cup T$ supports $(x,y)$.
+\end{enumerate}
+Consequently, equivariant images and products preserve finite supportedness.
+None of these conclusions requires infinitude.
+\end{proposition}
+
+\begin{proof}
+A permutation fixing $T$ pointwise also fixes $S\subseteq T$; for the
+empty set the pointwise condition is vacuous. Equivariance and support give
+$\pi\act f(x)=f(\pi\act x)=f(x)$.
+For products, fixation is componentwise; enlarge separate bounds to
+$S\cup T$. Existential witnesses for the image and product are the same
+bound and the union, respectively.
+\end{proof}
+
+The image theorem is a bound, not an equality of least supports. For
+example, a constant map into $\Discrete_A(\mathbb B)$ is equivariant.
+Its value inherits the bound $\{a\}$ of an atom $a$, but also has the
+strictly smaller empty bound. The image theorem needs only the
+ordinary-function predicate $\Equivariant_A(f)$, without an action or a
+support certificate on the function itself.
+
+\subsection{Support transport by conjugation}
+\label{sec:support-transport}
+
+\begin{proposition}[Conjugation transport]
+\label{prop:support-transport}
+For every $\pi\in\Perm(A)$ and finite $S\subseteq A$,
+\[
+  \operatorname{Supports}(\pi[S],\pi\act x)
+  \quad\Longleftrightarrow\quad
+  \operatorname{Supports}(S,x).
+\]
+No infinitude or commuting-action hypothesis is required.
+\end{proposition}
+
+\begin{proof}
+Suppose $S$ supports $x$ and $\sigma$ fixes $\pi[S]$ pointwise.
+For $a\in S$, one has $\sigma(\pi(a))=\pi(a)$, so
+$(\pi^{-1}\sigma\pi)(a)=a$.
+Thus $\pi^{-1}\sigma\pi$ fixes $S$ pointwise and hence fixes $x$.
+The action laws give
+\[
+  \sigma\act(\pi\act x)
+  =\pi\act\bigl((\pi^{-1}\sigma\pi)\act x\bigr)
+  =\pi\act x.
+\]
+For the converse, apply this implication to $\pi^{-1}$, the bound
+$\pi[S]$ and the element $\pi\act x$, then cancel the inverse actions.
+\end{proof}
+
+The formal statement is \path{supports_smul_iff}. Conjugation is essential
+to this proof: renaming transports the pointwise fixer of $S$ to that of
+$\pi[S]$. Mathlib's \path{MulAction.Supports.smul} instead assumes
+commuting scalar actions on both carriers, a condition that general
+permutations do not satisfy. The conjugation argument accommodates their
+noncommutativity directly.
+
+\begin{proposition}[Existential transport]
+\label{prop:finitely-supported-transport}
+For every $\pi\in\Perm(A)$,
+\[
+  \operatorname{FinitelySupported}_A(\pi\act x)
+  \quad\Longleftrightarrow\quad
+  \operatorname{FinitelySupported}_A(x).
+\]
+\end{proposition}
+
+Transport sends a witness $S$ to $\pi[S]$; applying $\pi^{-1}$ gives the
+converse. Thus finite supportedness is
+invariant under renaming even when no bound is selected as data.
+
+\subsection{Swaps and intersection}
+\label{sec:support-swap-criterion}
+\label{sec:support-intersection}
+
+\begin{proposition}[Support tested by swaps]
+\label{prop:support-swap-criterion}
+A finite $S\subseteq A$ supports $x$ if and only if
+\[
+  \forall a,b\in A,\quad a\notin S\ \land\ b\notin S
+  \Longrightarrow\swap a b\act x=x.
+\]
+Equal endpoints are allowed, and no infinitude premise is required.
+\end{proposition}
+
+This specializes Proposition~\ref{prop:swap-invariance} to a finite bound.
+It turns a quantification
+over all finite permutations into a local condition on two atoms.
+Intersection then reduces to finding a spare atom joining two such local
+conditions.
+
+\begin{proposition}[Intersection of finite support bounds]
+\label{prop:finite-support-intersection}
+Assume $A$ is infinite. If finite $S,T\subseteq A$ both support $x$,
+then $S\cap T$ supports $x$.
+\end{proposition}
+
+\begin{proof}
+By the swap criterion, it suffices to show that $\swap a b$ fixes $x$
+whenever $a,b\notin S\cap T$. The case $a=b$ is immediate. Otherwise,
+choose
+\[
+  c\notin S\cup T\cup\{a,b\}.
+\]
+Such an atom exists because the excluded set is finite. The atom $a$ lies
+outside at least one of $S,T$, and $c$ lies outside both; therefore
+$\swap a c$ fixes $x$. Similarly, $\swap c b$ fixes $x$. Conjugation gives
+\[
+  \swap a c\swap c b\swap a c
+  =\swap{\swap a c(c)}{\swap a c(b)}
+  =\swap a b.
+\]
+All three factors on the left fix $x$, so their product does too.
+\end{proof}
+
+In \path{supports_inter}, infinitude is used only to obtain $c$ by
+Mathlib's \path{Finset.exists_notMem}. There is no assumption that all
+values of $X$ are finitely supported. The role of the atom hypothesis is
+mathematical, as the following example shows.
+
+\begin{example}[Intersection can fail on finite atoms]
+\label{ex:finite-atom-intersection}
+Let $A=\mathbb B$ carry its canonical action, and take
+$x=\mathrm{false}$. Both $\{\mathrm{false}\}$ and
+$\{\mathrm{true}\}$ support $x$, but their empty intersection does not.
+\end{example}
+
+\begin{proof}
+The first bound is immediate. A permutation fixing $\mathrm{true}$ also
+fixes $\mathrm{false}$: injectivity prevents it from sending both atoms to
+$\mathrm{true}$, and these are the only atoms. This gives the second
+bound. Yet $\swap{\mathrm{false}}{\mathrm{true}}$ moves $x$, so the empty
+set cannot support it.
+\end{proof}
+
+The example uses the same finite-permutation group and support definition
+as the infinite-atom theorem. It shows why a sufficient support bound
+cannot be identified with a least bound and why intersection needs an
+atom hypothesis.
+
+\subsection{Assumptions and support witnesses}
+\label{sec:support-assumptions}
+
+The mathematical distinction between a supplied finite bound and existence
+of a bound has a useful consequence for the Lean interface. Visible union,
+image and intersection expressions require decidable equality. When such
+a set is constructed only as an existential witness, classical equality
+can remain local to the proof: finite supportedness still carries no
+computational choice of bound. The assumptions therefore separate as follows.
+
+\begin{center}
+\small
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.66\linewidth}
+  >{\raggedright\arraybackslash}p{0.28\linewidth}@{}}
+\hline
+Statements & Atom assumptions \\
+\hline
+Definitions, enlargement, empty support, equivariant images,
+common product bounds, closure and transport of finite supportedness & None \\
+Visible finite-set image and union bounds, swap criterion &
+  \texttt{DecidableEq A} \\
+Intersection of finite support bounds &
+  \texttt{DecidableEq A}, \texttt{Infinite A} \\
+\hline
+\end{tabular}
+\end{center}
+
+All rows use the selected actions, with independent carrier universes.
+Countability, carrier-wide supportedness and commuting-action assumptions
+are unnecessary. The calculus therefore applies to finitely supported
+elements within arbitrary permutation actions, before imposing any
+condition on the carrier as a whole.
+
+\subsection{Nominality and least support}
+\label{sec:least-support}
+
+\begin{definition}[Nominality certificate]
+A selected action on $X$ is \emph{nominal} when every $x\in X$ is finitely
+supported. The certificate asserts
+\[
+  \forall x\in X,\quad
+  \exists S\in\Finset(A),\quad\operatorname{Supports}(S,x).
+\]
+\end{definition}
+
+This condition is meaningful for any atom carrier. In Lean,
+\texttt{Nominal A X} is a class in \texttt{Prop}, parameterized by the
+already selected \texttt{MulAction (Perm A) X}. Its sole field proves finite
+supportedness of every element. It contains neither an action nor a chosen
+finite set, and requires neither infinitude nor decidable equality. Atom and
+carrier universes remain independent; the atom parameter is explicit.
+
+Least support concerns an individual element. Write
+$\operatorname{supp}_A(x)$ for its least finite supporting set when this
+exists. The next result requires finite supportedness of $x$, without a
+nominality certificate for all of $X$.
+
+\begin{proposition}[Unique least finite support]
+\label{prop:least-support}
+Assume $A$ is infinite and $x\in X$ is finitely supported. There is a unique
+finite set $L\subseteq A$ such that
+\[
+  \operatorname{Supports}(L,x)
+  \quad\text{and}\quad
+  \forall T\in\Finset(A),\quad
+  \operatorname{Supports}(T,x)\Longrightarrow L\subseteq T.
+\]
+Consequently, for every finite $S\subseteq A$,
+\[
+  \operatorname{Supports}(S,x)
+  \quad\Longleftrightarrow\quad\operatorname{supp}_A(x)\subseteq S.
+\]
+\end{proposition}
+
+\begin{proof}
+Strict inclusion of finite sets is well founded. Since $x$ has a finite
+support, choose an inclusion-minimal supporting set $L$. For any finite
+support $T$, Proposition~\ref{prop:finite-support-intersection} shows that
+$L\cap T$ also supports $x$. Its containment in $L$ and the minimality of
+$L$ give $L\subseteq L\cap T\subseteq T$. Thus $L$ is least, rather than
+merely minimal. Two least supporting sets contain each other and hence
+are equal. The final equivalence follows from leastness and enlargement
+of supporting bounds.
+\end{proof}
+
+Mathlib supplies the well-founded Finset order and
+\path{exists_minimal_of_wellFoundedLT}; the nominal step is closure under
+binary intersection. The declaration
+\path{FinitelySupported.exists_least_support} combines these results.
+One could instead minimize the cardinality of a supporting set: intersecting
+it with another support cannot decrease its cardinality, so the intersection
+equals the selected set. The inclusion-order proof uses the existing order
+interface directly. It neither enumerates atoms nor assumes a theorem about
+arbitrary intersections.
+
+Let \texttt{hx} be a proof of \texttt{FinitelySupported A x}.
+The noncomputable operation \texttt{hx.support} chooses the uniquely
+characterized set. Its public laws
+state that this set supports $x$ and is contained in every finite support;
+clients need not unfold the choice. No public decidable-equality argument is
+required: classical equality is local to the intersection proof. Choosing a
+semantic support is not an algorithm for computing it.
+
+Two certificates of finite supportedness, even if proved using different
+finite bounds, yield the same least set. Lean's proof irrelevance identifies
+the certificate arguments, and the mathematical uniqueness result identifies
+any independently constructed least support. Neither explanation identifies
+supports belonging to different selected actions.
+
+For a nominal carrier, the convenient operation \texttt{support A x} uses
+the class's finite-supportedness proof as its elementwise certificate.
+It makes no second choice. The agreement law \texttt{support\_eq} equates
+this value with \texttt{hx.support} for any supplied certificate of $x$.
+Thus two nominality certificates for the same action also yield equal
+supports. The atom type is an explicit argument to the carrier operation
+and its laws, allowing clients to select the intended action when several
+atom types occur in a context.
+
+The carrier interface makes support available uniformly, while the
+elementwise interface retains the weaker hypothesis needed for a particular
+value. For instance, under the ordinary pointwise action on functions
+$\mathbb N\to\mathbb N$, a constant function is supported by its value's
+singleton. The identity function has no finite support: given any proposed
+bound, swap two distinct atoms outside it and evaluate at one endpoint.
+Consequently, this function carrier is not nominal even though its supported
+elements admit the least-support construction. No function-space action is
+changed to obtain this distinction.
+
+The atom hypothesis cannot be replaced by carrier-wide nominality. Under the
+canonical action on $\mathbb B$, every atom has a singleton supporting bound.
+Yet the element $\mathrm{false}$ of
+Example~\ref{ex:finite-atom-intersection} has no least finite support: a least
+bound would lie in both singleton supports, hence be empty, whereas the empty
+set does not support it. Finite supportedness and least-support existence
+therefore have different atom assumptions.
+
+\begin{proposition}[Laws of least support]
+\label{prop:least-support-laws}
+Assume $A$ is infinite, $x\in X$ is finitely supported, and $\pi\in\Perm(A)$.
+Then
+\begin{align*}
+  \operatorname{supp}_A(\pi\act x)&=\pi[\operatorname{supp}_A(x)],\\
+  \operatorname{supp}_A(x)=\varnothing
+    &\quad\Longleftrightarrow\quad
+      \forall\sigma\in\Perm(A),\ \sigma\act x=x.
+\end{align*}
+If $f:X\to Y$ is equivariant, then $f(x)$ is finitely supported and
+\[
+  \operatorname{supp}_A(f(x))\subseteq\operatorname{supp}_A(x).
+\]
+No nominality assumption on either whole carrier is needed.
+\end{proposition}
+
+\begin{proof}
+Transport of sufficient bounds shows that
+$\pi[\operatorname{supp}_A(x)]$ supports $\pi\act x$, giving one inclusion
+by leastness. For the reverse inclusion, transport the least support of
+$\pi\act x$ back by $\pi^{-1}$. It supports $x$, so contains
+$\operatorname{supp}_A(x)$; applying $\pi$ yields the other inclusion.
+Thus both directions reuse Proposition~\ref{prop:support-transport}.
+For the empty characterization, the empty set is a supporting bound exactly
+for elements fixed by every permutation, and it is then the least bound.
+Finally, equivariance makes every support of $x$ a support of $f(x)$.
+Apply this fact to $\operatorname{supp}_A(x)$ and use leastness of the image.
+\end{proof}
+
+The elementwise Lean laws take the original certificate \texttt{hx} and
+derive those for the renamed element and equivariant image using
+\texttt{hx.smul} and \texttt{hx.map}. A separately supplied certificate
+gives the same support. The finite-set image equation uses the existing
+\texttt{Pointwise} scope and requires \texttt{DecidableEq A}; the empty
+characterization and image inclusion need no equality instance. None of
+the laws assumes that permutation actions commute.
+
+The carrier versions use the same elementwise laws. In particular, writing
+both sides of the image bound with \texttt{support A} requires nominality of
+both carriers. For an arbitrary acted-on codomain, the elementwise image
+certificate still suffices. Infinitude is needed for both choices of interface;
+decidable equality remains confined to the finite-set image equation.
+
+The image inclusion is generally strict. An atom moved by a swap has
+nonempty least support, while its image under a constant map into explicit
+discrete data is fixed by every permutation and has empty support. Thus
+equivariance preserves supporting bounds but need not preserve dependence
+on every atom in the original least bound.
+
+Least support is also distinct from strong support. If $\pi\act x=x$,
+transport gives
+$\pi[\operatorname{supp}_A(x)]=\operatorname{supp}_A(x)$.
+This is setwise preservation, which allows atoms inside the support to be
+permuted. The supporting property says that fixing those atoms pointwise
+fixes $x$; it does not give the converse.

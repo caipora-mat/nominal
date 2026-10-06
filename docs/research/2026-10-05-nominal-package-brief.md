@@ -122,11 +122,13 @@ obligations as well as successful results. Separate conjectures, source-reviewed
 claims, scratch experiments and integrated verified results.
 
 Write the evolving mathematical article together with the package development,
-describing the package, uses, theory, difficulties and limitations. R13 specifies
-LaTeX format and concurrent per-increment delivery; publication venue remains
-open. Do not claim novelty, equivalence of architectures, or generality without
-supporting evidence. The future brainstorming prompt must require both an
-architectural roadmap and a sustainable research-writing workflow.
+selecting the package's research insights, theory, uses and limitations rather
+than documenting every implementation detail. R13 specifies LaTeX format,
+publication content and concurrent writing; publication venue remains open.
+Discuss relevant related systems and theories through supported comparisons.
+Do not claim novelty, equivalence of architectures, or generality without
+supporting evidence. Keep the architectural roadmap and research-writing workflow
+as internal records.
 
 ### R8 Preserve the completed development
 
@@ -290,18 +292,29 @@ article describing the nominal package implementation under `docs/article/`,
 written alongside implementation. All article content must be LaTeX. The author
 explicitly permitted delegation of article writing to subagents.
 
-The entry point is [main.tex](../article/main.tex), with included introduction
-and foundations sections. The delivered F02/F03a exposition refers to actual
-checked declarations and recorded verification; later contracts remain prospective.
-This supersedes the earlier article-plan suggestion to draft the manuscript in
-Markdown. It does not authorize publication or imply completion of later Package
-layers. The requirement applies to every subsequent substantive increment:
-specifications/plans assign the corresponding LaTeX work; statements and proofs
-are written while the code develops; final hypotheses, declaration references,
-limitations and verification evidence are synchronized and the article compiled
-before the increment is marked complete. PKG-11 records this ongoing work rather
-than a writing phase after implementation. Article drafting may be delegated
-in parallel, with reconciliation against the final code before delivery.
+The entry point is [main.tex](../article/main.tex), with included mathematical
+sections. The author's subsequent clarification makes this an intended research
+publication about the system and its mathematics. Select central definitions,
+theorems, proof ideas, architectural insights, limitations and counterexamples;
+include grounded discussion of relevant theories and related systems. Do not
+mirror every API or routine proof, or invent novelty to justify inclusion.
+
+The manuscript excludes development-stage/task IDs, work logs, implementation
+status and delivery narratives, approvals, branch/commit bookkeeping, agent work,
+review outcomes, and audit/build commands, results, counts or cache histories.
+Those records belong in the roadmap and research notes. Scientifically relevant
+logical assumptions, mathematical dependencies and Lean declaration correspondence
+remain appropriate. The [article policy](2026-10-05-article-plan.md#publication-content-policy)
+supersedes earlier instructions to put operational evidence in the manuscript.
+
+All article content remains LaTeX, replacing the earlier Markdown-first suggestion.
+Every substantive increment assigns relevant exposition work and develops it with
+the proofs. Check final hypotheses, selected declaration references and limitations
+against the code, review the mathematics and compile the article before closing
+the increment; record those checks internally. Routine implementation changes
+need not add article text. PKG-11 tracks this continuous responsibility. Drafting
+may be delegated in parallel with reconciliation against final code. These are
+writing-process requirements, not manuscript content or permission to publish.
 
 ### R14 Mathlib-first development
 

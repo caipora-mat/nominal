@@ -1,64 +1,42 @@
-\section{Purpose and scope}
+\section{Nominal reasoning and selected actions}
 \label{sec:introduction}
 
-The intended package supports ordinary Lean proofs about languages with
-binders. A researcher should be able to specify syntax, define operations, and
-reason about judgments using certified renaming and freshness principles.
-The mathematical setting is classical Lean, with one atom sort, actual
-quotients, and eventual least supports. Single binders and nested binders form
-the initial binding scope. Ordinary propositions remain the language of
-theorems; the package is not intended to require a separate object language
-for logic.
+Reasoning about languages with binders requires a precise account of renaming
+and dependence on names. Nominal sets express this dependence through finite
+support: a finite set of atoms supports an object when every finite permutation
+fixing those atoms pointwise also fixes the object. The definition applies to
+syntax, functions and relations once their permutation actions have been
+specified. We formalize the permutation, action and finite-support theory in
+Lean, using the classical setting of nominal-set theory described by
+Pitts~\cite[Chapters 1--2]{pitts2013}.
 
-Before syntax generation or binder reasoning can be certified, the meaning of
-renaming must be fixed. A carrier alone does not determine an action: the same
-type can carry a trivial action, a canonical atom action, or, for suitable
-carriers, a pointwise or conjugation action. These choices affect every later
-support statement. The foundation described here therefore exposes a small
-permutation and action interface for ordinary Lean proofs.
-The underlying mathematics is standard group-action and nominal-set theory;
-Pitts~\cite[Chapters 1--2]{pitts2013} provides the background.
+The choice of action is part of the mathematical interface. The same underlying
+carrier can support a trivial action, an action inherited from its components,
+or, for suitable carriers, a conjugation action. These choices yield different
+invariance and support properties. Our representation makes the selected
+action explicit through Mathlib's \texttt{MulAction} interface and keeps the
+atom and carrier universes independent. Finite permutations form a subgroup of
+\texttt{Equiv.Perm}; a distinct carrier represents data on which permutations
+act trivially. These choices permit standard group-action reasoning while
+preventing an implicit identification of mathematically different actions.
 
-For each definition or structure that encodes a mathematical concept, we
-state that concept before describing its Lean representation. We identify
-the correspondence between the mathematical object, its operations and
-laws, and the actual declarations. We also check the pinned Mathlib for
-existing constructions before adding package-specific machinery, recording
-what is reused and why a different interface is needed when reuse does not
-fit. Representation helpers without a separate mathematical counterpart
-are described as such, rather than promoted to additional theory.
+Two results connect this representation to support proofs. First, a finite
+permutation factors into transpositions whose endpoints belong to its original
+moved-point set. A permutation fixing a set pointwise therefore admits a
+factorization that avoids that set. This yields a swap criterion for invariance
+under any selected action, without an infinitude assumption. Second, over an
+infinite atom type, finite supports are closed under binary intersection.
+An inclusion-minimal supporting bound is consequently least among all finite
+supporting bounds. This gives canonical support for an individually supported
+element, without assuming that its entire carrier is nominal.
+A two-atom counterexample shows why the latter conclusion cannot be inferred
+from the former without the additional hypothesis.
 
-Declarations use the namespace \texttt{NominalPackage}, under
-\path{Package/}, with \path{Package.lean} as
-the public import. It uses Mathlib directly and preserves the earlier
-\path{Nominal/} and \path{Instances/} development as a reference implementation.
-Analogous results in that development are not evidence that a new package
-declaration has been proved. The design adapts the subgroup construction for
-finite permutations and uses standard \texttt{MulAction} interfaces for the
-new boundary.
-
-\paragraph{Implementation status.}
-This version describes the implemented foundation increments for roadmap tasks
-\texttt{PKG-F02} and both slices, \texttt{F03a/F03b}, of \texttt{PKG-F03}.
-The permutation and action interfaces exported by \texttt{Package} have been
-checked by Lean, and the source-coverage check and production axiom audit pass.
-Section~\ref{sec:evidence} records the verification evidence separately from
-the mathematical exposition.
-
-Sections~\ref{sec:controlled-swaps} and~\ref{sec:swap-invariance} describe
-the support-facing permutation input supplied by \texttt{F03b}: controlled
-swap factorization, avoidance of an arbitrary pointwise fixed set, and the
-corresponding criterion for invariance in any selected action. All four
-public results have been checked by Lean. The support construction itself,
-\texttt{PKG-F04}, remains later work.
-Supported predicates (\texttt{PKG-01}) are also later work. Persistent usage
-examples are reserved for the future case studies.
-
-The present scope includes finite permutations, controlled swap factorization,
-arbitrary-set avoidance, actions on atoms,
-products and finite atom sets, explicit discrete data, and equivariance of
-ordinary functions, together with the selected-action swap criterion.
-It does not establish finite
-or least support, freshness, quotient actions, supported predicates, name
-abstraction, induction, recursion, or generated syntax. These are later
-mathematical layers, with their own proof obligations.
+Section~\ref{sec:foundations} develops controlled factorization and explains
+the action choices that matter to the interface. Section~\ref{sec:finite-support}
+uses these results to derive finite-support laws, including transport by
+conjugation and intersection, and constructs least support in
+Section~\ref{sec:least-support}. Section~\ref{sec:perspectives} relates the action
+and support interfaces to predicate reasoning and other nominal formalizations.
+The Lean interfaces discussed here are exported by
+\texttt{import Package} in the namespace \texttt{NominalPackage}.

@@ -2,8 +2,9 @@
 
 Date: 2026-10-05. Architectural-policy revision after
 `7fed53a2e5fc67379f86f085515e310e7c1fddb7` on `fasapa/nominal-package`.
-Proposed writing workflow for the
-[package research](2026-10-05-package-architecture.md), not a publication claim.
+Writing policy for the
+[package research](2026-10-05-package-architecture.md) and its intended research
+publication; no publication, novelty or readiness claim is implied.
 The article should develop alongside proofs and client experience; it should
 not present proposed package contracts as already established results.
 
@@ -12,8 +13,10 @@ author requested an article under `docs/article/`, entirely in LaTeX, written
 alongside implementation. The initial [main source](../article/main.tex) includes
 [purpose/scope](../article/sections/introduction.tex) and
 [permutation/action foundations](../article/sections/foundations.tex).
-It now contains manuscript proofs, actual F02/F03a declarations and verification
-evidence, while keeping later support/predicate contracts prospective. The bounded
+Its scientific scope includes permutations, selected actions and finite support,
+with mathematical arguments and relevant Lean declaration correspondence.
+The article now also covers the proved least-support construction and laws;
+freshness/predicate contracts require their own results. The bounded
 [implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md)
 assigns article updates to each task. A subsequent author correction reserves
 persistent usage examples for future case studies; the article does not claim
@@ -21,16 +24,49 @@ a separate Package examples or consumer-audit layer.
 
 The author also requested that discussions clarifying mathematical concepts and
 representation choices be incorporated into the corresponding LaTeX sections
-when missing. Record the meaning of an interface, its rationale and viable
-alternatives with their tradeoffs; do not leave that reasoning only in chat or
-present a chosen implementation as a mathematical necessity.
+when they add insight to the article. Explain the meaning of a consequential
+interface, its rationale and viable alternatives with their tradeoffs; preserve
+the full discussion in research notes when only part serves the manuscript.
+Do not leave the reasoning only in chat or present an implementation choice as
+a mathematical necessity.
 
-For each new definition or structure with a mathematical counterpart, state
-the mathematical concept explicitly before discussing its Lean encoding, and
-identify the correspondence of carriers, operations and laws. Check Mathlib for
-existing definitions and theorems before introducing package-specific machinery;
-record reuse, adaptation or the concrete reason an available interface does not
-fit. Distinguish implementation helpers from independent mathematical concepts.
+For each definition or structure selected for exposition, state its mathematical
+concept before discussing the Lean encoding, and identify the correspondence of
+carriers, operations and laws. This does not require a manuscript entry for every
+declaration. Check Mathlib before introducing package-specific machinery; record
+the investigation in research notes and explain reuse or adaptation in the article
+when it illuminates the mathematics or system design. Distinguish implementation
+helpers from independent mathematical concepts.
+
+## Publication content policy
+
+The article is a selective research account of the system and its mathematics.
+Choose a coherent argument around central definitions, theorems and proof ideas,
+meaningful architectural choices, consequences, limitations and counterexamples.
+Discuss relevant theories and related systems through grounded comparisons of
+assumptions, guarantees and user reasoning. Explain what the results teach; do
+not invent novelty, priority, generality or performance claims. This policy
+supersedes earlier instructions that made the manuscript a development record.
+
+Exclude development-stage and task IDs (including F03b, F04a and PKG identifiers),
+work logs, delivery/status or approval narratives, branch and commit bookkeeping,
+agent assignments, reviews and verdicts, and audit/build commands, results,
+counts, cache conditions and diagnostic histories. In particular, review claims
+such as "Independent final review found no issues" are not article content.
+Keep this information in the roadmap, specifications/plans or research notes.
+The internal claim ledger supports the article; it is not a manuscript section.
+
+Retain scientifically relevant logical assumptions, mathematical dependencies,
+limitations and Lean API correspondence. Lean's kernel and standard classical
+axioms may be explained as the formalization's logical basis, without reporting
+audit operations or outcomes. Cite relevant publications and source versions
+for scholarly attribution; keep development revision tracking in research notes.
+
+Select examples and proofs for their explanatory value. Summarize routine lemmas
+or cite their source; do not mirror the module tree, enumerate the entire API,
+or reproduce every implementation proof. An article section need not correspond
+one-to-one with a task, module or declaration. Internal research notes retain
+details and unsuccessful experiments that do not serve the publication's argument.
 
 ## Concurrent writing is part of delivery
 
@@ -40,19 +76,21 @@ LaTeX work in its scope and completion criteria. PKG-11 tracks this continuous
 responsibility; it is not work postponed until the implementation is finished.
 
 Each specification/plan must identify the relevant sections under `docs/article/`
-and the mathematical statements, proof explanations and implementation evidence
+and the selected mathematical statements, proof explanations or system insights
 to add or revise. Draft the mathematics while designing/proving it, and update
-the draft as hypotheses, names, representations or proof strategies change.
-Keep prospective results visibly separate from verified Package declarations.
+the draft as hypotheses, relevant names, representations or proof strategies
+change. Do not present proposed results as established; phrase open questions
+in mathematical terms, without importing implementation-stage tracking.
 
 Before closing an increment, require both its code validation and an accurate
 article update: definitions and theorem assumptions match the chosen interface;
-the mathematical argument and limitations are explained; source/declaration
-references and verification evidence are current; and the LaTeX entry point
-compiles. Review the mathematical correspondence as well as PDF compilation.
-Changes confined to build tooling may need only an updated implementation or
-verification account, rather than a new mathematical section. Journal-ready
-polish and publication are not per-increment requirements.
+the mathematical argument and limitations are explained; relevant source and
+declaration references are accurate; and the LaTeX entry point compiles. Review
+the mathematical correspondence as well as PDF compilation. Record these checks
+and their results in the roadmap, never in the manuscript. Routine implementation
+or build-tooling changes may require no new article text; record that editorial
+decision internally instead of adding an operational account. Publication polish
+and publication are not per-increment requirements.
 
 An article subagent may draft in parallel with implementation using agreed
 statements. Reconcile its text against the final declarations and checks before
@@ -63,7 +101,31 @@ and the selected-action criterion in [foundations.tex](../article/sections/found
 The mathematics and LaTeX were developed together. The four public Lean results
 are checked, the article is reconciled and compiled, and independent review
 found no issues. F03b is delivered.
-F04 support theory remains labeled as future work.
+F04a finite support theory and F04b nominality/least support are implemented and
+checked with their concurrent article sections; the remaining F04 layers remain
+future work. F04b's independent final review found no issues and independently
+checked its mathematical correspondence and a fresh manuscript compilation.
+
+The [F04a written specification](../superpowers/specs/2026-10-05-package-finite-support-design.md)
+now assigns `docs/article/sections/support.tex`, `sec:finite-support`, to its
+concurrent implementation: Mathlib's support predicate and its finite-bound
+specialization, finite supportedness, basic/image/product bounds, conjugation
+transport, the F03b swap specialization, infinite-atom finite intersection and
+the two-atom counterexample. The specification is approved; its
+[implementation plan](../superpowers/plans/2026-10-05-package-finite-support.md)
+assigns concurrent LaTeX drafting to Tasks 1–3 and final correspondence/build
+verification to Task 4. The plan was approved for native execution; its code,
+consumers and mathematical section now check, with a clean independent final review.
+F04a is delivered in the working tree, uncommitted.
+The approved [F04b specification](../superpowers/specs/2026-10-06-package-least-support-design.md)
+and [native plan](../superpowers/plans/2026-10-06-package-least-support.md)
+extend that file with `sec:least-support`, now reconciled and compiled alongside
+the checked implementation. It explains the proof-only certificate, individual
+leastness and uniqueness via the Finset minimum/intersection argument, witness
+independence, carrier convenience, transport, empty support, image inclusion
+and the finite-atom/strong-support boundaries. F04c owns `sections/freshness.tex` and F04d owns
+`sections/quotients.tex`, as recorded in the active roadmap. Every later
+specification and plan must retain its own article/reconciliation obligations.
 
 The [F03b written specification](../superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
 assigns the controlled-factorization, avoidance and action-invariance propositions,
@@ -99,10 +161,11 @@ package's declaration paths or mandatory imports.
 | [Package roadmap](../nominal-package-roadmap.md) | PKG task IDs, dependency/status tracking, delivered verification | Link to notes instead of copying proofs; mark complete only against stated acceptance criteria; keep the prior library roadmap as historical evidence |
 | `Package/` | New foundations, package machinery, and implementation clients | Choose internal paths in the relevant bounded plan; attach evidence to the actual new declarations |
 | Future `docs/research/claims.md` | Statement-to-evidence ledger | Add a row whenever the manuscript makes or changes a substantive claim |
-| `docs/article/`, entry point `main.tex` | Coherent evolving LaTeX exposition | Develop alongside implementation; distinguish manuscript proofs, source-attributed facts and checked Package results visibly |
+| `docs/article/`, entry point `main.tex` | Selective LaTeX research exposition | Develop alongside implementation; explain system and mathematics, attribute sources and delimit proved claims; exclude development records |
 | Per-increment spec/plan | Implementation boundaries, replacement dependencies, article section and execution checks | Assign code and LaTeX work to the same bounded increment; link its PKG task and any historical evidence separately |
 
-The separate claim-ledger path remains proposed, and `Package/` is the selected
+This table describes internal artifact ownership, not an article outline. The
+separate claim-ledger path remains proposed, and `Package/` is the selected
 implementation destination. The manuscript now uses a single LaTeX entry point
 and included sections; its initial bibliography is in `main.tex`. This supersedes
 the earlier recommendation to begin article sections in Markdown. All article
@@ -113,7 +176,8 @@ not create a Package implementation or certify its proposed declarations.
 
 ## Claim ledger format
 
-Each claim should record: stable claim ID; exact mathematical statement and
+The ledger is an internal research record, not manuscript content. Each claim
+should record: stable claim ID; exact mathematical statement and
 hypotheses; status; Lean declaration/module and source revision; proof dependency
 policy; source/theorem/page when inherited; commands actually run; counterexample
 or failure history; manuscript location; next unresolved obligation.
@@ -136,180 +200,124 @@ Possible initial entries (examples of the ledger format):
 | CL-008 | Unconditional abstraction mapping for supported functions fails — scratch theorem | [BackendCounterexamples.lean](probes/BackendCounterexamples.lean), `no_unconditional_const_abs_map` | Fresh-binder mapping remains possible research |
 | CL-009 | Generic fresh rule criterion — primary-source theorem | [2025 comparison](2026-10-05-isabelle-comparison.md), Definition 6/Theorem 7 | No Lean port or Isabelle build in this research turn |
 | CL-010 | Complete generated syntax/function/judgment workflow — proposed | PKG-07 acceptance criterion | No implementation/generation result yet |
-| CL-011 | Package permutation/action kernel — F02/F03a/F03b delivered; support and predicate foundations remain proposed | `Package/Foundations/Permutation.lean`, `Package/Foundations/SwapFactorization.lean`, `Package/Foundations/Action.lean`, their recorded audit and the foundations article section | Later support/freshness/function/predicate claims require their own proofs and article updates |
+| CL-011 | Package permutation/action, finite support and least support — F02/F03a/F03b/F04a/F04b delivered | `Package/Foundations/Permutation.lean`, `Package/Foundations/SwapFactorization.lean`, `Package/Foundations/Action.lean`, `Package/Foundations/Support.lean`, `Package/Foundations/Nominal.lean`, their recorded audit and article sections | Canonical nominal instances, freshness, quotients and predicate foundations require their later proofs and article updates |
 
 Record actual declaration names when creating the ledger; a descriptive label is
 not an adequate theorem reference. Re-run audits after a dependency-changing
 proof refactor. A cached build, direct source elaboration, fresh project build
 using cached dependencies, and clean dependency bootstrap are separate fields.
 
-## Detailed article outline
+## Selective article outline
 
-### 1. Problem, audience and demonstrable scope
+These are candidate research themes, not a requirement to document every layer.
+Choose and combine them according to the proved results and the article's central
+argument. Omit unsupported contributions and routine implementation details.
+Case studies and future interfaces below are internal planning candidates;
+listing them here does not establish them or require their appearance in a draft.
 
-Explain the workflow for researchers defining first-order syntax with binders,
-operations and judgments. State classical Lean, one atom sort, finite syntax,
-single/nested binders, and ordinary Prop reasoning. Introduce the five chosen
-studies and explain which release/stage each actually reaches. Give a complete
-small user program before describing implementation. While the DSL is proposed,
-typeset examples as proposals and use the compiling manual tutorial as evidence.
-Identify that tutorial as a reference-library client. Once package examples
-exist, use their actual `Package/` paths and imports for the new workflow.
+### 1. Research problem and explanatory example
 
-Evidence: [tutorial](../tutorial.md),
-[compiling tutorial](../../Examples/Tutorial.lean), PKG-07 through PKG-10.
+Explain the problem of reasoning about syntax, operations and judgments with
+binders. State the intended mathematical setting and the guarantees actually
+provided. Use one small example to expose the difficulty and the reasoning the
+system supports. Separate a demonstrated interface from a mathematical proposal
+without a release/stage narrative. Introduce only contributions substantiated
+by the formalization and the source comparisons.
 
-### 2. Nominal mathematics and foundations
+### 2. The mathematical ideas behind the representation
 
-Specify atoms and finite permutations, action coherence, finite versus least
-versus strong support, freshness and equivariance. Explain actual quotients,
-classical choice and theorem-level computation. State the conjugation action on
-supported functions and distinguish it from ordinary pointwise actions without
-requiring the old `PFun`/`NFun` wrappers. Explain the selected atom interface,
-bundling or class design, and universe parameters based on their mathematical
-and client benefits. Avoid treating either the constructive Rocq choices or the
-old Lean implementation as universal restrictions. All new results are developed
-under `Package/`; explain and validate replacement dependencies before using them.
+Develop the definitions needed for the central results: finite permutations,
+selected actions, support and equivariance, then the binding constructions when
+available. Distinguish moved points from support and finite, least and strong
+support. Choose proof ideas that explain why the representation works, such as
+controlled transpositions or the fresh atom in finite-support intersection.
+A short counterexample can explain an essential hypothesis better than an API
+catalogue. Summarize routine closure laws unless a later argument needs detail.
 
-Reference results: `supports_iff_swap`, `supp_supports`, `supp_le`,
-`supp_equivariant`, `NFun.supp_apply_le`; sources in
-[`Support`](../../Nominal/Set/Support.lean),
-[`Nominal`](../../Nominal/Set/Nominal.lean),
-[`NFun.Basic`](../../Nominal/Set/NFun/Basic.lean).
-These are optional comparisons, not prescribed new declaration names or proof
-sources. Cite the actual new declarations once proved, and record foundation
-tasks before PKG-01 in the manuscript's dependency account.
-Use the [pinned correspondence](../research-correspondence.md) for external
-versions and unresolved compiler evidence.
+Explain classical choice, actual quotients and noncomputable semantic operations
+where they affect the theory. Relate meaningful Lean choices to the mathematics,
+such as selected actions, universe independence and conjugation versus pointwise
+function actions. Compare viable representations when the tradeoff yields an
+insight; do not treat the old Lean or constructive Rocq representation as a
+mathematical necessity. Describe mathematical dependencies without task IDs.
 
-### 3. Predicates and the boundaries of quotient reasoning
+### 3. Reasoning with binders, predicates and judgments
 
-Distinguish truth values, predicates, formula syntax, expressions and proofs.
-Develop the selected supported-predicate representation, action/equality laws,
-logical closure, and quantifier support bounds. Compare supported subsets and
-supported Prop-valued functions mathematically; such a comparison need not use
-the reference `NFun`. State Some/Any with its hypotheses.
-Prove the alpha-compatible raw predicate/quotient predicate bridge, then
-separate genuinely dependent families and coherent transport. Explain why fresh
-induction can quantify over arbitrary motives despite these supported objects.
+Select the central theorems about alpha equivalence, predicate descent and fresh
+reasoning once established. Distinguish supported predicate objects from the
+arbitrary motives allowed by induction. Explain the hypotheses of Some/Any and
+why quotient compatibility and dependent transport are different obligations.
 
-Evidence: [foundations note](2026-10-05-predicate-foundations.md), Pitts exact
-numbered results, Copello 2016/2018, PKG-01 and its foundation prerequisites.
-Keep PKG-01 bounded to its stated predicate contract; identify any new action,
-support, function, abstraction, or quotient results it needs as explicit
-dependencies, rather than silently importing them from the reference core.
-Include unsupported predicates and
-the no-supported-fresh-selector result as boundaries of automation.
+Present fresh term induction, iteration and primitive recursion separately when
+the distinction matters to the contribution. For judgments, explain how premises,
+induction hypotheses and conclusions are transported together, and what justifies
+the variable convention. A contraction or eigenvariable example should clarify
+the theorem's reach. Include only the machinery needed to explain the result;
+do not turn this theme into a full inventory of binder interfaces.
 
-### 4. Binding signatures and construction of syntax
+### 4. System architecture and user reasoning
 
-State the accepted grammar mathematically, including atom/data/recursive
-positions, category indices, binding scopes, universes and positivity.
-Describe the selected carrier construction, alpha equality, coherent nominal
-action, and exact support. If the backend uses raw syntax and alpha quotients,
-explain that construction and its descent proofs; otherwise explain how its
-representation meets the same mathematical interface. Explain fresh/common
-representatives and constructor inversion.
-For every generated carrier, identify the actual constructor map. State an
-initiality theorem only if its map class, existence and uniqueness are proved;
-do not substitute an unrelated type isomorphism.
+Explain the selected syntax construction, accepted binding scopes and how the
+system turns user declarations into certified guarantees. Give the central
+correctness contracts and the reason for architectural choices. Show enough Lean
+correspondence to connect the mathematical account with actual use, including a
+manual proof when automation has a meaningful boundary.
 
-Evidence: [backend comparison](2026-10-05-backend-comparison.md), PKG-02/04.
-Show `let` scope and a binder over a product. Record unsupported containers and
-what proofs would be needed to extend them.
+Discuss generic versus generated proofs and Lean's kernel and standard axioms
+as the logical basis. Routine module layout, declaration inventories, import
+checks, development workflow and build/audit mechanisms do not belong here.
+Do not call a type isomorphism an initiality theorem without the required map
+class, existence and uniqueness results.
 
-### 5. Fresh induction, iteration and primitive recursion
+### 5. Case studies as mathematical evidence
 
-Give separate statements for arbitrary-motive term induction, supported
-iteration, primitive recursion using original subterms, and any later dependent
-eliminator. Explain generalized avoidance contexts and nested binders.
-Derive scoped binder compatibility through the chosen abstraction and descent
-principles, which may be newly proved. NameAbs, concretion, FCB, and fresh
-representatives are reference techniques to compare where useful. Prove
-equations, uniqueness and support rather than claiming
-definitional computation. If product reconstruction yields primitive recursion,
-show the reconstruction invariant and binder descent explicitly.
+Choose studies that add distinct insight to the argument. The agreed research
+portfolio remains below for planning; completing it does not oblige the article
+to give every study equal space or to report implementation stages.
 
-Evidence: existing [lambda induction](../../Instances/LambdaCalculus/Induction.lean)
-and [iterator](../../Instances/LambdaCalculus/Recursion.lean); PKG-03/05.
-State where new results match, strengthen, or specialize the reference theorem
-statements. Explain any new admissibility theorem on its own terms; no old
-certificate format or public API must be retained.
+| Candidate study | Distinct mathematical question |
+| --- | --- |
+| Lambda calculus | How syntax, substitution and fresh rule reasoning combine in Church–Rosser for open contextual terms |
+| First-order logic | How finite contexts and eigenvariables enter substitution admissibility |
+| Lambda with let | How binder scope and access to original subterms support expansion correctness |
+| π-calculus | How joint label/continuation binding affects transitions and fresh inversion |
+| Modal μ-calculus | How positivity, semantic environments and fixed-point unfolding interact with nominal binding |
 
-### 6. Inductive judgments and the variable convention
+Use actual theorem strengths and justified limits. For π and μ, state the chosen
+semantics before discussing results. Arbitrary semantic environments need not be
+finitely supported, and nominal syntax generation alone does not establish a
+coinductive semantics. Reference-library examples must not be presented as new
+package clients.
 
-Define the accepted rule grammar and certified semantic extension route.
-Distinguish relation equivariance, fixed-parameter support, alpha compatibility,
-refreshability and freshness preservation. Explain how all affected premises,
-IHs and conclusions move together. Compare generated derivation proofs with a
-generic monotone-operator theorem; state equivalence to the intended ordinary
-inductive relation. Present both parallel contraction and an eigenvariable rule.
+### 6. Related theories, systems and limitations
 
-Evidence: [ReductionInduction](../../Instances/LambdaCalculus/ReductionInduction.lean),
-[ReductionInversion](../../Instances/LambdaCalculus/ReductionInversion.lean),
-original Nominal, Nominal2 and the 2025 theorem, PKG-06. Include a rejected rule
-whose nominated binder is semantically free in the conclusion.
+Integrate grounded comparisons with the mathematical and architectural discussion,
+then draw together the consequences. Compare relevant results from Pitts,
+Isabelle Nominal/Nominal2, Copello's predicate work, the Rocq precursor and other
+binding frameworks by assumptions, theorem strength and forms of user reasoning.
+Check primary sources before making each comparison or claim of novelty.
 
-### 7. The proof-producing package interface
+Select limitations and counterexamples that explain a boundary of the system:
+for example, fixed-parameter support versus joint equivariance, unsupported fresh
+selection, dependent coherence or inadmissible binder rules. A failed encoding
+may motivate a representation choice, but it is not a universal impossibility
+result. Discuss the substantive lesson rather than the sequence of attempts,
+compiler diagnostics or review outcomes. End with grounded research questions.
 
-Explain command elaboration, normalized scope metadata, proof registries,
-transactional failures, generated declaration names and ordinary Lean usage.
-Show captured parameters, shadowed locals, higher-order functions, rewriting,
-and a manual proof completing an unsupported automatic obligation. Describe
-which proofs are generic and which are generated. Identify the trusted base as
-Lean's normal kernel plus accepted standard axioms, not the metaprogram's claims.
+### Internal evidence map
 
-Evidence: [proposed contracts](2026-10-05-package-contracts.md), eventually
-generated acceptance tests. Report timing/size observations only with a pinned
-configuration and controlled comparison; do not invent performance benefits.
+These links guide writing and checking; they are not a list of content to copy
+into the manuscript. Operational commands, revisions, failed attempts and
+validation results remain in the linked research records and roadmap.
 
-### 8. Case studies, each with a distinct test
-
-| Case study | Mathematical story | Package question tested |
-| --- | --- | --- |
-| Lambda calculus | Substitution, parallel diamond and Church–Rosser through the new package | Full syntax/function/judgment workflow, unrestricted reduction, open terms |
-| First-order logic | Natural-deduction substitution admissibility | Multiple categories, finite contexts, eigenvariables and fresh rule induction |
-| Lambda with let | Expansion correctness and substitution compatibility | Nonrecursive binder scope, original subterms and translation between generated languages |
-| π-calculus | Bound transitions and fresh residual inversion; later a selected congruence result | Joint label/continuation binding, rule transport and channel names |
-| Modal μ-calculus (proposed variant) | Positive substitution, semantic interpretation and fixed-point unfolding | Positivity independent of alpha support; μ/ν binders and semantic environments |
-
-Do not claim all five are complete when only the first workflow is delivered.
-New case-study code lives under `Package/`; use its own declaration names in the
-article. Equivalence to reference `Term` can be useful validation, but direct
-proofs of the required theorem strengths are equally acceptable. No comparison
-theorem or backwards-compatible client API is required merely for continuity.
-For π and μ, state the chosen semantics before theorem statements. An arbitrary
-semantic environment may lie outside the finitely supported function space;
-the semantics must be modeled honestly instead of demanding unsupported global
-instances. Bisimulation/coinduction is an additional semantic layer, not an
-automatic consequence of nominal datatype generation.
-
-### 9. Difficulties, failed approaches and limitations
-
-Preserve: absent atom arity in the old lambda signature; false fixed-substitution
-equivariance; direct recursive NameAbs failure; support/action incoherence;
-unconditional supported abstraction mapping; finite-support quantifier limits;
-choice-selected fresh functions; dependent coherence; rejected rule binders;
-the ordinary recursion/container grammar boundary. State each as a theorem,
-counterexample, compiler result or research risk, according to its evidence.
-
-Separate problems inherited from an old sketch from properties of the completed
-reference core and from evidence about the new `Package/` implementation. In
-particular, the tested `NameAbs` encoding's failure and the reference universe
-limits do not exclude all other encodings or set the new universe scope.
-List unsupported features and proof escape hatches without turning
-them into unsound automatic promises.
-
-### 10. Related work and reproducibility
-
-Compare Pitts, original Isabelle Nominal, Nominal2, Copello's compatible
-predicates, the Rocq precursor and other relevant generated binding frameworks
-by exact theorem assumptions and user contracts. Extend the survey before any
-priority claim. Include source hashes/revisions, toolchains, compilation commands,
-axiom reports and explicit unavailable external builds. Explain which results
-are inherited, re-proved under different foundations, generalized, or only
-engineering interfaces. Finish with open mathematical questions, not speculative
-claims of novelty or publication readiness.
+| Theme | Internal sources and possible correspondence |
+| --- | --- |
+| User reasoning | [Tutorial](../tutorial.md), [reference client](../../Examples/Tutorial.lean), [proposed contracts](2026-10-05-package-contracts.md); PKG-07–PKG-10 |
+| Permutations, actions and support | `Package/Foundations/Permutation.lean`, `SwapFactorization.lean`, `Action.lean`, `Support.lean`; [foundation investigation](2026-10-05-algebraic-source-investigation.md), [discrete representation](2026-10-05-discrete-representation.md); PKG-F03/F04 |
+| Predicates and fresh reasoning | [Predicate foundations](2026-10-05-predicate-foundations.md), [propositions and induction](2026-10-05-propositions-and-induction.md), [Isabelle comparison](2026-10-05-isabelle-comparison.md); PKG-01/03/06 |
+| Carrier and package design | [Backend comparison](2026-10-05-backend-comparison.md), [architecture](2026-10-05-package-architecture.md), [contracts](2026-10-05-package-contracts.md); PKG-02/04/05 |
+| Reference theorem comparisons | [Term induction](../../Instances/LambdaCalculus/Induction.lean), [iteration](../../Instances/LambdaCalculus/Recursion.lean), [rule induction](../../Instances/LambdaCalculus/ReductionInduction.lean), [inversion](../../Instances/LambdaCalculus/ReductionInversion.lean), [pinned external correspondence](../research-correspondence.md) |
+| Boundaries and counterexamples | [Backend probes](2026-10-05-backend-comparison.md), [predicate probes](2026-10-05-predicate-foundations.md), [reference contracts](../../Examples/CoreContracts.lean); record exact assumptions before generalizing |
 
 ## Sustainable update cycle
 
@@ -319,17 +327,21 @@ dependency with its own statement and evidence, not merely a rename of a
 reference theorem. Subsequent increments may develop additional foundations
 when needed; the roadmap should record that work explicitly.
 
-For every increment: record the question, discriminating test and article section;
-draft the statement and mathematical explanation while developing its Lean proof;
-preserve important failed approaches and counterexamples; compile and audit the
-code; consume the claimed fact through the public boundary; synchronize and
-compile the LaTeX exposition; then update the evidence and task status. For
-foundation slices, usage checks may remain temporary under the author's policy;
-persistent usage examples belong to case studies. A theorem rename updates its
+For every increment: record the question, discriminating test and relevant article
+section internally; draft the selected mathematical explanation while developing
+its Lean proof; preserve important failed approaches and counterexamples in
+research notes; compile and audit the code; consume the claimed fact through the
+public boundary; synchronize and compile the LaTeX exposition; then update the
+roadmap's evidence and task status. None of these process records belongs in the
+manuscript. For foundation slices, usage checks may remain temporary under the
+author's policy;
+persistent usage examples belong to case studies. A theorem rename updates any
 article references in the same increment. A changed hypothesis reopens dependent
 claims. A proposed command becomes a demonstrated command only when its example
 compiles through the supported import boundary. Do not mark a mathematical
-increment complete with its article section left for later.
+increment complete with relevant research exposition left for later. When a
+routine change adds no research insight and changes no manuscript claim, record
+that editorial decision in the roadmap instead of enlarging the article.
 Use `Package/` paths for new declarations, imports, and implementation plans;
 retain old source paths and revisions when citing historical evidence.
 

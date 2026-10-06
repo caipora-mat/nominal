@@ -1,5 +1,11 @@
 # Package Foundation Kernel Implementation Plan
 
+**Article editorial correction:** manuscript passages follow the current
+[research-article policy](../../research/2026-10-05-article-plan.md): selected
+system/mathematical exposition and substantive comparisons, with no task IDs
+or development/review/build diary. Article instructions below are amended
+accordingly; the recorded execution history remains an internal record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking. The user's no-commit instruction overrides the skills' commit steps.
 
 **Goal:** Deliver PKG-F02 plus the approved F03a permutation/action kernel, with independently checked interfaces, coverage/auditing, and its accompanying LaTeX article section.
@@ -46,7 +52,7 @@ one-off compatibility proofs are retained only outside the repository.
 | `Package/Tests/AxiomAudit.lean` | Task 3: imported module-origin audit and validator checks |
 | `Package/Scripts/check-imports.py` | Task 3: inventory, dependency JSON, closure/policy check and self-tests |
 | `Package/README.md` | Task 3: usage, actual validation commands, scope and build limits |
-| `docs/article/main.tex` | Existing draft entry point; Task 3 checks title/status and PDF build |
+| `docs/article/main.tex` | Existing draft entry point; Task 3 checks mathematical scope and PDF rendering |
 | `docs/article/sections/introduction.tex` | Tasks 1–3 maintain the actual implemented scope |
 | `docs/article/sections/foundations.tex` | Tasks 1/2 refine mathematics and declaration correspondence; Task 3 verifies all implementation claims |
 | `docs/nominal-package-roadmap.md` | Task 3 records F02/F03a delivery and remaining F03b obligations |
@@ -139,9 +145,10 @@ proofs only in `/tmp/nominal-f02-f03a-execution/ActionContracts.lean`. Modify `l
 
 - [x] **Step 7: Write the delivered permutation mathematics into the article.**
   Update the finite-moved subgroup, multiplication convention, moved-point and
-  swap proofs in `foundations.tex` to match the actual declarations. Update
-  the implementation-status paragraph for Task 1 only. Preserve the distinction
-  between a manuscript proof and a kernel-checked theorem. Compile the manuscript
+  swap arguments in `foundations.tex` to match the actual declarations. Select
+  details that explain the mathematical interface; omit implementation-status
+  paragraphs and task identifiers. Keep operational evidence in this plan or
+  the roadmap. Compile the manuscript
   with the LaTeX command in final verification; resolve diagnostics introduced
   by these edits. Review the focused diff without committing.
 
@@ -232,10 +239,10 @@ check outside the repository; neither is a persistent Package module.
   correspondence and retain support/quotients/binders as later work. Review
   the focused source/article diff without committing.
 
-## Task 3: Coverage, axioms, article evidence and delivery
+## Task 3: Coverage, axioms, mathematical correspondence and delivery
 
 **Files:** Create AxiomAudit, check-imports.py and Package/README.md; update
-article status/correspondence and `docs/nominal-package-roadmap.md`.
+article mathematical correspondence and `docs/nominal-package-roadmap.md`.
 
 **Interfaces:**
 
@@ -361,7 +368,7 @@ that command did not elaborate their proofs or build Package.
 Self-review mapping: permutation equations → Task 1; all action/universe/user
 contracts and temporary negative checks → Task 2; Lake setup → Task 1; import/audit
 coverage and final preservation → Task 3; article mathematics → Tasks 1/2;
-article evidence and PDF validation → Task 3. Every Review Focus item has an
+article mathematical correspondence and PDF validation → Task 3. Every Review Focus item has an
 owning task. Public names in temporary checks/audit refer to the Interfaces blocks.
 No support theory, general function bundle, new parser framework, CI or
 fresh-build helper has been introduced into the approved scope.

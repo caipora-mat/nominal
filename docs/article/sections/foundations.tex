@@ -1,46 +1,31 @@
 \section{Finite permutations and actions}
 \label{sec:foundations}
 
-Let $A$ be the atom carrier. In this section $A$ is an arbitrary type:
-neither infinitude nor countability is required. Later existence of fresh
-atoms will require infinitude. In Lean, atoms and other carriers have
-independent universe parameters,
-\[
-  A : \texttt{Type}\ u,\qquad X : \texttt{Type}\ v,
-  \qquad Y : \texttt{Type}\ w.
-\]
-The action interface concerns type-valued carriers; no general interface for
-\texttt{Sort}-valued carriers is promised.
+Let $A$ be an arbitrary atom carrier. Neither infinitude nor countability
+is needed for the permutation and action theory below. Atom and value
+carriers may inhabit independent Lean universes,
+$A:\texttt{Type}\ u$, $X:\texttt{Type}\ v$ and $Y:\texttt{Type}\ w$.
+The central distinction is between the finite set moved by a permutation
+and the support of a value under a selected action.
 
-\subsection{The finite-moved subgroup}
+\subsection{Finite-moved permutations}
 \label{sec:permutations}
 
 \begin{definition}
-For a bijection $\pi:A\to A$, define its \emph{moved-point set} by
-\[
-  \moved(\pi)=\{a\in A\mid \pi(a)\ne a\}.
-\]
-Let $\Perm(A)$ consist of those bijections whose moved-point sets are finite.
-Multiplication is composition in the convention
-$(\pi\sigma)(a)=\pi(\sigma(a))$.
+For a bijection $\pi:A\to A$, let
+$\moved(\pi)=\{a\in A\mid\pi(a)\ne a\}$.
+The group $\Perm(A)$ consists of bijections with finite moved-point sets,
+with multiplication $(\pi\sigma)(a)=\pi(\sigma(a))$.
 \end{definition}
 
-The Lean declaration \texttt{permSubgroup A} is the subgroup of
-\texttt{Equiv.Perm A} cut out by this finiteness property, and
-\texttt{Perm A} is its carrier. Both lie in the namespace
-\texttt{NominalPackage}. The property is a proof field; applying
-a permutation does not select a finite enumeration or a least support.
-In particular, $\moved(\pi)$ is a set, rather than a chosen
-\texttt{Finset}. Equality is extensional: if $\pi(a)=\sigma(a)$ for every
-$a$, then $\pi=\sigma$.
-The implementation adapts the elementary subgroup argument from
-\path{Nominal/Core/FinitePerm.lean}, without importing that module. The
-reference revision is recorded in Section~\ref{sec:evidence}.
+Lean represents \texttt{Perm A} as a subgroup of \texttt{Equiv.Perm A}.
+Finiteness is a proof field: applying a permutation
+requires neither a finite enumeration nor a choice of support. Equality
+is extensional, and the coercion to bijections respects the group operations.
 
-\begin{proposition}[Subgroup and moved-point laws]
+\begin{proposition}[Moved-point laws]
 \label{prop:subgroup}
-Finite-moved permutations form a subgroup of the bijections of $A$. For
-its elements,
+Finite-moved permutations form a subgroup, and
 \begin{align}
   \moved(1)&=\varnothing,\label{eq:moved-one}\\
   \moved(\pi\sigma)&\subseteq\moved(\pi)\cup\moved(\sigma),
@@ -49,485 +34,180 @@ its elements,
   \moved(\pi\sigma\pi^{-1})&=\pi[\moved(\sigma)].
     \label{eq:moved-conj}
 \end{align}
-Here $\pi[S]=\{\pi(a)\mid a\in S\}$ is direct image.
+Here $\pi[S]$ denotes direct image.
 \end{proposition}
 
 \begin{proof}
-The identity moves no point. If both $\pi$ and $\sigma$ fix $a$, then so
-does $\pi\sigma$, proving~\eqref{eq:moved-mul}. Moreover,
-$\pi^{-1}(a)=a$ if and only if $\pi(a)=a$, proving~\eqref{eq:moved-inverse}.
-These facts give closure under identity, multiplication, and inverse,
-because subsets of finite sets and finite unions are finite. Finally,
-injectivity of $\pi$ gives
-\[
-  (\pi\sigma\pi^{-1})(a)\ne a
-  \quad\Longleftrightarrow\quad
-  \sigma(\pi^{-1}(a))\ne\pi^{-1}(a).
-\]
-This is exactly membership of $a$ in the image on the right
-of~\eqref{eq:moved-conj}.
+A point fixed by both factors is fixed by their product, and a bijection
+and its inverse fix the same points. These observations give subgroup
+closure. For conjugation, injectivity of $\pi$ gives
+$(\pi\sigma\pi^{-1})(a)\ne a$ exactly when
+$\sigma(\pi^{-1}(a))\ne\pi^{-1}(a)$.
 \end{proof}
 
-The public application equations are
-\[
-  1(a)=a,\quad (\pi\sigma)(a)=\pi(\sigma(a)),\quad
-  \pi^{-1}(\pi(a))=a,\quad\pi(\pi^{-1}(a))=a.
-\]
-These are \path{Perm.one_apply}, \path{Perm.mul_apply},
-\path{Perm.inv_apply_apply}, and \path{Perm.apply_inv_apply}.
-The conversion \path{Perm.toEquiv} preserves identity, multiplication, and
-inverse by \path{Perm.toEquiv_one}, \path{Perm.toEquiv_mul}, and
-\path{Perm.toEquiv_inv}. Its function application agrees with that of
-\texttt{Perm A} by \path{Perm.toEquiv_apply}. A single \texttt{FunLike}
-instance and the extensionality theorem \path{Perm.ext} allow consumers to
-apply permutations, rewrite, and use \texttt{ext} without unfolding the
-subgroup representation. The coercion to \texttt{Equiv.Perm A} is the
-inherited subgroup coercion.
-
-The finite-set property is \path{Perm.moved_finite}; the four equations in
-Proposition~\ref{prop:subgroup} correspond respectively to
-\path{Perm.moved_one}, \path{Perm.moved_mul_subset},
-\path{Perm.moved_inv}, and \path{Perm.moved_conj}.
-
-\subsection{Transpositions}
+\subsection{Transpositions and controlled factorization}
 \label{sec:swaps}
+\label{sec:controlled-swaps}
 
-Write $\swap a b$ for the permutation interchanging $a$ and $b$ and fixing
-every other atom. An executable definition uses decidable equality on $A$;
-classical reasoning can provide this locally when execution is not required.
-The Lean operation is the qualified \texttt{Perm.swap}; it requires
-\texttt{DecidableEq A}, but neither the permutation group nor its moved-point
-laws require this assumption.
+Write $\swap a b$ for the transposition of $a$ and $b$, fixing every other
+atom. The Lean operation \texttt{Perm.swap} uses decidable equality on
+$A$, which classical reasoning can supply locally. The permutation group
+itself requires no such assumption.
 
 \begin{proposition}[Swap equations]
 \label{prop:swaps}
-For all $a,b,c\in A$,
-\begin{gather*}
-  \swap a b(a)=b,\qquad \swap a b(b)=a,\\
-  c\ne a\ \land\ c\ne b\quad\Longrightarrow\quad\swap a b(c)=c,\\
-  \swap a a=1,\qquad
-  \swap a b^{-1}=\swap a b,\qquad
-  \swap a b\swap a b=1,\\
+A swap exchanges its endpoints, fixes all other atoms, and satisfies
+\[
+  \swap a a=1,\qquad \swap a b^{-1}=\swap a b,\qquad
   \pi\swap a b\pi^{-1}=\swap{\pi(a)}{\pi(b)}.
-\end{gather*}
-If $a\ne b$, then $\moved(\swap a b)=\{a,b\}$.
+\]
+If $a\ne b$, its moved-point set is $\{a,b\}$.
 \end{proposition}
 
-\begin{proof}
-The defining cases show that applying a swap twice fixes each atom. They
-also show that its moved-point set is contained in $\{a,b\}$, so it is a
-finite-moved permutation. If $a\ne b$, both endpoints are moved, giving
-the exact set. Conjugation sends $\pi(a)$ to $\pi(b)$ and $\pi(b)$ to
-$\pi(a)$. A point outside those endpoints has inverse image outside
-$\{a,b\}$ and is therefore fixed. Extensionality proves the conjugation
-equation, including the case $a=b$.
-\end{proof}
+These identities follow by evaluating at the endpoints and at points
+outside them. In particular, a swap is its own inverse, so its square is
+the identity. The conjugation identity also holds when the endpoints
+coincide.
 
-Within the namespace \texttt{Perm}, the endpoint equations are
-\path{swap_apply_left} and \path{swap_apply_right}; the third-point equation
-is \path{swap_apply_of_ne_of_ne}. The remaining equations are
-\path{swap_self}, \path{swap_inv}, \path{swap_mul_self},
-\path{conj_swap}, and \path{moved_swap}. The last theorem retains
-the hypothesis $a\ne b$; a reflexive swap instead has empty moved-point set.
-The implementation reuses Mathlib's corresponding equations for
-\texttt{Equiv.swap}, including its conjugation equation, with the
-finite-moved certificate proved when constructing \texttt{Perm.swap}.
-
-\subsection{Controlled swap factorization}
-\label{sec:controlled-swaps}
-
-For an endpoint-pair list $l=[(a_1,b_1),\ldots,(a_n,b_n)]$, write
+Swap generation alone is insufficient for support arguments: the factors
+must avoid specified atoms. For a finite list
+$l=[(a_1,b_1),\ldots,(a_n,b_n)]$, put
 \[
-  W(l)=\swap{a_1}{b_1}
-    \bigl(\cdots(\swap{a_n}{b_n}1)\cdots\bigr),
-  \qquad W([])=1.
+  W(l)=\swap{a_1}{b_1}\cdots\swap{a_n}{b_n},\qquad W([])=1.
 \]
-This denotes multiplication of permutations, so the rightmost swap acts
-first. Prepending $(a,b)$ gives $W((a,b)::l)=\swap a b W(l)$.
-The Lean expression is the ordinary list product
-\begin{verbatim}
-  (l.map (fun p => Perm.swap p.1 p.2)).prod
-\end{verbatim}
-No separate word datatype or evaluator is needed.
+The rightmost factor acts first. In Lean, $W(l)$ is the ordinary product
+of the list obtained by mapping \texttt{Perm.swap} over the endpoint pairs.
 
 \begin{proposition}[Factorization within the original moved set]
 \label{prop:controlled-factorization}
-For every $\pi\in\Perm(A)$ there is a finite list $l$ of endpoint pairs
-such that $W(l)=\pi$ and every $(a,b)\in l$ satisfies
+For every $\pi\in\Perm(A)$ there is a finite list $l$ with $W(l)=\pi$
+such that every $(a,b)\in l$ satisfies
 \[
   a\ne b,\qquad a\in\moved(\pi),\qquad b\in\moved(\pi).
 \]
 \end{proposition}
 
 \begin{proof}
-Fix $M=\moved(\pi)$. In the ambient group of all bijections of $A$, let
-\[
-  G_M=\{\swap a b\mid a\ne b,\ a\in M,\ b\in M\}.
-\]
+Fix $M=\moved(\pi)$ and, in the group of all bijections of $A$, let
+$G_M=\{\swap a b\mid a\ne b,\ a,b\in M\}$.
 Mathlib's restricted-transposition closure theorem characterizes membership
 of $\sigma$ in the subgroup generated by $G_M$: its moved-point set must
 be finite, and $\sigma(a)$ must lie in the orbit of $a$ under that subgroup
-for every $a$. These conditions hold for $\pi$. Finiteness is part of
-its certificate. If $\pi(a)=a$, the identity witnesses the orbit condition.
-Otherwise $a\in M$ and $\pi(a)\in M$: an equality
-$\pi(\pi(a))=\pi(a)$ would, by injectivity, imply $\pi(a)=a$.
-Consequently $\swap a{\pi(a)}$ is a generator sending $a$ to $\pi(a)$.
-Thus the underlying bijection of $\pi$ lies in the closure of $G_M$.
+for every $a$.
 
-Left closure induction extracts the desired list. The identity uses the
-empty list. Left multiplication by a generator prepends its endpoint pair;
-left multiplication by the inverse of a generator prepends the same pair,
-because a swap is its own inverse. Throughout this induction, every endpoint
-belongs to the fixed set $M$, the moved set of the original $\pi$.
-The induction records that the underlying bijection of $W(l)$ equals the
-current ambient permutation. The existing identity and multiplication
-equations for \texttt{toEquiv} preserve this equality at each step.
-Subtype extensionality then yields $W(l)=\pi$ in $\Perm(A)$.
+These conditions hold for $\pi$. Finiteness is part of its certificate.
+If $\pi(a)=a$, the identity witnesses the orbit condition. Otherwise
+$a,\pi(a)\in M$: injectivity shows that $\pi(a)$ cannot be fixed unless
+$a$ is fixed. Thus the generator $\swap a{\pi(a)}$ sends $a$ to $\pi(a)$.
+Left closure induction now extracts a list: the identity gives the empty
+list, and multiplication by a generator or its inverse prepends the same
+endpoint pair, since swaps are self-inverse. Every endpoint remains in
+the fixed set $M$ of the original permutation.
 \end{proof}
 
-The finite-set reduction behind the adopted Mathlib closure theorem explains
-why this argument terminates. For $\sigma\in\Perm(A)$ and a moved atom $a$, put
-$\tau=\swap a{\sigma(a)}$ and $\rho=\tau\sigma$. Then $\rho(a)=a$ and
+The theorem is \path{Perm.swap_factorization}; the proof uses Mathlib's
+\path{mem_closure_isSwap} and \path{Subgroup.closure_induction_left}.
+The finite descent underlying the closure theorem is instructive. If
+$\sigma(a)\ne a$, then $\rho=\swap a{\sigma(a)}\sigma$ fixes $a$ and
 \[
-  \moved(\rho)\subseteq\moved(\sigma)\setminus\{a\},
-  \qquad |\moved(\rho)|<|\moved(\sigma)|,
-  \qquad \sigma=\tau\rho.
+  \moved(\rho)\subseteq\moved(\sigma)\setminus\{a\},\qquad
+  |\moved(\rho)|<|\moved(\sigma)|.
 \]
-The inclusion says that a point moved after this correction was already
-moved and differs from $a$. Since $a$ was moved, the inclusion gives a
-strict decrease in finite cardinality. It does not assert exact deletion
-of just one point: if $\sigma$ is a two-cycle, $\rho=1$ and both endpoints
-disappear. The package reuses Mathlib's finite-set induction rather than
-copying that reduction. The local restriction to $G_M$ and the subsequent
-closure induction supply the original-set endpoint bound.
-
-The declaration is \path{Perm.swap_factorization}. Its source is
-\begin{quote}
-\small\path{Package/Foundations/SwapFactorization.lean}.
-\end{quote}
-The proof uses \path{mem_closure_isSwap} and
-\path{Subgroup.closure_induction_left}. Their sources are respectively
-\begin{quote}
-\small
-\path{Mathlib/GroupTheory/Perm/ClosureSwap.lean},\\
-\path{Mathlib/Algebra/Group/Subgroup/Pointwise.lean},
-\end{quote}
-at the pinned revision recorded in Section~\ref{sec:evidence}.
-The empty-product certificate is definitional, and
-\path{Perm.toEquiv_mul} tracks each prepended factor; the proof introduces
-no separate product homomorphism or public helper.
-In particular, the proof uses a restricted generating set, rather than
-assuming that unrestricted swap generation already provides endpoint control.
+This is a strict decrease, not necessarily deletion of exactly one point:
+correcting a two-cycle removes both endpoints. Restricting the generators
+to $G_M$ preserves the original-set bound throughout the argument.
 
 \begin{proposition}[Factorization avoiding a pointwise fixed set]
 \label{prop:avoidance-factorization}
-Let $S\subseteq A$ be any set, and suppose $\pi(a)=a$ for every $a\in S$.
-There is a finite list $l$ with $W(l)=\pi$ such that every $(a,b)\in l$
-satisfies
-\[
-  a\ne b,\qquad a\notin S,\qquad b\notin S.
-\]
+If $\pi$ fixes an arbitrary $S\subseteq A$ pointwise, there is a list
+$l$ with $W(l)=\pi$ whose endpoint pairs satisfy
+$a\ne b$, $a\notin S$ and $b\notin S$.
 \end{proposition}
 
 \begin{proof}
-Every member of $\moved(\pi)$ lies outside $S$, since a member of $S$
-is fixed. Apply Proposition~\ref{prop:controlled-factorization} and use
-this fact at each endpoint.
+Every moved atom lies outside $S$. Apply
+Proposition~\ref{prop:controlled-factorization}.
 \end{proof}
 
-The declaration is \path{Perm.swap_factorization_avoiding}.
-Both propositions retain \texttt{DecidableEq A} for the swap operation,
-which classical reasoning can supply locally. They require no infinitude,
-countability, finiteness, or inhabitant assumption on $A$. The avoidance
-parameter is an arbitrary \texttt{Set A}; neither $S$ nor its complement
-has to be finite. If $\pi=1$, endpoint membership in its empty moved set
-forces the controlled list to be empty. This also covers empty and singleton
-atom carriers, where every permutation is the identity. The results give
-existential factor lists, with no canonical choice, minimal length, uniqueness,
-or executable factoring algorithm promised.
+Neither $S$ nor its complement needs to be finite. Both factorization
+results apply to finite, empty and singleton atom carriers. They assert
+existence, without specifying a canonical or shortest factorization.
 
-\subsection{Selected actions and canonical data shapes}
+\subsection{Selected actions}
 \label{sec:actions}
 
-An action on $X$ consists of an operation $\pi\act x$ satisfying
-\[
-  1\act x=x,\qquad (\pi\sigma)\act x=\pi\act(\sigma\act x).
-\]
-The interface uses \texttt{MulAction (Perm A) X} directly. No additional
-action class or independently competing scalar operation is installed.
-Standard group-action laws give
-\[
-  \pi^{-1}\act(\pi\act x)=x,\qquad
-  \pi\act(\pi^{-1}\act x)=x,\qquad
-  \pi\act x=\pi\act y\ \Longleftrightarrow\ x=y.
-\]
-These equations concern the selected action; a different action on the same
-carrier is different input to subsequent theorems.
+An action on $X$ is an operation $\pi\act x$ satisfying
+$1\act x=x$ and $(\pi\sigma)\act x=\pi\act(\sigma\act x)$.
+The system uses Mathlib's \texttt{MulAction (Perm A) X} directly.
+Consequently, a theorem about support or equivariance refers to the selected
+action on its carrier; changing that action changes the mathematical input.
 
-The canonical action on atoms is evaluation, $\pi\act a=\pi(a)$,
-as stated by \path{Perm.smul_atom}. It is obtained by restricting Mathlib's
-\path{Equiv.Perm.applyMulAction} to the subgroup \texttt{permSubgroup A}.
-Thus the computation theorem describes an inherited action; it does not
-introduce another action instance on atoms.
-The standard product action is componentwise:
-\[
-  \pi\act(x,y)=(\pi\act x,\pi\act y).
-\]
-Both projections therefore commute with renaming. This construction permits
-the two factors, as well as the atom carrier, to inhabit different universes.
+The canonical atom action is evaluation, $\pi\act a=\pi(a)$.
+Products use the componentwise action, and finite atom sets use direct image:
+\begin{gather*}
+  \pi\act(x,y)=(\pi\act x,\pi\act y),\qquad \pi\act S=\pi[S],\\
+  a\in\pi\act S\ \Longleftrightarrow\ \pi^{-1}(a)\in S.
+\end{gather*}
+The atom action restricts Mathlib's bijection action to the subgroup;
+the product and finite-set actions likewise reuse standard constructions.
+The finite-set action is scoped by \texttt{Pointwise} in Lean.
 
-For $S\in\Finset(A)$, the selected action is direct image,
-$\pi\act S=\pi[S]$. Its public equations include
-\begin{align*}
-  a\in\pi\act S&\quad\Longleftrightarrow\quad\pi^{-1}(a)\in S,\\
-  \pi\act\varnothing&=\varnothing,\\
-  \pi\act\{a\}&=\{\pi(a)\},\\
-  \pi\act(S\cup T)&=(\pi\act S)\cup(\pi\act T).
-\end{align*}
-Membership follows from the inverse bijection; the other identities follow
-from the corresponding direct-image identities. In Lean this action reuses
-Mathlib's scoped pointwise action on finite sets. A consumer must explicitly
-write \texttt{open scoped Pointwise}; opening the scope in a dependency is
-not a promise that it is active downstream. Finite-set computations may use
-local classical decidable equality. No overlapping global finite-set action
-is needed. The image and membership equations are \path{Perm.smul_finset}
-and \path{Perm.mem_smul_finset}. The standard action laws and the product,
-empty-set, singleton, and union equations are supplied by Mathlib; the package
-does not duplicate them under fresh names.
-
-\subsection{Swap invariance for a selected action}
+\subsection{Invariance tested by swaps}
 \label{sec:swap-invariance}
-
-Fix an arbitrary selected action of $\Perm(A)$ on $X$. For any set
-$S\subseteq A$ and value $x\in X$, invariance under the pointwise fixer
-of $S$ can be tested using only swaps outside $S$.
 
 \begin{proposition}[Pointwise-fixer invariance and outside swaps]
 \label{prop:swap-invariance}
-For an arbitrary set $S\subseteq A$ and an arbitrary $x\in X$,
+For any selected action on $X$, arbitrary $S\subseteq A$, and $x\in X$,
 \begin{align*}
   &\bigl(\forall\pi\in\Perm(A),\
       (\forall c\in S,\ \pi(c)=c)\Longrightarrow\pi\act x=x\bigr)\\
   &\hspace{2em}\Longleftrightarrow
-    \bigl(\forall a,b\in A,\
-      a\notin S\Longrightarrow b\notin S
-      \Longrightarrow\swap a b\act x=x\bigr).
+    \bigl(\forall a,b\notin S,\ \swap a b\act x=x\bigr).
 \end{align*}
 \end{proposition}
 
 \begin{proof}
-Suppose every swap with endpoints outside $S$ fixes $x$, and let $\pi$
-fix $S$ pointwise. Proposition~\ref{prop:avoidance-factorization} gives
-a list $l$ of such swaps whose product is $\pi$. Induct on that list.
-The empty product fixes $x$ by the identity-action law. For a prepended
-pair $(a,b)$, the product-action law gives
-\[
-  W((a,b)::l)\act x
-    =\swap a b\act(W(l)\act x)
-    =\swap a b\act x=x.
-\]
-Thus $\pi\act x=x$. Conversely, if $a,b\notin S$, every $c\in S$
-differs from both endpoints, so $\swap a b(c)=c$ by the third-point swap
-equation. Apply the pointwise-fixer hypothesis to this swap.
+A permutation fixing $S$ pointwise factors into swaps outside $S$ by
+Proposition~\ref{prop:avoidance-factorization}. If each factor fixes $x$,
+the action laws show that their product does too. Conversely, a swap with
+both endpoints outside $S$ fixes $S$ pointwise.
 \end{proof}
 
-The declarations are \path{Perm.smul_eq_of_swap_smul_eq} for
-the implication from outside-swap invariance to pointwise-fixer invariance,
-and \path{Perm.forall_smul_eq_iff_swap_smul_eq} for the equivalence.
-They use only \texttt{DecidableEq A} and
-\texttt{MulAction (Perm A) X}, with independent atom and carrier universes.
-The swap premise permits equal endpoints; those cases follow from
-$\swap a a=1$ and $1\act x=x$, so requiring only distinct-endpoint swaps
-would be equivalent.
+This is \path{Perm.forall_smul_eq_iff_swap_smul_eq}. Equal endpoints are
+allowed because $\swap a a=1$. No finite-support or infinitude assumption
+enters the equivalence. Pointwise fixation is essential: setwise
+preservation $\pi[S]=S$ permits permutations among the members of $S$.
 
-Pointwise fixation here means $\pi(c)=c$ for each $c\in S$; setwise
-preservation $\pi[S]=S$ is a weaker condition. The finite moved-point set
-of a permutation also differs from support of a value in an arbitrary
-action. No assumption that $x$, or every value of $X$, has finite support
-enters this proposition. It provides the permutation input for the later
-support layer, \texttt{PKG-F04}; a support predicate, least support, and
-freshness remain future work.
-
-\subsection{Explicit discrete data}
+\subsection{Discrete data and equivariant maps}
 \label{sec:discrete}
-
-\begin{definition}[Discrete permutation set]
-For a group $G$ and a set $X$, the \emph{discrete $G$-set on $X$} has
-underlying set $X$ and action $g\act x=x$ for every $g\in G$ and $x\in X$.
-For $G=\Perm(A)$ we denote this construction by $\Delta_A(X)$.
-\end{definition}
-
-This is the mathematical construction encoded by \texttt{Discrete A X}.
-It is the discrete group action of Pitts~\cite[Example~1.5, p.~15]{pitts2013}
-and, for an infinite atom set, the discrete nominal set of
-\cite[Example~2.5, p.~30]{pitts2013}. The implementation uses a canonically
-bijective copy $\Discrete_A(X)$ of the carrier, with constructor
-$\operatorname{mk}$ and projection $\operatorname{val}$, and action
-\[
-  \pi\act\operatorname{mk}(x)=\operatorname{mk}(x).
-\]
-
-Thus $\operatorname{val}(\operatorname{mk}(x))=x$,
-$\operatorname{mk}(\operatorname{val}(d))=d$, and
-$\operatorname{val}(\pi\act d)=\operatorname{val}(d)$.
-The structure \texttt{Discrete A X} makes the trivial-action
-choice explicit, even when $X=A$. It supports arbitrary type universes,
-including empty and singleton data represented by universe-correct
-\texttt{PEmpty} and \texttt{PUnit}. More precisely, if
-$A:\texttt{Type}\ u$ and $X:\texttt{Type}\ v$, then
-$\Discrete_A(X):\texttt{Type}\ v$: the atom type is a phantom parameter,
-not stored data. This wrapper carries the only new action instance in the
-action module.
-
-In words, $\Discrete_A(X)$ means ``values of $X$ that are unaffected by
-renaming atoms of $A$.'' The parameter $A$ specifies the acting group;
-$X$ specifies the data being carried. For example, $\Discrete_A(\mathbb N)$
-can represent numerical annotations that stay unchanged during renaming.
-The construction also permits $X=A$: the wrapped datum is then treated as
-a fixed label, as detailed in Example~\ref{ex:discrete}. This choice does
-not assert that an action already supplied on $X$ is trivial.
-If $X$ already has an action, the construction forgets that action and
-equips its underlying data with the trivial one. It does not take the
-subset of fixed points or the quotient into orbits.
-
-Every orbit is a singleton. In the usual support terminology, the empty
-set supports each wrapped value: every permutation fixes it, including
-every permutation fixing the empty set pointwise. Since the empty set is
-contained in every other set, it is its least support. This is a
-mathematical consequence of the trivial action; the package's general
-support and freshness interfaces remain later work.
-
-\paragraph{Why a single-field structure?}
-The complete data declaration is
-\begin{verbatim}
-structure Discrete (A : Type u) (X : Type v) : Type v where
-  val : X
-\end{verbatim}
-Only the underlying value must be stored. The name \texttt{val} is a
-conventional projection name with no mathematical significance; it could
-equally be called \texttt{value}. A single field does not mean a single
-inhabitant: each element of $X$ determines one wrapped value. The trivial
-action and its laws are supplied uniformly by a typeclass instance, so
-individual values need not store an action, an atom, or a support certificate.
-
-The structure makes $\Discrete_A(X)$ a separate Lean type, not
-definitionally equal to $X$. Its constructor and projection explicitly
-cross this boundary. This lets the canonical atom action on $A$ and the
-trivial action on $\Discrete_A(A)$ coexist under ordinary instance search.
-
-\paragraph{Alternative declarations.}
-An abbreviation \texttt{abbrev Discrete A X := X} unfolds during reducible
-unification. It therefore does not supply the distinct carrier boundary
-chosen here for selecting a different action. A regular definition
-\texttt{def Discrete A X := X} is a viable type-tag alternative: it is
-still definitionally equal to $X$, while its unfolding behavior differs
-from that of an abbreviation. Mathlib uses this technique for
-\texttt{Additive} and \texttt{Multiplicative} in
-\path{Mathlib/Algebra/Group/TypeTags/Basic.lean}, inspected at the pinned
-Mathlib revision recorded in Section~\ref{sec:evidence}.
-The pinned Lean 4.34.1 instance search does not unfold an ordinary
-semireducible definition. Thus a regular definition can separate the
-tagged and underlying action instances; a structure is not required for
-that purpose alone. This agrees with the general account in the
-\href{https://lean-lang.org/doc/reference/latest/Type-Classes/Instance-Synthesis/}{Lean reference on instance synthesis};
-the installed compiler sources and the probes below determine the
-version-specific claims here.
-
-The definition approach permits direct reuse of underlying values,
-functions, predicates and containers through definitional equality. For
-example, a list of $X$ can also be checked as a list of tagged $X$ without
-mapping a constructor over it. With the structure, that passage is explicit.
-Both approaches already have reflexive conversion round trips. Neither
-automatically supplies every underlying typeclass instance: our probes
-needed explicit forwarding of \texttt{Inhabited} and \texttt{DecidableEq}
-for a regular tag, just as the current structure needs corresponding
-instances when a client requires them.
-
-\paragraph{What the elaboration probes distinguish.}
-Action selection depends on the type Lean infers for an expression, not
-only on a type annotation that it checks against. In a scratch regular-def
-tag \texttt{D}, with the trivial action registered, a variable
-\texttt{d : D Bool Bool} is fixed. Yet an existing raw Boolean value checked
-against that definitionally equal type can still select the raw atom action.
-For the swap $\tau=\swap{\mathrm{false}}{\mathrm{true}}$, the tested expression
-\begin{verbatim}
-  tau • (false : D Bool Bool)
-\end{verbatim}
-elaborates to the raw action and equals \texttt{true}. A named identity-valued
-constructor \texttt{D.mk false}, whose declared result is the tagged type,
-instead selects the trivial action and stays fixed. Named equivalence-based
-conversions and explicitly typed local binders also worked. The Boolean
-carrier deliberately tests the action layer without any infinitude premise.
-
-The same distinction appeared for an existing raw pair and finite set:
-checking either against a definitionally equal tagged container type did
-not necessarily change its inferred action. A named conversion with the
-tagged result type did. Reusing an already elaborated function likewise
-preserves the operations and instances selected in its body. These are
-elaboration choices, not inconsistent proofs or a mathematical failure of
-the discrete construction. They explain why a regular-def interface still
-needs an explicit conversion discipline for predictable action selection.
-
-Another option is to define the trivial action directly on $X$ and select
-it locally or pass it explicitly. That avoids a wrapper, but simultaneous
-reasoning with two actions on the same carrier then requires managing the
-two structures explicitly. The present single-field structure chooses a
-stronger type boundary at the cost of constructor/projection conversions.
-This is an interface decision, not a mathematical necessity or a claim
-that a regular-definition implementation cannot work.
-
-\paragraph{Mathlib reuse and the resulting choice.}
-Mathlib provides precedents for both encodings. Its \texttt{OrderDual}
-tag explicitly recommends conversion functions even though the
-opposite-order carrier is definitionally equal to the original.
-The source is \path{Mathlib/Order/OrderDual.lean}.
-Conversely, the categorical \texttt{Discrete} chooses a one-field structure
-to control passage to the underlying type.\footnote{See
-\path{Mathlib/CategoryTheory/Discrete/Basic.lean}.}
-That declaration encodes a \emph{discrete category}, not a discrete
-permutation set, so its name is not a reason to reuse it as our nominal carrier.
-
-The implementation states the discrete action directly:
-\begin{verbatim}
-instance : MulAction (Perm A) (Discrete A X) where
-  smul _ d := d
-  one_smul _ := rfl
-  mul_smul _ _ _ := rfl
-\end{verbatim}
-The first line of the record ignores the permutation and returns the same
-value. The identity permutation therefore fixes every value. Applying two
-permutations successively and applying their product both return that same
-value, which explains the two \texttt{rfl} proofs. The record supplies the
-standard Mathlib action interface with the operation we want.
-
-We checked Mathlib's alternative action constructors and verified that one
-produces a definitionally equal record. The explicit form above is retained
-for readability: it displays the mathematical action and both laws immediately.
-The alternatives and their exact source references remain in the research
-record. This choice adds no new general theory of group actions.
-
-We retain the present structure: for this action-facing API,
-explicit carrier boundaries currently outweigh the definition's container
-conversion advantage. This conclusion can be revisited when a real client
-demonstrates that conversion costs dominate; it does not prescribe
-structures for all future type tags.
-
-The ordinary type equivalence between $\Discrete_A(X)$ and $X$ does not
-identify their actions. If $X$ already carries an independently selected
-action, its projection is equivariant exactly when every $x\in X$ is fixed
-by every permutation. No automatic discrete action on arbitrary external
-carriers is part of the interface.
-The operation is \path{Discrete.equiv}, with computation equations
-\path{Discrete.equiv_apply} and \path{Discrete.equiv_symm_apply}.
-The trivial-action equations are \path{Discrete.smul_mk} and
-\path{Discrete.smul_val}.
-
-\subsection{Equivariance of ordinary functions}
 \label{sec:equivariance}
 
+\begin{definition}[Discrete permutation set]
+The discrete permutation set $\Discrete_A(X)$ is a copy of $X$ with trivial
+action $\pi\act\operatorname{mk}(x)=\operatorname{mk}(x)$.
+\end{definition}
+
+This is the discrete group action of Pitts~\cite[Example~1.5, p.~15]{pitts2013}
+and, for infinite atoms, a discrete nominal set
+\cite[Example~2.5, p.~30]{pitts2013}. It treats data as unaffected by atom
+renaming: numerical annotations are one example, but even an atom can be
+carried as a fixed label. The construction forgets any action on $X$;
+it is neither the subset of fixed points nor an orbit quotient.
+
+Lean represents \texttt{Discrete A X} by a structure with one field
+\texttt{val : X}. The atom parameter fixes the acting group without storing
+a value or raising the carrier universe. The distinct type
+allows its trivial action to coexist with an action on $X$, at the cost
+of explicit constructor and projection conversions. A definitionally equal
+type tag is another possible representation, but action selection then
+requires attention to the type inferred for each expression. The type
+equivalence $\Discrete_A(X)\simeq X$ alone does not identify the actions.
+
+Every discrete value has singleton orbit and empty least support: all
+permutations fix it, and the empty set is contained in every supporting set.
+
 \begin{definition}
-Given selected actions on $X$ and $Y$, an ordinary function $f:X\to Y$
-is \emph{equivariant} when
+A function $f:X\to Y$ between selected actions is \emph{equivariant} when
 \[
   \Equivariant_A(f)\quad\Longleftrightarrow\quad
   \forall\pi\in\Perm(A)\ \forall x\in X,\quad
@@ -535,237 +215,65 @@ is \emph{equivariant} when
 \]
 \end{definition}
 
-In Lean, this unbundled property is written \texttt{Equivariant A f},
-with the atom type $A$ an explicit input.
-It is not an \texttt{outParam} inferred from the carrier. The domain and
-codomain have independently selected \texttt{MulAction} instances and may
-inhabit different universes. Defining equivariance requires neither a
-supported-function wrapper nor an action on the function type itself.
-No global action on truth values is introduced.
+The Lean predicate \texttt{Equivariant A f} leaves $f$ an ordinary
+function and takes the atom type explicitly. It requires no action on the
+function type itself.
 
 \begin{proposition}[Elementary equivariant maps]
 \label{prop:equivariant}
-Identity maps and product projections are equivariant. If $f:X\to Y$
-and $g:Y\to Z$ are equivariant, so is $g\circ f$. If $f:X\to Y$ and
-$h:X\to Z$ are equivariant, so is $x\mapsto(f(x),h(x))$.
+Identity maps and product projections are equivariant. Equivariant maps
+are closed under composition and pairing.
 \end{proposition}
 
-\begin{proof}
-Identity is immediate, and the projection statements follow from the
-componentwise product action. For composition,
-\[
-  (g\circ f)(\pi\act x)
-  =g(\pi\act f(x))
-  =\pi\act g(f(x)).
-\]
-For pairing, apply the two equivariance equations componentwise.
-\end{proof}
-
-The corresponding declarations are \path{Equivariant.id},
-\path{Equivariant.fst}, \path{Equivariant.snd},
-\path{Equivariant.comp}, and \path{Equivariant.pair}.
-Composition takes its certificates in the order
-\texttt{Equivariant.comp hg hf}, yielding equivariance of $g\circ f$.
-Pairing takes the certificates for the first and second components in that
-order. The proofs use ordinary function application and the selected actions;
-no function bundle is needed.
-
-Later supported-map certificates can weaken equivariance by restricting
-the permutations to those fixing a finite set of parameters. Fixing a
-parameter in a jointly equivariant operation need not leave an equivariant
-function. No finite-support closure theorem is claimed in this increment.
+The claims follow by composing the action equations and applying them
+componentwise. Fixing a parameter in a jointly equivariant operation,
+however, need not leave an equivariant function: the joint equation
+renames the parameter as well as the argument.
 
 \subsection{Three distinctions between actions}
 \label{sec:counterexamples}
 
-The following examples require just two distinct atoms $a\ne b$. Put
-$\tau=\swap a b$, so $\tau(a)=b$ and $\tau\ne1$. They isolate choices
-of action rather than difficulties concerning infinitude or support.
+Let $a\ne b$ and $\tau=\swap a b$. The following examples explain why
+specifying the action is part of specifying the object under study.
 
 \begin{example}[An atom and a discrete copy]
 \label{ex:discrete}
 The canonical action moves $a$, since $\tau\act a=b\ne a$.
-The discrete action fixes $\operatorname{mk}(a)$, since
-$\tau\act\operatorname{mk}(a)=\operatorname{mk}(a)$.
+The discrete action fixes $\operatorname{mk}(a)$.
 Consequently, $\operatorname{val}:\Discrete_A(A)\to A$ is a bijection of
-types but is not equivariant for these actions: applying it after renaming
-gives $a$, whereas renaming its value gives $b$.
+types but is not equivariant: applying it after renaming gives $a$, whereas
+renaming its value gives $b$.
 \end{example}
 
 \begin{example}[Left multiplication and conjugation]
 \label{ex:group-actions}
-A group acts on itself by left multiplication, $\pi\act\sigma=\pi\sigma$.
-It also admits the conjugation action $\pi\star\sigma=\pi\sigma\pi^{-1}$.
-These disagree at the identity:
+A group acts on itself by left multiplication, $\pi\act\sigma=\pi\sigma$,
+and by conjugation, $\pi\star\sigma=\pi\sigma\pi^{-1}$. At the identity,
 \[
   \tau\act1=\tau\ne1,\qquad \tau\star1=1.
 \]
 The bare group $\Perm(A)$ retains its standard left action. The moved-point
-conjugation law in Proposition~\ref{prop:subgroup} is a group equation;
-it does not install conjugation as that group's scalar action.
+conjugation law~\eqref{eq:moved-conj} is a group equation; it does not select
+conjugation as the group's scalar action.
 \end{example}
 
 \begin{example}[Pointwise and conjugation actions on functions]
 \label{ex:function-actions}
-For ordinary $f:X\to Y$, the pointwise action uses only the codomain action:
+For $f:X\to Y$, the pointwise action uses only the codomain action,
+whereas conjugation also renames the argument:
 \[
-  (\pi\act_{\mathrm{pt}}f)(x)=\pi\act f(x).
+  (\pi\act_{\mathrm{pt}}f)(x)=\pi\act f(x),\qquad
+  (\pi\act_{\mathrm{conj}}f)(x)=\pi\act f(\pi^{-1}\act x).
 \]
-When the domain also has an action, the conjugation formula is
-\[
-  (\pi\act_{\mathrm{conj}}f)(x)
-    =\pi\act f(\pi^{-1}\act x).
-\]
-On the identity function of the canonical atom carrier these differ:
+On the identity function of the canonical atom carrier,
 \[
   (\tau\act_{\mathrm{pt}}\id_A)(a)=b,\qquad
   (\tau\act_{\mathrm{conj}}\id_A)(a)=a.
 \]
-Equivariance is precisely being fixed by every conjugation operation. Indeed,
-substituting $\pi^{-1}\act x$ in its defining equation gives
-$\pi\act f(\pi^{-1}\act x)=f(x)$; conversely, substitute $\pi\act x$
-in this fixed-point equation. It is not the fixed-point condition for the
-ordinary pointwise action. The interface does not replace Mathlib's
-pointwise action on bare function types or infer that arbitrary functions
-are finitely supported.
+Equivariance is precisely invariance under conjugation: substituting
+$\pi^{-1}\act x$ in the equivariance equation gives the fixed-point
+equation, and substituting $\pi\act x$ gives the converse. It is not
+invariance under the pointwise action, which Mathlib assigns to bare
+function types. Nor does an arbitrary function necessarily have finite
+support under conjugation.
 \end{example}
-
-These are manuscript calculations explaining the selected actions. Temporary
-Lean checks confirmed the three distinctions through the public import and
-checked that a structure without a declared action does not acquire one
-automatically. They do not introduce additional public theorems or a
-persistent example library. The absence of an inferred action is an interface
-property, not a claim that no mathematical action can be constructed.
-
-\subsection{Implementation correspondence and evidence}
-\label{sec:evidence}
-
-The foundation contract is divided as follows. The permutation,
-factorization, and action modules have been checked, together with their
-source coverage and axiom dependencies.
-The declaration references identify the implemented statements; the manuscript
-also explains consequences that are not exported as separate named theorems.
-
-\begin{center}
-\small
-\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.37\linewidth}
-  >{\raggedright\arraybackslash}p{0.57\linewidth}@{}}
-\hline
-Contract & File \\
-\hline
-Subgroup, application, moved sets, swaps &
-  \path{Package/Foundations/Permutation.lean} \\
-Controlled and avoiding factorization &
-  \path{Package/Foundations/SwapFactorization.lean} \\
-Actions, swap criterion, discrete data, equivariance &
-  \path{Package/Foundations/Action.lean} \\
-Public import & \path{Package.lean} \\
-Module-origin axiom audit & \path{Package/Tests/AxiomAudit.lean} \\
-Import and source-coverage check & \path{Package/Scripts/check-imports.py} \\
-\hline
-\end{tabular}
-\end{center}
-
-The implementation uses the repository's pinned Lean and Mathlib 4.34.1
-versions. The Mathlib revision, agreeing with the manifest and installed
-checkout, is
-\begin{quote}
-\small\texttt{d13f23b723b8a846827a245b89c10fc7d3f11612}.
-\end{quote}
-The \texttt{F03b} checks concern an uncommitted increment. Its branch is
-\path{fasapa/nominal-package}, and its committed \texttt{F02/F03a} base is
-\begin{quote}
-\small\texttt{3d2196a57b8964084dd58a65a0cb1c0be50b1592}.
-\end{quote}
-The final verification commands were
-\begin{quote}
-\small
-\begin{verbatim}
-lake build Package +Package.Tests.AxiomAudit
-lake env lean \
-  /tmp/nominal-f03b-execution/FactorizationContracts.lean
-lake env lean \
-  /tmp/nominal-f03b-execution/ActionContracts.lean
-lake env lean \
-  /tmp/nominal-f02-f03a-execution/ActionContracts.lean
-lake env lean \
-  /tmp/nominal-f02-f03a-execution/NegativeContracts.lean
-lake env lean Package/Tests/AxiomAudit.lean
-python3 Package/Scripts/check-imports.py
-git diff --check
-\end{verbatim}
-\end{quote}
-All commands exited successfully. The direct audit and temporary consumers
-produced no warnings. Iterative builds rebuilt the changed package modules
-using cached dependencies. The final combined build completed 967 jobs,
-rebuilding the audit and reusing those checked modules.
-This evidence does not claim a fresh project build, a dependency bootstrap,
-or a rebuild of the unchanged reference development.
-
-The source-coverage checker reports four production source modules: the public
-root and the three foundation modules. The audit category contains one module,
-whose import closure reaches all five Lean source files. The checker validates
-headers using the pinned Lean parser, rejects missing or unclassified package
-sources and forbidden dependencies, and checks reachability from the respective
-roots. Its thirteen self-tests passed during the preceding \texttt{F02/F03a}
-increment; the checker is unchanged and those self-tests were not rerun for
-\texttt{F03b}. In particular, the production closure
-has no dependency on the earlier nominal library, its clients, or research
-probes. Header discovery complements the full Lean build; it does not replace
-proof elaboration or checking of module bodies.
-
-The axiom audit examines declarations by their originating modules, including
-private and generated declarations, rather than selecting a namespace prefix.
-It checked 81 production declarations from the three foundation modules;
-the public umbrella introduces no declarations of its own. Transitive axiom
-dependencies were confined to \texttt{propext}, \texttt{Classical.choice}, and
-\texttt{Quot.sound}. The audit rejects a count of zero or any additional axiom,
-and checks its rejection logic with simulated axiom names rather than new
-axiom declarations. Its direct invocation repeats the traversal even when
-Lake can reuse a compiled audit module.
-
-The audit prints dependencies for all four new results:
-\begin{quote}
-\small
-\path{Perm.swap_factorization},\\
-\path{Perm.swap_factorization_avoiding},\\
-\path{Perm.smul_eq_of_swap_smul_eq},\\
-\path{Perm.forall_smul_eq_iff_swap_smul_eq}.
-\end{quote}
-It also retains representative checks for
-\path{Perm.moved_conj}, \path{Perm.conj_swap}, \path{Perm.smul_atom},
-\path{Discrete.smul_val}, and \path{Equivariant.comp}; these likewise
-contain only the permitted standard axioms. These results establish the
-permutation, factorization, and action layer described here. They do not supply finite
-support, least support, predicates, or the future case studies.
-
-The new temporary consumers use only \texttt{import Package}. They check
-that all factors fix an atom fixed by the original permutation; identity,
-empty, and singleton carriers give empty controlled lists; and a nontrivial
-swap on a finite carrier gives a nonempty list. A noncommuting three-point
-product distinguishes the rightmost-first order from its reverse. Avoidance
-is also exercised on the infinite set $\mathbb N\setminus\{0,1\}$, without
-restricting the theorem's arbitrary-set parameter.
-
-The action consumers recover both component equalities from invariance of
-a product with independent carrier universes, exercise both directions of the criterion at
-$S=\varnothing$, and handle $S=A$ and a premise restricted to distinct
-endpoints. Rerun \texttt{F03a} consumers preserve the atom, product,
-finite-set, discrete, bare-group, and pointwise-function action distinctions
-and the expected missing-action diagnostic. These successful checks are
-scratch evidence rather than maintained package modules; persistent usage
-examples belong to the future case studies.
-
-The manuscript was compiled from \path{docs/article/} with
-\begin{quote}
-\small
-\begin{verbatim}
-latexmk -pdf -interaction=nonstopmode -halt-on-error \
-  -outdir=/tmp/nominal-package-article-build main.tex
-\end{verbatim}
-\end{quote}
-Generated files remain outside the source tree. The final log was checked
-for unresolved references and layout diagnostics, and the changed pages'
-extracted text was inspected. PDF compilation checks the document artifact;
-the separate source correspondence check verifies the four Lean signatures,
-their assumptions, product order, and proof route.

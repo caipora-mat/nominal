@@ -1,5 +1,11 @@
 # F03b: controlled swap factorization
 
+**Article editorial correction:** manuscript passages follow the current
+[research-article policy](../../research/2026-10-05-article-plan.md): selected
+system/mathematical exposition and substantive comparisons, with no task IDs
+or development/review/build diary. Article instructions below are amended
+accordingly; the recorded execution history remains an internal record.
+
 Date: 2026-10-05. **Written specification approved by the author.**
 The [implementation plan](../plans/2026-10-05-package-controlled-swaps.md) is
 approved for native execution. All four results and the matching article are
@@ -224,8 +230,8 @@ of an arbitrary action, and no least- or strong-support assertion follows here.
 | `Package.lean` | Explicitly export SwapFactorization alongside existing foundation imports |
 | `Package/Tests/AxiomAudit.lean` | Add representative `#print axioms` for all four new public results; retain whole-production traversal |
 | `Package/README.md` | Document the four declarations, list order, arbitrary-set contract and delivered boundary |
-| `docs/article/sections/foundations.tex` | Concurrent mathematical development and final declaration/evidence correspondence |
-| `docs/article/sections/introduction.tex`, `docs/article/main.tex` | Reconcile scope/status and abstract with delivered F03b |
+| `docs/article/sections/foundations.tex` | Selected mathematical exposition and relevant declaration correspondence |
+| `docs/article/sections/introduction.tex`, `docs/article/main.tex` | Reconcile the scientific scope and abstract with the formalized results |
 | `docs/nominal-package-roadmap.md` | F03b/F03 and PKG-11 evidence and completion status |
 | `docs/research/README.md`, `2026-10-05-pkg01-readiness.md`, `2026-10-05-article-plan.md` (under `docs/research/`) | Link review artifacts, then reconcile current delivery and remaining F04/F05 work |
 
@@ -252,18 +258,18 @@ with the finite moved-set reduction underlying the adopted Mathlib result.
 Identify the reused Mathlib mathematics and the additional Package certificate.
 
 After introducing selected actions, add `prop:swap-invariance` for the exact
-equivalence above, with its list-action proof and converse. Explain its role as
-F04's permutation input; do not introduce or claim a checked Package support
-interface, support intersection, least support or freshness.
+equivalence above, with the essential list-action argument and converse. Explain
+its mathematical role in the support criterion, without roadmap labels. State
+only the results justified by the corresponding formalization.
 
-Draft statements while the Lean proofs are developed, labeling prospective
-results explicitly until checked. At delivery, reconcile all four declaration
-names, hypotheses, product order, proof explanation and status against source.
-Update `sec:evidence` with the new module, measured coverage/audit counts,
-representative axioms and actual commands/cache conditions. Preserve earlier
-F03a evidence as historical evidence where useful. Update introduction/abstract
-status without implying that F04 or PKG-01 is delivered. Compile the manuscript
-and review mathematical correspondence as well as rendering/log diagnostics.
+Draft the exposition while the Lean proofs are developed. Reconcile the
+mathematical hypotheses, product order, selected proof explanation and relevant
+declaration references against the source. Retain the reasoning that explains
+endpoint control and its significance, rather than duplicate routine calculations.
+The article has no operational evidence section: module/declaration counts,
+axiom-audit output, commands, cache conditions, reviews and phase identifiers
+belong in the roadmap or implementation notes. Update the introduction/abstract
+around mathematical scope. Compile and review the manuscript internally.
 
 ## Acceptance and verification
 

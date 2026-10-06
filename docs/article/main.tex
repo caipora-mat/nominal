@@ -21,7 +21,7 @@
 \theoremstyle{remark}
 \newtheorem{remark}[proposition]{Remark}
 
-\title{A Nominal Package for Lean:\\Permutation and Action Foundations}
+\title{A Nominal Package for Lean:\\Permutation, Action and Support Foundations}
 \author{}
 \date{5 October 2026}
 
@@ -29,31 +29,52 @@
 \maketitle
 
 \begin{abstract}
-We describe the first foundation layer of a proposed nominal package for Lean:
-finite permutations, coherent actions, and equivariant ordinary functions.
+We present a Lean formalization of
+finite permutations, coherent actions, equivariant ordinary functions,
+and finite support for elements of selected actions.
 Controlled swap factorization keeps every endpoint in the original moved
 set and yields factorization avoiding an arbitrary pointwise fixed set.
 For any selected action, invariance under swaps outside a set is equivalent
 to invariance under all finite permutations fixing that set pointwise.
 The design uses Mathlib's group and action interfaces, separates atom and
 carrier universes, and makes trivial actions on external data explicit.
-Three small counterexamples distinguish actions that have the same underlying
-carrier but different mathematical meanings. The permutation and action
-declarations have been checked by Lean. We distinguish the
-mathematical exposition from the implementation correspondence and record the
-scope of the verification evidence.
+Finite bounds are transported by conjugation, preserved by equivariant
+images and combined for products. Over infinite atoms, two finite support
+bounds have a supporting intersection and each finitely supported element
+has a unique least finite support. A Boolean counterexample explains why
+finite supportedness alone does not give this conclusion on finite atoms.
+Least support commutes with renaming and can shrink under equivariant maps;
+a proof-only nominality certificate supplies it uniformly across a carrier.
+Counterexamples distinguish actions on the same underlying carrier and show
+why action selection and infinitude assumptions are essential to nominal
+reasoning. The mathematical interface separates an element's finite dependence
+on atoms from the representation of its carrier.
 \end{abstract}
 
 \input{sections/introduction}
 \input{sections/foundations}
+\input{sections/support}
+\input{sections/perspectives}
 
-\begin{thebibliography}{1}
+\begin{thebibliography}{9}
 \bibitem{pitts2013}
 Andrew M. Pitts.
 \newblock \emph{Nominal Sets: Names and Symmetry in Computer Science}.
 \newblock Cambridge Tracts in Theoretical Computer Science, volume 57.
 \newblock Cambridge University Press, 2013.
-\newblock Chapters 1--2.
+\bibitem{urbanKaliszyk2012}
+Christian Urban and Cezary Kaliszyk.
+\newblock General bindings and alpha-equivalence in Nominal Isabelle.
+\newblock \emph{Logical Methods in Computer Science}, 8(2:14):1--35, 2012.
+\newblock \url{https://doi.org/10.2168/LMCS-8(2:14)2012}.
+
+\bibitem{paranhosVentura2025}
+Fabr{\'i}cio Sanches Paranhos and Daniel Ventura.
+\newblock Nominal sets in Rocq.
+\newblock \emph{Electronic Proceedings in Theoretical Computer Science},
+430:55--68, 2025.
+\newblock \url{https://doi.org/10.4204/EPTCS.430.5}.
+\newblock Also available as arXiv:2509.25883v1.
 \end{thebibliography}
 
 \end{document}

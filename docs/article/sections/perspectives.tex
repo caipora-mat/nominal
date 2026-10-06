@@ -1,0 +1,66 @@
+\section{Predicates, support and binding}
+\label{sec:perspectives}
+
+The distinction between a carrier and its action becomes particularly useful
+when the carrier represents logical information. Giving truth values the
+trivial action still leaves a nontrivial action on predicates. For a
+permutation set $X$, conjugation on $P : X \to \mathrm{Prop}$ gives
+\[
+  (\pi \act P)(x) \;\longleftrightarrow\; P(\pi^{-1}\act x).
+\]
+For example, the atom predicate $P_a(x) \equiv (x=a)$ is sent to
+$P_{\pi a}$. The singleton $\{a\}$ supports $P_a$, although exchanging $a$
+with another atom changes the predicate. Pitts' nominal powerset captures
+precisely this distinction: its elements are supported subsets, while
+equivariant subsets have empty support~\cite[Section~2.5]{pitts2013}.
+There are consequently two different roles for a predicate in reasoning
+about binders. As a semantic object, it may carry a finite-support
+hypothesis; as the motive of an induction theorem, it may be arbitrary.
+Pitts' alpha-structural induction theorem uses supported predicate
+families~\cite[Theorem~8.21]{pitts2013}. Nominal2's strong induction principle
+instead generalizes each recursive hypothesis over a finitely supported
+context, without requiring finite support of the motive
+itself~\cite[Section~7, equation~(7.1)]{urbanKaliszyk2012}. These are different
+theorem interfaces: the context specifies what binders must avoid, and the
+generalized hypotheses provide the strength needed to change that context.
+A calculus of supported predicates therefore need not restrict the ordinary
+propositions available to an induction proof.
+
+The treatment of support witnesses gives another useful comparison.
+The constructive Rocq account of Paranhos and Ventura equips nominal
+carriers with a function supplying a finite support and uses setoid equality
+with explicit respectfulness laws~\cite[Section~3]{paranhosVentura2025}.
+In the present formulation, finite supportedness is an existential
+proposition about an element of a selected action. A proof can introduce a
+convenient bound, enlarge it, transport it or combine it with another bound,
+without making that choice part of the element's identity. This distinction
+matters even in classical mathematics: a supplied support may contain atoms
+on which the element does not depend. Over infinite atoms, the intersection
+theorem turns an inclusion-minimal bound into the unique least support
+(Proposition~\ref{prop:least-support}), as in the classical theory of
+support~\cite[Section~2.1]{pitts2013}. This construction applies to an
+individually supported element; nominality of the whole carrier only supplies
+such certificates uniformly. The elementary support calculus itself requires
+no operation selecting a least bound. Lean's ordinary
+equality and classical foundations make extensional equality and quotient
+constructions available; the Rocq formulation instead exposes the chosen
+equivalence relation in its action laws. Support arguments must respect the
+equality used for the carrier in either setting.
+
+Nominal2 also illustrates the additional mathematical content needed to
+connect such a semantic foundation to a language specification. Urban and
+Kaliszyk construct raw syntax, define alpha-equivalence, and pass to
+quotients, deriving support equations and strong induction through generated
+proofs~\cite[Sections~4--7]{urbanKaliszyk2012}. This passage depends on
+properties of the particular binding specification: alpha-equivalence must
+be an equivariant equivalence relation, and operations descending to the
+quotient must respect it. Identifying semantic support with free atoms is a
+further theorem about that syntax. The selected-action support laws studied
+here supply reusable premises for these arguments, independently of the
+constructors chosen for a language. They do not determine which occurrences
+a constructor binds. In particular, an action on terms and finite support
+alone do not justify a fresh-binder induction rule: the rule must explain
+how changing a representative preserves the term and supplies the required
+recursive cases. Separating these obligations gives a precise connection
+between permutation semantics and the familiar practice of choosing bound
+names fresh for the parameters of a proof.

@@ -110,7 +110,7 @@ acceptance criteria guide architecture without prescribing the old implementatio
 | [Isabelle comparison](2026-10-05-isabelle-comparison.md) | Pinned source readings and fresh-rule criteria |
 | [Backend comparison](2026-10-05-backend-comparison.md) | Candidate grammar, construction alternatives and historical counterexamples |
 | [Client contracts](2026-10-05-package-contracts.md) | Mathematical user contracts and proposed syntax; old declarations are examples |
-| [Article plan](2026-10-05-article-plan.md) | Research-writing organization and statement-to-proof evidence workflow |
+| [Article plan](2026-10-05-article-plan.md) | Selective publication policy, thematic outline and internal evidence workflow |
 | [PKG-01 start prompt](pkg-01-start-prompt.md) | Fresh-context handoff that checks prerequisites before predicate implementation |
 | [Current foundation readiness](2026-10-05-pkg01-readiness.md) | F01–F05 evidence, representation comparison and exact proposed predicate contracts at `76966b1` |
 | [Pinned algebraic source investigation](2026-10-05-algebraic-source-investigation.md) | Direct declaration review, dispositions and reproduced counterexamples |
@@ -120,8 +120,12 @@ acceptance criteria guide architecture without prescribing the old implementatio
 | [First implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md) | Approved native execution; incorporates removal of standalone Package examples |
 | [F03b controlled-swap specification](../superpowers/specs/2026-10-05-package-controlled-swaps-design.md) | Approved public statements, Mathlib proof route, article obligations and acceptance checks |
 | [F03b implementation plan](../superpowers/plans/2026-10-05-package-controlled-swaps.md) | Completed native execution with concurrent LaTeX work and clean independent review |
-| [Package foundation interface](../../Package/README.md) | F02/F03a kernel plus working-tree F03b results, import policy and validation commands |
-| [LaTeX article](../article/main.tex) | Foundation mathematics, actual public declarations and verification evidence |
+| [F04a finite-support specification](../superpowers/specs/2026-10-05-package-finite-support-design.md) | Approved Mathlib support specialization, exact assumptions, proof strategies and article/verification obligations |
+| [F04a implementation plan](../superpowers/plans/2026-10-05-package-finite-support.md) | Completed native execution with concurrent article work and clean independent final review |
+| [F04b least-support specification](../superpowers/specs/2026-10-06-package-least-support-design.md) | Approved proof-only nominality and elementwise/carrier least-support contracts |
+| [F04b native implementation plan](../superpowers/plans/2026-10-06-package-least-support.md) | Completed native execution with concurrent article work and clean independent final review |
+| [Package foundation interface](../../Package/README.md) | Committed F02/F03a/F03b and checked working-tree F04a/F04b results, import policy and validation commands |
+| [LaTeX article](../article/main.tex) | Research exposition of the system, mathematics and relevant Lean correspondence |
 
 The earlier architecture prompt was removed in `76966b1`; the table now points
 to the existing handoff and current review artifacts. F01 is in progress, with
@@ -135,22 +139,59 @@ Package foundation has no standalone Examples layer.
 
 ## Article and implementation advance together
 
+The article is intended as a selective research publication. Explain central
+definitions, theorems and proof ideas, architectural meaning and choices, limits
+and counterexamples, with grounded discussion of relevant systems and theories.
+Select the details needed for that argument; avoid a complete API inventory or
+routine-proof catalogue. Do not manufacture novelty or unsupported comparisons.
+
+Keep development-stage/task IDs, work logs, status/delivery and approval stories,
+branch/commit bookkeeping, agent assignments, review verdicts and audit/build
+commands, outcomes, counts and cache conditions out of the manuscript. Preserve
+them in this research folder and the roadmap. Logical assumptions, mathematical
+dependencies, substantive limitations and relevant Lean APIs remain scientific
+content. This distinction supersedes earlier manuscript-evidence instructions.
+
 For every substantive Package increment, its spec/plan includes the corresponding
-LaTeX sections under `docs/article/`. Develop the mathematical statements and
-explanations alongside the Lean proofs, then reconcile hypotheses, declarations,
-limitations and verification evidence and compile the article before closing the
-increment. PKG-11 coordinates this requirement throughout development; manuscript
-writing is not deferred until the package is finished. The
+LaTeX work under `docs/article/`. Develop selected mathematical statements and
+explanations alongside the Lean proofs, then reconcile hypotheses, relevant
+declarations and limitations and compile the article before closing the increment.
+Record the checks in the roadmap. Routine implementation changes may need no new
+manuscript text. PKG-11 coordinates this requirement throughout development;
+manuscript writing is not deferred until the package is finished. The
 [article plan](2026-10-05-article-plan.md#concurrent-writing-is-part-of-delivery)
-specifies the completion rule.
+specifies the completion rule and [publication content policy](2026-10-05-article-plan.md#publication-content-policy).
 
 F02/F03a are delivered with their article sections. F03b now implements controlled
 swap factorization, avoidance for arbitrary `Set A`, and the selected-action
 implication/equivalence, with corresponding LaTeX exposition. The author approved
-native execution; independent final review found no issues. The direct production audit covers
-81 declarations in three defining modules with only standard axioms. Coverage
-reaches four production source modules and one audit module. F04 support/freshness,
-F05 interfaces and PKG-01 remain future work; the new results add no action instance.
+native execution; F03b's independent final review found no issues. The subsequent
+F04a extension now passes a direct production audit of 104 declarations in four
+defining modules with only standard axioms. Coverage reaches five production source
+modules and one audit module. Its finite-support calculus adds no action instance.
+
+The F04a design session inspected a clean tree at
+`34a83358739ab962e2b9d2035a21d67b2a896071`, which commits F03b. The
+[tracker](../nominal-package-roadmap.md#pkg-f04--support-freshness-and-required-constructions)
+now splits F04 into finite support calculus (F04a), nominality/least support
+(F04b), canonical instances/freshness (F04c), and canonical equivariant quotients
+(F04d). The [F04a written specification](../superpowers/specs/2026-10-05-package-finite-support-design.md)
+and its native implementation plan were approved. F04a's 18 public declarations
+and meaningful temporary consumers now check, with corresponding mathematics in
+`docs/article/sections/support.tex`, `sec:finite-support`. Independent final review
+found no issues; F04a is delivered, uncommitted.
+
+The author subsequently approved the F04b specification and native plan.
+`Package/Foundations/Nominal.lean` now supplies proof-only `Nominal A X`,
+elementwise `hx.support` and carrier `support A x`, with witness agreement,
+leastness, transport, empty-support characterization and equivariant-image
+inclusion. All 19 approved declarations and six temporary public-import files
+check; the direct audit covers 132 declarations from five defining modules
+with standard axioms only, and source coverage reaches six production modules
+including the root plus one audit. The concurrent `sec:least-support` article
+section is reconciled and compiled. Independent final review found no Critical,
+Important or Minor issues and independently reran code/article/preservation
+checks. F04b is delivered, uncommitted. F04c/F04d, F05 and PKG-01 remain future work.
 
 ## Scratch evidence
 

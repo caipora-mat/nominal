@@ -1,5 +1,11 @@
 # F03b Controlled Swaps Implementation Plan
 
+**Article editorial correction:** manuscript passages follow the current
+[research-article policy](../../research/2026-10-05-article-plan.md): selected
+system/mathematical exposition and substantive comparisons, with no task IDs
+or development/review/build diary. Article instructions below are amended
+accordingly; the recorded execution history remains an internal record.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development or superpowers:executing-plans to implement this plan task-by-task using the approved native execution method. Steps use checkbox syntax for tracking. The author approved this plan and selected native execution.
 
 **Goal:** Deliver controlled swap factorization, arbitrary-set avoidance and the selected-action criterion, with matching checked LaTeX exposition, completing F03b of PKG-F03.
@@ -23,7 +29,7 @@
 - Keep `Nominal/`, `Instances/`, reference `Examples/`, historical `docs/roadmap.md`, original probes and old validation scripts unchanged.
 - Persistent usage examples remain reserved for case studies. Use named temporary public-import checks, never a new Package/Examples layer or tests concluding `True`.
 - No `sorry`, `admit`, custom axioms or disabled kernel checking. Only standard `propext`, `Classical.choice`, and `Quot.sound` are allowed by the audit.
-- All manuscript content stays under `docs/article/` in LaTeX. Draft with the proofs; reconcile exact statements and evidence and compile before delivery. Generated files stay outside the source tree.
+- All manuscript content stays under `docs/article/` in LaTeX. Draft with the proofs; reconcile selected mathematical statements and compile before delivery. Record execution evidence outside the manuscript. Generated files stay outside the source tree.
 
 ## Review Focus
 
@@ -42,7 +48,7 @@
 | `Package/Foundations/Action.lean` | Task 2: import factorization and add action implication/equivalence |
 | `Package/Tests/AxiomAudit.lean` | Task 3: print all four new results; retain whole-production traversal |
 | `Package/README.md` | Task 3: exact public API, ordering, assumptions and verification limits |
-| `docs/article/sections/foundations.tex` | Tasks 1/2: mathematics and proof correspondence; Task 3: final verification evidence |
+| `docs/article/sections/foundations.tex` | Tasks 1/2: selected mathematics and proof ideas; Task 3: final mathematical correspondence |
 | `docs/article/sections/introduction.tex`, `docs/article/main.tex` | Task 3: reconcile delivered scope and abstract |
 | `docs/nominal-package-roadmap.md` | Task 3: F03b/F03 acceptance and PKG-11 evidence |
 | `docs/research/README.md`, `docs/research/2026-10-05-pkg01-readiness.md`, `docs/research/2026-10-05-article-plan.md` | Task 3: current result and remaining F04/F05/PKG-01 work |
@@ -218,7 +224,7 @@ theorem forall_smul_eq_iff_swap_smul_eq (S : Set A) (x : X) :
   declaration names, both logical directions and proof explanation. Compile
   the article with the command below and resolve introduced diagnostics.
 
-## Task 3: Audit, article evidence and delivery
+## Task 3: Audit, mathematical correspondence and delivery
 
 **Files:** Update audit, Package README, three article sources, active roadmap,
 and the three research notes listed in the ownership table. No new checker or
@@ -237,10 +243,10 @@ exposition; no additional mathematical API.
   a four-name allowlist.
 
 - [x] **Step 2: Update public documentation and provisional evidence.** Add
-  the actual API and list convention to Package/README.md. Update article
-  abstract/introduction scope and `sec:evidence`, including the new module and
-  four declaration references. Keep counts and verification status tied to
-  actual output; do not copy the F03a count of 77 or claim F04 delivery.
+  the actual API and list convention to Package/README.md. Update the article
+  abstract/introduction and relevant theorem references to describe the system
+  and its mathematics. Put measured counts, verification status and historical
+  comparisons in the roadmap, not an article evidence section.
 
 - [x] **Step 3: Run final Package and consumer verification.** Execute:
 
@@ -263,8 +269,8 @@ exposition; no additional mathematical API.
   changes, run the separate reference build, direct audit and import checker
   from the spec; source-preservation checks suffice when it stays unchanged.
 
-- [x] **Step 4: Finalize and verify the LaTeX artifact.** Record the actual
-  verification output/cache conditions in `sec:evidence`. Check the four Lean
+- [x] **Step 4: Finalize and verify the LaTeX artifact.** Record verification
+  output/cache conditions in the roadmap or this plan. Check the four Lean
   signatures against the three propositions, endpoint restrictions, product
   order, closure proof and decrease explanation. Create the output directory
   if needed; from `docs/article/` run:
@@ -308,7 +314,7 @@ Coverage mapping: controlled factorization, original endpoints, identity/order/
 finite carriers and infinite-set avoidance → Task 1; generic selected actions,
 both equivalence directions, empty/universal sets and coherence → Task 2;
 production/audit coverage, README/status and final independent review → Task 3.
-Article mathematics belongs to Tasks 1/2 and final evidence/reconciliation to
+Article mathematics belongs to Tasks 1/2 and internal validation/correspondence review to
 Task 3. All Review Focus items have named checks. The Interfaces blocks preserve
 the approved names, explicit parameters and independent universes exactly.
 No standalone example layer, new foundation representation or F04 API is hidden

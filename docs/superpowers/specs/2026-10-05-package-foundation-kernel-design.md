@@ -1,5 +1,11 @@
 # Package foundation kernel: F02 and F03a
 
+**Article editorial correction:** manuscript passages follow the current
+[research-article policy](../../research/2026-10-05-article-plan.md): selected
+system/mathematical exposition and substantive comparisons, with no task IDs
+or development/review/build diary. Article instructions below are amended
+accordingly; the recorded execution history remains an internal record.
+
 Date: 2026-10-05. **Written specification approved by the author.**
 The author approved F02 + F03a, then requested a LaTeX article developed alongside
 implementation under `docs/article/`. The
@@ -215,11 +221,14 @@ separately. This specification requires no dependency bootstrap or CI.
 The author's subsequent instruction requires the implementation's mathematical
 exposition to be written alongside this increment, entirely in LaTeX under
 `docs/article/`. The entry point is `docs/article/main.tex`, with included
-introduction and foundations sections. Update definitions, proofs and source
-correspondence as each implementation task lands. Mark approved contracts and
-manuscript arguments separately from verified Package declarations. Compile the
-manuscript without placing generated build files in the source tree. This adds
-an accompanying article deliverable, without broadening the Lean mathematics.
+introduction and foundations sections. Select the central mathematical concepts,
+proof ideas and representation choices; relate them to appropriate theories or
+systems where this explains the design. Keep the scientific claims and relevant
+Lean references accurate. Do not include task IDs, implementation chronology,
+review verdicts, audit counts, commands or build outcomes in the manuscript.
+Record operational evidence in the roadmap and implementation notes. Compile
+the manuscript internally without placing generated files in the source tree.
+This adds an accompanying article deliverable without broadening the Lean mathematics.
 
 ## Acceptance and verification
 

@@ -4,9 +4,10 @@ This handoff follows the revised foundation-first roadmap. The author has
 settled architectural freedom and the top-level `Package/` location. Predicate
 implementation still depends on establishing the chosen foundation contracts;
 the prompt does not assume the existing core supplies them. **Current resume
-point:** F02 and F03a are delivered in the working tree. F03b is next, followed
-by F04/F05 before PKG-01. Write the corresponding LaTeX article sections with
-each implementation increment.
+point:** F02/F03a/F03b are committed and F04a is delivered in the working tree.
+F04b is next, followed by F04c/F04d and F05 before PKG-01. Write the relevant
+LaTeX research exposition alongside each increment, keeping operational evidence
+in the roadmap and research notes.
 
 ```text
 Begin the PKG-01 workstream for the Lean nominal package. First assess and plan
@@ -16,8 +17,9 @@ on top of the existing library.
 Repository and current state
 
 Work in /home/fab/Documents/nominal/nominal on fasapa/nominal-package.
-The last inspected HEAD was 76966b1f2e44f594517442b6572e33abaa9038e0, with
-uncommitted F02/F03a implementation, article and design records. The
+The last inspected HEAD was 34a83358739ab962e2b9d2035a21d67b2a896071, containing
+F02/F03a/F03b, with delivered F04a implementation, article and design records
+in the working tree. The
 completed reference core/Church–Rosser baseline is
 4279ba92efacd77b3b96e507631502272b489999. Inspect the actual branch, history and
 working tree first. Preserve every existing tracked and untracked file.
@@ -39,10 +41,10 @@ Read AGENTS.md and README.md, then:
 - docs/research/2026-10-05-algebraic-source-investigation.md
 - Package/README.md and the delivered Package/Foundations modules
 
-The F02 + F03a specification and native implementation plan were approved and
+The F02/F03a, F03b and F04a specifications and native plans were approved and
 delivered. Preserve that work and its scope correction: persistent usage
 examples belong to future case studies; foundation usage checks may be temporary.
-Do not recreate the first kernel or ask for its approval again. Check the current
+Do not recreate completed slices or ask for their approval again. Check the current
 records rather than treating historical absence claims as current state.
 
 The active tracker is docs/nominal-package-roadmap.md. Do not reuse or update
@@ -70,9 +72,9 @@ Always investigate the pinned Mathlib before introducing general-purpose
 definitions, instances or proofs. Search .lake/packages/mathlib/Mathlib with rg,
 inspect exact statements and imports, and use small Lean checks where needed.
 Prefer direct reuse, specialization, combinations of existing lemmas or a small
-proved adapter to recreating existing infrastructure. For F03b in particular,
-look for permutation factorization/induction results and test whether they can
-provide the required control over endpoints.
+proved adapter to recreating existing infrastructure. The controlled-swap and
+finite-support results are delivered; inspect their current contracts when
+planning least support and later constructions.
 
 If new code is necessary, record the relevant candidates and the concrete
 mathematical or interface gap. Check hypotheses, universes and action coherence;
@@ -100,10 +102,9 @@ established for the selected design:
 - F01: direct algebraic-sketch investigation, mathematical/API contracts and
   reuse/adapt/rebuild decisions per layer.
 - F02: Package build, import, example and axiom-audit boundary.
-- F03: F03a group/actions are delivered; F03b's support-facing permutation
-  lemmas remain, especially swap generation with controlled endpoints and its
-  avoidance corollary.
-- F04: required support, freshness and quotient interfaces.
+- F03: group/actions and controlled-swap factorization/avoidance are delivered.
+- F04: F04a finite support calculus is delivered; F04b least support, F04c
+  canonical instances/freshness and F04d quotient interfaces remain.
 - F05: minimal function/predicate-input foundation for the chosen representation.
 
 Report the evidence for each prerequisite. If it is missing, propose the first
@@ -198,12 +199,25 @@ Concurrent article writing — settled
 
 Write the article together with the implementation, entirely in LaTeX under
 docs/article/. Every substantive increment's spec/plan includes its corresponding
-article sections. Draft the mathematics while proving it; synchronize final
-assumptions, declarations, proof status and verification evidence and compile
-the article before marking that increment complete. PKG-11 coordinates ongoing
-writing and is not deferred until the code is finished. For F03b, extend the
-foundations section with the factorization argument and avoidance corollary.
-Delegated article work may run in parallel but must match the final code.
+exposition work. This is a selective research publication: explain central
+definitions, theorems/proof ideas, system architecture and meaningful choices,
+limitations and counterexamples, with grounded discussion of related systems
+and theories. Select details for their explanatory value; do not reproduce
+the entire API or every routine proof, or manufacture claims of novelty.
+
+Exclude development-stage/task IDs, work logs, status/delivery and approval
+narratives, branch/commit bookkeeping, agent assignments, review verdicts and
+audit/build commands, results, counts or cache/diagnostic histories. Keep these
+in the roadmap and research notes. Logical assumptions, mathematical dependencies
+and relevant Lean declaration correspondence remain appropriate. Follow the
+publication content policy in docs/research/2026-10-05-article-plan.md; it
+supersedes earlier directions to put operational evidence in the manuscript.
+
+Draft the selected mathematics while proving it; check final assumptions,
+relevant declarations and limitations against the code and compile the article
+before closing the increment. Record those checks internally. Routine code
+changes may need no added article text. PKG-11 coordinates this continuous work;
+delegated writing may run in parallel but must match the final code.
 
 Next-session deliverables and implementation boundary
 
@@ -212,10 +226,10 @@ design/planning. Do not begin production implementation before agreement on
 the relevant spec and plan.
 
 - Give a current-state and foundation-readiness assessment using the delivered
-  F01/F02/F03a evidence; identify F03b's remaining contract without redoing the
-  completed slice.
+  foundation evidence; identify the next remaining contract without redoing
+  completed slices.
 - Compare the proof routes and interfaces needed by the next unfinished slice,
-  currently F03b. Resolve only choices that affect that increment; broader
+  currently F04b. Resolve only choices that affect that increment; broader
   predicate representations remain later decisions when their dependencies exist.
 - Specify exact proposed theorem statements, hypotheses, universes, action and
   equality laws, user interface, and required foundational dependencies.
