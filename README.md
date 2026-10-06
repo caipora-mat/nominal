@@ -47,7 +47,7 @@ Nominal/
     Problems/             # constraints, problems, entailment
     Rename.lean           # meta-level renaming of atoms
     RenameVar.lean        # renaming of metavariables
-    TermsNominal.lean     # nominal terms form a nominal set
+    TermsNominal.lean     # terms, contexts and substitutions form nominal sets
     Unification.lean      # re-exports Unification.*
     Unification/
       Basic.lean          # solutions, instantiation ordering (preorder; partial order on the quotient)

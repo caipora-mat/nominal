@@ -26,15 +26,6 @@ lemma ntm.subst_idempotent {σ : Subst F X 𝔸} (hσ : σ.IsIdempotent) (t : nt
     rw [ntm.subst_idempotent hσ t']
 
 
-def Constraint.applySubst (c : Constraint F X 𝔸) (σ : Subst F X 𝔸) : Constraint F X 𝔸 :=
-  match c with
-  | .fresh a t => .fresh a (t.subst σ)
-  | .alpha s t => .alpha (s.subst σ) (t.subst σ)
-
-def Problem.applySubst (P : Problem F X 𝔸) (σ : Subst F X 𝔸) : Problem F X 𝔸 :=
-  P.map fun c => c.applySubst σ
-
-
 mutual
   /-- Lemma 22(a): freshness preserved by substitution. -/
   lemma ntm.fresh_subst (Γ Γ' : Context 𝔸 X) (σ : Subst F X 𝔸) (a : 𝔸) (t : ntm F X 𝔸)

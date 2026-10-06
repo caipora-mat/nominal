@@ -262,4 +262,28 @@ lemma ds_append_swap_sub (π π' : LPerm 𝔸) (b : 𝔸) (a : 𝔸) (hab : a �
     · intro h; exact hab (LPermApply_injective π' h) 
     · intro h; exact hab (LPermApply_injective π (h.symm ▸ heq))
 
+/-- Computable list of atoms in a permutation. -/
+def LPerm.atomsList : LPerm 𝔸 → List 𝔸
+  | []           => []
+  | (a, b) :: ps => a :: b :: LPerm.atomsList ps
+
+/-- Computable difference list (may contain duplicates). -/
+def dsList (π π' : LPerm 𝔸) : List 𝔸 :=
+  (LPerm.atomsList π ++ LPerm.atomsList π').filter fun n =>
+    LPermApply π n ≠ LPermApply π' n
+
+lemma LPerm.mem_atomsList_iff (n : 𝔸) (π : LPerm 𝔸) :
+    n ∈ LPerm.atomsList π ↔ n ∈ LPerm.atoms π := by
+  induction π with
+  | nil => simp [LPerm.atomsList, LPerm.atoms]
+  | cons p π ih =>
+    obtain ⟨a, b⟩ := p
+    simp [LPerm.atomsList, LPerm.atoms, ih]
+
+lemma mem_dsList_iff_mem_ds (n : 𝔸) (π π' : LPerm 𝔸) :
+    n ∈ dsList π π' ↔ n ∈ ds π π' := by
+  simp only [dsList, ds, List.mem_filter, Finset.mem_filter, Finset.mem_union,
+             List.mem_append, decide_not, Bool.not_eq_true', decide_eq_false_iff_not]
+  rw [LPerm.mem_atomsList_iff, LPerm.mem_atomsList_iff]
+
 end Nominal
