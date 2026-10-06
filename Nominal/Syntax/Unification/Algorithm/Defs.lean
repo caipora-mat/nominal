@@ -59,4 +59,14 @@ def unifStep (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸) (σ : S
             .next (.unif (s'.permute [(b, a)]) t' :: .fresh b s' :: rest) σ
       | _, _ => .fail
 
+lemma unifStep_fresh_of_not_mvar (a : 𝔸) (t : ntm F X 𝔸) (rest : UnifProblem F X 𝔸)
+    (σ : Subst F X 𝔸) (ht : ∀ π x, t ≠ .mvar π x) :
+    unifStep (.fresh a t) rest σ =
+      match simplifyFresh a t with
+      | none    => .fail
+      | some cs => .next (rest ++ cs.map (·.toUnif)) σ := by
+  cases t with
+  | mvar π x => exact absurd rfl (ht π x)
+  | _ => rfl
+
 end Nominal

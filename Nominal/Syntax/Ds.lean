@@ -23,7 +23,7 @@ lemma ds_comm (π π' : LPerm 𝔸) : ds π π' = ds π' π := by
     tauto
 
 @[simp]
-lemma LPermAtoms_append (π π' : LPerm 𝔸) :
+lemma LPerm.atoms_append (π π' : LPerm 𝔸) :
     (π ++ π').atoms = π.atoms ∪ π'.atoms := by
   induction π with
   | nil => simp [LPerm.atoms]
@@ -33,13 +33,13 @@ lemma LPermAtoms_append (π π' : LPerm 𝔸) :
     rw [<- ih]
 
 @[simp]
-lemma LPermAtoms_reverse (π : LPerm 𝔸) :
+lemma LPerm.atoms_reverse (π : LPerm 𝔸) :
     LPerm.atoms (π.reverse) = π.atoms := by
   induction π with
   | nil => simp
   | cons s τ ih =>
     rcases s with ⟨a, b⟩
-    simp only [List.reverse_cons, LPermAtoms_append]
+    simp only [List.reverse_cons, LPerm.atoms_append]
     rw [ih]
     simp [LPerm.atoms]
 
@@ -64,7 +64,7 @@ lemma ds_perm_swap (σ σ' π : LPerm 𝔸) :
     ds (σ ++ π) σ' = ds σ (σ' ++ π.reverse) := by
   ext n
   simp only [ds, Finset.mem_filter, Finset.mem_union, ne_eq,
-             LPermAtoms_append, LPermAtoms_reverse, LPermApply_append]
+             LPerm.atoms_append, LPerm.atoms_reverse, LPermApply_append]
   constructor
   · rintro ⟨hmem, hne⟩
     refine ⟨?_, fun heq => hne ?_⟩
@@ -107,7 +107,7 @@ lemma ds_trans (π₁ π₂ π₃ : LPerm 𝔸) :
 lemma ds_append (σ σ' π : LPerm 𝔸) :
     ds σ σ' = ds (σ ++ π) (σ' ++ π) := by
   ext n
-  simp only [ds, Finset.mem_filter, Finset.mem_union, LPermAtoms_append,
+  simp only [ds, Finset.mem_filter, Finset.mem_union, LPerm.atoms_append,
              LPermApply_append, ne_eq]
   constructor
   · rintro ⟨hmem, hne⟩
@@ -175,7 +175,7 @@ lemma ds_append_eq_of_ds_empty (σ τ π π' : LPerm 𝔸) (h : ds π π' = ∅)
     ds (σ ++ π) τ = ds (σ ++ π') τ := by
   ext n
   simp only [ds, Finset.mem_filter, Finset.mem_union, ne_eq,
-             LPermAtoms_append, LPermApply_append]
+             LPerm.atoms_append, LPermApply_append]
   have hpw : LPermApply π (LPermApply σ n) = LPermApply π' (LPermApply σ n) :=
     LPermApply_eq_of_ds_empty π π' h _
   rw [hpw]
@@ -219,7 +219,7 @@ lemma ds_swap_symm (a b : 𝔸) : ds [(a,b)] [(b,a)] = ∅ := by
   intro n hn
   simp [swapApply_symm]
 
-lemma Lperm_not_in_ds (a : 𝔸) (π π' : LPerm 𝔸) :
+lemma LPermApply_eq_iff_not_mem_ds (a : 𝔸) (π π' : LPerm 𝔸) :
     LPermApply π a = LPermApply π' a ↔ a ∉ ds π π' := by
   constructor
   · intro h
@@ -235,7 +235,7 @@ lemma Lperm_not_in_ds (a : 𝔸) (π π' : LPerm 𝔸) :
 
 lemma ds_append_swap_sub (π π' : LPerm 𝔸) (b : 𝔸) (a : 𝔸) (hab : a ≠ b) :
     a ∈ ds (π ++ [(LPermApply π' b, LPermApply π b)]) π' → a ∈ ds π π' := by
-  simp only [ds, LPermAtoms_append, Finset.union_assoc, Finset.mem_filter, Finset.mem_union, and_imp]
+  simp only [ds, LPerm.atoms_append, Finset.union_assoc, Finset.mem_filter, Finset.mem_union, and_imp]
   intro h h'
   constructor
   · have hmem : a ∈ (π ++ [(LPermApply π' b, LPermApply π b)]).atoms ∨ a ∈ π'.atoms := by
@@ -250,10 +250,10 @@ lemma ds_append_swap_sub (π π' : LPerm 𝔸) (b : 𝔸) (a : 𝔸) (hab : a �
     rw [swapApply_other]
     · intro heq; exact hab (by
         rw [← LPermApply_reverse_left π' b, ← heq,
-            LPermApply_not_mem_atoms _ _ (LPermAtoms_reverse π' ▸ hnot.2)])
+            LPermApply_not_mem_atoms _ _ (LPerm.atoms_reverse π' ▸ hnot.2)])
     · intro heq; exact hab (by
         rw [← LPermApply_reverse_left π b, ← heq,
-            LPermApply_not_mem_atoms _ _ (LPermAtoms_reverse π ▸ hnot.1)]) 
+            LPermApply_not_mem_atoms _ _ (LPerm.atoms_reverse π ▸ hnot.1)]) 
   · intro heq
     apply h'
     rw [LPermApply_append, heq]

@@ -420,6 +420,12 @@ decreasing_by
                by simp, by simp, by rw [add_comm], by simp⟩
   · exact unifStep_next_decreasing c rest σ Pr' σ' h
 
+/-- The fold step of `finalizeDeferred`: collect primitive obligations into the context. -/
+def ctxStep (g : Context 𝔸 X) (c : Constraint F X 𝔸) : Context 𝔸 X :=
+  match c with
+  | .fresh a' (.mvar [] x') => insert (a', x') g
+  | _                       => g
+
 /-- Post-loop step: applies the final `σ` to each deferred `(a, x)` pair and
     accumulates the reduced freshness leaves into `Γ`. -/
 def finalizeDeferred : List (𝔸 × X) → Subst F X 𝔸 → Context 𝔸 X →
@@ -429,11 +435,7 @@ def finalizeDeferred : List (𝔸 × X) → Subst F X 𝔸 → Context 𝔸 X �
     match simplifyFresh a ((ntm.mvar (F := F) [] x).subst σ) with
     | none    => none
     | some cs =>
-      let Γ' := cs.foldl (fun g c =>
-        match c with
-        | .fresh a' (.mvar [] x') => insert (a', x') g
-        | _                       => g) Γ
-      finalizeDeferred tl σ Γ'
+      finalizeDeferred tl σ (cs.foldl ctxStep Γ)
 
 /-- Top-level entry point: runs `unify` then `finalizeDeferred`. -/
 def UnifProblem.solve (Pr : UnifProblem F X 𝔸) : Option (Context 𝔸 X × Subst F X 𝔸) :=

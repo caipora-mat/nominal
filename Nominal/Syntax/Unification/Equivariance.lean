@@ -93,16 +93,6 @@ end
 
 /-! ### One step -/
 
-private lemma unifStep_fresh_of_not_mvar (a : 𝔸) (t : ntm F X 𝔸) (rest : UnifProblem F X 𝔸)
-    (σ : Subst F X 𝔸) (ht : ∀ π x, t ≠ .mvar π x) :
-    unifStep (.fresh a t) rest σ =
-      match simplifyFresh a t with
-      | none    => .fail
-      | some cs => .next (rest ++ cs.map (·.toUnif)) σ := by
-  cases t with
-  | mvar π x => exact absurd rfl (ht π x)
-  | _ => rfl
-
 theorem unifStep_rename (ρ : Equiv.Perm 𝔸) (c : UnifConstraint F X 𝔸)
     (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) :
     unifStep (c.rename ρ) (UnifProblem.rename ρ rest) (Subst.rename ρ σ) = (unifStep c rest σ).rename ρ := by
@@ -174,12 +164,6 @@ theorem unify_rename (ρ : Equiv.Perm 𝔸) (Pr : UnifProblem F X 𝔸) (σ : Su
       exact ih
 
 /-! ### The second stage -/
-
-/-- The fold step of `finalizeDeferred`: collect primitive obligations into the context. -/
-def ctxStep (g : Context 𝔸 X) (c : Constraint F X 𝔸) : Context 𝔸 X :=
-  match c with
-  | .fresh a' (.mvar [] x') => insert (a', x') g
-  | _                       => g
 
 lemma finalizeDeferred_cons (a : 𝔸) (x : X) (tl : List (𝔸 × X)) (σ : Subst F X 𝔸)
     (Γ : Context 𝔸 X) :

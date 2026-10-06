@@ -306,10 +306,7 @@ lemma finalizeDeferred_vars_avoid_dom (σ : Subst F X 𝔸) (hσ : σ.SolvedForm
             (∀ p ∈ Γ₀, p.2 ∉ σ.dom) →
             (∀ a' x', Constraint.fresh a' (ntm.mvar (F := F) [] x') ∈ cs_pre →
               x' ∉ σ.dom) →
-            ∀ p ∈ cs_pre.foldl (fun g c =>
-              match c with
-              | .fresh a' (.mvar [] x') => insert (a', x') g
-              | _                       => g) Γ₀, p.2 ∉ σ.dom := by
+            ∀ p ∈ cs_pre.foldl ctxStep Γ₀, p.2 ∉ σ.dom := by
           intro cs_pre
           induction cs_pre with
           | nil => intro Γ₀ hΓ₀ _ p hp; exact hΓ₀ p hp

@@ -1467,20 +1467,12 @@ lemma Constraint.reduced_destr {c : Constraint F X 𝔸} (h : c.IsReduced = true
     | abs _ _ => simp [Constraint.IsReduced] at h
   | alpha _ _ => simp [Constraint.IsReduced] at h
 
-/-- The foldl that builds the new Γ from reduced freshness constraints. -/
-private def finalize_foldl_step (Γ : Context 𝔸 X) (cs : List (Constraint F X 𝔸)) :
-    Context 𝔸 X :=
-  cs.foldl (fun g c =>
-    match c with
-    | .fresh a' (.mvar [] x') => insert (a', x') g
-    | _                       => g) Γ
-
-lemma finalize_foldl_step_mono (Γ : Context 𝔸 X) (cs : List (Constraint F X 𝔸)) :
-    Γ ⊆ finalize_foldl_step Γ cs := by
+lemma foldl_ctxStep_mono (Γ : Context 𝔸 X) (cs : List (Constraint F X 𝔸)) :
+    Γ ⊆ cs.foldl ctxStep Γ := by
   induction cs generalizing Γ with
-  | nil => simp [finalize_foldl_step]
+  | nil => simp
   | cons c cs' ih =>
-    simp only [finalize_foldl_step, List.foldl_cons]
+    simp only [List.foldl_cons]
     refine Finset.Subset.trans ?_ (ih _)
     cases c with
     | fresh a' t =>
@@ -1493,9 +1485,9 @@ lemma finalize_foldl_step_mono (Γ : Context 𝔸 X) (cs : List (Constraint F X 
     | alpha _ _ => exact Finset.Subset.refl _
 
 /-- Reduced constraints in cs are entailed by the foldl-built context. -/
-lemma finalize_foldl_step_entails (Γ : Context 𝔸 X) (cs : List (Constraint F X 𝔸))
+lemma foldl_ctxStep_entails (Γ : Context 𝔸 X) (cs : List (Constraint F X 𝔸))
     (hred : Problem.IsReduced cs) :
-    Problem.Entails (finalize_foldl_step Γ cs) cs := by
+    Problem.Entails (cs.foldl ctxStep Γ) cs := by
   intro c hc
   obtain ⟨a', x', rfl⟩ := Constraint.reduced_destr (hred c hc)
   simp only [Constraint.Entails, fresh, List.reverse_nil, LPermApply_nil,
@@ -1504,10 +1496,10 @@ lemma finalize_foldl_step_entails (Γ : Context 𝔸 X) (cs : List (Constraint F
   induction cs generalizing Γ with
   | nil => cases hc
   | cons c0 cs' ih =>
-    simp only [finalize_foldl_step, List.foldl_cons]
+    simp only [List.foldl_cons]
     rcases List.mem_cons.mp hc with hh | hmem
     · subst hh
-      apply finalize_foldl_step_mono
+      apply foldl_ctxStep_mono
       exact Finset.mem_insert_self _ _
     · exact ih _ hmem
 
@@ -1537,16 +1529,16 @@ lemma finalizeDeferred_sound (σ : Subst F X 𝔸) :
     | none => rw [hcs] at h; cases h
     | some cs =>
       rw [hcs] at h
-      have hrec := finalizeDeferred_sound σ tl (finalize_foldl_step Γ₀ cs) Γ
-        (show finalizeDeferred tl σ (finalize_foldl_step Γ₀ cs) = some Γ from h)
+      have hrec := finalizeDeferred_sound σ tl (cs.foldl ctxStep Γ₀) Γ
+        (show finalizeDeferred tl σ (cs.foldl ctxStep Γ₀) = some Γ from h)
       refine ⟨?_, ?_⟩
-      · exact Finset.Subset.trans (finalize_foldl_step_mono Γ₀ cs) hrec.1
+      · exact Finset.Subset.trans (foldl_ctxStep_mono Γ₀ cs) hrec.1
       · rintro p hp
         rcases List.mem_cons.mp hp with hh | hmem
         · subst hh
           have hred : Problem.IsReduced cs := simplifyFresh_isReduced a _ hcs
-          have hent : Problem.Entails (finalize_foldl_step Γ₀ cs) cs :=
-            finalize_foldl_step_entails Γ₀ cs hred
+          have hent : Problem.Entails (cs.foldl ctxStep Γ₀) cs :=
+            foldl_ctxStep_entails Γ₀ cs hred
           have hent' : Problem.Entails Γ cs :=
             Problem.Entails_mono_reduced hrec.1 hred hent
           exact (simplifyFresh_sound Γ a _ hcs).mpr hent'

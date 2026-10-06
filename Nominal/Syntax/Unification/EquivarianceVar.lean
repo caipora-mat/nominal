@@ -88,16 +88,6 @@ end
 
 /-! ### One step -/
 
-private lemma unifStep_fresh_of_not_mvar' (a : 𝔸) (t : ntm F X 𝔸) (rest : UnifProblem F X 𝔸)
-    (σ : Subst F X 𝔸) (ht : ∀ π x, t ≠ .mvar π x) :
-    unifStep (.fresh a t) rest σ =
-      match simplifyFresh a t with
-      | none    => .fail
-      | some cs => .next (rest ++ cs.map (·.toUnif)) σ := by
-  cases t with
-  | mvar π x => exact absurd rfl (ht π x)
-  | _ => rfl
-
 theorem unifStep_renameVar (τ : Equiv.Perm X) (c : UnifConstraint F X 𝔸)
     (rest : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) :
     unifStep (c.renameVar τ) (UnifProblem.renameVar τ rest) (Subst.renameVar τ σ)
@@ -114,7 +104,7 @@ theorem unifStep_renameVar (τ : Equiv.Perm X) (c : UnifConstraint F X 𝔸)
         | mvar π' x' => exact ht π' x' rfl
         | _ => simp at h
       simp only [UnifConstraint.renameVar]
-      rw [unifStep_fresh_of_not_mvar' _ _ _ _ ht', unifStep_fresh_of_not_mvar' _ _ _ _ ht,
+      rw [unifStep_fresh_of_not_mvar _ _ _ _ ht', unifStep_fresh_of_not_mvar _ _ _ _ ht,
         simplifyFresh_renameVar]
       cases simplifyFresh a t with
       | none => rfl

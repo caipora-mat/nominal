@@ -12,7 +12,7 @@ mutual
     match s with
     | atm c => simp [alphaEquiv, permute, swapApply_symm]
     | mvar π x =>
-      simp only [permute, alphaEquiv, ds, ne_eq, LPermAtoms_append, LPerm.atoms, Finset.union_empty,
+      simp only [permute, alphaEquiv, ds, ne_eq, LPerm.atoms_append, LPerm.atoms, Finset.union_empty,
         Finset.union_insert, Finset.union_singleton, Finset.insert_union, Finset.union_idempotent,
         Finset.mem_insert, true_or, Finset.insert_eq_of_mem, or_true, Finset.mem_filter, and_imp,
         forall_eq_or_imp, true_and, Bool.decide_and, decide_implies, dite_eq_ite, ite_not,

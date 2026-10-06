@@ -212,7 +212,7 @@ mutual
     | ntm.atm b =>
       simp [fresh, alphaEquiv, ntm.permute]
       intro h
-      exact (Lperm_not_in_ds b π π').mpr h
+      exact (LPermApply_eq_iff_not_mem_ds b π π').mpr h
 
     | ntm.mvar σ x =>
       simp [fresh, alphaEquiv, ntm.permute]
@@ -237,7 +237,7 @@ mutual
       intro h
       split_ifs with heq
       · have hb_not_ds : b ∉ ds π π' := by
-          exact (Lperm_not_in_ds b π π').mp heq
+          exact (LPermApply_eq_iff_not_mem_ds b π π').mp heq
         exact alphaEquiv_invariance_mp Γ t π π' (fun a ha => by
             rcases h a ha with rfl | hfresh
             · exact absurd ha hb_not_ds
@@ -251,7 +251,7 @@ mutual
             exfalso
             have : LPermApply (π ++ [(LPermApply π' a, LPermApply π a)]) a = LPermApply π' a := by
               simp [LPermApply_append, swapApply_right]
-            exact absurd ha ((Lperm_not_in_ds a _ π').mp this)
+            exact absurd ha ((LPermApply_eq_iff_not_mem_ds a _ π').mp this)
           · have hads : a ∈ ds π π' := ds_append_swap_sub π π' b a hab ha
             exact (h a hads).resolve_left hab
         · rw [fresh_equivariance Γ (LPermApply π' b) (ntm.permute π t) π.reverse]
@@ -271,7 +271,7 @@ mutual
           have hc_ds : c ∈ ds π π' := by
             by_contra h_not
             have heq1 : LPermApply π c = LPermApply π' b := by simp [c, LPermApply_reverse_right]
-            have heq2 : LPermApply π c = LPermApply π' c := (Lperm_not_in_ds c π π').mpr h_not
+            have heq2 : LPermApply π c = LPermApply π' c := (LPermApply_eq_iff_not_mem_ds c π π').mpr h_not
             exact hcb (LPermApply_injective π' (heq1 ▸ heq2).symm)
           rcases h c hc_ds with hceqb | hfresh
           · exact absurd hceqb hcb
@@ -300,7 +300,7 @@ mutual
     | ntm.atm b =>
       simp [fresh, alphaEquiv, ntm.permute]
       intro h
-      exact (Lperm_not_in_ds b π π').mp h
+      exact (LPermApply_eq_iff_not_mem_ds b π π').mp h
 
     | ntm.mvar σ x =>
       simp [fresh, alphaEquiv, ntm.permute]
@@ -309,7 +309,7 @@ mutual
       have hne : LPermApply π a ≠ LPermApply π' a := by
         simp only [ds, Finset.mem_filter] at ha; exact ha.2
       apply h
-      simp only [ds, Finset.mem_filter, Finset.mem_union, LPermAtoms_append, LPermApply_append, ne_eq]
+      simp only [ds, Finset.mem_filter, Finset.mem_union, LPerm.atoms_append, LPermApply_append, ne_eq]
       refine ⟨?_, by rw [LPermApply_reverse_right]; exact hne⟩
       by_contra hnot
       push_neg at hnot
@@ -356,7 +356,7 @@ mutual
             rw [ntm.permute_append] at h1
             have hmpr := alphaEquiv_invariance_mpr Γ t (π ++ [(LPermApply π' b, LPermApply π b)]) π' h1
             apply hmpr
-            simp only [ds, Finset.mem_filter, Finset.mem_union, LPermAtoms_append,
+            simp only [ds, Finset.mem_filter, Finset.mem_union, LPerm.atoms_append,
                      LPermApply_append, ne_eq]
             constructor
             · by_contra hnot

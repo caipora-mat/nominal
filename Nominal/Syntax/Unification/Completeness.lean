@@ -1167,20 +1167,14 @@ lemma finalizeDeferred_le :
             hfresh_θ_x (alphaEquiv_symm Δ _ _ habs_x)
         have hcs := simplifyFresh_subst_imp_entails Δ a θ
           ((ntm.mvar (F := F) [] x).subst σ) cs hsf hfresh_θ
-        set Γ_init' : Context 𝔸 X := cs.foldl (fun g c =>
-          match c with
-          | .fresh a' (.mvar [] x') => insert (a', x') g
-          | _                       => g) Γ_init with hΓ_init'_def
+        set Γ_init' : Context 𝔸 X := cs.foldl ctxStep Γ_init with hΓ_init'_def
         have hinit' : Γ_init'.EntailsUnder Δ θ = true := by
           simp only [Context.EntailsUnder, decide_eq_true_eq]
           intro p hp
           have hfold_prop : ∀ (cs_pre : Problem F X 𝔸) (Γ₀ : Context 𝔸 X),
               (∀ q ∈ Γ₀, (Δ ⊢ q.1 # (ntm.mvar (F := F) [] q.2).subst θ) = true) →
               (∀ c' ∈ cs_pre, Constraint.Entails Δ (c'.applySubst θ) = true) →
-              ∀ q ∈ cs_pre.foldl (fun g c =>
-                match c with
-                | .fresh a' (.mvar [] x') => insert (a', x') g
-                | _                       => g) Γ₀,
+              ∀ q ∈ cs_pre.foldl ctxStep Γ₀,
                 (Δ ⊢ q.1 # (ntm.mvar (F := F) [] q.2).subst θ) = true := by
             intro cs_pre
             induction cs_pre with

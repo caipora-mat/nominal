@@ -278,44 +278,6 @@ lemma Problem.entails_subst (Γ Γ' : Context 𝔸 X) (σ : Subst F X 𝔸) (P :
         simp [Constraint.Entails, Constraint.applySubst] at hc' ⊢
         exact ntm.alphaEquiv_subst Γ Γ' σ s t hctx hc'
 
-/-
-mutual
-  /-- Corollary 25: if Γ ⊢ s ≈α t then Γ ⊢ u[Y↦s] ≈α u[Y↦t]. -/
-  lemma ntm.applyOne_alphaEquiv_congr
-      (Γ : Context 𝔸 X) (u : ntm F X 𝔸) (Y : X) (s t : ntm F X 𝔸)
-      (h : (Γ ⊢ s ≈α t) = true) :
-      (Γ ⊢ u.applyOne Y s ≈α u.applyOne Y t) = true := by
-    sorry
-
-  lemma ntm.alphaEquivList_applyOne_congr
-      (Γ : Context 𝔸 X) (us : List (ntm F X 𝔸)) (Y : X) (s t : ntm F X 𝔸)
-      (h : (Γ ⊢ s ≈α t) = true) :
-      alphaEquivList Γ (us.map (·.applyOne Y s)) (us.map (·.applyOne Y t)) = true := by
-    sorry
-end
-
-/-- Corollary 25: freshness preserved by alpha-equivalent single substitution. -/
-lemma ntm.applyOne_fresh_congr
-    (Γ : Context 𝔸 X) (a : 𝔸) (u : ntm F X 𝔸) (Y : X) (s t : ntm F X 𝔸)
-    (h : (Γ ⊢ s ≈α t) = true) :
-    (Γ ⊢ a # u.applyOne Y s) = (Γ ⊢ a # u.applyOne Y t) := by
-  sorry
-
-/-- Corollary 25(1): constraint entailment preserved by alpha-equivalent single substitution. -/
-theorem Constraint.applyOne_entails_congr
-    (Γ : Context 𝔸 X) (c : Constraint F X 𝔸) (Y : X) (s t : ntm F X 𝔸)
-    (h : (Γ ⊢ s ≈α t) = true) :
-    (c.applyOne Y s).Entails Γ = (c.applyOne Y t).Entails Γ := by
-  sorry
-
-/-- Corollary 25(1): problem entailment preserved by alpha-equivalent single substitution. -/
-theorem Problem.applyOne_entails_congr
-    (Γ : Context 𝔸 X) (P : Problem F X 𝔸) (Y : X) (s t : ntm F X 𝔸)
-    (h : (Γ ⊢ s ≈α t) = true) :
-    Problem.Entails Γ (P.applyOne Y s) ↔ Problem.Entails Γ (P.applyOne Y t) := by
-  sorry
--/
-
 /-- `x ∉ dom σ ↔ σ.lookup x = none`. -/
 lemma Subst.lookup_eq_none_iff_not_mem_dom (σ : Subst F X 𝔸) (x : X) :
     Subst.lookup σ x = none ↔ x ∉ Subst.dom σ := by
