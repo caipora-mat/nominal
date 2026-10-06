@@ -6,6 +6,8 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
+/-! ### Entailment helpers -/
+
 /-- Convert + applySubst commute. -/
 @[simp] lemma UnifConstraint.toConstraint_applySubst (c : UnifConstraint F X 𝔸)
     (σ : Subst F X 𝔸) :
@@ -139,6 +141,8 @@ mutual
           · exact fresh_subst_of_simplifyFresh_entails Γ a τ t cs₁ hf hcs'.1
           · exact freshList_subst_of_simplifyFreshList_entails Γ a τ ts' cs₂ hg hcs'.2
 end
+
+/-! ### `σ` only grows -/
 
 /-- `unifStep` extends σ, at the level of the *action* on terms: there is an `ε`
     with `t.subst σ_next = (t.subst σ).subst ε` for every `t`.  For
@@ -277,6 +281,8 @@ lemma unify_σ_prefix : ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (d
     obtain ⟨ε1, hε1⟩ := unifStep_σ_extends c rest σ Pr' σ_next hnext
     obtain ⟨ε2, hε2⟩ := ih ds' σ' h
     exact ⟨ε1.comp ε2, fun t => by rw [hε2 t, hε1 t, ntm.subst_comp]⟩
+
+/-! ### Metavariables and the disjointness invariant -/
 
 /-- Metavariables of a single unification constraint. -/
 def UnifConstraint.metavars : UnifConstraint F X 𝔸 → Finset X
@@ -551,6 +557,8 @@ lemma allMetavars_map_subset {α : Type*} (l : List α) (f : α → UnifConstrai
     rcases hx with hx | hx
     · exact h a List.mem_cons_self x hx
     · exact ih (fun a' ha' => h a' (List.mem_cons_of_mem _ ha')) hx
+
+/-! ### One step preserves idempotence -/
 
 /-- Common pattern for unifStep instantiation: σ_next = σ ++ [(x, u_perm)],
     Pr' = rest.applySubst [(x, u_perm)]. -/
@@ -885,6 +893,8 @@ lemma unifStep_next_idempotent_and_disjoint
                        Finset.mem_union] at hy ⊢
             tauto)
 
+
+/-! ### Soundness of one step -/
 
 /-- Under the invariants of `unify`, the final substitution τ "resolves" the
     binding `(x, u_perm)` produced by the instantiation step:
@@ -1422,6 +1432,8 @@ lemma unifStep_next_sound
       | atm _ | fapp _ _ => simp [unifStep] at h
 
 
+/-! ### Soundness of `finalizeDeferred` -/
+
 mutual
   /-- Freshness is monotone in the context. -/
   theorem fresh_mono {Γ Γ' : Context 𝔸 X} (hsub : Γ ⊆ Γ') (a : 𝔸) (t : ntm F X 𝔸)
@@ -1545,6 +1557,8 @@ lemma finalizeDeferred_sound (σ : Subst F X 𝔸) :
         · exact hrec.2 p hmem
 
 
+/-! ### Soundness of `unify` and `solve` -/
+
 /-- Inversion of `.ctx`: only `.fresh _ (.mvar _ _)` produces it. -/
 lemma unifStep_ctx_inv (c : UnifConstraint F X 𝔸) (rest : UnifProblem F X 𝔸)
     (σ : Subst F X 𝔸) (a : 𝔸) (x : X) (h : unifStep c rest σ = .ctx a x) :
@@ -1659,6 +1673,8 @@ theorem UnifProblem.solve_sound (Pr : UnifProblem F X 𝔸) (Γ : Context 𝔸 X
       have hdisj_empty : Subst.disjointPr ([] : Subst F X 𝔸) Pr := by
         intro x _; simp [Subst.dom]
       exact (unify_sound Γ_fin Pr [] [] ds σ_u hu hσ_empty hdisj_empty hfresh).1
+
+/-! ### Idempotence of the computed substitution -/
 
 /-- `unify` preserves idempotence of σ under the disjointness invariant. -/
 theorem unify_preserves_idempotent :

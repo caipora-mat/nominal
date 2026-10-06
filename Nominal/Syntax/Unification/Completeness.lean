@@ -6,6 +6,8 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
+/-! ### Absorption -/
+
 /-- The accumulated substitution `σ` is consistent with `θ` modulo `Δ`:
     inductive invariant carried through `unify_le`.  Maribel Theorem 35. -/
 def Subst.absorbedBy (Δ : Context 𝔸 X) (σ θ : Subst F X 𝔸) : Prop :=
@@ -164,6 +166,8 @@ lemma UnifProblem.entails_applyOne_of_entails
   apply h
   simp only [UnifProblem.applySubst, UnifProblem.toConstraint, List.mem_map]
   exact ⟨c.applySubst θ, ⟨c, hc_mem, rfl⟩, rfl⟩
+
+/-! ### Completeness of one step -/
 
 mutual
   /-- Converse of `fresh_subst_of_simplifyFresh_entails` (from Properties).
@@ -714,6 +718,8 @@ lemma unifStep_ctx_le
           LPermApply_reverse_right]
       exact hcfresh
 
+/-! ### Term size (for the occurs check) -/
+
 mutual
   def ntm.size : ntm F X 𝔸 → ℕ
     | .atm _     => 1
@@ -865,6 +871,8 @@ lemma ntm.size_subst_gt_var_of_nonmvar (u : ntm F X 𝔸) (θ : Subst F X 𝔸) 
       simp only [ntm.subst_abs, ntm.size_abs]
       have := ntm.size_subst_ge_var t' θ x hocc
       omega
+
+/-! ### Failure means no solution -/
 
 mutual
   lemma simplifyFresh_none_subst_not_fresh (a : 𝔸) (t : ntm F X 𝔸)
@@ -1071,6 +1079,8 @@ lemma unifStep_fail_no_solution
         · simp [unifStep, hab] at h
         · simp [unifStep, hab] at h
 
+/-! ### The loop -/
+
 lemma unify_le :
     ∀ (Pr : UnifProblem F X 𝔸) (σ : Subst F X 𝔸) (ds : List (𝔸 × X))
       (ds' : List (𝔸 × X)) (σ' : Subst F X 𝔸)
@@ -1139,6 +1149,8 @@ lemma unify_none_no_solution :
       rw [unify, hnext] at h
       obtain ⟨hsat', habs'⟩ := unifStep_next_le c rest σ σ_next Pr' Δ θ hnext hsat habs
       exact ih h Δ θ habs' hsat'
+
+/-! ### The second stage -/
 
 -- This step has no direct Isabelle counterpart.
 lemma finalizeDeferred_le :
@@ -1246,6 +1258,8 @@ lemma finalizeDeferred_none_no_solution :
           rw [hsf] at h
           exact finalizeDeferred_none_no_solution tl σ _ h Δ θ habs
             (fun p hp => hdef p (List.mem_cons_of_mem _ hp))
+
+/-! ### Main results -/
 
 -- Final theorem — Maribel Theorem 35.
 theorem UnifProblem.solve_principal

@@ -6,6 +6,8 @@ open Core
 
 variable {F X 𝔸 : Type*} [DecidableEq F] [DecidableEq X] [Name 𝔸]
 
+/-! ### Solved form -/
+
 /-- A member of a list on which `occursIn z` is false itself has `occursIn z` false. -/
 lemma ntmList.not_occursIn_of_mem {z : X} {t : ntm F X 𝔸} {ts : List (ntm F X 𝔸)}
     (ht : t ∈ ts) (h : ntmList.occursIn z ts = false) : t.occursIn z = false := by
@@ -175,6 +177,8 @@ lemma ntmList.substList_avoids_dom_of_solved (σ : Subst F X 𝔸) (hσ : σ.Sol
              ntmList.substList_avoids_dom_of_solved σ hσ z hz ts'⟩
 end
 
+/-! ### The mediator `θ ∖ dom σ` -/
+
 lemma Subst.lookup_filter_not_mem_dom {σ : Subst F X 𝔸} (θ : Subst F X 𝔸) (y : X) :
     Subst.lookup (θ.filter (fun p => decide (p.1 ∉ σ.dom))) y
       = if y ∈ σ.dom then none else Subst.lookup θ y := by
@@ -333,6 +337,8 @@ lemma finalizeDeferred_vars_avoid_dom (σ : Subst F X 𝔸) (hσ : σ.SolvedForm
               exact hleaf' a'' x'' (List.mem_cons_of_mem _ hmem)
         exact finalizeDeferred_vars_avoid_dom σ hσ tl _ Γ h (hfold cs Γ_init hinit hleaf)
 
+
+/-! ### The algorithm preserves solved form -/
 
 /-- `σ` moves every variable of its domain. -/
 def Subst.MovesDom (σ : Subst F X 𝔸) : Prop :=
@@ -716,6 +722,8 @@ theorem UnifProblem.solve_solvedForm (Pr : UnifProblem F X 𝔸) (Γ : Context �
         hmove_empty hsolved_empty
 
 
+/-! ### Absorption and factorisation -/
+
 /-- `Subst.lookup` (recursive) agrees with `Subst.lookupSim` (`find?`-based). -/
 lemma Subst.lookup_getD_eq_lookupSim (ρ : Subst F X 𝔸) (x : X) :
     (Subst.lookup ρ x).getD (ntm.mvar [] x) = ρ.lookupSim x := by
@@ -907,6 +915,8 @@ theorem Subst.absorbedBy_iff_factors_indep {Δ : Context 𝔸 X} {σ θ : Subst 
     exact ⟨σ', hdisj, fun x => by rw [ntm.subst_mvar_nil_comp]; exact hmed x⟩
   · rintro ⟨σ', _, hfact⟩
     exact Subst.absorbedBy_of_factors σ' hσ.isIdempotent hfact
+
+/-! ### Principality with an independent mediator -/
 
 /-- The finalised context `Γ` is entailed by every solution `(Δ, θ)` under `θ`
     itself (the `SolutionLe` context clause with the trivial mediator). -/
