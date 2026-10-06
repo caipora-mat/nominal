@@ -63,6 +63,12 @@ not proof that every listed declaration or behavior is present.
 
 ## Mathematical and Lean conventions
 
+- Prefer sound, mathematically natural general definitions and theorem statements
+  over needlessly specialized ones; derive specialized client facts as corollaries.
+  Minimize hypotheses and preserve elementwise evidence where carrier-wide
+  assumptions are unnecessary. Reuse and stability of the theory are reasons
+  for generalization, even before a particular client requires it. Inspect the
+  pinned Mathlib first and preserve action coherence and theorem meaning.
 - Review theorem statements as well as proofs. Do not weaken a statement or add
   assumptions merely to make a proof compile; explain any intentional change.
 - Do not introduce `sorry`, `admit`, custom axioms, or disabled kernel checking

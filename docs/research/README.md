@@ -7,6 +7,28 @@ The policy revision described here was made with HEAD
 `7fed53a2e5fc67379f86f085515e310e7c1fddb7`; always inspect the actual checkout
 before starting a new task.
 
+## Current Package state
+
+F04a/F04b were committed at `68956dd23066c7c5c647345e5598b859ff97a10c`.
+Under the approved F04c specification and native plan, the working tree now
+contains canonical nominality certificates, exact support formulas, elementwise
+and carrier atom freshness, and fresh existence with finite combined avoidance.
+The source adds Canonical.lean and Freshness.lean, with matching exposition in
+`docs/article/sections/freshness.tex`. Integrated verification and the requested
+independent final review pass, with two minor tracker/test findings corrected.
+F04c is delivered, uncommitted; evidence is tracked in the
+[active roadmap](../nominal-package-roadmap.md). F04d and F05 still precede PKG-01.
+Earlier uncommitted-delivery descriptions below record their original sessions.
+
+The author subsequently requested Pitts' general support-disjointness relation
+and a preference for natural mathematical generalizations. The current extension
+uses `Fresh A x y`, elementwise `hx.FreshWith hy`, and the retained atom helper
+`hx.Fresh a`. Three independent investigations and their checked proposals are
+recorded in [the generalization review](2026-10-06-foundation-generalizations.md).
+The freshness extension, article, integrated checks and independent final review
+are complete; a minor stale proof-description sentence was corrected.
+The generality preference is also recorded in AGENTS.md and decision R15.
+
 ## Architectural freedom
 
 **Settled user decision:** the existing infrastructure is an optional source of
@@ -48,6 +70,9 @@ assumptions, dates and verification limits.
 
 **Settled user decision:** always look for and use suitable infrastructure in
 the pinned Mathlib before implementing general-purpose mathematics yourself.
+Prefer the natural general statement and derive specialized APIs from it.
+Theoretical reuse and stability are benefits in their own right; do not require
+a particular client before considering a sound useful generalization.
 Search local Mathlib source, inspect the exact declarations and test their
 fit when needed. Prefer existing definitions, instances and lemmas, including
 their specializations or small proof-backed adapters, over duplicate theory.
@@ -124,7 +149,9 @@ acceptance criteria guide architecture without prescribing the old implementatio
 | [F04a implementation plan](../superpowers/plans/2026-10-05-package-finite-support.md) | Completed native execution with concurrent article work and clean independent final review |
 | [F04b least-support specification](../superpowers/specs/2026-10-06-package-least-support-design.md) | Approved proof-only nominality and elementwise/carrier least-support contracts |
 | [F04b native implementation plan](../superpowers/plans/2026-10-06-package-least-support.md) | Completed native execution with concurrent article work and clean independent final review |
-| [Package foundation interface](../../Package/README.md) | Committed F02/F03a/F03b and checked working-tree F04a/F04b results, import policy and validation commands |
+| [F04c specification](../superpowers/specs/2026-10-06-package-canonical-freshness-design.md) | Approved canonical-instance, exact-support, atom-freshness and avoidance interfaces |
+| [F04c native implementation plan](../superpowers/plans/2026-10-06-package-canonical-freshness.md) | Approved execution with concurrent LaTeX, meaningful consumers and one independent final review |
+| [Package foundation interface](../../Package/README.md) | Current canonical support/freshness interfaces, import policy and validation commands |
 | [LaTeX article](../article/main.tex) | Research exposition of the system, mathematics and relevant Lean correspondence |
 
 The earlier architecture prompt was removed in `76966b1`; the table now points
@@ -161,6 +188,9 @@ manuscript text. PKG-11 coordinates this requirement throughout development;
 manuscript writing is not deferred until the package is finished. The
 [article plan](2026-10-05-article-plan.md#concurrent-writing-is-part-of-delivery)
 specifies the completion rule and [publication content policy](2026-10-05-article-plan.md#publication-content-policy).
+
+The following earlier delivery records retain their original verification and
+working-tree states; the current state is summarized above.
 
 F02/F03a are delivered with their article sections. F03b now implements controlled
 swap factorization, avoidance for arbitrary `Set A`, and the selected-action

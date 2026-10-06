@@ -58,6 +58,41 @@ run_cmd do
 #print axioms NominalPackage.FinitelySupported.support_eq_empty_iff
 #print axioms NominalPackage.FinitelySupported.support_map_subset
 #print axioms NominalPackage.support_eq
+#print axioms NominalPackage.instNominalAtom
+#print axioms NominalPackage.instNominalDiscrete
+#print axioms NominalPackage.instNominalProd
+#print axioms NominalPackage.instNominalFinset
+#print axioms NominalPackage.support_atom
+#print axioms NominalPackage.support_discrete
+#print axioms NominalPackage.FinitelySupported.support_prod
+#print axioms NominalPackage.support_prod
+#print axioms NominalPackage.support_finset
+#print axioms NominalPackage.FinitelySupported.Fresh
+#print axioms NominalPackage.FinitelySupported.fresh_of_supports
+#print axioms NominalPackage.FinitelySupported.fresh_smul_iff
+#print axioms NominalPackage.FinitelySupported.fresh_smul_iff_inv
+#print axioms NominalPackage.FinitelySupported.fresh_prod_iff
+#print axioms NominalPackage.FinitelySupported.swap_smul_eq_of_fresh
+#print axioms NominalPackage.FinitelySupported.exists_fresh
+#print axioms NominalPackage.FinitelySupported.exists_fresh_notMem
+#print axioms NominalPackage.Fresh
+#print axioms NominalPackage.fresh_iff
+#print axioms NominalPackage.exists_fresh_notMem
+#print axioms NominalPackage.FinitelySupported.FreshWith
+#print axioms NominalPackage.FinitelySupported.freshWith_iff_exists_disjoint_supports
+#print axioms NominalPackage.FinitelySupported.freshWith_smul_iff
+#print axioms NominalPackage.FinitelySupported.freshWith_prod_left_iff
+#print axioms NominalPackage.FinitelySupported.freshWith_map_right
+#print axioms NominalPackage.FinitelySupported.freshWith_finset_left_iff
+#print axioms NominalPackage.fresh_iff_freshWith
+#print axioms NominalPackage.fresh_comm
+#print axioms NominalPackage.fresh_self_iff
+#print axioms NominalPackage.fresh_prod_right_iff
+#print axioms NominalPackage.fresh_smul_both_iff
+#print axioms NominalPackage.fresh_iff_exists_disjoint_supports
+#print axioms NominalPackage.fresh_map_left
+#print axioms NominalPackage.fresh_finset_right_iff
+#print axioms NominalPackage.fresh_finsets_iff
 
 set_option maxHeartbeats 0 in
 -- This budget applies only to the inspection traversal, not mathematical proofs.

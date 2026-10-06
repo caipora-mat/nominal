@@ -35,7 +35,34 @@ No branch switch, merge, commit, dependency change, production implementation,
 or CI change belongs to this session. The active tracker is the
 [package roadmap](../nominal-package-roadmap.md), not the historical roadmap.
 
-## Current status after F04b implementation
+## Current status after F04c implementation
+
+The approved canonical-instance/freshness slice now supplies four nominality
+certificates for existing actions, exact atom/discrete/product/Finset supports,
+and `hx.Fresh a` / `Fresh A a x`. Transport, sufficient bounds, fresh swaps,
+nested-product decomposition and combined finite avoidance retain the approved
+assumption separation. Individual supported elements need no nominal carrier;
+canonical nominality itself needs no infinitude. Finset's action and certificate
+remain Pointwise-scoped. See the
+[F04c plan](../superpowers/plans/2026-10-06-package-canonical-freshness.md) and
+[active tracker](../nominal-package-roadmap.md) for checks and final-review status.
+F04c is delivered with passing integrated checks and resolved independent review;
+the two minor tracker/test findings were corrected and rechecked.
+The author's later approved extension makes `Fresh A x y` the general
+support-disjointness relation, with `hx.FreshWith hy` for individual evidence.
+Atom freshness is a derived interface. Product decomposition now works on both
+sides; disjoint sufficient bounds, finite-set contexts and equivariant images
+have general laws. See the [generalization review](2026-10-06-foundation-generalizations.md)
+for the accompanying independent investigations and remaining proposals.
+Canonical equivariant quotients (F04d), function/predicate input interfaces
+(F05), and predicate foundations (PKG-01) remain later work.
+
+F04a/F04b were committed at `68956dd`; the records below preserve their
+historical uncommitted delivery states. The old predicate proposals do not
+override the delivered support/freshness signatures. In particular `Fresh`
+now names atom freshness, not the cofinite predicate quantifier sketched below.
+
+## F04b implementation record (historical)
 
 The current Package source supplies the permutation/action kernel and its
 production audit. **F03b** now proves swap generation with endpoints in the

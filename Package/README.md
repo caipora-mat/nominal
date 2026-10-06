@@ -1,6 +1,6 @@
 # Package foundation kernel
 
-This contains F02, both F03 slices, and F04a/F04b of the new nominal package. It uses the pinned
+This contains F02, both F03 slices, and F04a/F04b/F04c of the new nominal package. It uses the pinned
 Lean/Mathlib 4.34.1 and imports Mathlib directly. The reference `Nominal/` and
 `Instances/` development remains separate.
 
@@ -36,6 +36,16 @@ nor decidable equality; `Perm.swap` takes `[DecidableEq A]`.
 | Elementwise least support | `FinitelySupported.exists_least_support`, `.support`, `.supports_support`, `.support_minimal`, `.supports_iff_support_subset`, `.support_unique`, `.support_eq` |
 | Elementwise support laws | `FinitelySupported.support_smul`, `.support_eq_empty_iff`, `.support_map_subset` |
 | Nominal-carrier convenience | `support A x`, `support_eq`, `supports_support`, `support_minimal`, `supports_iff_support_subset`, `support_smul`, `support_eq_empty_iff`, `support_map_subset`; A explicit throughout |
+| Canonical nominality | `instNominalAtom`, `instNominalDiscrete`, `instNominalProd`, scoped `instNominalFinset`; no infinitude premise |
+| Canonical sufficient bounds | `supports_atom`, `supports_discrete`, `supports_finset` |
+| Exact canonical support | `support_atom`, `support_discrete`, `support_prod`, `support_finset`, `FinitelySupported.support_prod` |
+| General freshness | `Fresh A x y`, `hx.FreshWith hy`, `fresh_iff_disjoint_support`, `fresh_iff_freshWith` |
+| Symmetry and products | `fresh_comm`, `fresh_self_iff`, `fresh_prod_left_iff`, `fresh_prod_right_iff`; elementwise `freshWith_*` counterparts |
+| General bounds, transport and maps | `fresh_iff_exists_disjoint_supports`, `fresh_of_disjoint_supports`, `fresh_smul_both_iff`, `fresh_smul_right_iff`, `fresh_map_left/right`; elementwise counterparts |
+| Atom specialization | `hx.Fresh a`, `Fresh A a x`, `fresh_iff_notMem_support`, `fresh_iff`, `fresh_atom_right_iff` |
+| Freshness laws | Elementwise and carrier `fresh_of_supports`, `fresh_smul_iff`, `fresh_smul_iff_inv`, `swap_smul_eq_of_fresh`, `fresh_prod_iff` |
+| Canonical freshness | `fresh_atom_iff`, `fresh_discrete`, `fresh_finset_iff` |
+| Fresh existence | Elementwise and carrier `exists_fresh`, `exists_fresh_notMem`; explicit-set avoidance uses Mathlib's `Finset.exists_notMem` |
 
 Atom and carrier universes are independent. `Discrete A X : Type v` retains the
 universe of `X : Type v`. Its ordinary type equivalence to X does not identify
@@ -122,11 +132,94 @@ is impossible. Least support is not strong support either: fixing an element
 implies setwise preservation of its least support, not pointwise fixation of
 the atoms in it.
 
+The canonical actions on atoms, `Discrete A X`, products of nominal carriers,
+and `Finset A` now have nominality certificates. None requires infinite atoms.
+Discrete data needs no action or nominality on its underlying X. Products reuse
+`FinitelySupported.prod` and need no decidable atom equality. The Finset
+certificate is scoped with `Pointwise`, like its image action, and requires
+`DecidableEq A`. These instances certify exactly the existing canonical actions;
+they do not assert nominality for an arbitrary locally selected action on the
+same type.
+
+Under `[Infinite A]`, the exact formulas are:
+
+```text
+support A a = {a}
+support A (Discrete.mk d : Discrete A X) = ∅
+support A (x, y) = support A x ∪ support A y
+support A (S : Finset A) = S
+```
+
+The atom/discrete equations need no decidable equality; the visible union and
+Finset action retain it. `hx.support_prod hy` gives the product equation without
+carrier-wide nominality. Both inclusions are proved. In particular swapping
+distinct a,b fixes `{a,b}` but moves both members of its actual least support,
+as identified by `support_finset`.
+
+Following Pitts, `Fresh A x y` means
+`Disjoint (support A x) (support A y)`. The two carriers and their universes
+may differ; both use the same atom type and their selected actions. Use
+`hx.FreshWith hy` for individually supported values without requiring either
+carrier nominal. `fresh_iff_freshWith A x y hx hy` gives agreement for any
+certificates of those values/actions. The definition and generic laws need
+`Infinite A` but no `DecidableEq A`. No new notation or action is installed.
+
+Freshness is symmetric (`fresh_comm`), and `fresh_self_iff` characterizes empty
+support. `fresh_prod_left_iff` and `fresh_prod_right_iff` decompose products on
+both sides, so a condition such as `Fresh A ((a,b),c) (d,e)` gives all six
+pairwise conditions. `fresh_smul_both_iff A π x y` provides simultaneous
+transport; `fresh_smul_right_iff` moves an action across the relation by its
+inverse. Symmetry is not a global simp rule.
+
+`fresh_iff_exists_disjoint_supports A x y` characterizes freshness by the
+existence of disjoint sufficient finite bounds. Use `fresh_of_disjoint_supports`
+to introduce it from two such bounds. The `fresh_map_left/right` laws preserve
+freshness under ordinary equivariant maps, with no function-space action.
+They are implications: an equivariant map can erase support. All these results
+also have elementwise `FinitelySupported.freshWith_*` forms.
+
+Atom freshness is a specialization using singleton atom support. Use
+`hx.Fresh a` with explicit evidence or `Fresh A a x` on a nominal carrier;
+`fresh_iff A a x hx` retains their agreement. Ordinary atom calls and theorem
+names are retained; the fully explicit `@Fresh` signature now has both carrier,
+action and nominality parameters.
+`hx.fresh_of_supports hS ha` and `fresh_of_supports A hS ha` derive freshness
+from `Supports S x` and `ha : a ∉ S`.
+
+`hx.fresh_smul_iff π a` and `fresh_smul_iff A π a x` preserve and reflect
+simultaneous renaming. The `_iff_inv` variants rewrite freshness for `π • x`
+as freshness of `π⁻¹ a` for x. These statements need only infinitude; their
+proofs keep classical equality local. With decidable equality,
+`hx.swap_smul_eq_of_fresh ha hb` or `swap_smul_eq_of_fresh A ha hb` proves
+swap fixation, including equal endpoints.
+
+Canonical freshness reduces to inequality for atoms and nonmembership for
+atom-versus-finite-set comparisons. `fresh_discrete_left/right` gives freshness
+for arbitrary discrete data on either side. `fresh_finset_left_iff` and
+`fresh_finset_right_iff` characterize `Fresh A S x` and `Fresh A x S` by
+`∀ a ∈ S, Fresh A a x`; `fresh_finsets_iff` gives disjointness for two finite
+atom sets. These Finset carrier laws keep decidable equality and Pointwise.
+Carrier product freshness simplifies on either side; `fresh_prod_iff` remains
+the atom-left adapter. For explicit certificates, specialize
+`hx.freshWith_prod_left_iff hy hz`, `hx.freshWith_prod_right_iff hy hz`, or
+the atom adapter `hx.fresh_prod_iff hy a` before rewriting:
+generic simp cannot recover both certificates from proof-irrelevant product
+evidence. This route requires neither carrier nominality nor decidable equality.
+
+`hx.exists_fresh_notMem S` gives `∃ a, a ∉ S ∧ hx.Fresh a`;
+`exists_fresh_notMem A S x` is the carrier adapter. Without an extra exclusion
+set, use `hx.exists_fresh` or `exists_fresh A x`. None requires decidable equality.
+Combine certificates using `.prod`, or supply a nested nominal context to the
+carrier operation and decompose its freshness. A Finset used as a context
+component still needs equality and Pointwise; an explicit finite exclusion bound
+alone does not. These theorems construct witnesses in proofs and export no
+executable, equivariant or finitely supported fresh-selector function.
+
 Persistent usage examples are reserved for future case studies. This increment
 contains the foundation modules and their audit, without a `Package/Examples`
 layer. F04a supplies the finite support calculus and F04b supplies nominality
-and least support. Canonical nominal instances/freshness and equivariant quotients
-remain F04c/F04d. Supported-function and predicate interfaces, Some/Any, binders
+and least support. F04c supplies canonical instances and freshness; canonical
+equivariant quotients remain F04d. Supported-function and predicate interfaces, Some/Any, binders
 and recursion are later work. Bare permutations retain left multiplication and
 ordinary functions retain their pointwise action; neither receives an automatic
 finite-supportedness or nominality claim.
@@ -141,7 +234,7 @@ python3 Package/Scripts/check-imports.py
 git diff --check
 ```
 
-The public root imports all five foundation modules. The coverage script inventories
+The public root imports all seven foundation modules. The coverage script inventories
 all Package Lean sources and checks the separate production and audit closures.
 It rejects unclassified sources, missing local imports, production-to-audit
 imports and reference-library dependencies. Its header parser is pinned Lean's

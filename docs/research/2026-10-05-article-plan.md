@@ -15,8 +15,11 @@ alongside implementation. The initial [main source](../article/main.tex) include
 [permutation/action foundations](../article/sections/foundations.tex).
 Its scientific scope includes permutations, selected actions and finite support,
 with mathematical arguments and relevant Lean declaration correspondence.
-The article now also covers the proved least-support construction and laws;
-freshness/predicate contracts require their own results. The bounded
+The article now also covers least support, exact canonical support, symmetric
+support-disjointness freshness with its atom specialization, and finite combined
+avoidance; predicate contracts require their own
+results. Earlier delivery-state descriptions below are historical: F04a/F04b
+were subsequently committed at `68956dd`. The bounded
 [implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md)
 assigns article updates to each task. A subsequent author correction reserves
 persistent usage examples for future case studies; the article does not claim
@@ -123,8 +126,18 @@ extend that file with `sec:least-support`, now reconciled and compiled alongside
 the checked implementation. It explains the proof-only certificate, individual
 leastness and uniqueness via the Finset minimum/intersection argument, witness
 independence, carrier convenience, transport, empty support, image inclusion
-and the finite-atom/strong-support boundaries. F04c owns `sections/freshness.tex` and F04d owns
-`sections/quotients.tex`, as recorded in the active roadmap. Every later
+and the finite-atom/strong-support boundaries. F04c's approved native execution
+adds `sections/freshness.tex`, with `sec:canonical-support` and `sec:freshness`:
+four mathematical certificates, both inclusions of each exact support formula,
+general freshness and evidence agreement, transport, fresh swaps, nested avoidance
+and existence, and the unordered-pair counterexample using actual least support.
+The author's later generalization adds disjoint sufficient bounds, products on
+both sides, finite-set contexts and equivariant-image preservation, as direct
+consequences of the support theory. The independent generalization investigations
+are internal research evidence, not a manuscript development narrative.
+The article and proofs are reconciled together; verification and final-review
+status are recorded in the active roadmap. F04d owns the future
+`sections/quotients.tex`. Every later
 specification and plan must retain its own article/reconciliation obligations.
 
 The [F03b written specification](../superpowers/specs/2026-10-05-package-controlled-swaps-design.md)

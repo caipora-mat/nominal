@@ -3,14 +3,23 @@
 Last updated: 2026-10-06. Branch: `fasapa/nominal-package`.
 Research baseline: `7fed53a2e5fc67379f86f085515e310e7c1fddb7`.
 F01 assessment snapshot: `76966b1f2e44f594517442b6572e33abaa9038e0`.
-Current inspected HEAD: `34a83358739ab962e2b9d2035a21d67b2a896071`, containing
-the committed F03b implementation/article/design updates. F04a design started
-on a clean working tree at that revision; its subsequent approved native
-implementation, article and design/tracker updates are uncommitted.
-F04b's written specification and native implementation plan are approved.
-Its code, consumers, audit and article pass; independent final review is clean.
-F04b changes are also uncommitted.
-F02/F03a were committed in the preceding `3d2196a`.
+Current inspected HEAD: `68956dd23066c7c5c647345e5598b859ff97a10c`, containing
+the committed F04a/F04b implementation, article and design/tracker updates.
+F04c design began with a clean working tree at that revision. The author approved
+its written specification and native implementation plan. F04c code, consumers,
+audit and article pass. Independent review found no Critical/Important issues;
+its two minor documentation/test findings are corrected and rechecked. F04c is DONE.
+All F04c work remains uncommitted.
+The author then approved general support-disjointness freshness as a bounded
+F04c follow-up and requested three generalization investigations. The extension
+and retained atom consumers pass. Its independent review found no Critical or
+Important issues; one article proof-description correction was made and checked.
+The new preference and checked proposals are recorded in
+[the generalization report](research/2026-10-06-foundation-generalizations.md).
+Earlier uncommitted-delivery descriptions retain their historical meaning.
+F04a/F04b's specifications and native plans were approved, and their code,
+consumers, audits, articles and independent final reviews passed.
+F03b was committed at `34a8335`, following F02/F03a at `3d2196a`.
 The original investigation started at
 `4279ba92efacd77b3b96e507631502272b489999`; its verification remains historical
 evidence, as recorded below.
@@ -79,6 +88,14 @@ a foundation criterion without duplicating its proofs under a new name.
 
 ## Mathlib-first development
 
+Prefer sound, mathematically natural general definitions and statements, with
+specialized interfaces derived from them. The author explicitly values theory
+reuse and stability as reasons for generalization, including before a specific
+client requires it. Minimize hypotheses, preserve independently selected actions
+and universes, and keep elementwise evidence where whole-carrier assumptions
+would be unnecessary. This preference does not turn an unimplemented research
+proposal into an established interface.
+
 This policy applies to every research, design and implementation increment.
 Before proposing a general-purpose definition, instance or proof, search the
 pinned Mathlib source and inspect the relevant declarations. Use `rg` in
@@ -131,7 +148,8 @@ for later per-layer choices.
 F03b is delivered with matching LaTeX exposition and a clean independent review.
 F04a is delivered with matching LaTeX exposition and a clean independent final review.
 F04b is delivered with matching LaTeX exposition and a clean independent final
-review. F04c/F04d, F05/F06 and PKG-01 remain unimplemented.
+review. F04a/F04b are committed at `68956dd`. F04c is delivered with passing validation and resolved independent final review;
+F04d, F05/F06 and PKG-01 remain unimplemented.
 
 Distinguish user decisions, integrated theorems, standalone probes, source
 readings, mathematical analyses and proposed interfaces. Record revision and
@@ -171,7 +189,7 @@ polish is not required to complete an increment, but accurate exposition is.
 | PKG-F01 | IN PROGRESS — first foundation spec approved; later layer choices remain proposed | Current user decisions; PKG-00 evidence; pinned algebraic source | Algebraic-sketch investigation, foundation/API contract and per-layer adoption/adaptation/reconstruction decisions |
 | PKG-F02 | DONE — verified, committed delivery | Approved F01 boundary for F02/F03a; approved native plan | `Package/` root, Lake/import boundary and production audit coverage |
 | PKG-F03 | DONE — F03a and F03b verified and committed | Approved F01 boundary; F02; approved F03b native plan | Atoms, finite permutations, actions and equivariance |
-| PKG-F04 | IN PROGRESS — F04a/F04b DONE; F04c/F04d TODO | PKG-F03; F04a → F04b → F04c/F04d | Finite support calculus, nominality/least support, canonical instances/freshness, canonical equivariant quotients |
+| PKG-F04 | IN PROGRESS — F04a/F04b/F04c DONE; F04d TODO | PKG-F03; F04a → F04b → F04c/F04d | Finite support calculus, nominality/least support, canonical instances/freshness, canonical equivariant quotients |
 | PKG-F05 | TODO | PKG-F04 | Minimal function-space and predicate-input interface |
 | PKG-F06 | TODO | PKG-F04/F05 | Abstraction, concretion or equivalent certified binder-descent facility |
 | PKG-01 | TODO | PKG-F04/F05 | Supported predicates, logical support and quotient-predicate descent |
@@ -184,7 +202,7 @@ polish is not required to complete an increment, but accurate exposition is.
 | PKG-08 | TODO | PKG-07 and a scoped let specification | Lambda with let and expansion correctness |
 | PKG-09 | TODO | PKG-07 and a residual-binding/transition specification | π-calculus case study |
 | PKG-10 | TODO | PKG-07 and a positivity/semantic specification | μ-calculus case study |
-| PKG-11 | IN PROGRESS — F02/F03a/F03b/F04a/F04b LaTeX exposition and evidence delivered | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
+| PKG-11 | IN PROGRESS — F02/F03a/F03b/F04a/F04b/F04c LaTeX exposition and evidence delivered | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
 
 The implementation dependency spine is
 `F01 → F02 → F03a → F03b → F04 → F05 → PKG-01`, with concurrent
@@ -397,13 +415,13 @@ implementation. F02/F03a/F03b remain delivered and are not reopened.
 
 | Slice | Status | Dependencies | Article section assigned to its spec/plan |
 | --- | --- | --- | --- |
-| F04a — Finite support calculus | DONE — verified working-tree delivery; clean final review | Delivered F03b and selected actions | `docs/article/sections/support.tex`, `sec:finite-support` |
-| F04b — Nominality and least support | DONE — verified working-tree delivery; clean final review | F04a, especially finite intersection | `docs/article/sections/support.tex`, `sec:least-support` |
-| F04c — Canonical instances and freshness | TODO | F04a/F04b; delivered canonical actions | `docs/article/sections/freshness.tex`, `sec:canonical-support` and `sec:freshness` |
+| F04a — Finite support calculus | DONE — verified, committed at `68956dd`; clean final review | Delivered F03b and selected actions | `docs/article/sections/support.tex`, `sec:finite-support` |
+| F04b — Nominality and least support | DONE — verified, committed at `68956dd`; clean final review | F04a, especially finite intersection | `docs/article/sections/support.tex`, `sec:least-support` |
+| F04c — Canonical instances and freshness | DONE — verified working-tree delivery; final review resolved | F04a/F04b; delivered canonical actions | `docs/article/sections/freshness.tex`, `sec:canonical-support` and `sec:freshness` |
 | F04d — Canonical equivariant quotients | TODO | F03 actions; F04a support bounds; F04b nominality/least support | `docs/article/sections/quotients.tex`, `sec:equivariant-quotients` |
 
-F04a and F04b's assigned article sections are written; F04c/F04d paths/labels remain
-assigned future sections. F04d's action construction and support preservation need no infinitude;
+F04a, F04b and F04c's assigned article sections are written. F04d's path and
+label remain assigned future exposition. Its action construction and support preservation need no infinitude;
 its full delivery follows F04b for the nominality and least-support conclusions.
 F04c is not a mathematical prerequisite for F04d: a quotient consumer may use
 explicit local support evidence if canonical instances are not yet delivered.
@@ -460,7 +478,7 @@ The [native implementation plan](superpowers/plans/2026-10-06-package-least-supp
 was subsequently approved. All 19 public declarations and their consumers are
 implemented and checked, with a passing whole-production audit and matching
 compiled article. The requested fresh independent final review found no Critical,
-Important or Minor issues. F04b is DONE; the work remains uncommitted.
+Important or Minor issues. F04b is DONE; its delivery is committed at `68956dd`.
 
 - [x] Verify branch/history/status and delivered F04a; inspect pinned Mathlib
   minimum, cardinality and order APIs and compare least-support constructions.
@@ -487,21 +505,58 @@ Important or Minor issues. F04b is DONE; the work remains uncommitted.
 
 #### F04c — Canonical instances and freshness
 
-- [ ] Supply nominality under the intended actions on atoms, `Discrete A X`,
+The [approved written specification](superpowers/specs/2026-10-06-package-canonical-freshness-design.md)
+uses the delivered interfaces and selected actions. It specifies four canonical
+nominality certificates, exact support formulas with both inclusions,
+elementwise `hx.Fresh a` and convenient `Fresh A a x`, transport, swaps and
+finite combined avoidance. It specifies two foundation modules and assigns
+concurrent article work and meaningful public-import acceptance checks.
+The author approved it on 2026-10-06. Its
+[native implementation plan](superpowers/plans/2026-10-06-package-canonical-freshness.md)
+was approved for native execution. All 34 production interfaces and seven
+temporary consumers now check, with the reconciled 20-page article. The production audit passes with 178 declarations in seven defining modules; source
+coverage reaches eight production modules including the root and one audit.
+The fresh independent final review found no Critical or Important issues. Its
+two minor tracker/test findings were corrected and the affected checks passed.
+F04c is DONE; this delivery remains uncommitted.
+
+**Approved follow-up:** general freshness now relates two nominal elements by
+disjoint supports. `hx.FreshWith hy` retains the two-element evidence route and
+`hx.Fresh a` is the atom specialization. Both product sides, disjoint sufficient
+bounds, finite-set contexts and equivariant images have general laws. This
+supersedes the initial atom-only scope. All 33 added declarations and eight
+consumers pass; the direct audit now covers 226 declarations and the article has
+21 pages. Follow-up independent review is resolved. The seven other checked
+[generalization proposals](research/2026-10-06-foundation-generalizations.md)
+remain research evidence for future design, not hidden implementation in F04c.
+
+- [x] Verify branch/history/status and committed F04a/F04b; inspect delivered
+  foundations, pinned Mathlib APIs, research constraints and current manuscript.
+- [x] Prepare a bounded written specification with exact public statements,
+  action/instance policy, assumption separation, evidence interfaces, imports,
+  proof strategies, article work and acceptance checks.
+- [x] Obtain agreement on the concrete written F04c specification.
+- [x] Prepare the native implementation plan with concurrent article tasks,
+  meaningful consumers and one fresh independent final review.
+- [x] Obtain written-plan approval before production changes, preserving
+  prior approvals and the selected execution method.
+- [x] Supply nominality under the intended actions on atoms, `Discrete A X`,
   products and finite atom sets with the existing scoped image action.
-- [ ] Prove exact support formulas, with their required hypotheses:
+- [x] Prove exact support formulas, with their required hypotheses:
   `support a = {a}`, `support (Discrete.mk x) = ∅`,
   `support (x,y) = support x ∪ support y`, and `support (S : Finset A) = S`.
-- [ ] Define atom freshness by nonmembership in least support; derive freshness
+- [x] Define atom freshness by nonmembership in least support; derive freshness
   from sufficient bounds, permutation transport and swaps fixing an element
   when both endpoints are fresh.
-- [ ] Use Mathlib's infinite/finite-set results for avoiding finite bounds and
+- [x] Use Mathlib's infinite/finite-set results for avoiding finite bounds and
   combined nominal contexts, including nested products. No executable or
   finitely supported fresh-selector function is required.
-- [ ] Retain the unordered-pair counterexample: swapping distinct a,b fixes
+- [x] Retain the unordered-pair counterexample: swapping distinct a,b fixes
   `{a,b}` but moves both atoms of its least support. Do not infer nominality of
   arbitrary functions or bare permutations under their default actions.
-- [ ] Deliver consumers, audits and both assigned LaTeX subsections together.
+- [x] Deliver consumers, audits and both assigned LaTeX subsections together.
+- [x] Complete the fresh independent final review and resolve its findings
+  before marking F04c DONE.
 
 #### F04d — Canonical equivariant quotients
 
@@ -521,9 +576,9 @@ Important or Minor issues. F04b is DONE; the work remains uncommitted.
 
 #### Overall F04 completion
 
-- [ ] Prove or adopt finite support, least support and their transport/minimality
+- [x] Prove or adopt finite support, least support and their transport/minimality
   laws, with each required atom hypothesis explicit.
-- [ ] Establish fresh-atom existence, avoidance of finite combined contexts and
+- [x] Establish fresh-atom existence, avoidance of finite combined contexts and
   the freshness/renaming laws consumed by the first workflow.
 - [ ] Supply required product and equivariant-quotient actions/support results.
   State upper bounds separately from exact support formulas and prove any exact
@@ -865,8 +920,12 @@ Lean rebuild. A successful document check is never package proof evidence.
    [F04b specification](superpowers/specs/2026-10-06-package-least-support-design.md)
    and [native implementation plan](superpowers/plans/2026-10-06-package-least-support.md)
    are approved. F04b is delivered with passing code, consumers, audit, article
-   and independent final review. The remaining order is F04c/F04d, then F05
-   before PKG-01; those slices retain their own design and approval boundaries.
+   and independent final review. F04a/F04b are committed at `68956dd`.
+   F04c's [written specification](superpowers/specs/2026-10-06-package-canonical-freshness-design.md)
+   is approved; its [native implementation plan](superpowers/plans/2026-10-06-package-canonical-freshness.md)
+   was also approved. F04c implementation, integrated checks and final review
+   are complete. F04d and then F05 still precede PKG-01; those
+   slices retain their own design and approval boundaries.
    The [approved F03b specification](superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
    and [native plan](superpowers/plans/2026-10-05-package-controlled-swaps.md)
    supply its bounded contract. The swap criterion supplies permutation input;
@@ -875,8 +934,8 @@ Lean rebuild. A successful document check is never package proof evidence.
    at their own tasks. Later π/μ semantics remain separate decisions.
 
 The actual F04a inspection began with a clean tree at `34a8335`. Earlier logs
-retain the working-tree status at their own inspections. Current F04a implementation,
-article and design/tracker changes are approved working-tree work, uncommitted.
+retain the working-tree status at their own inspections. F04c's inspection
+began with a clean tree at `68956dd`, containing committed F04a/F04b delivery.
 Persistent usage examples belong to future case studies. The current
 Package audit covers production declarations directly; the reference examples
 remain unchanged. The candidate direct SPred interface is still a proposal and
@@ -896,6 +955,8 @@ requires no complete general supported-function library as a hidden prerequisite
 - [Approved F04a native implementation plan](superpowers/plans/2026-10-05-package-finite-support.md).
 - [Approved F04b nominality/least-support specification](superpowers/specs/2026-10-06-package-least-support-design.md).
 - [Approved F04b native implementation plan](superpowers/plans/2026-10-06-package-least-support.md).
+- [Approved F04c canonical-instances/freshness specification](superpowers/specs/2026-10-06-package-canonical-freshness-design.md).
+- [Approved F04c native implementation plan](superpowers/plans/2026-10-06-package-canonical-freshness.md).
 - [LaTeX manuscript](article/main.tex).
 - [Current research policy and reading guide](research/README.md).
 - [Requirements and author decisions](research/2026-10-05-nominal-package-brief.md).
@@ -2025,3 +2086,305 @@ correspondence were checked.
 **F04b is DONE. PKG-F04 remains IN PROGRESS**, with F04c/F04d still TODO.
 All changes remain uncommitted in the requested checkout. No branch integration
 or cleanup is requested or performed.
+
+### 2026-10-06 — F04c specification prepared for review
+
+Verified the requested checkout on `fasapa/nominal-package`, HEAD
+`68956dd23066c7c5c647345e5598b859ff97a10c`, with a clean initial working tree.
+History and the HEAD file inventory confirm that F04a/F04b are committed in
+that revision. Corrected the current-state paragraphs above; preserved all
+earlier work-log text and its historical uncommitted-delivery descriptions.
+Earlier approvals and results are not reopened.
+
+The [proposed F04c specification](superpowers/specs/2026-10-06-package-canonical-freshness-design.md)
+defines the bounded interface for review: four certificates of existing
+actions, exact canonical support formulas, an elementwise product formula,
+`hx.Fresh a` and `Fresh A a x`, sufficient bounds, transport and inverse
+transport, fresh swaps, canonical decomposition and finite combined avoidance.
+No new notation is proposed. Finset nominality is registered in the existing
+Pointwise scope; no action is introduced or replaced. Equality stays out of
+atom/discrete nominality, product nominality, atom/discrete support formulas,
+generic freshness transport/decomposition and existential avoidance interfaces.
+
+The design gives both inclusions for every exact formula, keeps proof evidence
+usable without carrier nominality, retains the Bool boundary and assigns an
+unordered-pair consumer using actual least support. Canonical.lean and
+Freshness.lean are proposed new modules over the delivered foundations; they
+are not implemented. The plan will assign concurrent LaTeX development in
+freshness.tex, final correspondence/build checks and one fresh independent
+final review. F04d and all later phases remain outside this increment.
+
+Read the current foundation, audits/import policy, requested design/research
+inputs and all included manuscript sections. Inspected the pinned Mathlib
+support, singleton/image/union, finite avoidance and action APIs at
+`d13f23b723b8a846827a245b89c10fc7d3f11612`. An import/`#check`/`#synth` inventory
+confirms their types and universe/assumption boundaries; it implements no
+proposed F04c declaration. Initial fingerprints for all 117 tracked/untracked
+files and design checks are under `/tmp/nominal-f04c-design-n_6qp3g8/`.
+
+Fresh baseline commands actually run in this design session:
+
+- `lake build Package +Package.Tests.AxiomAudit`: passed, 970 jobs using cached
+  project/dependency artifacts; compiled audit output was replayed.
+- `lake env lean Package/Tests/AxiomAudit.lean`: direct audit passed, 132
+  production declarations in five defining modules, with only `propext`,
+  `Classical.choice` and `Quot.sound`.
+- `python3 Package/Scripts/check-imports.py`: passed, six production source
+  modules including the root and one audit module reached. Checker unchanged.
+- `lake env lean /tmp/nominal-f04c-design-n_6qp3g8/PinnedAPI.lean`: passed;
+  declarations and action synthesis checked without proposed-result proofs.
+- `lake env lean /tmp/nominal-f04c-design-n_6qp3g8/UnscopedFinset.lean`:
+  expected exit 1, failing only to synthesize the Finset action without Pointwise;
+  its scoped counterpart succeeds in the inventory check.
+- `lake env lean /tmp/nominal-f04b-execution/BoundaryContracts.lean`: passed;
+  retained finite-atom and unsupported-function conclusions remain checked.
+- `lake env lean /tmp/nominal-f02-f03a-execution/ActionContracts.lean` and
+  `lake env lean /tmp/nominal-f02-f03a-execution/NegativeContracts.lean`: passed.
+- From docs/article/, `latexmk -pdf -interaction=nonstopmode -halt-on-error
+  -outdir=/tmp/nominal-package-article-build main.tex`: passed with outputs
+  already current. The existing 16-page log has no warning, unresolved reference
+  or box diagnostic. This invocation did not rebuild the PDF.
+- `git diff --check`: passed before documentation edits.
+
+These are baseline checks, not F04c proof or implementation-review evidence.
+No fresh whole-project build, dependency bootstrap or reference-library rebuild
+is claimed. Production and manuscript sources are unchanged during design.
+
+Document checks passed for both Markdown files: 57 local links, six anchors,
+balanced fences, no unresolved specification placeholders and all whitespace,
+including the untracked specification. `git diff --check` passed after edits.
+Fingerprint comparison preserves 116 of 117 baseline files; only the active
+roadmap changed, with this new specification added. The prior work log is
+preserved verbatim, along with branch/HEAD, production sources, reference code,
+historical roadmap, manuscript and dependency pins. No independent implementation
+review has been performed during design.
+
+**F04c awaits agreement on its concrete written specification.** After that,
+prepare its native implementation plan and obtain plan approval before production
+changes. The execution method and one fresh independent final review after
+implementation are already selected; do not ask again. PKG-F04 remains
+IN PROGRESS; F04d, F05 and PKG-01 remain later work. Leave the design and tracker
+changes uncommitted.
+
+### 2026-10-06 — F04c specification approved; native plan prepared
+
+The author approved the concrete
+[F04c specification](superpowers/specs/2026-10-06-package-canonical-freshness-design.md).
+Its exact statements, action/instance policy, assumption separation and
+freshness/evidence interfaces are unchanged. Native execution with one fresh
+independent final review was already selected and is preserved. Specification
+approval authorizes the written implementation plan; plan approval remains
+required before production changes.
+
+Reinspected `fasapa/nominal-package` at
+`68956dd23066c7c5c647345e5598b859ff97a10c`. The only initial changes were the
+uncommitted F04c specification and active roadmap. Snapshotted all 118 existing
+tracked/untracked files under `/tmp/nominal-f04c-plan-d1f0h4eo/`, preserving
+the prior design work and every historical log entry.
+
+The [native implementation plan](superpowers/plans/2026-10-06-package-canonical-freshness.md)
+assigns four mathematical tasks: canonical certificates, exact support,
+freshness laws, and fresh existence/combined avoidance. A fifth task owns
+integrated public-signature/action checks, audit, documentation, final article
+reconciliation and the one fresh independent final review. Root owns the
+native work; no per-task agent dispatch or additional review sequence is added.
+Every mathematical task develops and compiles its LaTeX alongside Lean.
+
+Seven temporary consumers cover all 34 production declarations and the
+unordered-pair boundary theorem. The plan's seven Lean interface blocks match
+the approved specification byte-for-byte; the specification's Lean blocks
+are unchanged. The five review concerns have explicit test owners, including
+arbitrary local actions, Pointwise scope, independent universes, supported
+elements of non-nominal carriers, strict sufficient bounds, nested contexts,
+inverse transport, equal-endpoint swaps and successive fresh choices.
+
+Planning checks cover document consistency, links/anchors, fences, whitespace
+including both untracked documents, exact interface-block comparison and file
+preservation. `git diff --check` passed. No production or article source was
+changed, and no execution step is marked complete. No Lean build, audit or
+article compilation was rerun during planning; the prior design-session
+verification remains recorded under that session, not as new planning evidence.
+
+**The native implementation plan awaits author approval.** The specification
+and native execution method are already approved; do not ask for either again.
+F04c remains unimplemented and PKG-F04 remains IN PROGRESS, with F04d and later
+phases unchanged. Keep the plan, specification and tracker work uncommitted.
+
+### 2026-10-06 — Native F04c implementation and integrated validation
+
+The author approved the written native plan. Both approval gates are satisfied;
+the execution method and one fresh independent final review were preserved.
+Execution began at `68956dd23066c7c5c647345e5598b859ff97a10c`, preserving all
+119 existing tracked/untracked files, including the three design/tracker files.
+Root performed the native Lean, consumer, article and integration work.
+
+Canonical.lean supplies three sufficient bounds, four proof-only certificates
+of existing actions, and five exact support formulas including the elementwise
+product law. Freshness.lean supplies atom freshness, evidence/carrier agreement,
+bound and transport laws, swaps, canonical/product decomposition and four fresh
+existence laws. All 34 production interfaces check with the approved hypotheses
+and independent universes. No action, parallel support theory, quotient or
+function/predicate interface was introduced.
+
+One mechanical encoding adjustment was recorded: `instNominalFinset` is a
+theorem rather than the proposed proof-only def, and its scoped registration
+uses the fully qualified name. Pinned Lean's warnings and scoped name resolution
+required this local correction. Its public name, type, assumptions and scope
+are unchanged; no linter, reducibility or instance-priority setting was changed.
+For proof-indexed product freshness, consumers specialize
+`hx.fresh_prod_iff hy a` before rewriting; generic simp cannot recover both
+certificates from proof-irrelevant product evidence. Carrier decomposition
+simplifies automatically. The README records this usage distinction.
+
+The seven consumers in `/tmp/nominal-f04c-execution/` are
+`InstanceContracts.lean`, `ActionCoherence.lean`, `CanonicalSupportContracts.lean`,
+`BoundaryContracts.lean`, `FreshnessContracts.lean`, `AvoidanceContracts.lean`
+and `PublicSignatures.lean`. They import only Package and consume actual
+conclusions. New-interface tests failed before their declarations were added,
+then passed. Fixture corrections preserved their mathematical assertions.
+The unordered-pair theorem uses `support_finset` for actual least-support
+membership of both moved endpoints. Bool and unsupported pointwise-identity
+evidence remain proved. Nested avoidance chooses two distinct fresh atoms and
+uses them to fix both the full context and its components.
+
+Integrated commands actually run, all with exit 0:
+
+- `lake build Package +Package.Tests.AxiomAudit`: 972 jobs; dependencies cached,
+  changed project artifacts rebuilt during execution.
+- `lake env lean Package/Foundations/Canonical.lean` and
+  `lake env lean Package/Foundations/Freshness.lean`: direct source checks.
+- `lake env lean` on each of the seven temporary files listed above: all
+  public signatures, evidence, exactness, action/scope and avoidance checks pass.
+- `lake env lean Package/Tests/AxiomAudit.lean`: direct traversal of 178
+  production declarations from seven defining modules, including generated
+  names; only `propext`, `Classical.choice` and `Quot.sound`.
+- `python3 Package/Scripts/check-imports.py`: eight production source modules
+  including the root and one audit module reached. Checker unchanged, so no
+  checker self-test rerun was required.
+- Direct retained checks of F03a `ActionContracts.lean`/`NegativeContracts.lean`
+  and F04b `BoundaryContracts.lean`: passed unchanged.
+
+The native runner `python3 /tmp/nominal-f04c-execution/integrated.py` records
+these 15 commands, with full output and timing in the execution directory.
+Baseline checks, per-task missing-interface failures and successful reruns
+are separate logs there. No fresh whole-project build, dependency bootstrap
+or rebuild of unchanged reference libraries is claimed. The five delivered
+foundation sources, reference code, pins, Lake configuration, shared tools and
+historical roadmap remain unchanged.
+
+The article was developed and compiled in each mathematical task. The final
+`latexmk -pdf -interaction=nonstopmode -halt-on-error
+-outdir=/tmp/nominal-package-article-build main.tex` invocation from docs/article/
+rebuilt the reconciled manuscript to 20 pages with a clean log. Both assigned
+sections are included from main.tex; abstract/introduction and related exposition
+are reconciled. Extracted canonical-support/freshness text was inspected against
+the actual mathematics, separately from compilation. All generated artifacts
+remain outside the source tree; operational records remain outside the article.
+
+Document and preservation checks pass: seven Markdown files, local links and
+anchors, 50 distinct LaTeX labels, and all changed/untracked whitespace.
+`git diff --check` passes. The execution snapshot identifies 14 intended
+existing-file edits and three new files, preserving the other 105 of 119
+baseline files and the prior work log verbatim. The validated Lean sources
+are unchanged after integrated verification. Branch and HEAD are preserved.
+
+**Integrated validation passes; independent final review is pending.**
+F04c remains IN PROGRESS until that review is resolved. PKG-F04 stays open
+for F04d; no later phase, commit, push, merge, cleanup or publication is included.
+
+The fresh independent final review is now complete. It found no Critical or
+Important issues and two Minor findings: one stale sentence describing F04c's
+article as future, and the arbitrary-Finset-action guard running without
+Pointwise/equality, so its certificate was inactive. Both findings were verified
+and corrected. The strengthened guard now first synthesizes canonical Finset
+nominality in the same scoped/equality context, then rejects the unrelated
+action; `lake env lean /tmp/nominal-f04c-execution/ActionCoherence.lean` passes.
+Document/preservation/diff checks also pass after the corrections. No production
+proof or API change and no second review were needed; no findings remain deferred.
+
+The reviewer independently reran the cached 972-job build, both modules, seven
+consumers, three retained consumers, its additional action/evidence contracts,
+the direct 178-declaration standard-axiom audit, 8+1 import coverage and all
+document/preservation checks. A fresh manuscript build in
+`/tmp/nominal-f04c-review-V2nE2A/article/` produced 20 pages with clean diagnostics;
+the extracted text was checked against the mathematics. The report and exact
+commands are in `/tmp/nominal-f04c-review-V2nE2A/review.md`.
+
+The review's exclusions match the approved boundary: later quotient and
+function/predicate phases, prior-foundation/reference redesign, selectors,
+general binary freshness, tactics, persistent Package examples and new external
+research comparisons are not part of F04c. Existing scholarship was not
+re-audited and no clean Lean/bootstrap/reference rebuild is inferred.
+
+**F04c is DONE. PKG-F04 remains IN PROGRESS for F04d.** All code, meaningful
+consumers, audits, article correspondence/compilation and the final review pass,
+with the two minor corrections verified natively. All work remains uncommitted
+on `fasapa/nominal-package`; the checkout, reference sources and retained evidence
+are preserved.
+
+### 2026-10-06 — General freshness and independent generalization investigations
+
+After the original F04c delivery, the author requested Pitts' symmetric
+freshness relation and approved the bounded extension before F04d. The later
+instruction makes natural mathematical generality a standing preference:
+use general definitions and minimally assumed statements, derive special cases,
+and count theory reuse/stability as benefits. This is recorded in AGENTS.md,
+research decision R15 and the current research policy; it supersedes F04c's
+initial atom-only scope without reopening the delivered support construction.
+
+`Fresh A x y` now means disjointness of the two least supports. The elementwise
+form is `hx.FreshWith hy`; `hx.Fresh a` and the former named atom laws are
+derived specializations. The fully explicit `@Fresh` signature intentionally
+adds the second carrier/action/nominality parameters. Thirty-three added
+declarations supply symmetry, self-freshness, products on both sides, transport,
+disjoint sufficient bounds iff, equivariant-map preservation and finite-set
+contexts. No new action, instance, notation, tactic, least-support construction
+or later quotient/function infrastructure was added.
+
+Three agents independently investigated permutations/actions, support/least
+support, and canonical/freshness interfaces, without repository edits. Root
+inspected their reports and proof routes, retained four standalone probes,
+and reran every probe successfully. The
+[generalization report](research/2026-10-06-foundation-generalizations.md)
+records the adopted freshness results and seven other checked proposals.
+The latter remain outside production imports. Important boundaries include
+failure of unrestricted support reflection for surjections/equivariant maps,
+and a checked arbitrary-set support that omits an atom of least finite support.
+The investigation does not authorize silently implementing all proposals.
+
+Execution evidence is under `/tmp/nominal-general-freshness-9a13sgo9/`.
+The new general consumer first failed on the atom-only interface, then passed.
+Eight temporary public-import consumers pass, including both associations of
+the six-condition product example, general evidence without nominal carriers,
+and two supported functions fresh in a provably non-nominal pointwise function
+carrier. The copied old explicit-arity fixture was adapted; the original F04c
+scratch evidence is preserved.
+
+Actually run and passed: `lake build Package +Package.Tests.AxiomAudit`
+(972 jobs, cached dependencies and incremental project artifacts), direct
+Canonical/Freshness checks, all eight consumers, three retained F03a/F04b
+consumers, `lake env lean Package/Tests/AxiomAudit.lean` (226 declarations in
+seven defining modules, only the standard three axioms), and
+`python3 Package/Scripts/check-imports.py` (8+1 source coverage).
+Root separately ran `lake env lean` on all four `Generalization*.lean` research
+probes. The unchanged checker did not require self-tests. No fresh full-project
+Lean build, dependency bootstrap or unchanged reference-library rebuild is claimed.
+
+The article now presents the general relation first, with atom freshness as a
+specialization, both-sided product decomposition, disjoint bounds and image laws.
+The documented latexmk command builds 21 pages with a clean final log. A fresh
+independent reviewer reran all production/consumer/probe checks, inspected
+the mathematics and preservation, and built a fresh 21-page article. It found
+no Critical/Important issues and one Minor: a stale atom-transport proof
+description. Root corrected it to cite general disjoint-support transport and
+`Finset.disjoint_image`, rebuilt the article in the documented and a fresh
+output directory, and reran document/preservation checks. No production fix,
+second review or deferred finding was needed. The report is retained at
+`/tmp/nominal-final-review-Xr59FA/review.md`.
+
+The follow-up preserves 108 of its 122 baseline files, with 14 intentional
+edits and five added research files. Previous work-log text, all other foundation
+production modules, reference code, pins, branch and HEAD are preserved.
+**F04c, including general freshness, is DONE; PKG-F04 remains open for F04d.**
+All changes remain uncommitted. The next handoff is the requested F04d design
+prompt, carrying the current interfaces and the generality preference.

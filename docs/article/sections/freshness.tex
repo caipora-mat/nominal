@@ -1,0 +1,278 @@
+\section{Canonical nominal actions and support}
+\label{sec:canonical-support}
+
+The selected actions on atoms, discrete data, products and finite atom sets
+give basic contexts for nominal reasoning. Their nominality is a property
+of those actions, not an additional choice of action.
+
+\begin{proposition}[Canonical nominality]
+\label{prop:canonical-nominality}
+For any atom carrier $A$, the canonical action on $A$ and the trivial action
+on $\Discrete_A(X)$ are nominal. Products of nominal actions are nominal
+under the componentwise action, and $\Finset(A)$ is nominal under direct image.
+\end{proposition}
+
+\begin{proof}
+The singleton $\{a\}$ supports the atom $a$, since a permutation fixing
+that singleton fixes its member. Every permutation fixes a discrete value,
+so the empty set supports it. The union of supporting bounds for $x$ and
+$y$ supports $(x,y)$ by Proposition~\ref{prop:support-products}.
+Finally, a permutation fixing every member of $S$ has image $S$ itself,
+so $S$ supports $S\in\Finset(A)$.
+\end{proof}
+
+These certificates need no infinitude assumption. In particular, the
+discrete construction assumes no action or nominality of the underlying
+data type $X$. The Lean proofs reuse Mathlib's support-of-a-member and
+finite-image laws, together with the existing finite-supportedness product
+law. The Finset certificate retains the equality assumption of its image
+action and is registered in the same \texttt{Pointwise} scope. The other
+three certificates need no decidable equality. All certify the selected
+actions of Section~\ref{sec:actions}; none introduces a competing action.
+
+\begin{proposition}[Exact canonical supports]
+\label{prop:canonical-support}
+Assume $A$ is infinite. Under these canonical actions,
+\begin{align*}
+  \operatorname{supp}_A(a)&=\{a\}, &
+  \operatorname{supp}_A(\operatorname{mk}(d))&=\varnothing,\\
+  \operatorname{supp}_A(x,y)&=
+    \operatorname{supp}_A(x)\cup\operatorname{supp}_A(y), &
+  \operatorname{supp}_A(S)&=S.
+\end{align*}
+The product equation requires only finite supportedness of the two
+particular elements, rather than nominality of their entire carriers.
+\end{proposition}
+
+\begin{proof}
+The bounds in Proposition~\ref{prop:canonical-nominality} give the
+upper inclusions by leastness. For an atom, suppose a finite supporting
+bound $T$ omits $a$. Choose $b\notin T\cup\{a\}$. The swap $\swap a b$
+fixes $T$ pointwise but sends $a$ to the distinct atom $b$, a contradiction.
+Thus every supporting bound contains $a$. For a discrete value the empty
+bound is already least.
+
+A bound supporting $(x,y)$ supports each projection. Consequently, each
+component's least support is contained in the pair's least support, giving
+the reverse product inclusion. Conversely, their union supports the pair.
+
+For the finite-set equation, suppose $T$ supports $S$ and omits an atom
+$a\in S$. Choose $b\notin S\cup T$. Both endpoints of $\swap a b$ lie
+outside $T$, so the swap fixes $S$ by the support swap criterion. But its
+image contains $b$, the image of $a$, contradicting $b\notin S$. Thus
+$S$ is contained in every finite supporting bound and is itself the least.
+\end{proof}
+
+The reverse inclusions are essential: a convenient supporting bound need
+not identify all atoms on which an element depends. The Lean theorem
+\path{FinitelySupported.support_prod} states the elementwise product
+equation; carrier equations, including \path{support_finset}, use the
+canonical certificates. Agreement of support certificates transfers each
+canonical formula to independently supplied evidence of the same element.
+Singleton and empty Finset expressions need no decidable equality, whereas
+the displayed union and the selected Finset image action retain it.
+Classical equality used only inside the atom proof adds no public premise.
+
+Infinitude is a hypothesis of the general least-support interface, distinct
+from the preceding nominality certificates. In particular, the canonical
+Bool action is nominal while false has no least support, as shown in
+Example~\ref{ex:finite-atom-intersection} and
+Section~\ref{sec:least-support}.
+
+\begin{example}[An unordered pair is not strongly supported]
+\label{ex:unordered-pair-support}
+Let $a\ne b$ and $S=\{a,b\}$ over infinite atoms. Then
+\begin{gather*}
+  \swap a b\act S=S,\qquad \operatorname{supp}_A(S)=\{a,b\},
+  \\
+  \swap a b(a)=b\ne a,\qquad \swap a b(b)=a\ne b.
+\end{gather*}
+Thus a permutation can fix an element while moving both atoms of its
+least support. The exact Finset formula identifies the actual least
+support in this example, not merely a sufficient bound. Fixation of an
+element entails setwise preservation of its least support by transport;
+it does not entail pointwise fixation.
+\end{example}
+
+\section{Freshness and renaming}
+\label{sec:freshness}
+
+Assume throughout this section that $A$ is infinite. For finitely supported
+elements $x\in X$ and $y\in Y$ of selected actions, define freshness by
+\[
+  x\mathrel{\#}y\quad\Longleftrightarrow\quad
+  \operatorname{supp}_A(x)\cap\operatorname{supp}_A(y)=\varnothing.
+\]
+This is Pitts' symmetric relation between elements of nominal sets over
+the same atom carrier~\cite[Section~3.1, equation~(3.1)]{pitts2013}.
+The value carriers may differ and have independent universes. Atom freshness
+is a specialization: since $\operatorname{supp}_A(a)=\{a\}$,
+\[
+  a\mathrel{\#}x\quad\Longleftrightarrow\quad
+  a\notin\operatorname{supp}_A(x).
+\]
+
+In Lean, \texttt{Fresh A x y} uses \texttt{Disjoint} on the two least supports,
+avoiding a decidable-equality premise for forming an explicit intersection.
+For individual certificates \texttt{hx} and \texttt{hy}, the corresponding
+relation is \texttt{hx.FreshWith hy}. The two interfaces agree for any
+certificates of the same elements under the same selected actions. The
+atom helper \texttt{hx.Fresh a} specializes this relation using the canonical
+atom certificate; \path{fresh_iff} retains the atom-to-carrier agreement law.
+No additional support choice is made. Supported values in a non-nominal
+carrier, such as pointwise constant functions, retain this freshness
+interface without a nominality assertion about the whole function space.
+These are named predicates; the mathematical symbol above is not an
+additional Lean notation.
+
+\begin{proposition}[General freshness laws]
+\label{prop:general-freshness}
+For finitely supported elements of the indicated selected actions,
+\begin{align*}
+ x\mathrel{\#}y&\quad\Longleftrightarrow\quad y\mathrel{\#}x,\\
+ x\mathrel{\#}x&\quad\Longleftrightarrow\quad
+   \operatorname{supp}_A(x)=\varnothing,\\
+ (x,y)\mathrel{\#}z&\quad\Longleftrightarrow\quad
+   x\mathrel{\#}z\ \land\ y\mathrel{\#}z,\\
+ x\mathrel{\#}(y,z)&\quad\Longleftrightarrow\quad
+   x\mathrel{\#}y\ \land\ x\mathrel{\#}z,\\
+ (\pi\act x)\mathrel{\#}(\pi\act y)&\quad\Longleftrightarrow\quad x\mathrel{\#}y.
+\end{align*}
+Moreover, $x\mathrel{\#}y$ holds exactly when there exist disjoint finite
+sets $S,T$ supporting $x,y$, respectively. Equivariant maps preserve
+freshness in either argument: if $x\mathrel{\#}y$ and $f$ is equivariant,
+then $f(x)\mathrel{\#}y$; likewise for a map on the second argument.
+\end{proposition}
+
+\begin{proof}
+Symmetry and the self case are properties of disjointness. Exact product
+support turns the product claims into disjointness of a union, while
+least-support transport and injectivity of permutation images give the
+renaming equivalence. The least supports themselves witness the finite-bound
+characterization. Conversely, leastness puts the two supports inside any
+disjoint sufficient bounds, and disjointness is preserved by taking subsets.
+Finally, an equivariant image has support contained in that of its source,
+so the same subset argument applies.
+\end{proof}
+
+The image implication generally does not reflect freshness: an equivariant
+constant map into discrete data sends an atom $a$ to a value fresh for $a$,
+although $a$ is not fresh for itself. The finite-bound characterization lets
+clients establish freshness using convenient bounds without computing least
+supports. These results reuse Mathlib's disjointness laws and the established
+support formulas; their elementwise interfaces assume no nominality of the
+whole carriers and no decidable atom equality. Classical equality needed for
+finite images and unions remains inside proofs.
+
+Products may now occur on both sides. For example,
+$((a,b),c)\mathrel{\#}(d,e)$ decomposes into the six pairwise conditions
+between $a,b,c$ and $d,e$. This follows by repeatedly applying the two
+product equivalences, without any freshness-specific tactic.
+
+\begin{proposition}[Freshness laws]
+\label{prop:freshness-laws}
+Let $x$ be finitely supported and $\pi\in\Perm(A)$.
+If a finite set $S$ supports $x$, then $a\notin S$ implies
+$a\mathrel{\#}x$. Moreover,
+\begin{align*}
+  \pi(a)\mathrel{\#}(\pi\act x)
+    &\quad\Longleftrightarrow\quad a\mathrel{\#}x,\\
+  a\mathrel{\#}(\pi\act x)
+    &\quad\Longleftrightarrow\quad \pi^{-1}(a)\mathrel{\#}x.
+\end{align*}
+If $a\mathrel{\#}x$ and $b\mathrel{\#}x$, then
+$\swap a b\act x=x$, including when $a=b$.
+\end{proposition}
+
+\begin{proof}
+Leastness gives $\operatorname{supp}_A(x)\subseteq S$, so nonmembership
+in $S$ suffices. Least-support transport gives
+$\operatorname{supp}_A(\pi\act x)=\pi[\operatorname{supp}_A(x)]$.
+Bijectivity of $\pi$ gives both membership equivalences and hence their
+negations. Finally, both fresh endpoints avoid the supporting bound
+$\operatorname{supp}_A(x)$, so the support swap criterion applies.
+It already permits equal endpoints.
+\end{proof}
+
+The atom transport laws specialize the general freshness transport theorem.
+Its formal proof combines the established support equation with Mathlib's
+\path{Finset.disjoint_image} for injective images. It does not repeat the
+conjugation argument. Although the support equation uses a finite-set
+image, the freshness equivalences contain no such operation: classical
+equality can stay inside their proofs. Their public statements therefore
+need no decidable equality. The swap theorem retains the equality premise
+of the swap operation, without adding a distinctness hypothesis.
+
+Proposition~\ref{prop:canonical-support} yields the computation laws
+\begin{gather*}
+  a\mathrel{\#}b\ \Longleftrightarrow\ a\ne b,\qquad
+  a\mathrel{\#}\operatorname{mk}(d),\qquad
+  a\mathrel{\#}S\ \Longleftrightarrow\ a\notin S,\\
+  a\mathrel{\#}(x,y)\ \Longleftrightarrow\
+    a\mathrel{\#}x\ \land\ a\mathrel{\#}y.
+\end{gather*}
+The product law applies to individually supported components. Its Lean
+statement likewise avoids an equality premise by keeping the union inside
+the proof. Repeated decomposition handles either association of nested
+products, including repeated components. For finite-set contexts, the
+selected image action still requires decidable equality and the
+\texttt{Pointwise} scope.
+More generally, for a finite atom set $S$,
+\[
+ S\mathrel{\#}x\quad\Longleftrightarrow\quad
+ (\forall a\in S,\ a\mathrel{\#}x)
+ \quad\Longleftrightarrow\quad x\mathrel{\#}S.
+\]
+Since $\operatorname{supp}_A(S)=S$, this is disjointness expressed through
+membership. Finite atom sets thus serve as contexts on either side of the relation.
+
+\begin{proposition}[Fresh existence]
+\label{prop:fresh-existence}
+For every finitely supported $x$ and finite exclusion set $S\subseteq A$,
+\[
+  \exists a\in A,\qquad a\notin S\ \land\ a\mathrel{\#}x.
+\]
+In particular every such $x$ has a fresh atom. No nominality of its whole
+carrier is required.
+\end{proposition}
+
+\begin{proof}
+Choose an atom outside the finite set
+$S\cup\operatorname{supp}_A(x)$. Infinite atoms guarantee its existence;
+nonmembership in the two components gives the conclusion. Taking $S$ empty
+gives the special case.
+\end{proof}
+
+Mathlib supplies this finite avoidance step as
+\path{Finset.exists_notMem}. The elementwise Lean theorem
+\path{FinitelySupported.exists_fresh_notMem} and its carrier adapter
+\path{exists_fresh_notMem} keep the union inside the proof, so neither
+requires decidable equality. Avoiding an explicit finite set alone uses
+Mathlib's theorem directly and needs no action or nominality. The hypotheses
+of a Finset action enter only when a finite set is treated as a renamed
+context component.
+
+For example, take
+$c=(x,(y,(T,\operatorname{mk}(d))))$, where $x$ and $y$ are supported,
+$T$ is a finite atom set and $d$ is arbitrary discrete data. Choose $a$
+outside an explicit $S$ and fresh for $c$. Product decomposition yields
+\[
+  a\notin S,\qquad a\mathrel{\#}x,\qquad
+  a\mathrel{\#}y,\qquad a\notin T.
+\]
+The same argument works using individual support certificates for the
+components. There is no assumption that every element of their carriers
+is supported. Alternatively, supplied sufficient bounds can be combined
+inside the finite exclusion set and used via Proposition~\ref{prop:freshness-laws}.
+
+Choose a second atom $b$ fresh for $c$ and outside $S\cup\{a\}$. Then
+$a\ne b$, both avoid $S$ and $T$, and the fresh-swap law gives
+$\swap a b\act c=c$, as well as fixation of $x$ and $y$ separately.
+This combines fresh existence with an actual renaming consequence, without
+requiring a new container operation or a freshness tactic.
+
+These results assert existence and use witnesses within proofs. They supply
+neither an executable fresh-name algorithm nor an equivariance or finite-support
+property for a function choosing witnesses. The infinite-atom assumption
+also remains essential: an explicit exclusion set may exhaust a finite
+atom carrier, regardless of any nominality certificate.

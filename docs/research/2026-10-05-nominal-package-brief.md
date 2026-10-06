@@ -379,3 +379,21 @@ changes. Subsequent F02/F03a implementation and article work is recorded in the
 roadmap on the `76966b1` working tree. This follow-up clarifies the next slice and
 concurrent-writing requirement without changing Lean or LaTeX sources, committing,
 pushing, merging, changing dependencies or CI, or publishing anything.
+
+### R15 Natural mathematical generality (2026-10-06)
+
+The author prefers sound, mathematically natural generalizations as the primary
+foundation interfaces, with specialized statements derived as corollaries.
+Reuse and stability of the theory count as reasons for generalization before
+a particular client requires it. Minimize hypotheses, keep atom/carrier
+universes independent, preserve selected actions, and retain elementwise
+evidence where carrier-wide assumptions are unnecessary. Continue to inspect
+and reuse pinned Mathlib rather than duplicate suitable general infrastructure.
+
+The immediate approved example is Pitts' heterogeneous freshness relation:
+`Fresh A x y := Disjoint (support A x) (support A y)`, with atom freshness a
+specialization and an elementwise two-certificate form. This supersedes F04c's
+initial atom-only scope restriction. The author requested three independent
+investigations of other generalizations in the current Package foundations;
+their findings are proposals unless included in an authorized implementation.
+They do not authorize unrelated changes to the preserved reference development.
