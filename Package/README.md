@@ -1,6 +1,6 @@
 # Package foundation kernel
 
-This contains F02, both F03 slices, and F04a–F04d of the new nominal package. It uses the pinned
+This contains F02, both F03 slices, F04a–F04d, and F05 of the new nominal package. It uses the pinned
 Lean/Mathlib 4.34.1 and imports Mathlib directly. The reference `Nominal/` and
 `Instances/` development remains separate.
 
@@ -288,10 +288,101 @@ contains the foundation modules and their audit, without a `Package/Examples`
 layer. F04a supplies the finite support calculus and F04b supplies nominality
 and least support. F04c supplies canonical instances and freshness; F04d supplies
 canonical equivariant quotients and their support characterization.
-Supported-function and predicate interfaces, Some/Any, binders
-and recursion are later work. Bare permutations retain left multiplication and
+Full predicate logic, Some/Any, predicate quotient descent, binders
+and recursion are later work. Function objects, supported maps and predicate
+inputs are described below. Bare permutations retain left multiplication and
 ordinary functions retain their pointwise action; neither receives an automatic
 finite-supportedness or nominality claim.
+
+## Functions and predicate inputs
+
+Ordinary mathematical definitions use `X → Y` and `X → Prop`. `SupportsMap S f`
+means that f commutes with permutations fixing S; `FinitelySupportedMap A f`
+asserts existence of such a finite bound. This is conjugation support, not
+`FinitelySupported A f` under the ordinary pointwise arrow action. Identity
+has empty map support, although pointwise action can move the ordinary identity.
+The finite-map certificate is a reducible existential alias, so `simp` also
+accepts literal witnesses passed to `SupportedMap.ofFun`.
+
+`FunctionObject G X Y` contains every ordinary map and has full conjugation
+`(g • F) x = g • F (g⁻¹ • x)`. It retains `Type (max uX uY)` independently
+of G. Its action uses DivisionMonoid, and cancellation/evaluation use Group.
+Full curry/uncurry and their inverse laws have no finite-support or nonempty
+premises. General sufficient bounds use Mathlib's `MulAction.Supports`;
+`ActionSupport.supports_map_iff` reflects them through equivariant injections,
+and `.supports_smul_iff` transports them by the same group without requiring
+commuting actions. These arbitrary-set laws do not extend finite least-support
+minimality to infinite supporting sets.
+
+`supportsMap_iff` connects ordinary certificates to `FunctionObject.ofFun (Perm A)`.
+`hf.toObject` converts finite map evidence to the delivered elementwise evidence,
+so `hf.toObject.support` and `.FreshWith` reuse the existing theory. Evaluation,
+composition, pairing and parameter fixing have sufficient/least-support bounds.
+Pairing and full curry/uncurry preserve the stated exact support; composition
+and evaluation only give inclusions. `Equivariant.toMulActionHom` and
+`equivariant_coe_mulActionHom` bridge the existing Mathlib bundle.
+
+`SupportedMap A X Y` stores a full object and finite support in a proof field.
+It is nominal without requiring X or Y nominal. Use `ofFun`, `ofSupports`,
+`ofEquivariant`, or `fromParam` with explicit evidence. FunLike provides ordinary
+application, higher-order arguments, `rw` and `ext`; `toObject` is a named
+projection, not a competing coercion. Different support proofs give the same
+function value. Constants, identity, composition, pairing and evaluation have
+application/coercion simp lemmas. Computable bodies remain computable when
+classical support witnesses stay in proofs.
+
+```lean
+section FunctionInputs
+variable {A P X Y : Type*}
+variable [MulAction (Perm A) P] [MulAction (Perm A) X] [MulAction (Perm A) Y]
+
+example (E : P × X → Y) (hE : Equivariant A E)
+    (p : P) (hp : FinitelySupported A p) :
+    FinitelySupportedMap A (fun x => E (p,x)) :=
+  hE.finitelySupportedMap_section hp
+
+example (E : P × X → Y) (hE : Equivariant A E)
+    (p : P) (hp : FinitelySupported A p) (x : X) :
+    SupportedMap.fromParam E hE p hp x = E (p,x) := by simp
+
+example (f : X → Y) (hf : FinitelySupportedMap A f) (xs : List X) :
+    xs.map (SupportedMap.ofFun A f hf) = xs.map f := by simp
+end FunctionInputs
+```
+
+A nested tuple of captures with individually certified bounds gives a context
+bound by products and `SupportsMap.section`; a jointly equivariant operation
+needs only the context's bound. Extra supplied values/atoms can enlarge that
+bound by monotonicity. This proves sufficient support without selecting a least
+support. The package supplies these proof constructors, not a context scanner
+or automatic support for arbitrary globals. Atom/action selection and support
+inference are separate: use explicit A/G when the surrounding type cannot
+select them.
+
+For `F : SupportedMap A (X × Y) Z`, `F.curryAt x hx` needs support of this x.
+`F.curryWithSections hs` instead accepts `hs : F.SectionsSupported`, the exact
+condition that every section is supported. `F.curry` is the convenience form
+under `Nominal A X`; Y and Z need only actions. `H.uncurry` is unconditional.
+The admissible-subset equivalence works without nominality of X, and all these
+curry/uncurry correspondences preserve exact least support. A supported binary
+projection can have an unsupported section at an unsupported parameter, so
+unconditional bundled curry is not available.
+
+An empty-domain function is always supported: `SupportedMap.ofIsEmpty A f`
+requires no support for codomain values. `supportsMap_const_iff`,
+`finitelySupportedMap_const_iff`, `SupportedMap.support_const` and `.const_inj`
+use Nonempty for reflection/exactness. `FunctionObject.const_injective_iff`
+also records the subsingleton-codomain exception.
+
+`SupportsPred S P` uses ordinary logical equivalence; no global Prop action is
+needed. `predicateObject A P` maps into `Discrete A Prop`, with both support
+and ordinary-type correspondences. `supportsPred_iff_set` uses the existing
+Pointwise-scoped Set image action. Renaming, precomposition and fixed-parameter
+bounds have explicit and existential forms. Equality with a supported value
+has exactly its support. An unsupported predicate is still an ordinary Lean
+predicate and a legal motive; only support-sensitive uses require evidence.
+No supported-predicate logic bundle, Some/Any or predicate pullback/descent API
+is supplied by this input layer.
 
 ## Verification
 
@@ -303,7 +394,7 @@ python3 Package/Scripts/check-imports.py
 git diff --check
 ```
 
-The public root imports all nine foundation modules. The coverage script inventories
+The public root imports all delivered foundation modules. The coverage script inventories
 all Package Lean sources and checks the separate production and audit closures.
 It rejects unclassified sources, missing local imports, production-to-audit
 imports and reference-library dependencies. Its header parser is pinned Lean's

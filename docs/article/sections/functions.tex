@@ -1,0 +1,338 @@
+\section{Functions, parameters and predicates}
+\label{sec:functions}
+
+A function can be equivariant, depend on finitely many atoms, or have no
+finite support. These are different properties of the same ordinary map.
+Their relationship is best understood by first considering full function
+spaces, then restricting to supported elements. The mathematical statements
+below describe the mathematics behind the function interfaces.
+
+\subsection{Full function spaces}
+\label{sec:full-function-spaces}
+
+Let $G$ be any group acting on $X$ and $Y$. Write $[X,Y]$ for the set of
+all functions $X\to Y$ with the \emph{conjugation action}
+\begin{equation}
+  (g\act f)(x)=g\act f(g^{-1}\act x).
+  \label{eq:function-conjugation}
+\end{equation}
+The inverse in the argument ensures the action law:
+\[
+  (g\act(h\act f))(x)
+    =(gh)\act f(h^{-1}\act(g^{-1}\act x))
+    =((gh)\act f)(x).
+\]
+This is Pitts' function space for group actions
+\cite[Section~1.4, equation~(1.24), p.~18]{pitts2013}.
+
+Three operations should be distinguished. The pointwise action
+$(g\act_{\mathrm{pt}}f)(x)=g\act f(x)$ renames only outputs;
+inverse precomposition $(g\act_{\mathrm{pre}}f)(x)=f(g^{-1}\act x)$
+renames only inputs. Conjugation combines both. It agrees with inverse
+precomposition when the codomain action is trivial, and with the pointwise
+action when the domain action is trivial. In general neither simplification
+is valid. For example, conjugation fixes $\id_A$ on atoms, whereas a
+nonidentity transposition changes it under either of the other two actions.
+
+\begin{proposition}[Application and currying]
+\label{prop:function-evaluation-curry}
+For arbitrary $G$-sets $Z,X,Y$, evaluation and currying are equivariant:
+\begin{gather*}
+  \operatorname{ev}:[X,Y]\times X\longrightarrow Y,
+  \qquad \operatorname{ev}(f,x)=f(x),\\
+  \operatorname{curry}:[Z\times X,Y]\longrightarrow[Z,[X,Y]],
+  \qquad \operatorname{curry}(F)(z)(x)=F(z,x).
+\end{gather*}
+Currying is an equivariant bijection whose inverse is uncurrying.
+\end{proposition}
+
+\begin{proof}
+Evaluation satisfies
+$(g\act f)(g\act x)=g\act f(x)$ by cancellation. For currying,
+\[
+  (g\act\operatorname{curry}(F))(z)(x)
+    =g\act F(g^{-1}\act z,g^{-1}\act x)
+    =\operatorname{curry}(g\act F)(z)(x).
+\]
+The ordinary function equations prove that currying and uncurrying are
+mutual inverses; the same calculation gives equivariance of uncurrying.
+\end{proof}
+
+These calculations give the exponential universal property for group
+actions \cite[Theorem~1.7, pp.~18--19]{pitts2013}. They use no atom carrier,
+finite support, infinitude or nominality assumptions.
+
+In Lean, \texttt{FunctionObject G X Y} keeps conjugation on a distinct carrier,
+preserving Mathlib's pointwise action on ordinary arrows. The group parameter
+selects the action interpretation without raising the universe of the function
+carrier. Its ordinary-function projection supports application and extensional
+equality, but is not generally equivariant to the pointwise arrow action.
+This boundary permits arbitrary, possibly unsupported maps to participate in
+the general action theory. Equivariant maps use Mathlib's existing
+\texttt{MulActionHom} interface.
+
+\subsection{Support of functions and their values}
+\label{sec:function-support}
+
+Now take $G=\Perm(A)$. Pitts fixes countably infinite atoms from
+Chapter~2 onward; the finite-avoidance and least-support arguments here
+need infinitude but not countability. For a finite atom set $S$, write
+$\operatorname{SupportsMap}(S,f)$ for the ordinary-function condition
+\begin{equation}
+  \forall\pi\in\Perm(A),\quad
+  \bigl(\forall a\in S,\ \pi(a)=a\bigr)
+    \Longrightarrow
+  \bigl(\forall x\in X,\ f(\pi\act x)=\pi\act f(x)\bigr).
+  \label{eq:supports-map}
+\end{equation}
+Substituting $\pi\act x$ or $\pi^{-1}\act x$ shows that this is
+exactly support of $f$ in $[X,Y]$. In particular, the empty set supports
+$f$ precisely when $f$ is equivariant
+\cite[Lemma~2.17, p.~35]{pitts2013}.
+
+Let $[X,Y]_{\mathrm{fs}}$ consist of the finitely supported elements of
+$[X,Y]$. Support transport makes this subset invariant under conjugation,
+and the inherited action makes it a nominal set. This construction is
+meaningful even when $X$ or $Y$ contains unsupported elements: it is the
+supported-element construction of Pitts' Theorem~2.15, p.~34. When $X$
+and $Y$ are nominal, it is the nominal function set of Definition~2.18,
+p.~35 \cite{pitts2013}. Membership asserts that a finite bound exists;
+it does not select an observable bound as additional function data.
+
+The corresponding \texttt{SupportedMap A X Y} record stores support existence
+as a proposition. Consequently, changing that evidence changes neither its
+ordinary extensional equality nor its computational behavior. Ordinary inputs
+use \texttt{SupportsMap} certificates, with a proved correspondence to support
+of their full function objects. This lets a definition remain an ordinary Lean
+function, while a higher-order interface can carry its support evidence with
+the value. Neither interface requires every element of the domain or codomain
+to be supported.
+
+\begin{proposition}[Evaluation bound]
+\label{prop:function-evaluation-support}
+If $S$ supports $f\in[X,Y]$ and $T$ supports $x\in X$, then $S\cup T$
+supports $f(x)$. Consequently, when $A$ is infinite and $f,x$ are
+finitely supported,
+\begin{equation}
+  \operatorname{supp}(f(x))
+    \subseteq \operatorname{supp}(f)\cup\operatorname{supp}(x).
+  \label{eq:function-evaluation-bound}
+\end{equation}
+For a finitely supported function over infinite atoms,
+$\operatorname{supp}(f)=\varnothing$ if and only if $f$ is equivariant.
+\end{proposition}
+
+\begin{proof}
+A permutation fixing $S\cup T$ fixes both $f$ and $x$. Equivariance of
+evaluation therefore fixes $f(x)$. Taking least supports gives the
+inclusion. The final equivalence follows from
+\eqref{eq:supports-map} and the characterization of empty least support.
+\end{proof}
+
+Only the particular argument $x$ needs finite support; no carrier-wide
+nominality hypothesis is needed for this reasoning. In freshness form,
+$a\mathbin{\#}f$ and $a\mathbin{\#}x$ imply
+$a\mathbin{\#}f(x)$, as in Pitts' Proposition~3.4(ii), p.~50
+\cite{pitts2013}. The converse fails: the map $T\mapsto T\setminus\{a\}$
+on finite atom sets always has an output fresh for $a$, but the map itself
+has least support $\{a\}$ \cite[Example~3.5, pp.~50--51]{pitts2013}.
+Freshness of outputs alone cannot certify freshness of a function object.
+
+Empty domains deserve separate attention. For a constant map $c_y:X\to Y$,
+every support of $y$ supports $c_y$. If $X$ is nonempty, the converse
+holds: evaluating the constant-function fixed-point equation at any
+argument gives $\pi\act y=y$, without requiring that argument to be
+supported. Thus supported constants have the same least support as their
+values over infinite atoms. If $X$ is empty, there is only one function
+$X\to Y$; it is equivariant regardless of the support of $y$, and the
+constant-map construction need not be injective.
+
+\subsection{Fixed parameters and supported currying}
+\label{sec:supported-currying}
+
+Suppose $F:Z\times X\to Y$ has finite support $S$. If $z\in Z$ has
+support $T$, then the section $F_z:x\mapsto F(z,x)$ has support
+$S\cup T$. Indeed, a permutation fixing this union satisfies
+\[
+  F(z,\pi\act x)=F(\pi\act z,\pi\act x)=\pi\act F(z,x).
+\]
+For jointly equivariant $F$, the parameter bound $T$ alone suffices.
+Fixing an atom parameter therefore generally produces a supported function,
+not an equivariant one. For example, $F(a,x)=a$ is jointly equivariant,
+but for a nonempty domain its section has least support $\{a\}$ over
+infinite atoms.
+
+Full-space currying always preserves and reflects every support bound,
+because it is an equivariant bijection. A different question is whether
+its values belong to $[X,Y]_{\mathrm{fs}}$. For a particular $F$, the
+exact condition is that every section $F_z$ is finitely supported.
+Finite supportedness of $F$ together with nominality of $Z$ is a
+sufficient uniform condition. Under it, currying gives a correspondence
+\[
+  [Z\times X,Y]_{\mathrm{fs}}
+    \simeq [Z,[X,Y]_{\mathrm{fs}}]_{\mathrm{fs}}.
+\]
+No nominality of $X$ or $Y$ is needed for this correspondence. If all three
+carriers are nominal, its restriction to equivariant maps is the
+exponential correspondence in the category of nominal sets
+\cite[Section~2.4 and Theorem~2.19, pp.~35--36]{pitts2013}.
+
+The section condition cannot simply be dropped. Let $Z$ contain an
+unsupported element $z$, take $X$ to be a one-point discrete set, and let
+$F:Z\times X\to Z$ be the first projection. The map $F$ is equivariant,
+so is finitely supported, but $F_z$ is the unsupported constant map with
+value $z$. This counterexample concerns the codomain restriction of
+currying; the full-space equivariant bijection remains valid.
+
+The interface exposes this distinction through \texttt{curryAt}, using evidence
+for one parameter, and \texttt{curryWithSections}, using evidence for every
+section. The latter agrees with ordinary currying on application and is inverse
+to uncurrying on its admissible domain. The convenient \texttt{curry} operation
+derives section evidence from nominality of the parameter carrier. Support
+reflection through the injective uncurrying map proves exact support equality,
+rather than only an upper bound.
+
+\subsection{Predicates with ordinary truth values}
+\label{sec:function-predicates}
+
+A predicate remains an ordinary $P:X\to\mathrm{Prop}$. Its renaming
+operation is inverse precomposition:
+\begin{equation}
+  (\pi\act P)(x)=P(\pi^{-1}\act x).
+  \label{eq:predicate-action}
+\end{equation}
+This is conjugation with trivial action on truth values, corresponding
+to Pitts' powerset construction from a discrete two-element truth object
+\cite[Section~1.5, pp.~19--20]{pitts2013}. It does not require replacing
+ordinary propositions by a separate internal logic.
+
+One can state support directly, without choosing any action instance on
+\texttt{Prop}:
+\begin{equation}
+\begin{split}
+  \operatorname{SupportsPred}(S,P)\quad\Longleftrightarrow\quad
+  &\forall\pi\in\Perm(A),\quad
+  \bigl(\forall a\in S,\ \pi(a)=a\bigr)\\
+  &\hspace{1em}\Longrightarrow
+    \bigl(\forall x,\ P(\pi\act x)\leftrightarrow P(x)\bigr).
+\end{split}
+\label{eq:supports-predicate}
+\end{equation}
+If an acted-on predicate carrier is used, function extensionality and
+propositional extensionality identify this condition with support under
+\eqref{eq:predicate-action}. Equivalently, closure of the satisfying set
+under every permutation fixing $S$ suffices: applying the closure property
+also to inverses supplies the reverse implication
+\cite[Lemma~2.24, p.~39]{pitts2013}. For a supported binary predicate,
+fixing a supported parameter gives the same union bound as for functions;
+Pitts' Proposition~2.25, p.~39 gives this argument for subsets of products.
+
+Support of a truth value and support of a predicate are different notions.
+For example, $P_a(x)\equiv(x=a)$ is renamed to $P_{\pi a}$.
+Its singleton bound $\{a\}$ supports it, but a swap moving $a$ changes it.
+With trivial action each individual proposition is fixed, but its dependence
+on a renamed argument can still have no finite bound. If an atom subset
+$U\subseteq A$ and its complement are both infinite, the predicate
+$a\mapsto a\in U$ is unsupported. Given a proposed finite support $S$,
+choose $a\in U\setminus S$ and $b\notin U\cup S$. Their swap fixes $S$
+and changes membership. More generally, an atom subset is finitely
+supported exactly when it is finite or cofinite
+\cite[Proposition~2.9, pp.~31--32]{pitts2013}. Thus arbitrary predicates
+remain legitimate logical inputs, including induction motives, while their
+use as supported parameters requires a separate hypothesis.
+
+\subsection{Sufficient support from a context}
+\label{sec:function-context-support}
+
+Pitts' Equivariance Principle states that constructions from equivariant
+functions and relations by higher-order logic remain equivariant
+\cite[Proposition~1.9 and following principle, p.~21]{pitts2013}.
+For a construction depending on parameters, the equivariance assertion
+renames all those parameters together. Fixing them gives the following
+useful sufficient-bound rule.
+
+\begin{proposition}[Context support]
+\label{prop:function-context-support}
+Let $c_i\in C_i$ have finite support bounds $S_i$, for $1\leq i\leq n$.
+If $E:(C_1\times\cdots\times C_n)\times X\to Y$ has support bound
+$S_0$, then
+\[
+  S_0\cup S_1\cup\cdots\cup S_n
+  \quad\text{supports}\quad
+  \bigl(x\mapsto E((c_1,\ldots,c_n),x)\bigr).
+\]
+In particular, for jointly equivariant $E$ one can take $S_0=\varnothing$.
+The same rule holds for predicates, interpreting the support equation
+by logical equivalence.
+\end{proposition}
+
+\begin{proof}
+A permutation fixing the union fixes every $c_i$. The support equation
+for $E$ then specializes to
+\[
+  E((c_1,\ldots,c_n),\pi\act x)
+    =\pi\act E((c_1,\ldots,c_n),x).
+\]
+For predicates the identical argument uses a biconditional instead of
+equality of outputs.
+\end{proof}
+
+Only sufficient bounds for these particular values are needed. The proof
+does not require least supports, infinitude of the atom carrier or
+nominality of every element of each $C_i$. Consequently, explicitly
+supplied support certificates suffice for this form of context reasoning;
+no constructive least-support theorem is being assumed. Pitts' Finite
+Support Principle gives the corresponding closure account for nominal
+higher-order logic, with function and subset quantification ranging over
+supported objects \cite[Section~2.5, pp.~39--40]{pitts2013}.
+The distinction is consequential constructively: general existence of least
+finite supports is not constructively provable, as Swan's counterexamples
+show \cite[Theorem~3.5]{swan2017}. Particular structures can still have
+constructively defined least supports; the context rule above only uses
+the supplied sufficient bounds.
+
+Urban's Isabelle/HOL account uses a closely related method: the free
+variables of a HOL expression suggest a support bound, then swapping
+equations certify it \cite[Section~5, Definition~5, Lemma~11 and
+Examples~1--2]{urban2008}. His discussion of function-space integration
+concerns Isabelle's infrastructure; it does not establish an obstruction
+to proof-field function bundles in Lean. A suitable interface can therefore
+accept ordinary functions with explicit certificates while also exposing
+supported function values for higher-order nominal reasoning.
+
+Selecting the atom carrier and its actions is distinct from establishing
+these support certificates. A function type determines its domain and
+codomain; it does not determine which atom parameters a particular function
+uses or whether it is finitely supported. A context-based proof may combine
+supplied bounds with proved equivariance rules, but merely listing local
+values proves no support claim. Captured functions and predicates require
+their own evidence when such a rule uses them, and fixed global values
+are parameters too. This is the warning of Pitts' Note~1.10, p.~22
+\cite{pitts2013}. Conversely, a bound obtained by collecting parameters
+is only sufficient: an expression may ignore a parameter or cancel its
+dependence, so a larger context need not describe its least support.
+
+\subsection{The boundary of choice}
+\label{sec:function-choice}
+
+Classical choice does not remove these obligations. For infinite $A$,
+there is no finitely supported function
+$c:\Finset(A)\to A$ satisfying $c(S)\notin S$ for every finite $S$.
+If $T$ supported such a function, then $T$ supports itself as a finite
+atom set, so the evaluation bound would give
+$\operatorname{supp}(c(T))\subseteq T$. The canonical atom support
+$\operatorname{supp}(c(T))=\{c(T)\}$ contradicts $c(T)\notin T$.
+This is the finite-avoidance form of the obstruction in Pitts'
+Theorem~2.29, p.~43, concerning choice from nonempty supported atom subsets
+\cite{pitts2013}. Each individual fresh atom exists, and classical Lean
+may select one; the resulting global selector has no finite support.
+Ordinary choice, equivariance and finite supportedness must therefore
+remain separate assertions.
+
+Pitts explicitly excludes unrestricted Hilbert choice from the
+Equivariance Principle \cite[Note~1.11, p.~22]{pitts2013}. Choice used
+to extract a uniquely determined value is different: if the defining
+relation is equivariant and total with unique outputs, renaming preserves
+the relation and uniqueness forces the chosen function's equivariance.
+Thus a choice-based definition needs an appropriate mathematical argument;
+the occurrence of choice alone neither supplies nor refutes its support.

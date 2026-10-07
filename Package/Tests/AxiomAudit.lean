@@ -107,6 +107,33 @@ run_cmd do
 #print axioms NominalPackage.FinitelySupported.mem_support_map_iff
 #print axioms NominalPackage.QuotientAction.support_eq_iInter
 
+#print axioms NominalPackage.ActionSupport.supports_map_iff
+#print axioms NominalPackage.ActionSupport.supports_smul_iff
+#print axioms NominalPackage.FunctionObject.smul_eq_iff
+#print axioms NominalPackage.FunctionObject.curryEquiv
+#print axioms NominalPackage.FunctionObject.supports_curry_iff
+#print axioms NominalPackage.FunctionObject.evalHom
+#print axioms NominalPackage.supportsMap_iff
+#print axioms NominalPackage.FinitelySupportedMap.toObject
+#print axioms NominalPackage.FinitelySupportedMap.support_pair
+#print axioms NominalPackage.FinitelySupportedMap.support_curry
+#print axioms NominalPackage.FinitelySupportedMap.freshWith_apply
+#print axioms NominalPackage.Equivariant.supportsMap_section
+#print axioms NominalPackage.predicateObjectEquiv
+#print axioms NominalPackage.supportsPred_iff
+#print axioms NominalPackage.supportsPred_iff_set
+#print axioms NominalPackage.FinitelySupported.support_predicate_eq
+#print axioms NominalPackage.SupportedMap.ofFun
+#print axioms NominalPackage.SupportedMap.instNominal
+#print axioms NominalPackage.SupportedMap.supportedSubtypeEquiv
+#print axioms NominalPackage.SupportedMap.support_toObject
+#print axioms NominalPackage.SupportedMap.eval
+#print axioms NominalPackage.SupportedMap.curryWithSections
+#print axioms NominalPackage.SupportedMap.admissibleCurryEquiv
+#print axioms NominalPackage.SupportedMap.curryEquiv
+#print axioms NominalPackage.SupportedMap.supports_uncurry_set_iff
+#print axioms NominalPackage.SupportedMap.support_curryWithSections
+
 set_option maxHeartbeats 0 in
 -- This budget applies only to the inspection traversal, not mathematical proofs.
 run_cmd do

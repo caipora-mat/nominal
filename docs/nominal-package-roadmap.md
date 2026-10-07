@@ -1,13 +1,12 @@
 # Nominal package roadmap
 
-Last updated: 2026-10-06. Branch: `fasapa/nominal-package`.
+Last updated: 2026-10-07. Branch: `fasapa/nominal-package`.
 Research baseline: `7fed53a2e5fc67379f86f085515e310e7c1fddb7`.
 F01 assessment snapshot: `76966b1f2e44f594517442b6572e33abaa9038e0`.
-Current inspected HEAD: `9c1cb9aa2f9f69d8d801a9864a9f0220b92ea62a`
-(`Freshness`), immediately after `68956dd23066c7c5c647345e5598b859ff97a10c`.
-F04a/F04b were committed in the earlier revision; the newer commit includes
-F04c, its general-freshness extension, article, research and instruction updates.
-The working tree was clean when the requested F04d design began.
+Current inspected HEAD: `32f3dba551761881409bbc7453054e214e582269`
+(`Nominal quotient`). F04a/F04b are committed at `68956dd`,
+F04c/general freshness at `9c1cb9a`, and F04d at this HEAD.
+The working tree and index were clean when the F05 investigation began.
 F04c's specification and native plan were approved; its code, consumers, audit,
 article and resolved independent reviews are delivered. F04c is DONE.
 The author then approved general support-disjointness freshness as a bounded
@@ -21,8 +20,15 @@ including the stronger supported-fiber characterization and quotient corollary.
 Its [native implementation plan](superpowers/plans/2026-10-06-package-equivariant-quotients.md)
 was subsequently approved. Native implementation, integrated Lean/article
 checks and the fresh independent final review pass with no findings.
-**F04d and the reconciled parent PKG-F04 are DONE**, delivered uncommitted.
-F05 and PKG-01 remain undelivered.
+**F04d and the reconciled parent PKG-F04 are DONE**, with F04d committed at
+`32f3dba`. F05 now has an author-approved
+[written specification](superpowers/specs/2026-10-07-package-function-space-design.md)
+and [source/probe investigation](research/2026-10-07-function-space-foundations.md).
+Its [implementation plan](superpowers/plans/2026-10-07-package-function-space.md)
+was approved for native execution. F05 code, public consumers, audit and article
+pass integrated checks and the independent final review, with no findings.
+**PKG-F05 is DONE**, delivered uncommitted.
+PKG-01 remains undelivered.
 Earlier uncommitted-delivery descriptions retain their historical meaning.
 F04a/F04b's specifications and native plans were approved, and their code,
 consumers, audits, articles and independent final reviews passed.
@@ -157,7 +163,8 @@ F04a is delivered with matching LaTeX exposition and a clean independent final r
 F04b is delivered with matching LaTeX exposition and a clean independent final
 review. F04a/F04b are committed at `68956dd`. F04c is delivered with passing validation and resolved independent final review.
 F04d is delivered with passing checks and a clean independent final review;
-F05/F06 and PKG-01 remain unimplemented.
+F05 is delivered with passing checks and independent final review, uncommitted.
+F06 and PKG-01 remain unimplemented.
 
 Distinguish user decisions, integrated theorems, standalone probes, source
 readings, mathematical analyses and proposed interfaces. Record revision and
@@ -197,8 +204,8 @@ polish is not required to complete an increment, but accurate exposition is.
 | PKG-F01 | IN PROGRESS — first foundation spec approved; later layer choices remain proposed | Current user decisions; PKG-00 evidence; pinned algebraic source | Algebraic-sketch investigation, foundation/API contract and per-layer adoption/adaptation/reconstruction decisions |
 | PKG-F02 | DONE — verified, committed delivery | Approved F01 boundary for F02/F03a; approved native plan | `Package/` root, Lake/import boundary and production audit coverage |
 | PKG-F03 | DONE — F03a and F03b verified and committed | Approved F01 boundary; F02; approved F03b native plan | Atoms, finite permutations, actions and equivariance |
-| PKG-F04 | DONE — all four slices and overall criteria verified; F04d uncommitted | PKG-F03; F04a → F04b → F04c/F04d | Finite support calculus, nominality/least support, canonical instances/freshness, canonical equivariant quotients |
-| PKG-F05 | TODO | PKG-F04 | Minimal function-space and predicate-input interface |
+| PKG-F04 | DONE — all four slices verified and committed | PKG-F03; F04a → F04b → F04c/F04d | Finite support calculus, nominality/least support, canonical instances/freshness, canonical equivariant quotients |
+| PKG-F05 | DONE — native implementation, integrated checks and independent final review; uncommitted | PKG-F04; proposed F05a → F05b → F05c | Function objects, ordinary map/predicate certificates and supported values |
 | PKG-F06 | TODO | PKG-F04/F05 | Abstraction, concretion or equivalent certified binder-descent facility |
 | PKG-01 | TODO | PKG-F04/F05 | Supported predicates, logical support and quotient-predicate descent |
 | PKG-02 | TODO | PKG-F04; approved backend/grammar from PKG-F01 | Manual syntax-carrier certificate with constructor/action/support laws |
@@ -210,7 +217,7 @@ polish is not required to complete an increment, but accurate exposition is.
 | PKG-08 | TODO | PKG-07 and a scoped let specification | Lambda with let and expansion correctness |
 | PKG-09 | TODO | PKG-07 and a residual-binding/transition specification | π-calculus case study |
 | PKG-10 | TODO | PKG-07 and a positivity/semantic specification | μ-calculus case study |
-| PKG-11 | IN PROGRESS — F02/F03a/F03b/F04a–F04d LaTeX exposition and evidence delivered | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
+| PKG-11 | IN PROGRESS — foundation exposition plus F05 mathematical research section | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
 
 The implementation dependency spine is
 `F01 → F02 → F03a → F03b → F04 → F05 → PKG-01`, with concurrent
@@ -427,7 +434,7 @@ remain delivered and are not reopened.
 | F04a — Finite support calculus | DONE — verified, committed at `68956dd`; clean final review | Delivered F03b and selected actions | `docs/article/sections/support.tex`, `sec:finite-support` |
 | F04b — Nominality and least support | DONE — verified, committed at `68956dd`; clean final review | F04a, especially finite intersection | `docs/article/sections/support.tex`, `sec:least-support` |
 | F04c — Canonical instances and freshness | DONE — committed at `9c1cb9a`, including general freshness; final reviews resolved | F04a/F04b; delivered canonical actions | `docs/article/sections/freshness.tex`, `sec:canonical-support` and `sec:freshness` |
-| F04d — Canonical equivariant quotients | DONE — verified working-tree delivery; clean independent final review | F03 actions; F04a support bounds; F04b nominality/least support; delivered F04c for canonical/freshness consumers | `docs/article/sections/quotients.tex`, `sec:equivariant-quotients` |
+| F04d — Canonical equivariant quotients | DONE — verified and committed at `32f3dba`; clean independent final review | F03 actions; F04a support bounds; F04b nominality/least support; delivered F04c for canonical/freshness consumers | `docs/article/sections/quotients.tex`, `sec:equivariant-quotients` |
 
 All four assigned article sections are written. F04d's action construction and
 support preservation need no infinitude;
@@ -585,7 +592,7 @@ public-import consumers. The author approved that concrete plan before productio
 changes. All interfaces, consumers, integrated audit/coverage and matching article
 now pass. The requested fresh independent final review found no Critical,
 Important or Minor issues and independently rebuilt Package artifacts and the
-article. F04d is DONE, uncommitted; the overall F04 criteria are reconciled below.
+article. F04d is DONE, committed at `32f3dba`; the overall F04 criteria are reconciled below.
 The other checked generalizations are dispositioned individually, not silently
 promoted to production APIs. Native execution and one fresh independent final
 review remain selected; no other proposal has been silently implemented.
@@ -645,31 +652,60 @@ F05/PKG-01; abstraction, FCB, recursion and generators remain later work.
 
 **PKG-F04 is DONE.** The execution work log maps each overall criterion to
 current passing consumers and preserved delivered theory. The independent final
-review checked that reconciliation. F04d is delivered in the working tree;
+review checked that reconciliation. F04d is committed at `32f3dba`;
 F05 and PKG-01 are not marked delivered by this closure.
 
-### PKG-F05 — Minimal function-space and predicate-input interface
+### PKG-F05 — Function-space and predicate-input foundation
 
-- [ ] Choose the least interface needed to express finitely supported maps or
-  predicates: bundles, explicit support proofs, supported subsets, or another
-  justified representation.
-- [ ] Prove function conjugation/evaluation laws where function objects are
-  used. Distinguish this action from ordinary pointwise function actions and
-  preserve instance coherence, including empty-domain cases.
-- [ ] Provide ordinary application and extensionality, support of evaluation,
-  and fixed-parameter support bounds from joint equivariance. Add only the
-  composition/partial-application adapters required by immediate clients.
-- [ ] Specify coherent truth action when `Prop` is itself an acted-on carrier,
-  or give the corresponding logical interface if predicates are represented
-  without such an instance. Check atom parameters and universe inference.
-- [ ] Reject automatic finite-support/equivariance claims for arbitrary ordinary
-  functions, arbitrary globals and unsupported predicates. Consume a supported
-  but non-equivariant fixed-parameter example successfully.
+**DONE — approved native implementation, integrated checks and independent final review; uncommitted.** The
+[written specification](superpowers/specs/2026-10-07-package-function-space-design.md)
+selects a hybrid: ordinary map/predicate certificates, a distinct full
+conjugation function carrier, and a proof-field supported-function bundle.
+The [investigation](research/2026-10-07-function-space-foundations.md) compares
+all four requested approaches, pinned Mathlib, Pitts and bounded probes.
+This supersedes the earlier immediate-client-only restriction: natural
+mathematical generality is a foundation criterion, not a reason to build
+unrelated category infrastructure or metaprogramming.
 
-Accept a small representation-specific foundation that makes PKG-01 precise
-and usable. A legacy `NFun` wrapper, a global nominal `Prop` instance, the old
-macro and a full higher-order function library are not prerequisites. Broader
-function ergonomics and automation belong to PKG-05 when clients require them.
+- [x] Inventory current foundations and pinned Mathlib; investigate Pitts' book.
+- [x] Compare ordinary certificates, full function objects, supported bundles
+  and a hybrid; investigate ordinary-first versus bundle-first consumers.
+- [x] Prepare exact contracts, boundary probes, article exposition and a written
+  specification with phase dependencies for review.
+- [x] Author approves the written specification and three-phase hybrid scope.
+- [x] Prepare the [implementation plan](superpowers/plans/2026-10-07-package-function-space.md),
+  including exact interfaces, consumers, article work and verification.
+- [x] Author reviewed the implementation plan and selected native execution.
+- [x] F05a: full conjugation carrier, coherent FunLike, group evaluation,
+  composition/pairing and curry/uncurry, general support correspondence.
+- [x] F05b: ordinary map and predicate certificates, elementwise evaluation and
+  fixed-parameter bounds, transport, discrete-truth bridge and negative boundaries.
+- [x] F05c: supported proof-field values, nominality, exact embedding support,
+  ordinary higher-order use, admissible curry and empty-domain behavior.
+- [x] Integrate the selected interface under Package with module/import/axiom
+  coverage, consuming checks and reconciled article evidence.
+
+The plan specifies `ActionSupport.lean`, `FunctionAction.lean`, `FunctionSupport.lean`,
+`PredicateSupport.lean` and `SupportedFunction.lean` under `Package/Foundations/`.
+F05a uses general group/action machinery; F05b uses it with delivered F04;
+F05c adds persistent supported values. A function-space action itself may use
+DivisionMonoid; cancellation/evaluation use Group. No global alternate action
+on bare arrows or Prop is proposed. Full curry works on arbitrary acted carriers;
+bundled curry needs supported sections, supplied in particular by supported
+parameters or nominality of the parameter carrier. Other carriers need not be
+nominal. Ordinary inputs and generic function support must never be confused
+with pointwise support of bare arrows.
+
+Context-derived sufficient bounds, including user-provided values/bounds, are
+an explicit intended consumer of the section/composition laws. No least-support
+computation is required. An elaborator must still prove capture support and
+operation compatibility; context inspection itself is later function tooling.
+Full predicate logic, Some/Any and surjective-equivariant predicate pullback/
+quotient descent remain PKG-01. Binder descent remains F06. No syntax, tactics,
+macros, generators, category instances or case-study migration belongs to F05.
+Accept the reusable interfaces and all stated phase criteria, not merely one
+compiling wrapper probe. Public spellings and the seven-task execution sequence
+are recorded in the plan for review.
 
 ### PKG-F06 — Binding, representatives and descent
 
@@ -681,6 +717,11 @@ function ergonomics and automation belong to PKG-05 when clients require them.
 - [ ] Establish the supported binder-descent principle needed by iteration:
   representative independence, scoped handler compatibility, existence,
   uniqueness and support/parameter bounds where claimed.
+- [ ] Specify whether binder-output conditions quantify over all values,
+  individually supported results, or certified reachable child/result pairs.
+  Preserve the exact premise needed for the chosen representative-independence
+  proof; the [Urban study](research/2026-10-07-urban-nominal-techniques.md)
+  gives an elementwise-result precedent, not a preselected FCB implementation.
 - [ ] Test nested binders, a binder over a product, fixed nominal parameters
   and let's scope over the body alone. Retain the constant-atom counterexample
   to unconditional supported abstraction mapping.
@@ -747,6 +788,13 @@ commands or migrate the manual case study in this task.
 - [ ] Compare concrete proof/transport costs before selecting a universal
   carrier or committing to per-declaration generation.
 
+The [Urban study](research/2026-10-07-urban-nominal-techniques.md) adds a
+restricted abstraction-function subset as comparison evidence. It does not
+require that backend: compare the actual constructor/action/support/induction
+contracts with a quotient construction. A bare bijection or an unrestricted
+function-valued syntax field does not establish them. Preserve Lean's empty
+datatype test independently of HOL's inhabited-type policy.
+
 Accept a manual certificate for actual constructors, not merely an interpreted
 arity or an arbitrary type equivalence. If initiality is claimed, specify and
 prove the structure map, map class, commuting equations and uniqueness. The
@@ -756,8 +804,15 @@ old lambda carrier is reference evidence; its representation need not be reused.
 
 - [ ] Prove arbitrary-motive induction with context-generalized recursive
   hypotheses, including avoidance enlarged under nested binders.
+- [ ] Assess the elementwise avoidance parent from Urban's Theorem 2:
+  a context-selection function may return a supported value for each context
+  without itself being supported or equivariant. Keep the motive arbitrary.
+  See the [Urban investigation](research/2026-10-07-urban-nominal-techniques.md).
 - [ ] Use the proved F06 facility to establish supported iteration, including
   scoped binder compatibility, totality and uniqueness.
+- [ ] Assess individually supported outputs in an arbitrary acted-on result
+  carrier before imposing a carrier-wide nominality hypothesis. Keep any
+  stronger convenience interface as a derived specialization.
 - [ ] Export guarded computation, support bounds, parameter/renaming laws and
   independence from a chosen support bound wherever the contract claims them.
 - [ ] Demonstrate reconstruction and capture-avoiding substitution with the
@@ -792,10 +847,21 @@ fields need separate proofs. Legacy container instances are optional evidence.
   computation equations and the selected proof-backed support interface.
 - [ ] Check captures by elaborated expression/local identity; use registries
   of checked theorems while preserving action instances and binding scopes.
+- [ ] Separate candidate-bound discovery from certification: combine relevant
+  local captures with user-provided values/bounds, then prove the support
+  equation. Prefer sufficient bounds; no least-support inference is required.
 - [ ] Prove a distinct primitive recursor and a consumer using both original
   children and recursive results, with its advertised support/uniqueness laws.
 - [ ] Expose unsolved support, binder-descent, coverage and termination
-  obligations. Failed commands must not leave a partial public package.
+obligations. Failed commands must not leave a partial public package.
+
+Use the [Urban investigation](research/2026-10-07-urban-nominal-techniques.md)
+to distinguish support proof, binder-output/descent proof and discharge of the
+user-facing freshness guard. Primitive recursion must establish support of
+reachable outputs as well as totality/uniqueness. Reject bound-name and exposed
+body selectors for alpha-compatibility reasons, separately from missing support
+certificates. Graph transport permutes handlers jointly; fixed supported
+handlers do not imply unconditional equivariance.
 
 Accept generated substitution, higher-order use, `rw`/`simp`/`ext`, shadowing,
 nested scopes and meaningful failure diagnostics. Arbitrary globals must not
@@ -805,6 +871,10 @@ recursion or promise unrestricted dependent elimination. The old `nfun` macro
 and `NFun` packaging are not required parts of the command implementation.
 
 ### PKG-06 — Judgment contracts and generation
+
+Urban's structural induction theorem is not a fresh-rule theorem. Retain the
+separate criterion below; the [source study](research/2026-10-07-urban-nominal-techniques.md)
+maps its historical warning without treating it as a proof of our later rules.
 
 - [ ] Establish a sufficient fresh-rule criterion: per-rule transport or a
   proved semantic refreshability theorem preserving the intended relation.
@@ -983,8 +1053,11 @@ Lean rebuild. A successful document check is never package proof evidence.
    [native plan](superpowers/plans/2026-10-06-package-equivariant-quotients.md)
    was approved before production changes. F04d code, consumers, audit and
    article and independent final review pass. F04d and the reconciled parent
-   PKG-F04 are DONE, with F04d uncommitted. F05 is the next foundation boundary
-   before PKG-01; it retains its own design and approval requirements.
+   PKG-F04 are DONE, with F04d committed at `32f3dba`. F05's hybrid and three phases are now approved. Its
+   [implementation plan](superpowers/plans/2026-10-07-package-function-space.md)
+   was approved for native execution. Code, consumers, audit and article pass;
+   the independent final review passed without findings. PKG-F05 is DONE,
+   uncommitted; PKG-01 remains later work.
    The [approved F03b specification](superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
    and [native plan](superpowers/plans/2026-10-05-package-controlled-swaps.md)
    supply its bounded contract. The swap criterion supplies permutation input;
@@ -997,10 +1070,16 @@ retain the working-tree status at their own inspections. F04c's inspection
 began with a clean tree at `68956dd`, containing committed F04a/F04b delivery.
 Persistent usage examples belong to future case studies. The current
 Package audit covers production declarations directly; the reference examples
-remain unchanged. The candidate direct SPred interface is still a proposal and
-requires no complete general supported-function library as a hidden prerequisite.
+remain unchanged. Direct SPred remains an unapproved storage proposal. The
+F05 hybrid deliberately scopes a reusable function foundation; the final
+supported-predicate representation and logical/descent operations stay PKG-01.
 
 ## Research artifacts
+
+- [Approved F05 written specification](superpowers/specs/2026-10-07-package-function-space-design.md).
+- [Approved F05 native implementation plan](superpowers/plans/2026-10-07-package-function-space.md).
+- [F05 current-source, Mathlib, Pitts and interface investigation](research/2026-10-07-function-space-foundations.md).
+- [Urban's nominal techniques: broader carrier, induction, recursion and automation investigation](research/2026-10-07-urban-nominal-techniques.md).
 
 - [Discrete permutation sets, representation comparison and Mathlib reuse](research/2026-10-05-discrete-representation.md).
 - [Current readiness and exact proposed predicate contracts](research/2026-10-05-pkg01-readiness.md).
@@ -2714,3 +2793,165 @@ branch and HEAD are preserved. Final closure changes documentation only.
 **F04d is DONE; all overall criteria are met and PKG-F04 is DONE.** F05 and
 PKG-01 remain undelivered. All changes and retained evidence remain uncommitted,
 with no branch, publication or integration action performed.
+
+### 2026-10-07 — F05 architectural investigation and written specification
+
+Started from a clean index/tree on `fasapa/nominal-package` at
+`32f3dba551761881409bbc7453054e214e582269` (`Nominal quotient`). Reconciled
+current-state summaries to record committed F04d; retained historical logs.
+No completed foundation task was restarted.
+
+The [F05 investigation](research/2026-10-07-function-space-foundations.md)
+inventories current Package source, pinned Mathlib and Pitts, compares all four
+requested representations, and records bounded positive/negative Lean evidence.
+Three independent investigations recommend a contextual hybrid: ordinary
+function/predicate inputs with explicit certificates, distinct full conjugation
+objects, and proof-field supported bundles for persistent nominal values.
+The [written specification](superpowers/specs/2026-10-07-package-function-space-design.md)
+sets proposed phases F05a (general function actions), F05b (map/predicate inputs)
+and F05c (supported values and admissible curry). It is for author review, not
+an approved implementation plan. F05 is IN PROGRESS; production checkboxes,
+PKG-01 and F06 remain open.
+
+The author asked agents to investigate the ordinary-first/bundle-first choice,
+then proposed local-context plus user-provided sufficient bounds. The spec now
+requires explicit-bound constructors and a proof-backed context rule, without
+least-support computation. A retained consumer combines two particular capture
+bounds with an arbitrary enlargement. Context discovery remains later tooling;
+a proposed bound does not certify unsupported functions, predicates or globals.
+The supplied Urban manuscript was read for that heuristic and, at the author's
+request, broader induction/recursion consequences; the
+[separate note](research/2026-10-07-urban-nominal-techniques.md) records its
+version, exact contracts, source cautions and future-task implications.
+
+Root verification actually run:
+
+- `lake env lean docs/research/probes/F05FunctionSpace.lean`: exit 0, including
+  full curry/uncurry, action separation, ordinary and nominal higher-order
+  consumers, context bounds, proof-field computation and predicate bridge.
+- `lake env lean docs/research/probes/F05Boundaries.lean`: exit 0, including
+  empty domains, sharp constant injectivity, unsupported sections/predicates,
+  fixed-atom equality and impossibility of supported fresh selection.
+- `lake env lean docs/research/probes/GeneralizationSupport.lean`: exit 0;
+  existing arbitrary-set support/reflection and finite-minimality boundary rerun.
+- Representative `#print axioms` outputs use only `propext`, `Classical.choice`
+  and `Quot.sound`; the concrete `#eval` identity returns `true`.
+- Integrated article compiled with `latexmk`, output under
+  `/tmp/nominal-f05-final-article/`; final log has no LaTeX warnings or undefined
+  references. Exposition adds functions, sufficient contexts, curry limits and
+  grounded Pitts/Urban/constructive comparisons, without implementation claims.
+- `git diff --check`, explicit changed/new-file whitespace and local Markdown
+  target checks passed; production/configuration diff and staged diff are empty.
+
+These are standalone elaborations with cached pinned imports, not a fresh
+production build or dependency bootstrap. No new production audit is claimed.
+No production Lean, dependencies, CI, branch, commits, pushes or publication
+changed. Research/LaTeX/specification edits and new scratch sources remain
+uncommitted. The next gate is author review of the written specification;
+implementation planning and its review/execution-method selection follow only
+then.
+
+### 2026-10-07 — F05 specification approved; implementation plan prepared
+
+The author approved the written F05 specification after its review delivery.
+The hybrid, three phases, context-bound interface and PKG-01 predicate-storage
+boundary are now approved design. Production implementation has not started.
+The [implementation plan](superpowers/plans/2026-10-07-package-function-space.md)
+contains seven tasks, exact shared interfaces, temporary public-import consumers,
+negative boundaries, article reconciliation and integrated audit/checks.
+It adds the small ActionSupport module explicitly permitted by the spec so that
+arbitrary-scalar reflection and group transport are shared without refactoring
+F04. The author has not yet reviewed this new plan or selected its execution
+method. Native execution with a fresh independent final review is recommended
+because the tasks share the same type/action/coercion interfaces.
+
+Planning rechecked branch, HEAD, dirty state, current production signatures,
+Mathlib adapters, module/import/audit coverage and the preceding plan conventions.
+HEAD remains `32f3dba`; all earlier uncommitted research, probes and LaTeX are
+preserved. A pre-plan hash snapshot is retained at
+`/tmp/nominal-f05-planning-baseline.json`. The inline plan self-review checked
+spec coverage, dependency/interface consistency, five review-focus cases and
+proportion. It corrected the computation consumer to use infinite Nat atoms
+with discrete Bool data when its proof mentions least support.
+
+Documentation links, code fences, whitespace, `git diff --check` and preservation
+against the initial hashes passed. Only approval/status documentation and the
+new plan changed in this turn. No production Lean, scratch probe, article source,
+configuration, index or Git history changed; no Lean or LaTeX rebuild was needed
+or claimed for this planning-only update. No commits were made. The next gate
+is written-plan review and execution-method selection, not another specification
+approval or a restart of the investigation.
+
+### 2026-10-07 — Native F05 implementation and integrated verification
+
+The author approved the written plan for native execution. Work stays on
+`fasapa/nominal-package` at HEAD `32f3dba`, with earlier uncommitted research,
+probes, article and design records preserved. The five new production modules
+are ActionSupport, FunctionAction, FunctionSupport, PredicateSupport and
+SupportedFunction, exported by Package. The code implements the approved
+three-phase hybrid: general full function actions, ordinary map/predicate
+certificates and supported function values with admissible currying.
+
+Evidence directory: `/tmp/nominal-package-f05-execution.dsh2fg3l/`.
+It retains the initial hash snapshot, native ledger, per-task failing/passing
+logs, eight public-import consumers, a checked README consumer and article PDF.
+The standalone consumers establish action separation, independent universes,
+ordinary higher-order rewriting, computation with noncomputable proof evidence,
+context bounds, empty constants, exact supported curry and the stated negative
+boundaries. Every consumer currently exits 0 without warnings.
+
+A concrete ergonomics failure required a focused representation detail:
+`FinitelySupportedMap` and `SupportedMap.SectionsSupported` are reducible aliases
+of their exact specified propositions. Literal existential/lambda evidence made
+constructor/curry simp fail under implicit transparency with semireducible defs.
+The retained RED/GREEN consumers exercise those exact calls. No existing support
+or action definition changed, and no broad transparency setting was introduced.
+This is a proof-interface choice, not weaker mathematics or an inferred support.
+
+Integrated checks actually run:
+
+- `lake build Package +Package.Tests.AxiomAudit`: exit 0, 980 jobs, rebuilding
+  new/affected project modules against cached pinned dependencies.
+- `lake env lean Package/Tests/AxiomAudit.lean`: exit 0; 573 production
+  declarations from 14 defining modules; only propext, Classical.choice and
+  Quot.sound. The direct run is separate from Lake's cached replay behavior.
+- All eight temporary public consumers and the extracted README consumer:
+  exit 0 without warnings; proof-field computation returns true.
+- `python3 Package/Scripts/check-imports.py`: all 15 production source modules
+  and the separate audit reached, with the existing policy unchanged.
+- Integrated article compiled with latexmk into the evidence directory:
+  33 pages, final log without warnings or undefined references.
+- Diff whitespace and baseline-hash preservation checks pass. Reference Lean,
+  prior probes, toolchain/dependency/configuration files, index and HEAD are
+  unchanged. No clean dependency bootstrap is claimed.
+
+At this verification checkpoint F05 remained IN PROGRESS pending its fresh
+independent final review and final status reconciliation. F06 and PKG-01 remain unimplemented. No commits, branch
+operations, pushes, CI changes or publication occurred.
+
+#### F05 final review and completion
+
+The fresh independent read-only review found no Critical, Important or Minor
+issues. It independently reran every supplied consumer, Package build, direct
+audit and import/diff checks, and added a mixed-sort/same-carrier test covering
+actual renamed bundles, predicate bridges, independent output evidence and
+extensional reconstruction. The additional source is retained in the execution
+evidence directory as IndependentReview.lean; final-review.md records the verdict.
+The complete review-focus matrix and all F05a/b/c acceptance criteria are met.
+PKG-F05 is DONE, delivered uncommitted. PKG-01 and F06 remain separate open tasks.
+
+The review explicitly set aside a clean dependency bootstrap, larger-client
+performance, external Isabelle/Rocq builds and complete inherited-bibliography
+re-audit. These were not required by this plan; no corresponding success claims
+are made. Central Pitts/Urban comparisons were checked, and root compiled the
+article whose log the reviewer inspected. There are no deferred minor findings.
+
+### 2026-10-07 — PredicateSupport module naming
+
+At the author's request, the predicate foundation module is now
+`Package/Foundations/PredicateSupport.lean`. The public import, specification
+and implementation plan use that name. Its mathematical declarations are
+unchanged. `lake build Package +Package.Tests.AxiomAudit`, the direct audit,
+import coverage and `git diff --check` pass; no old module-name references
+remain in Package or the documentation. The audit still covers 573 production
+declarations with only the standard permitted axioms. Changes remain uncommitted.

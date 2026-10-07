@@ -1,18 +1,10 @@
 \section{Predicates, support and binding}
 \label{sec:perspectives}
 
-The distinction between a carrier and its action becomes particularly useful
-when the carrier represents logical information. Giving truth values the
-trivial action still leaves a nontrivial action on predicates. For a
-permutation set $X$, conjugation on $P : X \to \mathrm{Prop}$ gives
-\[
-  (\pi \act P)(x) \;\longleftrightarrow\; P(\pi^{-1}\act x).
-\]
-For example, the atom predicate $P_a(x) \equiv (x=a)$ is sent to
-$P_{\pi a}$. The singleton $\{a\}$ supports $P_a$, although exchanging $a$
-with another atom changes the predicate. Pitts' nominal powerset captures
-precisely this distinction: its elements are supported subsets, while
-equivariant subsets have empty support~\cite[Section~2.5]{pitts2013}.
+Section~\ref{sec:function-predicates} distinguishes discrete truth values
+from predicates with nontrivial dependence on atoms. Pitts' nominal powerset
+collects supported subsets, while equivariant subsets have empty
+support~\cite[Section~2.5]{pitts2013}.
 There are consequently two different roles for a predicate in reasoning
 about binders. As a semantic object, it may carry a finite-support
 hypothesis; as the motive of an induction theorem, it may be arbitrary.
@@ -23,6 +15,12 @@ context, without requiring finite support of the motive
 itself~\cite[Section~7, equation~(7.1)]{urbanKaliszyk2012}. These are different
 theorem interfaces: the context specifies what binders must avoid, and the
 generalized hypotheses provide the strength needed to change that context.
+Urban's earlier strong-induction theorem makes an additional distinction:
+an avoidance selector $k$ need only return a finitely supported value $k(c)$
+for each context $c$. Neither the selector $k$ nor the motive itself is
+required to be finitely supported \cite[Section~4, Theorem~2]{urban2008}.
+Support of each selected avoidance value must therefore be distinguished
+from support of the function selecting it.
 A calculus of supported predicates therefore need not restrict the ordinary
 propositions available to an induction proof.
 

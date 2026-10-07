@@ -397,3 +397,32 @@ initial atom-only scope restriction. The author requested three independent
 investigations of other generalizations in the current Package foundations;
 their findings are proposals unless included in an authorized implementation.
 They do not authorize unrelated changes to the preserved reference development.
+
+## 2026-10-07 — Function-space investigation and context-bound proposal
+
+F04 is committed at `32f3dba`. The author requested architectural investigation
+of F05, including ordinary certificates, full conjugation objects, supported
+bundles and a hybrid; no production implementation or commits are authorized.
+The [F05 specification](../superpowers/specs/2026-10-07-package-function-space-design.md)
+and [investigation](2026-10-07-function-space-foundations.md) recommend a
+contextual hybrid, pending review. The author asked agents to investigate the
+ordinary-first versus bundle-first interface instead of choosing it in advance.
+
+The author also proposed using inspected local context together with supplied
+values as a sufficient support, without computing least support. This is a
+candidate tooling direction, not approval of a scanner. F05's explicit-bound
+section/product/composition laws support it; captured dependencies and operations
+still need proofs. The supplied Urban manuscript is investigated both for this
+heuristic and for broader induction/recursion consequences in the
+[Urban research note](2026-10-07-urban-nominal-techniques.md).
+
+### Subsequent F05 delivery
+
+The author approved the F05 written specification and then approved its written
+implementation plan for native execution. F05 is now delivered in the working
+tree with integrated checks and a clean independent final review. The hybrid
+and sufficient-context-bound contracts are implemented; the two new proof
+predicates are reducible aliases to support ordinary simp with literal evidence.
+Final supported-predicate storage/logic, context-scanning automation, binders
+and recursion remain at their own tasks. Exact evidence and uncommitted status
+are recorded in the active roadmap and F05 implementation plan.

@@ -37,6 +37,18 @@ or CI change belongs to this session. The active tracker is the
 
 ## Current status after F04d implementation
 
+**2026-10-07 reconciliation:** F04d is committed at
+`32f3dba551761881409bbc7453054e214e582269`, with a clean initial checkout for
+F05. The [new investigation](2026-10-07-function-space-foundations.md) and
+[written F05 specification](../superpowers/specs/2026-10-07-package-function-space-design.md)
+reassess the direct-SPred recommendation below. They recommend a hybrid
+function foundation; the final supported-predicate storage remains a PKG-01
+review decision. The author subsequently approved the F05 specification;
+its [implementation plan](../superpowers/plans/2026-10-07-package-function-space.md)
+was approved for native execution. F05 now supplies the function/predicate-input
+foundation with passing integrated checks and a clean independent final review.
+This does not approve direct-SPred storage or start PKG-01.
+
 The approved canonical-instance/freshness slice now supplies four nominality
 certificates for existing actions, exact atom/discrete/product/Finset supports,
 and `hx.Fresh a` / `Fresh A a x`. Transport, sufficient bounds, fresh swaps,
@@ -64,8 +76,8 @@ of representative supports on a nominal source. General freshness-map laws
 supply the context consumers. See the
 [F04d plan](../superpowers/plans/2026-10-06-package-equivariant-quotients.md) and
 active tracker for passing integrated validation and a clean independent final
-review. F04d and the reconciled PKG-F04 are delivered, uncommitted. Function/
-predicate input interfaces (F05), full predicate descent/support reflection
+review. F04d and the reconciled PKG-F04 are delivered and committed. Function/predicate input interfaces (F05) are now implemented with passing
+integrated checks and a clean independent final review. Full predicate descent/support reflection
 and predicate foundations (PKG-01) remain undelivered.
 
 F04a/F04b were committed at `68956dd`, and F04c/general freshness at `9c1cb9a`;
@@ -157,7 +169,7 @@ namespace-independent filtering is a useful technique to adapt, but it currently
 excludes future Package declarations. Reference builds remain preservation
 checks, not new-foundation evidence.
 
-## Representation comparison and recommendation
+## Representation comparison and recommendation (historical proposal)
 
 | Candidate | Benefit | Cost / mathematical boundary | Disposition |
 | --- | --- | --- | --- |

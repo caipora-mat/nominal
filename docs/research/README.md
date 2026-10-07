@@ -15,18 +15,34 @@ F04c and its general-freshness extension are committed at
 nominality, canonical instances and freshness foundations. Earlier
 uncommitted-delivery descriptions below record their original sessions.
 
-Under the approved F04d specification and native plan, the working tree now
-adds general explicit quotient-action constructors, the canonical nominal
+Under the approved F04d specification and native plan, commit
+`32f3dba551761881409bbc7453054e214e582269` delivers general explicit
+quotient-action constructors, the canonical nominal
 projection/support interface, general surjective nominality transfer and the
 supported-fiber characterization. The exact quotient intersection formula
 does not imply an exact-support representative. Current proof/consumer checks
 pass with matching exposition in `docs/article/sections/quotients.tex`.
 Integrated validation and the fresh independent final review pass with no
-findings; F04d and the reconciled PKG-F04 are delivered, uncommitted. Evidence
+findings; F04d and the reconciled PKG-F04 are delivered and committed. Evidence
 is tracked in the [active roadmap](../nominal-package-roadmap.md).
-F05 and PKG-01 remain undelivered;
-object-support bounds and fiber intersections do not implement predicate
-pullback/support reflection.
+F05 production interfaces, native implementation checks and independent final
+review are complete with no findings; the delivery is uncommitted. PKG-01 remains
+undelivered; object-support bounds and fiber intersections do not implement
+predicate pullback/support reflection.
+The 2026-10-07 [F05 investigation](2026-10-07-function-space-foundations.md)
+reassesses the older direct-SPred proposal against completed F04, pinned Mathlib
+and Pitts. Its [written specification](../superpowers/specs/2026-10-07-package-function-space-design.md)
+recommends ordinary certificates, full conjugation objects and supported bundles
+with proved bridges. The author approved that specification on 2026-10-07.
+The [implementation plan](../superpowers/plans/2026-10-07-package-function-space.md)
+was approved for native execution. Code, public consumers, audit, article and
+independent final review pass with no findings. It includes the author's context-bound idea as
+an intended consumer of explicit-bound laws; context-scanning tooling is deferred.
+At the author's request, the [broader Urban study](2026-10-07-urban-nominal-techniques.md)
+also informs future carrier, selected-avoidance induction, binder descent,
+primitive recursion and rule-induction criteria. It distinguishes the supplied
+2008 author manuscript from current Isabelle and records two manuscript slips.
+These are research/task refinements, not implemented or approved later APIs.
 
 The author subsequently requested Pitts' general support-disjointness relation
 and a preference for natural mathematical generalizations. The current extension

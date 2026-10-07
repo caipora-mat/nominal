@@ -7,3 +7,8 @@ import Package.Foundations.Canonical
 import Package.Foundations.Freshness
 import Package.Foundations.QuotientAction
 import Package.Foundations.Quotient
+import Package.Foundations.ActionSupport
+import Package.Foundations.FunctionAction
+import Package.Foundations.FunctionSupport
+import Package.Foundations.PredicateSupport
+import Package.Foundations.SupportedFunction

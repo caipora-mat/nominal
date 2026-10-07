@@ -21,7 +21,8 @@ avoidance. The quotient section now covers invariant monoid actions, canonical
 projections, support/nominality transfer, strict decrease, supported fibers and
 nonattainment; predicate contracts require their own results. Earlier
 delivery-state descriptions below are historical: F04a/F04b were subsequently
-committed at `68956dd`, and F04c/general freshness at `9c1cb9a`. The bounded
+committed at `68956dd`, F04c/general freshness at `9c1cb9a`, and F04d at
+`32f3dba`. The bounded
 [implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md)
 assigns article updates to each task. A subsequent author correction reserves
 persistent usage examples for future case studies; the article does not claim
@@ -42,6 +43,21 @@ declaration. Check Mathlib before introducing package-specific machinery; record
 the investigation in research notes and explain reuse or adaptation in the article
 when it illuminates the mathematics or system design. Distinguish implementation
 helpers from independent mathematical concepts.
+
+## Function-space research addition, 2026-10-07
+
+The [F05 investigation](2026-10-07-function-space-foundations.md) adds
+`sections/functions.tex`: full conjugation, evaluation, support of fixed
+parameters, sufficient context bounds, supported-curry admissibility,
+predicates and the choice obstruction. These are mathematical statements with
+proof sketches and exact Pitts references, independent of an unimplemented
+Lean representation. The [written specification](../superpowers/specs/2026-10-07-package-function-space-design.md)
+keeps the alternatives and phase/review records outside the article.
+The initial research addition claimed no implemented function API. Under the
+subsequently approved native plan, the function interfaces are now implemented
+and the section includes their justified Lean correspondence. Context scanning,
+predicate logic and binder/recursion tooling remain outside that delivery. The
+article continues to exclude operational status and build evidence.
 
 ## Publication content policy
 
