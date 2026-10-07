@@ -55,8 +55,11 @@ Nominal/
       Properties.lean     # soundness
       Completeness.lean   # completeness and principality
       Mgu.lean            # solved form; absorption vs. independent witness
+      Metavars.lean       # solve introduces no new metavariables
+      Atoms.lean          # solve introduces no new atoms
       Equivariance.lean   # solve commutes with renaming of atoms and metavariables
       NominalSet.lean     # solve as a morphism of nominal sets
+      NominalSetVar.lean  # the same over metavariables, on the synonym ByVar
 ```
 
 ## Key API
@@ -96,7 +99,10 @@ deferred obligations. The whole specification is executable.
 | Equivariance (atoms and metavariables) | `UnifProblem.solve_relabel`, `UnifProblem.mem_solutions_relabel` |
 | Equivariance (atoms) | `UnifProblem.solve_rename`, `UnifProblem.mem_solutions_rename` |
 | Equivariance (metavariables) | `UnifProblem.solve_renameVar`, `UnifProblem.solve_rename_renameVar` |
+| Object-level action | `UnifProblem.solutions_permute`, `UnifProblem.solve_permute_solEquiv` |
+| No new atoms or metavariables | `UnifProblem.solve_atoms_subset`, `UnifProblem.solve_metavars_subset` |
 | Morphism of nominal sets | `UnifProblem.solve_isEquivariant`, `ntm.instNominal` |
+| Morphism of nominal sets (metavariables) | `UnifProblem.solve_isEquivariant_var`, `ntm.instNominalVar` |
 
 **Design note:** `PFun α X Y` wraps `X → Y` with the conjugation action to avoid a diamond with Mathlib's `Pi.instSMul`.
 
