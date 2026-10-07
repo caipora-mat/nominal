@@ -28,6 +28,12 @@
 ## Generated if empty string is given at "Please type another file name for output:"
 .pdf
 
+## Local reference PDFs (root-level only — tracked PDFs in ref/ stay)
+/*.pdf
+
+## Local scratch notes
+Nominal/Syntax/Unification/Algorithm.md
+
 ## Bibliography auxiliary files (bibtex/biblatex/biber):
 *.bbl
 *.bcf
@@ -363,3 +369,6 @@ Temporary Items
 /.lake
 
 .gitignore_local
+
+# Template LaTeX auxiliar (não faz parte da formalização)
+/tex/
