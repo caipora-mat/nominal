@@ -5,3 +5,5 @@ import Package.Foundations.Support
 import Package.Foundations.Nominal
 import Package.Foundations.Canonical
 import Package.Foundations.Freshness
+import Package.Foundations.QuotientAction
+import Package.Foundations.Quotient

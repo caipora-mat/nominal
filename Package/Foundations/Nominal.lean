@@ -29,6 +29,16 @@ class Nominal (A : Type u) (X : Type v) [MulAction (Perm A) X] : Prop where
   /-- Support existence is proof-only; no supporting set is stored as data. -/
   finitelySupported : ∀ x : X, FinitelySupported A x
 
+/-- An equivariant surjection transfers nominality between already selected
+actions. Preimages are used only inside the proof of finite supportedness. -/
+theorem Equivariant.nominal_of_surjective {A : Type u} {X : Type v} {Y : Type w}
+    [MulAction (Perm A) X] [MulAction (Perm A) Y] [Nominal A X] {f : X → Y}
+    (hf : Equivariant A f) (hsurj : Function.Surjective f) : Nominal A Y := by
+  constructor
+  intro y
+  obtain ⟨x, rfl⟩ := hsurj y
+  exact (Nominal.finitelySupported (A := A) x).map hf
+
 variable {A : Type u} {X : Type v}
 variable [MulAction (Perm A) X] [Infinite A]
 variable {x : X} {S : Finset A}
@@ -111,6 +121,36 @@ theorem FinitelySupported.support_smul (hx : FinitelySupported A x) (π : Perm A
     simpa only [inv_smul_smul] using supports_smul (hx.smul π).supports_support π⁻¹
 
 end Transport
+
+open scoped Pointwise in
+/-- An atom belongs to image support exactly when it belongs to the support of
+every individually supported preimage in the same fiber. One supported preimage
+suffices; neither carrier nominality nor surjectivity is assumed. -/
+theorem FinitelySupported.mem_support_map_iff
+    {A : Type u} {X : Type v} {Y : Type w}
+    [MulAction (Perm A) X] [MulAction (Perm A) Y] [Infinite A]
+    {x : X} {f : X → Y}
+    (hx : FinitelySupported A x) (hf : Equivariant A f) (a : A) :
+    a ∈ (hx.map hf).support ↔
+      ∀ (z : X) (hz : FinitelySupported A z), f z = f x → a ∈ hz.support := by
+  classical
+  constructor
+  · intro ha z hz heq
+    have hS : Supports hz.support (f x) := by
+      simpa only [heq] using supports_map hf hz.supports_support
+    exact (hx.map hf).support_minimal hS ha
+  · intro h
+    by_contra ha
+    obtain ⟨b, hb⟩ := Finset.exists_notMem (insert a hx.support)
+    have hbS : b ∉ hx.support := fun hmem => hb (Finset.mem_insert_of_mem hmem)
+    have hbI : b ∉ (hx.map hf).support := fun hmem => hbS (hx.support_map_subset hf hmem)
+    have hfix : Perm.swap a b • f x = f x :=
+      swap_smul_eq_of_supports (hx.map hf).supports_support ha hbI
+    have heq : f (Perm.swap a b • x) = f x := (hf (Perm.swap a b) x).trans hfix
+    have hmem := h (Perm.swap a b • x) (hx.smul (Perm.swap a b)) heq
+    rw [hx.support_smul (Perm.swap a b), Perm.mem_smul_finset,
+      Perm.swap_inv, Perm.swap_apply_left] at hmem
+    exact hbS hmem
 
 section NominalCarriers
 

@@ -55,10 +55,20 @@ is retained and derived from the atom specialization.
 
 ## Checked proposals for subsequent foundation work
 
-The following are **kernel-checked research proposals**, not newly exported
-Package results. Investigation does not silently authorize implementing all
-of them. Prefer the relevant general parents when designing the next increments;
-retain existing specialized calls as adapters where useful.
+The following were **kernel-checked research proposals** at the investigation
+snapshot. F04d subsequently adopted only the general surjective nominality
+theorem, `Equivariant.nominal_of_surjective`, from the first row. Its scalar
+projection uses Mathlib's existing `MulActionHom`; it does not rewrite Package's
+Equivariant predicate or combinators. The injection/reflection parts and other
+six generalization proposals remain research-only. Investigation does not
+silently authorize implementing all of them.
+
+F04d separately proves `FinitelySupported.mem_support_map_iff` and the quotient
+intersection specialization, following the reviewed fresh-swap argument of
+Pitts, CUP 2013, Proposition 2.30. Those were approved in the F04d specification;
+they are not retrospectively claimed as results of these retained probes.
+Their implementation/consumer/article/review evidence belongs to the
+[active roadmap](../nominal-package-roadmap.md).
 
 | Priority | Generalization | Current declarations / benefit |
 | --- | --- | --- |
@@ -84,8 +94,10 @@ The first two require neither infinitude nor decidable equality; none needs
 whole-carrier nominality. Reflection cancels f after using equivariance.
 At carrier level, an equivariant injection pulls nominality back from its
 codomain, while an equivariant surjection sends domain nominality to the
-codomain. These should be explicit constructor theorems for selected actions,
-not unrestricted typeclass-search rules. Preimages stay inside proof fields.
+codomain. These are intended as explicit constructor theorems for selected
+actions, not unrestricted typeclass-search rules. The surjective direction is
+now implemented as such in F04d; the injective direction remains research.
+Preimages stay inside proof fields.
 
 The support-reflection parent in the probe uses only `SMul G A`, `SMul G X`,
 `SMul G Y`, arbitrary `S : Set A` and a commuting-map equation. Mathlib's

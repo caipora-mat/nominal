@@ -3,19 +3,26 @@
 Last updated: 2026-10-06. Branch: `fasapa/nominal-package`.
 Research baseline: `7fed53a2e5fc67379f86f085515e310e7c1fddb7`.
 F01 assessment snapshot: `76966b1f2e44f594517442b6572e33abaa9038e0`.
-Current inspected HEAD: `68956dd23066c7c5c647345e5598b859ff97a10c`, containing
-the committed F04a/F04b implementation, article and design/tracker updates.
-F04c design began with a clean working tree at that revision. The author approved
-its written specification and native implementation plan. F04c code, consumers,
-audit and article pass. Independent review found no Critical/Important issues;
-its two minor documentation/test findings are corrected and rechecked. F04c is DONE.
-All F04c work remains uncommitted.
+Current inspected HEAD: `9c1cb9aa2f9f69d8d801a9864a9f0220b92ea62a`
+(`Freshness`), immediately after `68956dd23066c7c5c647345e5598b859ff97a10c`.
+F04a/F04b were committed in the earlier revision; the newer commit includes
+F04c, its general-freshness extension, article, research and instruction updates.
+The working tree was clean when the requested F04d design began.
+F04c's specification and native plan were approved; its code, consumers, audit,
+article and resolved independent reviews are delivered. F04c is DONE.
 The author then approved general support-disjointness freshness as a bounded
 F04c follow-up and requested three generalization investigations. The extension
 and retained atom consumers pass. Its independent review found no Critical or
 Important issues; one article proof-description correction was made and checked.
 The new preference and checked proposals are recorded in
 [the generalization report](research/2026-10-06-foundation-generalizations.md).
+The author approved F04d's [written specification](superpowers/specs/2026-10-06-package-equivariant-quotients-design.md),
+including the stronger supported-fiber characterization and quotient corollary.
+Its [native implementation plan](superpowers/plans/2026-10-06-package-equivariant-quotients.md)
+was subsequently approved. Native implementation, integrated Lean/article
+checks and the fresh independent final review pass with no findings.
+**F04d and the reconciled parent PKG-F04 are DONE**, delivered uncommitted.
+F05 and PKG-01 remain undelivered.
 Earlier uncommitted-delivery descriptions retain their historical meaning.
 F04a/F04b's specifications and native plans were approved, and their code,
 consumers, audits, articles and independent final reviews passed.
@@ -148,8 +155,9 @@ for later per-layer choices.
 F03b is delivered with matching LaTeX exposition and a clean independent review.
 F04a is delivered with matching LaTeX exposition and a clean independent final review.
 F04b is delivered with matching LaTeX exposition and a clean independent final
-review. F04a/F04b are committed at `68956dd`. F04c is delivered with passing validation and resolved independent final review;
-F04d, F05/F06 and PKG-01 remain unimplemented.
+review. F04a/F04b are committed at `68956dd`. F04c is delivered with passing validation and resolved independent final review.
+F04d is delivered with passing checks and a clean independent final review;
+F05/F06 and PKG-01 remain unimplemented.
 
 Distinguish user decisions, integrated theorems, standalone probes, source
 readings, mathematical analyses and proposed interfaces. Record revision and
@@ -189,7 +197,7 @@ polish is not required to complete an increment, but accurate exposition is.
 | PKG-F01 | IN PROGRESS — first foundation spec approved; later layer choices remain proposed | Current user decisions; PKG-00 evidence; pinned algebraic source | Algebraic-sketch investigation, foundation/API contract and per-layer adoption/adaptation/reconstruction decisions |
 | PKG-F02 | DONE — verified, committed delivery | Approved F01 boundary for F02/F03a; approved native plan | `Package/` root, Lake/import boundary and production audit coverage |
 | PKG-F03 | DONE — F03a and F03b verified and committed | Approved F01 boundary; F02; approved F03b native plan | Atoms, finite permutations, actions and equivariance |
-| PKG-F04 | IN PROGRESS — F04a/F04b/F04c DONE; F04d TODO | PKG-F03; F04a → F04b → F04c/F04d | Finite support calculus, nominality/least support, canonical instances/freshness, canonical equivariant quotients |
+| PKG-F04 | DONE — all four slices and overall criteria verified; F04d uncommitted | PKG-F03; F04a → F04b → F04c/F04d | Finite support calculus, nominality/least support, canonical instances/freshness, canonical equivariant quotients |
 | PKG-F05 | TODO | PKG-F04 | Minimal function-space and predicate-input interface |
 | PKG-F06 | TODO | PKG-F04/F05 | Abstraction, concretion or equivalent certified binder-descent facility |
 | PKG-01 | TODO | PKG-F04/F05 | Supported predicates, logical support and quotient-predicate descent |
@@ -202,7 +210,7 @@ polish is not required to complete an increment, but accurate exposition is.
 | PKG-08 | TODO | PKG-07 and a scoped let specification | Lambda with let and expansion correctness |
 | PKG-09 | TODO | PKG-07 and a residual-binding/transition specification | π-calculus case study |
 | PKG-10 | TODO | PKG-07 and a positivity/semantic specification | μ-calculus case study |
-| PKG-11 | IN PROGRESS — F02/F03a/F03b/F04a/F04b/F04c LaTeX exposition and evidence delivered | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
+| PKG-11 | IN PROGRESS — F02/F03a/F03b/F04a–F04d LaTeX exposition and evidence delivered | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
 
 The implementation dependency spine is
 `F01 → F02 → F03a → F03b → F04 → F05 → PKG-01`, with concurrent
@@ -407,21 +415,22 @@ production/audit coverage and the accompanying article update.
 
 ### PKG-F04 — Support, freshness and required constructions
 
-**Selected task; bounded phases.** F04a–F04d are slices of this existing stable
+**Delivered in four bounded phases.** F04a–F04d are slices of this existing stable
 task ID, not replacements for PKG-F04. The author supplied the scope and ordering;
-each slice still needs its concrete specification, implementation plan and
-execution agreement. The full outline does not authorize a single combined
-implementation. F02/F03a/F03b remain delivered and are not reopened.
+each slice had its concrete specification, implementation plan and execution
+agreement. The full outline did not authorize a single combined implementation.
+All four deliveries and the overall criteria are now verified. F02/F03a/F03b
+remain delivered and are not reopened.
 
 | Slice | Status | Dependencies | Article section assigned to its spec/plan |
 | --- | --- | --- | --- |
 | F04a — Finite support calculus | DONE — verified, committed at `68956dd`; clean final review | Delivered F03b and selected actions | `docs/article/sections/support.tex`, `sec:finite-support` |
 | F04b — Nominality and least support | DONE — verified, committed at `68956dd`; clean final review | F04a, especially finite intersection | `docs/article/sections/support.tex`, `sec:least-support` |
-| F04c — Canonical instances and freshness | DONE — verified working-tree delivery; final review resolved | F04a/F04b; delivered canonical actions | `docs/article/sections/freshness.tex`, `sec:canonical-support` and `sec:freshness` |
-| F04d — Canonical equivariant quotients | TODO | F03 actions; F04a support bounds; F04b nominality/least support | `docs/article/sections/quotients.tex`, `sec:equivariant-quotients` |
+| F04c — Canonical instances and freshness | DONE — committed at `9c1cb9a`, including general freshness; final reviews resolved | F04a/F04b; delivered canonical actions | `docs/article/sections/freshness.tex`, `sec:canonical-support` and `sec:freshness` |
+| F04d — Canonical equivariant quotients | DONE — verified working-tree delivery; clean independent final review | F03 actions; F04a support bounds; F04b nominality/least support; delivered F04c for canonical/freshness consumers | `docs/article/sections/quotients.tex`, `sec:equivariant-quotients` |
 
-F04a, F04b and F04c's assigned article sections are written. F04d's path and
-label remain assigned future exposition. Its action construction and support preservation need no infinitude;
+All four assigned article sections are written. F04d's action construction and
+support preservation need no infinitude;
 its full delivery follows F04b for the nominality and least-support conclusions.
 F04c is not a mathematical prerequisite for F04d: a quotient consumer may use
 explicit local support evidence if canonical instances are not yet delivered.
@@ -518,7 +527,7 @@ temporary consumers now check, with the reconciled 20-page article. The producti
 coverage reaches eight production modules including the root and one audit.
 The fresh independent final review found no Critical or Important issues. Its
 two minor tracker/test findings were corrected and the affected checks passed.
-F04c is DONE; this delivery remains uncommitted.
+F04c is DONE; this delivery and its follow-up are now committed at `9c1cb9a`.
 
 **Approved follow-up:** general freshness now relates two nominal elements by
 disjoint supports. `hx.FreshWith hy` retains the two-element evidence route and
@@ -560,19 +569,58 @@ remain research evidence for future design, not hidden implementation in F04c.
 
 #### F04d — Canonical equivariant quotients
 
-- [ ] Construct the canonical quotient action for a setoid preserved by the
-  selected permutation action, keeping atom/carrier universes independent.
+The [approved written specification](superpowers/specs/2026-10-06-package-equivariant-quotients-design.md)
+selects explicit general scalar/monoid quotient constructors from an ordinary
+invariance proof, with no blanket action or nominality instance. Projection
+contracts refer to the constructed action. It includes the general equivariant
+surjection nominality theorem, quotient support adapters, and existing general
+freshness-map consumers. The approved stronger characterization generalizes
+Pitts' representative-support characterization to a supported fiber of an
+equivariant map, then specializes it to the quotient intersection formula.
+The author approved the whole written specification on 2026-10-06.
+Its [native plan](superpowers/plans/2026-10-06-package-equivariant-quotients.md)
+assigns 15 declarations to three mathematical tasks and one integrated
+validation/documentation/review task, with concurrent LaTeX and seven temporary
+public-import consumers. The author approved that concrete plan before production
+changes. All interfaces, consumers, integrated audit/coverage and matching article
+now pass. The requested fresh independent final review found no Critical,
+Important or Minor issues and independently rebuilt Package artifacts and the
+article. F04d is DONE, uncommitted; the overall F04 criteria are reconciled below.
+The other checked generalizations are dispositioned individually, not silently
+promoted to production APIs. Native execution and one fresh independent final
+review remain selected; no other proposal has been silently implemented.
+
+- [x] Verify actual branch/history/status and delivered foundations, including
+  the general-freshness amendment; inspect the pinned quotient/action APIs.
+- [x] Write a bounded specification with exact assumptions and universes,
+  compatibility input, action-selection policy, elementwise/carrier contracts,
+  mathematical boundaries, modules, article work and meaningful acceptance checks.
+- [x] Obtain agreement on the written specification, including the stronger
+  representative-support characterization and its quotient corollary.
+- [x] Prepare the native implementation plan, preserving earlier approvals
+  and the chosen method.
+- [x] Obtain written-plan approval before production changes.
+- [x] Construct the canonical quotient action for a setoid preserved by the
+  selected action, through a natural general monoid construction and its
+  permutation specialization, keeping atom/carrier universes independent.
   Inspect and reuse `Quotient.map`, `Quotient.map_mk` and
   `Function.Surjective.mulAction` where suitable.
-- [ ] Prove `π • q x = q (π • x)`, projection surjectivity and equivariance;
+- [x] Prove `π • q x = q (π • x)`, projection surjectivity and equivariance;
   preserve support bounds and inherit finite supportedness and nominality.
-- [ ] Prove `support (q x) ⊆ support x` with the least-support hypotheses and
+- [x] Prove `support (q x) ⊆ support x` with the least-support hypotheses and
   include a meaningful quotient with strict decrease. An unrelated quotient
   action does not satisfy this canonical-projection contract.
-- [ ] Deliver consumers, audit coverage and `sec:equivariant-quotients` together.
-  Full predicate descent/support reflection remains PKG-01; exact intersection
-  formulas over every representative's support are not required without a
-  concrete dependency.
+- [x] Prove the general supported-fiber characterization and the exact
+  quotient-support intersection formula; retain nonattainment and failure of
+  reverse supportedness as distinct mathematical boundaries.
+- [x] Consume general freshness-map laws for nominal and individually supported
+  contexts; test coherence with compatibility and canonical evidence active.
+- [x] Deliver consumers, audit coverage and `sec:equivariant-quotients` together.
+  Full predicate descent/support reflection remains PKG-01. The approved
+  representative-support characterization does not assert equality with a
+  chosen representative's support or supply a representative attaining it.
+- [x] Complete the fresh independent final review, resolve findings, then
+  reconcile every overall F04 criterion before marking PKG-F04 complete.
 
 #### Overall F04 completion
 
@@ -580,10 +628,10 @@ remain research evidence for future design, not hidden implementation in F04c.
   laws, with each required atom hypothesis explicit.
 - [x] Establish fresh-atom existence, avoidance of finite combined contexts and
   the freshness/renaming laws consumed by the first workflow.
-- [ ] Supply required product and equivariant-quotient actions/support results.
+- [x] Supply required product and equivariant-quotient actions/support results.
   State upper bounds separately from exact support formulas and prove any exact
   formula that is advertised.
-- [ ] Validate fixed parameters, nested product avoidance and quotient descent;
+- [x] Validate fixed parameters, nested product avoidance and quotient descent;
   retain a counterexample separating least support from strong support.
 
 Accept ordinary package clients that use the support and freshness conclusions,
@@ -594,6 +642,11 @@ Mark PKG-F04 complete only when all four agreed slice contracts, their consumers
 audit obligations and concurrent LaTeX sections are delivered. Supported-function
 objects, `SupportsMap`/`SupportsPred`, bundled predicates and Some/Any remain
 F05/PKG-01; abstraction, FCB, recursion and generators remain later work.
+
+**PKG-F04 is DONE.** The execution work log maps each overall criterion to
+current passing consumers and preserved delivered theory. The independent final
+review checked that reconciliation. F04d is delivered in the working tree;
+F05 and PKG-01 are not marked delivered by this closure.
 
 ### PKG-F05 — Minimal function-space and predicate-input interface
 
@@ -924,8 +977,14 @@ Lean rebuild. A successful document check is never package proof evidence.
    F04c's [written specification](superpowers/specs/2026-10-06-package-canonical-freshness-design.md)
    is approved; its [native implementation plan](superpowers/plans/2026-10-06-package-canonical-freshness.md)
    was also approved. F04c implementation, integrated checks and final review
-   are complete. F04d and then F05 still precede PKG-01; those
-   slices retain their own design and approval boundaries.
+   are complete and committed, including general freshness, at `9c1cb9a`.
+   F04d's [specification](superpowers/specs/2026-10-06-package-equivariant-quotients-design.md)
+   is approved, including its stronger characterization. Its
+   [native plan](superpowers/plans/2026-10-06-package-equivariant-quotients.md)
+   was approved before production changes. F04d code, consumers, audit and
+   article and independent final review pass. F04d and the reconciled parent
+   PKG-F04 are DONE, with F04d uncommitted. F05 is the next foundation boundary
+   before PKG-01; it retains its own design and approval requirements.
    The [approved F03b specification](superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
    and [native plan](superpowers/plans/2026-10-05-package-controlled-swaps.md)
    supply its bounded contract. The swap criterion supplies permutation input;
@@ -957,6 +1016,8 @@ requires no complete general supported-function library as a hidden prerequisite
 - [Approved F04b native implementation plan](superpowers/plans/2026-10-06-package-least-support.md).
 - [Approved F04c canonical-instances/freshness specification](superpowers/specs/2026-10-06-package-canonical-freshness-design.md).
 - [Approved F04c native implementation plan](superpowers/plans/2026-10-06-package-canonical-freshness.md).
+- [Approved F04d canonical-equivariant-quotient specification](superpowers/specs/2026-10-06-package-equivariant-quotients-design.md).
+- [Approved F04d native implementation plan](superpowers/plans/2026-10-06-package-equivariant-quotients.md).
 - [LaTeX manuscript](article/main.tex).
 - [Current research policy and reading guide](research/README.md).
 - [Requirements and author decisions](research/2026-10-05-nominal-package-brief.md).
@@ -2388,3 +2449,268 @@ production modules, reference code, pins, branch and HEAD are preserved.
 **F04c, including general freshness, is DONE; PKG-F04 remains open for F04d.**
 All changes remain uncommitted. The next handoff is the requested F04d design
 prompt, carrying the current interfaces and the generality preference.
+
+### 2026-10-06 — F04d specification prepared for review
+
+The author requested the next bounded slice of PKG-F04, preserving all earlier
+deliveries and approvals. Actual inspection found a clean working tree on
+`fasapa/nominal-package`, HEAD `9c1cb9aa2f9f69d8d801a9864a9f0220b92ea62a`
+(`Freshness`), which commits F04c, general freshness and the accompanying
+article/research/instruction work. The supplied `68956dd` remains the prior
+F04a/F04b revision. Earlier work-log descriptions are preserved verbatim.
+
+The [written specification](superpowers/specs/2026-10-06-package-equivariant-quotients-design.md)
+proposes two focused new modules: general `QuotientAction.lean`, using ordinary
+relation-invariance evidence, `Quotient.map` and
+`Function.Surjective.mulAction`; and `Quotient.lean` for the nominal
+specialization. Explicit local installation fixes the action in every canonical
+projection/support/nominality contract. There is no blanket quotient action or
+nominality instance. General equivariant-surjection nominality transfer is an
+additive theorem for already selected actions in Nominal.lean. Existing map
+support and general freshness laws supply the other mathematical contracts.
+
+The specification separately proposes a natural stronger parent: under infinite
+atoms, one supported preimage and equivariance, membership in image support is
+equivalent to membership in every supported preimage's support. The quotient
+intersection formula follows, with no exact-support representative promised.
+Pitts, CUP 2013, Section 1.7 and Proposition 2.30 were inspected directly; the
+fresh-swap proof route is recorded, not represented as already kernel checked.
+The strict-decrease consumer forgets the second component of an atom pair while
+retaining the first. The universal-atom quotient tests nonattainment of support;
+the universal quotient of the pointwise function carrier tests failure of
+reverse supportedness. All seven prior research proposals have explicit
+dispositions, and the completed three-agent investigation was not repeated.
+
+Read the delivered source, audit/checker and pins, current foundation/spec/plan
+and research inputs, retained Generalization probes, and the whole current
+manuscript. Lean/Mathlib remain `v4.34.1`, with Mathlib at
+`d13f23b723b8a846827a245b89c10fc7d3f11612`. A temporary existing-API inventory
+checked independent universes and exact signatures. Its initial lookup of the
+nonexistent direct `MulAction.toSMul` projection was corrected using the pinned
+inheritance through SemigroupAction, and the inventory then passed. No proposed
+F04d theorem or construction was implemented in that inventory.
+
+Fresh baseline checks actually run:
+
+- `lake build Package +Package.Tests.AxiomAudit`: passed, 972 jobs, cached
+  project/dependency artifacts; audit output replayed.
+- `lake env lean Package/Tests/AxiomAudit.lean`: passed, direct traversal of
+  226 declarations in seven defining modules, with only the standard three axioms.
+- `python3 Package/Scripts/check-imports.py`: passed, eight production source
+  modules including Package and one audit module. Checker unchanged.
+- `lake env lean /tmp/nominal-f04d-design-xxzz3gbk/PinnedAPI.lean`: passed after
+  the lookup correction; only imports, checks and representative axiom prints.
+- From docs/article/, the documented `latexmk -pdf -interaction=nonstopmode
+  -halt-on-error -outdir=/tmp/nominal-package-article-build main.tex` succeeded
+  with existing outputs current. The log has 21 pages and no warning/box
+  diagnostic; this invocation did not rebuild it.
+
+These are checks of the delivered baseline. No fresh full-project build,
+dependency bootstrap, reference-library rebuild, new generalization-probe run
+or independent F04d implementation review is claimed. Evidence and fingerprints
+of 127 original files are under `/tmp/nominal-f04d-design-xxzz3gbk/`.
+
+Inline self-review covered the action-indexed signatures, weaker elementwise
+assumptions, generality, support strictness/nonattainment, research dispositions,
+article obligations and active-candidate coherence tests. Document checks pass
+for 70 local links, six anchors, fences and changed/new whitespace;
+`git diff --check` passes. The preservation comparison leaves 126 of 127
+baseline files unchanged, with only this roadmap edited and the specification
+added. The previous work log, all Lean/article sources, pins, reference code,
+historical roadmap, branch and HEAD are preserved.
+
+F04d remains **IN PROGRESS for design, unimplemented**. Written-specification
+agreement, then preparation and approval of the native implementation plan,
+remain the next gates. The execution method is already selected. Article
+development, meaningful temporary public-import consumers, all-module audit,
+action-coherence negatives with active evidence, and one fresh independent
+final review are part of the proposed delivery. PKG-F04 remains open; F05 and
+PKG-01 remain undelivered. Design/tracker changes are left uncommitted.
+
+### 2026-10-06 — F04d specification approved; native plan prepared
+
+The author approved the concrete written F04d specification, including the
+general supported-fiber characterization and its quotient intersection
+corollary. The scope is no longer conditional on that mathematical choice.
+The selected native execution method and one fresh independent final review
+remain unchanged. Written-specification approval authorizes this plan; the
+concrete written plan still requires approval before production changes.
+
+Reinspection found the same branch and HEAD `9c1cb9a`, with only the prior
+F04d roadmap/specification work uncommitted. Planning fingerprinted 128
+tracked/untracked files and saved all eight approved Lean interface blocks
+under `/tmp/nominal-f04d-plan-87zxcq02/`. The design baseline, committed F04c
+and general-freshness work, retained research and historical work log are
+preserved. No implementation, article-source edit, dependency change, branch
+operation, commit or new investigation is part of this planning session.
+
+The [native implementation plan](superpowers/plans/2026-10-06-package-equivariant-quotients.md)
+assigns the unchanged 15-declaration contract in four tasks:
+
+1. General scalar/monoid quotient actions and the projection interface, with
+   explicit action installation, compatibility rejection and inherited-SMul checks.
+2. General surjective nominality transfer and canonical quotient support
+   adapters, with finite/empty carriers, individual evidence, general freshness
+   consumers and unrelated-action negatives with canonical evidence active.
+3. General supported-fiber membership and quotient intersection, with exact
+   first-component support decrease, nonattainment and reverse-support boundaries.
+4. Exact public signatures, whole-production audit, public/research documentation,
+   article reconciliation, all overall F04 criteria and one independent final review.
+
+Every mathematical task develops and compiles its LaTeX alongside Lean. Seven
+temporary consumers import only Package. Fixed-parameter object bounds,
+nested supported contexts, actual quotient elimination and retained Bool/
+unordered-pair evidence support explicit reconciliation of the parent task;
+predicate support reflection remains F05/PKG-01. The plan preserves the partial
+disposition of the seven research proposals and adds no unapproved interface.
+
+Planning self-review checks spec coverage, exact type/argument consistency,
+step specificity, all five review-focus cases and proportion. Document and
+preservation checks, rather than Lean proof checks, are the validation for this
+stage. The preceding 972-job build, 226-declaration direct audit, 8+1 coverage
+and current 21-page manuscript outputs remain design-session evidence; those
+checks were not rerun during planning.
+
+Planning validation passes: all eight approved specification Lean blocks are
+unchanged, and all six declaration blocks in the plan match them exactly,
+covering the 15 interfaces. Checks cover 77 local links, six anchors, balanced
+fences, changed/new-file whitespace and `git diff --check`. The preservation
+comparison leaves 126 of 128 baseline files unchanged, with only specification
+approval/status and current tracker edits plus the new plan. The entire previous
+work log, all Lean/article sources, reference code, pins, branch and HEAD remain
+unchanged. These document checks do not claim implementation verification.
+
+F04d remains **IN PROGRESS, unimplemented**, and PKG-F04 remains open. The next
+gate is approval of the concrete native plan; do not repeat specification approval
+or ask the author to choose a task/execution method. Leave all changes uncommitted.
+
+### 2026-10-06 — Native F04d implementation and integrated validation
+
+The author approved the concrete native plan, after approving the specification
+including its stronger characterization. Both gates are satisfied. Execution
+stayed in the requested checkout at `9c1cb9a`, preserving the 129-file initial
+snapshot including the existing design/tracker work. Root implemented the plan
+natively; no per-task delegation or repeat generalization investigation occurred.
+
+All **15 approved declarations** are implemented with their exact signatures.
+QuotientAction.lean uses `Quotient.map` for the scalar operation and
+`Function.Surjective.mulAction` for monoid laws, with an existing MulActionHom
+projection. There is no global/scoped quotient action or nominality instance.
+Quotient.lean fixes the constructed action in every canonical contract. Its
+support and nominality theorems reuse existing map laws and the new explicit
+general surjective nominality theorem. Nominal.lean additionally proves the
+general supported-fiber membership characterization with one fresh swap;
+quotient induction gives the exact Set intersection of representative supports.
+No existing production theorem or hypothesis was changed.
+
+The scalar construction needs only SMul; action laws need a monoid. Nominality
+transfer needs no infinitude, equality or inhabitance. Individual least support
+and the fiber characterization need Infinite A and explicit support evidence,
+without carrier-wide nominality or surjectivity in the general fiber theorem.
+Public signature assignments verify these boundaries and independent universes.
+Only the surjective nominality part of the prior seven research proposals is
+promoted; the new fiber theorem is separately approved F04d work.
+
+The seven main temporary consumers are ActionContracts, ActionCoherence,
+SupportContracts, FreshnessContracts, BoundaryContracts, ExactnessContracts and
+PublicSignatures under `/tmp/nominal-f04d-execution/`. Every file imports only
+Package and consumes actual conclusions. Red logs precede the corresponding
+implementation. Two temporary fixture extracts separately proved strict
+decrease/nonattainment before the stronger characterization was introduced.
+The first-component quotient retains `{a}` while dropping b from `{a,b}`.
+The universal-atom quotient has no representative attaining its empty support;
+the universal function quotient supports the image of an unsupported identity.
+General freshness, finite/empty carriers and both action-mismatch tests with
+canonical evidence active pass. No standalone Package/Examples layer was added.
+
+Execution corrections were local to consumers and article layout: explicit
+local instance binding for ordinary hs, exposing kernel equality to `decide`
+instead of using an unimported tactic, exact guard messages, visible Finset-pair
+equality and unused proof-binder names. They did not change production signatures,
+weaken conclusions or relax linter/reducibility policies.
+
+Actually run and passed after the last production edit:
+
+```sh
+lake build Package +Package.Tests.AxiomAudit
+lake env lean Package/Foundations/QuotientAction.lean
+lake env lean Package/Foundations/Nominal.lean
+lake env lean Package/Foundations/Quotient.lean
+lake env lean Package/Tests/AxiomAudit.lean
+python3 Package/Scripts/check-imports.py
+```
+
+All seven main consumer files were also checked individually with `lake env lean`.
+The retained `/tmp/nominal-general-freshness-9a13sgo9/AvoidanceContracts.lean`
+and `GeneralFreshnessContracts.lean` pass against the new public root. Exact
+commands/results are in the execution directory's `validation-*.json` files.
+The full build passes **974 jobs**; the direct audit traverses **245 production
+declarations in nine defining modules**, allowing only `propext`,
+`Classical.choice` and `Quot.sound`. Coverage reaches **ten production source
+modules and one audit**. The checker is unchanged, so its self-tests were not
+rerun. Dependencies are cached and project modules rebuilt incrementally;
+no fresh whole-project build or dependency bootstrap is claimed.
+
+The quotient article section was written and compiled with each mathematical
+task. It states the invariant relation and action, projection laws, sufficient
+support and nominality, least-support inclusion, strict decrease, supported
+fibers, exact class intersection and nonattainment, general freshness and the
+predicate-reflection distinction. Abstract/introduction are reconciled. The
+documented latexmk command rebuilds a **26-page** manuscript with a clean final
+log. Generated artifacts remain outside the source tree. The mathematical
+correspondence is checked separately from compilation.
+
+Overall PKG-F04 evidence, to be reconciled with the final review before closure:
+
+| Overall criterion | Current evidence |
+| --- | --- |
+| Finite/least support and transport/minimality | F04a/F04b source preserved apart from the two additive general theorems; supported dependent build, exact old/new interface use and complete audit pass. |
+| Fresh existence and combined finite avoidance | Delivered F04c/general freshness unchanged; retained AvoidanceContracts and GeneralFreshnessContracts pass, including nested contexts and fresh-swap consequences. |
+| Required product and quotient actions/support | Delivered exact product support is consumed in firstComponentSupport/Strict; canonical construction, projection, every sufficient bound, nominality, elementwise inclusion and exact intersection pass. |
+| Fixed parameters, nested avoidance, quotient descent, least versus strong support | fixedParameterQuotientBound and fixedAtomNotEquivariant; heterogeneous/nested freshness consumers; the relation-respecting first-projection lift; actual Bool leastness and unordered-pair support boundaries all pass. |
+
+Here quotient descent means the induced action and ordinary relation-respecting
+elimination. It does not count predicate descent/support reflection, SupportsMap/
+SupportsPred or Some/Any as delivered. F05 and PKG-01 remain later work.
+
+Final document/preservation checks and one fresh independent final review follow.
+**F04d and PKG-F04 remain IN PROGRESS pending that review.** All changes are
+uncommitted; no commit, push, publication, merge, branch switch, dependency or
+CI change is performed. Reference targets share no changed integration files;
+their source preservation is checked separately without claiming a rebuild.
+
+**Final independent review and closure.** The requested fresh reviewer found
+no Critical, Important or Minor issues. The report is retained at
+`/tmp/nominal-f04d-final-review-3fVxOr/report.md`. It checks the exact interfaces,
+mathematical proof routes, active-candidate negatives, meaningful boundaries,
+all-module coverage and article correspondence, and confirms the overall F04
+evidence map. No production fix or second review was needed.
+
+Independent verification compiled all nine foundation modules and Package.lean
+from current source into a fresh temporary olean tree, excluding the repository's
+project oleans from LEAN_PATH and reusing pinned dependency artifacts. All seven
+main consumers, both retained context consumers and the direct 245-declaration
+audit pass against those fresh artifacts. Coverage and diff checks pass. A fresh
+article build in the review directory has 26 pages and no warning/box diagnostic.
+This is a fresh Package proof-artifact build using cached dependencies, distinct
+from root's incremental Lake build; neither is a clean dependency bootstrap.
+
+Root checked the report's command/exit records and confirmed reviewed source
+hashes were unchanged before final status edits. All seven review exclusions
+match the approved scope: later predicate and function/binder/generator work,
+unadopted generalizations, unoffered selector/stronger support claims, new
+external-source research, reference/dependency bootstraps, and full visual or
+platform/performance review. Their omission changes no delivered guarantee;
+the relevant mathematical boundary claims and reference-source preservation
+were checked. There are no unresolved or deferred review findings.
+
+Final document checks cover eight Markdown files, 182 local links, 13 anchors
+and 59 LaTeX labels, plus preserved signature blocks, fences and whitespace.
+The execution snapshot comparison preserves 116 of 129 baseline files, with
+13 intended edits and three additions. Existing Nominal source is only extended,
+and the historical work log, reference code, pins, checker, historical roadmap,
+branch and HEAD are preserved. Final closure changes documentation only.
+
+**F04d is DONE; all overall criteria are met and PKG-F04 is DONE.** F05 and
+PKG-01 remain undelivered. All changes and retained evidence remain uncommitted,
+with no branch, publication or integration action performed.

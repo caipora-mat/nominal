@@ -35,7 +35,7 @@ No branch switch, merge, commit, dependency change, production implementation,
 or CI change belongs to this session. The active tracker is the
 [package roadmap](../nominal-package-roadmap.md), not the historical roadmap.
 
-## Current status after F04c implementation
+## Current status after F04d implementation
 
 The approved canonical-instance/freshness slice now supplies four nominality
 certificates for existing actions, exact atom/discrete/product/Finset supports,
@@ -54,13 +54,26 @@ Atom freshness is a derived interface. Product decomposition now works on both
 sides; disjoint sufficient bounds, finite-set contexts and equivariant images
 have general laws. See the [generalization review](2026-10-06-foundation-generalizations.md)
 for the accompanying independent investigations and remaining proposals.
-Canonical equivariant quotients (F04d), function/predicate input interfaces
-(F05), and predicate foundations (PKG-01) remain later work.
+Canonical equivariant quotients are now implemented under the approved F04d
+specification and native plan. General scalar/monoid action constructors require
+only invariant-setoid evidence; explicit local installation fixes the canonical
+projection contract. General surjective nominality transfer and the existing
+map laws give quotient finite/least-support bounds. The supported-fiber theorem
+needs only one supported preimage, and specializes to the exact intersection
+of representative supports on a nominal source. General freshness-map laws
+supply the context consumers. See the
+[F04d plan](../superpowers/plans/2026-10-06-package-equivariant-quotients.md) and
+active tracker for passing integrated validation and a clean independent final
+review. F04d and the reconciled PKG-F04 are delivered, uncommitted. Function/
+predicate input interfaces (F05), full predicate descent/support reflection
+and predicate foundations (PKG-01) remain undelivered.
 
-F04a/F04b were committed at `68956dd`; the records below preserve their
+F04a/F04b were committed at `68956dd`, and F04c/general freshness at `9c1cb9a`;
+the records below preserve their
 historical uncommitted delivery states. The old predicate proposals do not
 override the delivered support/freshness signatures. In particular `Fresh`
-now names atom freshness, not the cofinite predicate quantifier sketched below.
+now names support-disjointness freshness, with atom freshness as a specialization,
+not the cofinite predicate quantifier sketched below.
 
 ## F04b implementation record (historical)
 

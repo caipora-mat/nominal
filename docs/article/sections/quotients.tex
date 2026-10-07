@@ -1,0 +1,273 @@
+\section{Equivariant quotients}
+\label{sec:equivariant-quotients}
+
+An equivalence relation compatible with an action allows renaming to pass
+to equivalence classes. The construction concerns the selected action and
+the relation; it requires no support hypothesis. We first state it for
+monoids, then specialize to finite permutations.
+
+\subsection{Invariant relations and the induced action}
+
+Let a monoid $M$ act on $X$, and let $\sim$ be an equivalence relation on
+$X$ satisfying
+\[
+  x\sim y\quad\Longrightarrow\quad m\act x\sim m\act y
+  \qquad(m\in M).
+\]
+Only preservation is needed. For a group action, applying the same
+condition to $m^{-1}$ also gives reflection. Write $q(x)=[x]$ for the
+ordinary quotient projection.
+
+\begin{proposition}[Canonical quotient action]
+\label{prop:quotient-action}
+The equation
+\[
+  m\act q(x)=q(m\act x)
+\]
+defines an action of $M$ on $X/{\sim}$. The projection is surjective and
+commutes with the actions.
+\end{proposition}
+
+\begin{proof}
+If $x\sim y$, compatibility gives $m\act x\sim m\act y$, so the
+formula is independent of the representative. On a class $q(x)$ the
+action laws reduce to those on $X$:
+\[
+  1\act q(x)=q(x),\qquad
+  (mn)\act q(x)=q(m\act(n\act x))=m\act(n\act q(x)).
+\]
+Every class has a representative, which proves both that these laws hold
+on the whole quotient and that $q$ is surjective. The defining equation,
+read in the opposite direction, is the action-preservation law for $q$.
+\end{proof}
+
+The group case is the quotient $G$-set construction of
+Pitts~\cite[Section~1.7, equation~(1.43)]{pitts2013}. No nonempty-carrier
+assumption is used: a quotient of an empty carrier is empty, and its
+action laws are still meaningful. Neither decidability of the relation
+nor any assumptions about atoms enter the construction.
+
+Lean uses \texttt{Setoid X} for the equivalence relation and its laws.
+The carrier is \texttt{Quotient s}.
+Compatibility with the selected scalar operation is the ordinary
+proposition \texttt{SMulInvariant M s}.
+Quotient mapping in Mathlib descends each operation
+$x\mapsto m\act x$, with representative computation given by
+\path{Quotient.map_mk}. This part needs only \texttt{SMul M X},
+without monoid laws. The resulting projection can be packaged using
+Mathlib's existing \texttt{MulActionHom}; it remains an ordinary function
+under coercion.
+
+The monoid laws transfer along the projection using Mathlib's
+\path{Function.Surjective.mulAction}.
+That result presupposes a scalar operation on the
+target; quotient mapping supplies it. The inherited operation is
+definitionally the same one, so the public representative equation
+\path{QuotientAction.smul_mk} applies to both interfaces. The construction
+uses quotient elimination, without selecting representatives as data, and
+keeps the scalar and carrier universes independent.
+
+The action is installed explicitly by a client. Compatibility is an ordinary
+proof argument, not an instruction for typeclass search to select a new
+action on every quotient. Consequently the projection laws refer to this
+constructed action even if another action is available on the same
+underlying quotient type. A different action must establish its own
+projection law. This preserves the selected-action distinction of
+Section~\ref{sec:actions} while making canonical quotient computation
+available through a small public interface.
+
+\subsection{Support and nominality transfer}
+
+Now specialize to selected actions of $\Perm(A)$, with $A$ arbitrary.
+Equivariant maps preserve sufficient support bounds by
+Proposition~\ref{prop:support-basic}. Surjectivity gives a further consequence
+for whole carriers.
+
+\begin{proposition}[Nominality under equivariant surjections]
+\label{prop:surjective-nominality}
+Let $f:X\to Y$ be an equivariant surjection between selected permutation
+actions. If the action on $X$ is nominal, so is the action on $Y$.
+Neither infinitude of $A$ nor nonemptiness of $X$ is required.
+\end{proposition}
+
+\begin{proof}
+For $y\in Y$, surjectivity supplies $x\in X$ with $f(x)=y$.
+Nominality of $X$ supplies a finite supporting bound for $x$; equivariance
+makes the same bound support $y$. The preimage is used only to prove
+existence of a finite bound, not to define an operation on $Y$.
+\end{proof}
+
+This is \path{Equivariant.nominal_of_surjective}. Its target action is
+already selected; the theorem supplies only the proof-only nominality
+certificate. It is an explicit theorem, not an instance-search rule that
+could choose an action through an arbitrary surjection.
+
+\begin{proposition}[Canonical quotient support]
+\label{prop:quotient-support}
+Suppose $\sim$ is invariant under the selected action on $X$, and give
+$X/{\sim}$ its canonical action. Every finite set supporting $x$ also
+supports $q(x)$. Thus finite supportedness passes to individual classes,
+and a nominal source has a nominal quotient. If $A$ is infinite and $x$
+is finitely supported, then
+\[
+  \operatorname{supp}_A(q(x))\subseteq\operatorname{supp}_A(x).
+\]
+The individual conclusions require no nominality of the whole source.
+\end{proposition}
+
+\begin{proof}
+The projection is equivariant by Proposition~\ref{prop:quotient-action}.
+Apply the existing image support theorem to any supplied finite bound.
+Apply Proposition~\ref{prop:surjective-nominality} for the carrier statement.
+Under infinite atoms, apply image minimality to the source's least supporting
+bound to obtain the inclusion.
+\end{proof}
+
+The Lean interface keeps the same separation as the preceding support
+calculus. A source certificate \texttt{hx} maps to a certificate for its
+class, and \path{FinitelySupported.support_map_subset} gives the elementwise
+inclusion. On a nominal source, the canonical quotient certificate permits
+the convenient carrier statement \path{QuotientAction.support_mk_subset}.
+These are applications of the established map laws; no new least-support
+choice or support-intersection argument is needed. In particular, a quotient
+of a nominal action over finite atoms is still nominal, even though the
+general least-support interface requires infinite atoms.
+
+The canonical-action qualification is essential. For the equality relation
+on atoms, the canonical quotient action still renames the represented atom.
+One can instead give the same quotient carrier a trivial action. If $a\ne b$,
+this other action fixes $q(a)$, while
+$q(\swap a b\act a)=q(b)\ne q(a)$. The projection is then not equivariant.
+A certificate or equation about the canonical action cannot be applied to
+this other action solely because their carrier types agree.
+
+\subsection{Strict decrease and supported fibers}
+
+\begin{example}[Forgetting one component]
+\label{ex:quotient-strict-support}
+Give $A\times A$ the componentwise action and relate $(a,b)$ to $(a',b')$
+exactly when $a=a'$. This relation is invariant. Over infinite atoms, its
+canonical quotient satisfies
+\[
+  \operatorname{supp}_A(q(a,b))=\{a\},\qquad
+  \operatorname{supp}_A(a,b)=\{a,b\}.
+\]
+For $a\ne b$, the quotient support is a strict subset of the representative's
+support: it retains dependence on $a$ and loses dependence on $b$.
+\end{example}
+
+\begin{proof}
+The classes $q(a,b)$ and $q(a,a)$ agree. The latter has support contained
+in $\{a\}$ by the quotient bound and the exact atom/product formulas.
+Conversely, first projection descends to an equivariant function
+$(A\times A)/{\sim}\to A$ sending $q(a,b)$ to $a$. Image support inclusion for this
+function puts $\{a\}$ inside the class's support, giving equality.
+The pair formula then proves strictness when $a\ne b$.
+\end{proof}
+
+There is nevertheless an exact characterization using all supported
+preimages. It applies beyond quotients, without nominality of either
+whole carrier or surjectivity of the map.
+
+\begin{proposition}[Support in a supported fiber]
+\label{prop:supported-fiber}
+Assume $A$ is infinite, $f:X\to Y$ is equivariant, and $x\in X$ is
+finitely supported. Let
+\[
+  F_{f,x}=\{z\in X\mid z\text{ is finitely supported and }f(z)=f(x)\}.
+\]
+Then
+\[
+  \operatorname{supp}_A(f(x))
+  =\bigcap_{z\in F_{f,x}}\operatorname{supp}_A(z).
+\]
+\end{proposition}
+
+\begin{proof}
+The fiber is nonempty, since it contains $x$. Image support inclusion
+puts the support of $f(x)$ inside every support on the right.
+For the converse, suppose $a\notin\operatorname{supp}_A(f(x))$.
+Choose $b\notin\{a\}\cup\operatorname{supp}_A(x)$; image inclusion also
+puts $b$ outside the image support. Hence $\tau=\swap a b$ fixes $f(x)$.
+Equivariance gives $f(\tau\act x)=f(x)$, and renaming preserves finite
+supportedness, so $\tau\act x\in F_{f,x}$. Support transport gives
+\[
+  \operatorname{supp}_A(\tau\act x)
+  =\tau[\operatorname{supp}_A(x)].
+\]
+This set omits $a$, since its inverse image under $\tau$ is the excluded
+atom $b$. Thus $a$ is also absent from the intersection.
+\end{proof}
+
+The theorem \path{FinitelySupported.mem_support_map_iff} uses
+membership: an atom belongs to image support exactly
+when it belongs to the support of every finitely supported preimage.
+Unsupported values receive no artificial least support. The proof uses
+the established image bound, outside-swap fixation and transport law;
+it reconstructs none of them. Infinite atoms provide the single fresh
+choice by finite avoidance; countability is unnecessary. Classical equality
+for the swap and finite image remains inside the proof.
+
+\begin{proposition}[Support of a quotient class]
+\label{prop:quotient-support-intersection}
+Assume $A$ is infinite and $X$ is nominal. For an invariant equivalence
+relation and any class $c$ under the canonical action,
+\[
+  \operatorname{supp}_A(c)
+  =\bigcap_{\{x\in X\mid q(x)=c\}}\operatorname{supp}_A(x).
+\]
+\end{proposition}
+
+Apply Proposition~\ref{prop:supported-fiber} to a representative of $c$;
+nominality supplies support for all representatives. This is the quotient
+characterization of Pitts~\cite[Proposition~2.30, pp.~45--46]{pitts2013}.
+Its fresh-swap proof also explains the weaker hypotheses of the general
+fiber result. The Lean theorem \path{QuotientAction.support_eq_iInter}
+uses quotient induction and set extensionality, indexing the intersection
+by representatives together with their projection equality. The right side
+is an intersection in \texttt{Set A}, whereas each individual support is
+a Finset. This is an intersection of supports of different objects, not an
+assumption that arbitrary intersections of supporting bounds support one
+fixed object.
+
+\begin{example}[No representative need attain class support]
+\label{ex:quotient-support-nonattainment}
+Over an infinite atom carrier, identify every atom with every other atom.
+The resulting class is fixed
+by all permutations, so its least support is empty. Every representative
+still has singleton support. Thus the intersection formula does not give
+a representative whose support equals the class support.
+\end{example}
+
+Nor does support of a class imply support of a representative. For example,
+the identity in the pointwise function action on $\mathbb N\to\mathbb N$
+is unsupported, as shown in Section~\ref{sec:least-support}. In the universal
+quotient of that carrier its class is invariant and therefore empty-supported.
+The fiber characterization quantifies only over supported preimages; it
+does not reverse finite supportedness or carrier nominality through a
+surjection.
+
+\subsection{Supported contexts and freshness}
+
+Assume $A$ is infinite. The established general freshness laws immediately
+give
+\[
+  c\mathrel{\#}x\ \Longrightarrow\ c\mathrel{\#}q(x),\qquad
+  x\mathrel{\#}c\ \Longrightarrow\ q(x)\mathrel{\#}c.
+\]
+Indeed, quotienting can only shrink the relevant support, preserving its
+disjointness from the context's support. The context may have a different
+carrier and universe. Individual support certificates for $c$ and $x$
+suffice; their entire carriers need not be nominal. Nested products and
+finite atom sets use the decomposition laws of Section~\ref{sec:freshness}.
+For example, freshness of $(c,(d,e))$ for $x$ gives freshness of each
+component for $q(x)$.
+The implication need not reflect freshness: in
+Example~\ref{ex:quotient-strict-support}, $b\mathrel{\#}q(a,b)$ for
+$a\ne b$, while $b$ is not fresh for the original pair.
+
+These consequences use the existing freshness-map theorems with the
+projection. They concern supports of objects. A support-reflection statement
+for the pullback of a predicate would instead compare dependence of $P$
+with that of $P\circ q$; it is a distinct theorem about predicates, not an
+equality between the supports of an object and its representatives.

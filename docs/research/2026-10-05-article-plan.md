@@ -17,9 +17,11 @@ Its scientific scope includes permutations, selected actions and finite support,
 with mathematical arguments and relevant Lean declaration correspondence.
 The article now also covers least support, exact canonical support, symmetric
 support-disjointness freshness with its atom specialization, and finite combined
-avoidance; predicate contracts require their own
-results. Earlier delivery-state descriptions below are historical: F04a/F04b
-were subsequently committed at `68956dd`. The bounded
+avoidance. The quotient section now covers invariant monoid actions, canonical
+projections, support/nominality transfer, strict decrease, supported fibers and
+nonattainment; predicate contracts require their own results. Earlier
+delivery-state descriptions below are historical: F04a/F04b were subsequently
+committed at `68956dd`, and F04c/general freshness at `9c1cb9a`. The bounded
 [implementation plan](../superpowers/plans/2026-10-05-package-foundation-kernel.md)
 assigns article updates to each task. A subsequent author correction reserves
 persistent usage examples for future case studies; the article does not claim
@@ -136,8 +138,11 @@ both sides, finite-set contexts and equivariant-image preservation, as direct
 consequences of the support theory. The independent generalization investigations
 are internal research evidence, not a manuscript development narrative.
 The article and proofs are reconciled together; verification and final-review
-status are recorded in the active roadmap. F04d owns the future
-`sections/quotients.tex`. Every later
+status are recorded in the active roadmap. F04d adds
+`sections/quotients.tex`, with `sec:equivariant-quotients`, developed alongside
+the general action, nominal support and exact fiber proofs. It explains the
+canonical-action boundary and separates object support from predicate support
+reflection. Every later
 specification and plan must retain its own article/reconciliation obligations.
 
 The [F03b written specification](../superpowers/specs/2026-10-05-package-controlled-swaps-design.md)

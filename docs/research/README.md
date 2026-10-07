@@ -9,16 +9,24 @@ before starting a new task.
 
 ## Current Package state
 
-F04a/F04b were committed at `68956dd23066c7c5c647345e5598b859ff97a10c`.
-Under the approved F04c specification and native plan, the working tree now
-contains canonical nominality certificates, exact support formulas, elementwise
-and carrier atom freshness, and fresh existence with finite combined avoidance.
-The source adds Canonical.lean and Freshness.lean, with matching exposition in
-`docs/article/sections/freshness.tex`. Integrated verification and the requested
-independent final review pass, with two minor tracker/test findings corrected.
-F04c is delivered, uncommitted; evidence is tracked in the
-[active roadmap](../nominal-package-roadmap.md). F04d and F05 still precede PKG-01.
-Earlier uncommitted-delivery descriptions below record their original sessions.
+F04a/F04b were committed at `68956dd23066c7c5c647345e5598b859ff97a10c`;
+F04c and its general-freshness extension are committed at
+`9c1cb9aa2f9f69d8d801a9864a9f0220b92ea62a`. They supply the delivered support,
+nominality, canonical instances and freshness foundations. Earlier
+uncommitted-delivery descriptions below record their original sessions.
+
+Under the approved F04d specification and native plan, the working tree now
+adds general explicit quotient-action constructors, the canonical nominal
+projection/support interface, general surjective nominality transfer and the
+supported-fiber characterization. The exact quotient intersection formula
+does not imply an exact-support representative. Current proof/consumer checks
+pass with matching exposition in `docs/article/sections/quotients.tex`.
+Integrated validation and the fresh independent final review pass with no
+findings; F04d and the reconciled PKG-F04 are delivered, uncommitted. Evidence
+is tracked in the [active roadmap](../nominal-package-roadmap.md).
+F05 and PKG-01 remain undelivered;
+object-support bounds and fiber intersections do not implement predicate
+pullback/support reflection.
 
 The author subsequently requested Pitts' general support-disjointness relation
 and a preference for natural mathematical generalizations. The current extension
@@ -28,6 +36,10 @@ recorded in [the generalization review](2026-10-06-foundation-generalizations.md
 The freshness extension, article, integrated checks and independent final review
 are complete; a minor stale proof-description sentence was corrected.
 The generality preference is also recorded in AGENTS.md and decision R15.
+F04d adopts the surjective nominality part of that investigation and uses the
+existing Mathlib hom bundle for its scalar projection. The other proposed
+generalizations remain research; the supported-fiber theorem is separately
+approved and proved F04d work.
 
 ## Architectural freedom
 

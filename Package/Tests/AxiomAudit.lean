@@ -93,6 +93,19 @@ run_cmd do
 #print axioms NominalPackage.fresh_map_left
 #print axioms NominalPackage.fresh_finset_right_iff
 #print axioms NominalPackage.fresh_finsets_iff
+#print axioms NominalPackage.SMulInvariant
+#print axioms NominalPackage.QuotientAction.smul
+#print axioms NominalPackage.QuotientAction.mulAction
+#print axioms NominalPackage.QuotientAction.smul_mk
+#print axioms NominalPackage.QuotientAction.mkHom
+#print axioms NominalPackage.Equivariant.nominal_of_surjective
+#print axioms NominalPackage.QuotientAction.equivariant_mk
+#print axioms NominalPackage.QuotientAction.supports_mk
+#print axioms NominalPackage.QuotientAction.finitelySupported_mk
+#print axioms NominalPackage.QuotientAction.nominal
+#print axioms NominalPackage.QuotientAction.support_mk_subset
+#print axioms NominalPackage.FinitelySupported.mem_support_map_iff
+#print axioms NominalPackage.QuotientAction.support_eq_iInter
 
 set_option maxHeartbeats 0 in
 -- This budget applies only to the inspection traversal, not mathematical proofs.

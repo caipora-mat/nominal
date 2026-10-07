@@ -1,6 +1,6 @@
 # Package foundation kernel
 
-This contains F02, both F03 slices, and F04a/F04b/F04c of the new nominal package. It uses the pinned
+This contains F02, both F03 slices, and F04a–F04d of the new nominal package. It uses the pinned
 Lean/Mathlib 4.34.1 and imports Mathlib directly. The reference `Nominal/` and
 `Instances/` development remains separate.
 
@@ -46,6 +46,11 @@ nor decidable equality; `Perm.swap` takes `[DecidableEq A]`.
 | Freshness laws | Elementwise and carrier `fresh_of_supports`, `fresh_smul_iff`, `fresh_smul_iff_inv`, `swap_smul_eq_of_fresh`, `fresh_prod_iff` |
 | Canonical freshness | `fresh_atom_iff`, `fresh_discrete`, `fresh_finset_iff` |
 | Fresh existence | Elementwise and carrier `exists_fresh`, `exists_fresh_notMem`; explicit-set avoidance uses Mathlib's `Finset.exists_notMem` |
+| Invariant quotient actions | `SMulInvariant`, explicit `QuotientAction.smul` / `.mulAction`, `.smul_mk`, `.mk_smul` |
+| Canonical projection | `QuotientAction.mkHom`, `.mkHom_apply`, `.equivariant_mk`; Mathlib's `Quotient.mk_surjective` |
+| Surjective nominality transfer | `Equivariant.nominal_of_surjective` for already selected actions |
+| Quotient support | `QuotientAction.supports_mk`, `.finitelySupported_mk`, `.nominal`, `.support_mk_subset` |
+| Exact supported-fiber support | `FinitelySupported.mem_support_map_iff`, `QuotientAction.support_eq_iInter` |
 
 Atom and carrier universes are independent. `Discrete A X : Type v` retains the
 universe of `X : Type v`. Its ordinary type equivalence to X does not identify
@@ -215,11 +220,75 @@ component still needs equality and Pointwise; an explicit finite exclusion bound
 alone does not. These theorems construct witnesses in proofs and export no
 executable, equivariant or finitely supported fresh-selector function.
 
+An invariant setoid on an acted-on X gives an ordinary quotient with a canonical
+action. `SMulInvariant M s` means
+`∀ m ⦃x y⦄, s.r x y → s.r (m • x) (m • y)`. It is an ordinary proof argument,
+not a class; s need not be an ambient setoid instance. `QuotientAction.smul s hs`
+descends the selected scalar operation using Mathlib's `Quotient.map` and needs
+only `[SMul M X]`. For `[Monoid M] [MulAction M X]`,
+`QuotientAction.mulAction s hs` transfers the action laws along the surjective
+projection. Neither constructor needs nominality, relation decidability,
+inhabitance or any atom assumption. Both are computable and keep scalar/carrier
+universes independent.
+
+Install the action explicitly. For `s : Setoid X` and
+`hs : SMulInvariant (Perm A) s`:
+
+```lean
+letI : MulAction (Perm A) (Quotient s) := QuotientAction.mulAction s hs
+-- When the selected source action has [Nominal A X]:
+letI : Nominal A (Quotient s) := QuotientAction.nominal A s hs
+```
+
+Neither import nor compatibility evidence alone installs an action or quotient
+nominality instance. The projection computation laws are
+`QuotientAction.smul_mk s hs π x` and its reverse `.mk_smul`; only the first
+is a simp rule. `mkHom` packages the same ordinary projection in Mathlib's
+`MulActionHom`, with a computation lemma for application. For permutation
+actions, `.equivariant_mk A s hs` gives `Equivariant A (Quotient.mk s)`.
+Surjectivity is the existing `Quotient.mk_surjective (s := s)`. All action-dependent
+contracts fix the constructed action; they do not certify an unrelated action
+on the same quotient carrier.
+
+The two sufficient-support adapters preserve any supplied bound or individual
+certificate by the existing map laws. The general theorem
+`hf.nominal_of_surjective hsurj` transfers nominality to an already selected
+codomain action, with no infinitude, equality or nonempty-carrier hypothesis.
+Quotient nominality specializes it to the projection.
+Under `[Infinite A]`, `QuotientAction.support_mk_subset A s hs x` gives the
+carrier inclusion. Without source nominality, install only the canonical action
+and use `hx.support_map_subset (QuotientAction.equivariant_mk A s hs)`; the image
+certificate is `hx.map` of that equivariance proof. Support agreement permits
+independently supplied image evidence. The general freshness-map laws likewise
+apply directly in either argument, including `.freshWith_map_left/right` on
+individual certificates; no quotient-specific freshness theory is needed.
+
+For an ordinary equivariant f and one supported x, the stronger theorem says:
+
+```text
+a ∈ (hx.map hf).support ↔
+  ∀ z (hz : FinitelySupported A z), f z = f x → a ∈ hz.support
+```
+
+`hx.mem_support_map_iff hf a` needs Infinite A but neither whole carrier nominal,
+surjectivity nor decidable equality. It considers only supported preimages.
+For a nominal X, `QuotientAction.support_eq_iInter A s hs c` identifies
+`(support A c : Set A)` with the intersection of `support A x` over the subtype
+`{x : X // Quotient.mk s x = c}`. This is a Set intersection, not a new Finset
+operation. The result does not provide a representative attaining class support:
+over infinite atoms, the universal quotient has empty support while every representative
+has singleton support. The quotient of atom pairs that forgets the second
+component has support `{a}` at the class of `(a,b)`, strictly smaller than
+`{a,b}` when the atoms differ. Surjective equivariant maps can lose support and
+increase freshness; they do not reflect supportedness of arbitrary representatives.
+Predicate pullback/support reflection is a separate later interface.
+
 Persistent usage examples are reserved for future case studies. This increment
 contains the foundation modules and their audit, without a `Package/Examples`
 layer. F04a supplies the finite support calculus and F04b supplies nominality
-and least support. F04c supplies canonical instances and freshness; canonical
-equivariant quotients remain F04d. Supported-function and predicate interfaces, Some/Any, binders
+and least support. F04c supplies canonical instances and freshness; F04d supplies
+canonical equivariant quotients and their support characterization.
+Supported-function and predicate interfaces, Some/Any, binders
 and recursion are later work. Bare permutations retain left multiplication and
 ordinary functions retain their pointwise action; neither receives an automatic
 finite-supportedness or nominality claim.
@@ -234,7 +303,7 @@ python3 Package/Scripts/check-imports.py
 git diff --check
 ```
 
-The public root imports all seven foundation modules. The coverage script inventories
+The public root imports all nine foundation modules. The coverage script inventories
 all Package Lean sources and checks the separate production and audit closures.
 It rejects unclassified sources, missing local imports, production-to-audit
 imports and reference-library dependencies. Its header parser is pinned Lean's
