@@ -166,4 +166,37 @@ def UnifProblem.IsPrincipalSolution (Pr : UnifProblem F X 𝔸)
   p ∈ Pr.Solutions ∧ ∀ q ∈ Pr.Solutions, SolutionLe p q
 
 
+/-! ### Object-level permutation action on problems -/
+
+/-- Object-level action on a constraint: `π · (a #? t) = π·a #? π·t` and
+    `π · (s ≈? t) = π·s ≈? π·t`. -/
+def UnifConstraint.permute (π : LPerm 𝔸) : UnifConstraint F X 𝔸 → UnifConstraint F X 𝔸
+  | .fresh a t => .fresh (LPermApply π a) (t.permute π)
+  | .unif s t  => .unif (s.permute π) (t.permute π)
+
+def UnifProblem.permute (π : LPerm 𝔸) (Pr : UnifProblem F X 𝔸) : UnifProblem F X 𝔸 :=
+  Pr.map (UnifConstraint.permute π)
+
+lemma UnifConstraint.entails_permute (π : LPerm 𝔸) (Γ : Context 𝔸 X) (σ : Subst F X 𝔸)
+    (c : UnifConstraint F X 𝔸) :
+    ((c.permute π).applySubst σ).toConstraint.Entails Γ
+      = (c.applySubst σ).toConstraint.Entails Γ := by
+  cases c with
+  | fresh a t =>
+    simp only [UnifConstraint.permute, UnifConstraint.applySubst, UnifConstraint.toConstraint,
+      Constraint.Entails, ntm.subst_permute]
+    exact (fresh_equivariance Γ a (t.subst σ) π).symm
+  | unif s t =>
+    simp only [UnifConstraint.permute, UnifConstraint.applySubst, UnifConstraint.toConstraint,
+      Constraint.Entails, ntm.subst_permute]
+    exact (alphaEquiv_equivariance Γ (s.subst σ) (t.subst σ) π).symm
+
+/-- **Solutions are invariant under the object-level action**: `𝒰(π · Pr) = 𝒰(Pr)`. The action
+    is suspended on metavariables, so it does not change which substitutions solve a problem. -/
+theorem UnifProblem.solutions_permute (π : LPerm 𝔸) (Pr : UnifProblem F X 𝔸) :
+    (Pr.permute π).Solutions = Pr.Solutions := by
+  ext ⟨Γ, σ⟩
+  simp [UnifProblem.Solutions, Solution.Satisfies, Problem.Entails, UnifProblem.permute,
+    UnifProblem.applySubst, UnifProblem.toConstraint, UnifConstraint.entails_permute]
+
 end Nominal

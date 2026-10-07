@@ -1081,4 +1081,23 @@ theorem UnifProblem.solve_none_iff_no_solution (Pr : UnifProblem F X 𝔸) :
     rw [hempty] at hmem
     simp at hmem
 
+/-! ### The algorithm under the object-level action -/
+
+/-- `solve` fails on `π · Pr` exactly when it fails on `Pr`. -/
+theorem UnifProblem.solve_permute_eq_none_iff (π : LPerm 𝔸) (Pr : UnifProblem F X 𝔸) :
+    (Pr.permute π).solve = none ↔ Pr.solve = none := by
+  rw [UnifProblem.solve_none_iff_no_solution, UnifProblem.solve_none_iff_no_solution,
+    UnifProblem.solutions_permute]
+
+/-- The outputs of `solve` on `π · Pr` and on `Pr` are equivalent in the instantiation
+    ordering. They need not be equal: on `[X ≈? Y]` one binds `X` to `Y`, the other to
+    `(π⁻¹ ∘ π) · Y`. -/
+theorem UnifProblem.solve_permute_solEquiv (π : LPerm 𝔸) (Pr : UnifProblem F X 𝔸)
+    {p q : Context 𝔸 X × Subst F X 𝔸}
+    (hp : (Pr.permute π).solve = some p) (hq : Pr.solve = some q) : SolEquiv p q := by
+  have h₁ := UnifProblem.solve_principal (Pr.permute π) p.1 p.2 hp
+  have h₂ := UnifProblem.solve_principal Pr q.1 q.2 hq
+  rw [UnifProblem.IsPrincipalSolution, UnifProblem.solutions_permute] at h₁
+  exact ⟨h₁.2 q h₂.1, h₂.2 p h₁.1⟩
+
 end Nominal
