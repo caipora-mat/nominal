@@ -1,12 +1,12 @@
 # Nominal package roadmap
 
-Last updated: 2026-10-07. Branch: `fasapa/nominal-package`.
+Last updated: 2026-10-08. Branch: `fasapa/nominal-package`.
 Research baseline: `7fed53a2e5fc67379f86f085515e310e7c1fddb7`.
 F01 assessment snapshot: `76966b1f2e44f594517442b6572e33abaa9038e0`.
-Current inspected HEAD: `32f3dba551761881409bbc7453054e214e582269`
-(`Nominal quotient`). F04a/F04b are committed at `68956dd`,
-F04c/general freshness at `9c1cb9a`, and F04d at this HEAD.
-The working tree and index were clean when the F05 investigation began.
+Current inspected HEAD: `3c9d8dc527f7705b24c0308a2527e659ae933874`
+(`some predicate + function support`). F04a/F04b are committed at `68956dd`,
+F04c/general freshness at `9c1cb9a`, F04d at `32f3dba`, and F05 at this HEAD.
+The working tree and index were clean when the PKG-01 investigation began.
 F04c's specification and native plan were approved; its code, consumers, audit,
 article and resolved independent reviews are delivered. F04c is DONE.
 The author then approved general support-disjointness freshness as a bounded
@@ -27,8 +27,23 @@ and [source/probe investigation](research/2026-10-07-function-space-foundations.
 Its [implementation plan](superpowers/plans/2026-10-07-package-function-space.md)
 was approved for native execution. F05 code, public consumers, audit and article
 pass integrated checks and the independent final review, with no findings.
-**PKG-F05 is DONE**, delivered uncommitted.
-PKG-01 remains undelivered.
+**PKG-F05 is DONE**, committed at `3c9d8dc`.
+**PKG-01 is DONE — complete, independently reviewed, uncommitted.**
+The author selected the direct proof-field predicate record and scoped `И`,
+then approved the [full specification](superpowers/specs/2026-10-07-package-predicate-foundations-design.md)
+and [native implementation plan](superpowers/plans/2026-10-08-package-predicate-foundations.md).
+Tasks 1–3 deliver ordinary logic, supported predicates, semantic views and a
+single transferred Boolean algebra, quantifiers, sections and supported
+collections. Tasks 4–5 deliver general pullback reflection and ordinary/supported
+quotient descent with exact predicate support and individual-context freshness.
+Tasks 6–7 deliver ordinary cofinite truth, supplied-bound Some/Any, context
+adapters, bundled fresh projection and proved logical/quantifier boundaries.
+Task 8 checks the complete accepted specification through nine public consumers,
+compiled README examples, expanded axiom prints, import coverage, reconciled
+exposition and a clean external article build. The independent technical review
+passes with no correctness or acceptance defect; its one minor stale current
+status paragraph is corrected. Final evidence and review disposition are below.
+The run stops after Task 8; later PKG tasks were not started.
 Earlier uncommitted-delivery descriptions retain their historical meaning.
 F04a/F04b's specifications and native plans were approved, and their code,
 consumers, audits, articles and independent final reviews passed.
@@ -163,8 +178,10 @@ F04a is delivered with matching LaTeX exposition and a clean independent final r
 F04b is delivered with matching LaTeX exposition and a clean independent final
 review. F04a/F04b are committed at `68956dd`. F04c is delivered with passing validation and resolved independent final review.
 F04d is delivered with passing checks and a clean independent final review;
-F05 is delivered with passing checks and independent final review, uncommitted.
-F06 and PKG-01 remain unimplemented.
+F05 is delivered with passing checks and independent final review, committed at
+`3c9d8dc`. F06 remains unimplemented. PKG-01 Tasks 1–8 and all three phases
+are complete, independently reviewed and uncommitted. The current authorization
+ends after Task 8; later PKG tasks require a separate request.
 
 Distinguish user decisions, integrated theorems, standalone probes, source
 readings, mathematical analyses and proposed interfaces. Record revision and
@@ -205,9 +222,9 @@ polish is not required to complete an increment, but accurate exposition is.
 | PKG-F02 | DONE — verified, committed delivery | Approved F01 boundary for F02/F03a; approved native plan | `Package/` root, Lake/import boundary and production audit coverage |
 | PKG-F03 | DONE — F03a and F03b verified and committed | Approved F01 boundary; F02; approved F03b native plan | Atoms, finite permutations, actions and equivariance |
 | PKG-F04 | DONE — all four slices verified and committed | PKG-F03; F04a → F04b → F04c/F04d | Finite support calculus, nominality/least support, canonical instances/freshness, canonical equivariant quotients |
-| PKG-F05 | DONE — native implementation, integrated checks and independent final review; uncommitted | PKG-F04; proposed F05a → F05b → F05c | Function objects, ordinary map/predicate certificates and supported values |
+| PKG-F05 | DONE — verified delivery committed at `3c9d8dc` | PKG-F04; delivered F05a → F05b → F05c | Function objects, ordinary map/predicate certificates and supported values |
 | PKG-F06 | TODO | PKG-F04/F05 | Abstraction, concretion or equivalent certified binder-descent facility |
-| PKG-01 | TODO | PKG-F04/F05 | Supported predicates, logical support and quotient-predicate descent |
+| PKG-01 | DONE — Tasks 1–8 and independent whole-change review complete, uncommitted | Delivered PKG-F04/F05; 01a, independent ordinary 01b/01c, then bundled adapters | Supported predicates, logical/order calculus, pullback/descent and cofinite Some/Any |
 | PKG-02 | TODO | PKG-F04; approved backend/grammar from PKG-F01 | Manual syntax-carrier certificate with constructor/action/support laws |
 | PKG-03 | TODO | PKG-02 and PKG-F06 | Fresh term induction and supported iteration |
 | PKG-04 | TODO | PKG-02/03 | Multiple/direct mutual categories and finite-context infrastructure |
@@ -217,7 +234,7 @@ polish is not required to complete an increment, but accurate exposition is.
 | PKG-08 | TODO | PKG-07 and a scoped let specification | Lambda with let and expansion correctness |
 | PKG-09 | TODO | PKG-07 and a residual-binding/transition specification | π-calculus case study |
 | PKG-10 | TODO | PKG-07 and a positivity/semantic specification | μ-calculus case study |
-| PKG-11 | IN PROGRESS — foundation exposition plus F05 mathematical research section | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
+| PKG-11 | IN PROGRESS — foundation/function exposition plus predicate and Some/Any mathematics | Alongside every task | Article, decision record and claim-to-Lean evidence ledger |
 
 The implementation dependency spine is
 `F01 → F02 → F03a → F03b → F04 → F05 → PKG-01`, with concurrent
@@ -657,7 +674,8 @@ F05 and PKG-01 are not marked delivered by this closure.
 
 ### PKG-F05 — Function-space and predicate-input foundation
 
-**DONE — approved native implementation, integrated checks and independent final review; uncommitted.** The
+**DONE — approved native implementation, integrated checks and independent final review;
+committed at `3c9d8dc`.** The
 [written specification](superpowers/specs/2026-10-07-package-function-space-design.md)
 selects a hybrid: ordinary map/predicate certificates, a distinct full
 conjugation function carrier, and a proof-field supported-function bundle.
@@ -753,17 +771,76 @@ requires those explicit foundation contracts before implementation.
 
 ### PKG-01 — Predicate foundations
 
-- [ ] Build supported predicates on the selected F04/F05 interfaces, with
-  extensional equality and proved correspondence to supported subsets or
-  function objects where the chosen representation warrants it.
-- [ ] Prove the raw/quotient `Prop` bridge under the exact descent hypothesis;
-  distinguish alpha compatibility, finite support and equivariance.
-- [ ] Supply logical support, parameter/evaluation and Some/Any interfaces,
-  keeping finite-support premises explicit.
-- [ ] Retain unsupported-predicate and fresh-selector counterexamples, and
-  check any explicit truth-action/atom-instance choices at the public boundary.
-- [ ] Demonstrate arbitrary-motive consumers that need no predicate support
-  certificate; supported logical tools must not narrow future induction motives.
+**DONE — complete specification, Tasks 1–8 and independent review; uncommitted.**
+The [new specification](superpowers/specs/2026-10-07-package-predicate-foundations-design.md)
+is grounded in delivered F05, pinned Mathlib and the
+[current-source/probe record](research/2026-10-07-pkg01-predicate-foundations.md).
+The author selected the direct proof-field predicate record on 2026-10-08,
+with explicit supported-map and supported-subset views. The comparison with
+the viable SupportedMap wrapper remains evidence for that decision; the old
+direct-SPred proposal was not treated as prior approval.
+
+- [x] Inspect current F02–F05 source/delivery and pinned Mathlib; compare all four
+  storage candidates and their concrete ordinary-use behavior.
+- [x] Check bounded representation/logical, pullback/descent and cofinite probes,
+  including negative boundaries and representative axiom dependencies.
+- [x] Write exact contracts, hypothesis/action/universe policy, phase acceptance,
+  remaining obligations, research notes and matching mathematical LaTeX.
+- [x] Author selects named fresh quantifier plus opt-in scoped `И` notation.
+- [x] Author selects choice 1, the direct predicate record, on 2026-10-08.
+- [x] Author approves the written specification and full phase scope on 2026-10-08.
+- [x] Prepare the [implementation plan](superpowers/plans/2026-10-08-package-predicate-foundations.md), with eight tasks and a complete acceptance mapping.
+- [x] Author approves the implementation plan and selects native execution on 2026-10-08, with one numbered task per fresh context.
+- [x] **Task 1 / partial 01a:** ordinary logical support, joint/restricted quantification
+  and uniformly supported action-free families, publicly exported and verified.
+  Evidence: `/tmp/nominal-package-pkg01-execution.WReW3a/`; see the latest work log.
+- [x] **Task 2 / partial 01a:** direct supported predicates, Iff extensionality,
+  proof independence, canonical action/nominality, sufficient/least-support
+  correspondence with map/object/subset views, and Mathlib-transferred Boolean
+  algebra. Public consumer, signatures, audit and article checks pass; see the
+  Task 2 work log and `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+- [x] **Task 3 / completes 01a:** bundled logical computation/support/action laws,
+  F05 precomposition and individually certified sections, whole-carrier/restricted
+  quantification and supported collection union/intersection. Public consumers,
+  support loss, exact signatures, audit and article checks pass; see the Task 3
+  work log and `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+- [x] **Phase 01a complete, uncommitted:** Tasks 1–3 acceptance criteria pass
+  together. Ordinary uniform quantification is in Task 1; no unrestricted
+  CompleteLattice on supported predicates. The whole-change review is recorded with Task 8.
+- [x] **Task 4 / ordinary 01b:** scalar and DivisionMonoid pullback adapters;
+  ordinary sufficient/least-support reflection and Mathlib-backed action-free
+  predicate descent; canonical action laws and all positive/negative consumers.
+- [x] **Task 5 / supported 01b:** supported pullback, explicit SubMulAction
+  restriction and nominality, quotient equivalence, computation, both inverses
+  and action directions, exact support, individual-context freshness and logic.
+- [x] **Phase 01b complete, uncommitted:** both task criteria pass together,
+  including unsupported descent/induction, unrelated-action rejection and the
+  duplicate-label/enlarged-bound consumer. See the separate delivery records.
+- [x] **Task 6 / ordinary 01c:** cofinite quantification and scoped notation,
+  supplied/enlarged-bound Some/Any, finite/cofinite classification, decision
+  laws, joint support and all three uniform-support interchanges.
+- [x] **Task 7 / completes 01c:** individual contexts and avoidance, bundled fresh
+  projection, predicate-object freshness and proved negative boundaries.
+- [x] **Phase 01c complete, uncommitted:** both task criteria and combined
+  acceptance checks pass. See the separate Task 6 and Task 7 delivery records.
+  The independent whole-change review also passes in Task 8.
+- [x] Integrate the complete positive/negative matrix: fixed atoms, nonminimal
+  bounds, empty/non-nominal carriers, unsupported ordinary descent/motives,
+  non-surjectivity, alpha incompatibility, infinite/coinfinite predicates,
+  unsupported singleton unions, quantifier interchange and fresh-selector limits.
+- [x] Verify all phases through the Package public boundary, import coverage and
+  axiom audit; reconcile README/article and compile the manuscript.
+- [x] **Task 8 complete:** exact public signatures, all nine consumers and eight
+  README Lean blocks, complete specification mapping, expanded representative
+  audit, preservation and one fresh independent whole-change review. No material
+  findings; the minor current-status inconsistency is corrected. See the final record.
+
+Dependencies: delivered 01a and 01b use F04/F05; supported 01b additionally
+uses the phase 01a carrier and logic. Ordinary 01c uses PredicateLogic and
+Mathlib's filter theory without depending on the supported carrier; its bundled
+endpoints use 01a. All three phases, final integration, full specification
+coverage and independent review satisfy the PKG-01 completion criterion. F06 is not a prerequisite for generic predicate descent
+or Some/Any. Research probes alone never complete a production checkbox.
 
 At this stage such consumers can use general quotient descent/equality or
 ordinary induction. Generating fresh term/rule induction belongs to later tasks;
@@ -1056,8 +1133,12 @@ Lean rebuild. A successful document check is never package proof evidence.
    PKG-F04 are DONE, with F04d committed at `32f3dba`. F05's hybrid and three phases are now approved. Its
    [implementation plan](superpowers/plans/2026-10-07-package-function-space.md)
    was approved for native execution. Code, consumers, audit and article pass;
-   the independent final review passed without findings. PKG-F05 is DONE,
-   uncommitted; PKG-01 remains later work.
+   the independent final review passed without findings. PKG-F05 is DONE and
+   committed at `3c9d8dc`. PKG-01's written specification is approved and its
+   implementation plan is approved for native execution in fresh contexts.
+   Tasks 1–8, all phases, final integration, complete specification coverage and
+   independent whole-change review pass. PKG-01 is DONE, uncommitted. The run
+   stops here; later PKG tasks require a separate request.
    The [approved F03b specification](superpowers/specs/2026-10-05-package-controlled-swaps-design.md)
    and [native plan](superpowers/plans/2026-10-05-package-controlled-swaps.md)
    supply its bounded contract. The swap criterion supplies permutation input;
@@ -1070,12 +1151,21 @@ retain the working-tree status at their own inspections. F04c's inspection
 began with a clean tree at `68956dd`, containing committed F04a/F04b delivery.
 Persistent usage examples belong to future case studies. The current
 Package audit covers production declarations directly; the reference examples
-remain unchanged. Direct SPred remains an unapproved storage proposal. The
-F05 hybrid deliberately scopes a reusable function foundation; the final
-supported-predicate representation and logical/descent operations stay PKG-01.
+remain unchanged. The author selected the direct SupportedPred representation
+after its comparison with delivered SupportedMap.
+The F05 hybrid is preserved. The author has approved the
+[PKG-01 specification](superpowers/specs/2026-10-07-package-predicate-foundations-design.md),
+including direct storage, scoped `И` notation and the full 01a/01b/01c scope.
+The [implementation plan](superpowers/plans/2026-10-08-package-predicate-foundations.md)
+is also approved. Task 8 and the independent final review are complete; this
+run stops here. Earlier task checkpoints and handoffs are retained as history,
+and all delivery remains uncommitted.
 
 ## Research artifacts
 
+- [Approved PKG-01 predicate-foundations specification](superpowers/specs/2026-10-07-package-predicate-foundations-design.md).
+- [Approved PKG-01 native implementation plan](superpowers/plans/2026-10-08-package-predicate-foundations.md).
+- [PKG-01 current-source/Mathlib inventory, representation comparison and checked probes](research/2026-10-07-pkg01-predicate-foundations.md).
 - [Approved F05 written specification](superpowers/specs/2026-10-07-package-function-space-design.md).
 - [Approved F05 native implementation plan](superpowers/plans/2026-10-07-package-function-space.md).
 - [F05 current-source, Mathlib, Pitts and interface investigation](research/2026-10-07-function-space-foundations.md).
@@ -2955,3 +3045,992 @@ unchanged. `lake build Package +Package.Tests.AxiomAudit`, the direct audit,
 import coverage and `git diff --check` pass; no old module-name references
 remain in Package or the documentation. The audit still covers 573 production
 declarations with only the standard permitted axioms. Changes remain uncommitted.
+
+### 2026-10-07 — PKG-01 architectural investigation and written specification
+
+Inspected clean `fasapa/nominal-package` at
+`3c9d8dc527f7705b24c0308a2527e659ae933874`, which commits F05 as
+“some predicate + function support”. Current summaries now identify that
+committed delivery; preceding work-log entries retain their historical states.
+F02–F05 are complete and their implementation was preserved.
+
+The author authorized investigation, bounded scratch probes, notes and a
+reviewable specification, with no production implementation or commits. Three
+independent investigations covered representation/logic, pullback/descent and
+fresh quantification; root owned shared documentation and reconciliation.
+The [current-source record](research/2026-10-07-pkg01-predicate-foundations.md)
+contains the inventory, pinned Mathlib reuse, representation comparison,
+counterexamples and evidence. The
+[written specification](superpowers/specs/2026-10-07-package-predicate-foundations-design.md)
+recommends:
+
+* a direct ordinary-Prop predicate record with proof-only support and named
+  supported-map/subset views, deriving action/support from F05;
+* logical and quantified support with minimal hypotheses, Boolean structure
+  transferred from Mathlib's supported Boolean subalgebra, and supported-family
+  union/intersection without unrestricted external completeness;
+* ordinary descent from `Setoid.liftEquiv`, plus exact sufficient-bound
+  reflection along equivariant surjections and F04's canonical quotient action;
+* cofinite `Freshly`, supplied-bound Some/Any, elementwise parameter contexts
+  and precise logical/interchange boundaries.
+
+The author selected scoped `И` notation alongside the named operation.
+Direct storage versus the viable predicate-facing SupportedMap wrapper and
+the proposed 01a/01b/01c review units remain written-spec review choices.
+The full PKG-01 acceptance scope is retained; F06 is not made a prerequisite.
+
+The probes check ordinary application/Iff/ext/higher-order behavior, the local
+literal-existential simp remedy, independent universes and atom sorts, genuinely
+non-nominal and empty quantified carriers, nonminimal logical bounds, and
+supported collections. Descent checks include a nonempty-source counterexample
+without surjectivity, a supported but incompatible binder observation and an
+unsupported ordinary predicate used through quotient descent and induction.
+Fresh checks include enlarged bounds, finite avoidance, no-global-selector,
+unsupported singleton union and quantifier-interchange obstructions, plus the
+valid common-bound repairs. They remain standalone research evidence.
+
+Root verification actually run:
+
+* `lake build Package +Package.Tests.AxiomAudit`: exit 0, cached 980-job baseline.
+* `lake env lean Package/Tests/AxiomAudit.lean`: exit 0, 573 production
+  declarations from 14 defining modules, standard axioms only.
+* `python3 Package/Scripts/check-imports.py`: exit 0, all 15 production source
+  modules and the separate audit reached.
+* Direct elaboration of final
+  `2026-10-07-pkg01-representation.lean`, `2026-10-07-pkg01-descent.lean` and
+  `2026-10-07-pkg01-fresh.lean` under `docs/research/probes/`: all exit 0 without
+  warnings/errors. Their 14/16/24 representative axiom reports use only standard
+  foundations. These are fresh source checks using cached pinned imports.
+* LaTeX compilation into `/tmp/pkg01-article-build`: exit 0, 37-page article,
+  final log without warnings, unresolved references or box diagnostics.
+  `sections/predicates.tex` states mathematical results and proof ideas;
+  unsettled interfaces and operational records remain outside the manuscript.
+* Changed/new-file whitespace, local Markdown targets, `git diff --check`,
+  admission scan and preservation checks pass. HEAD, branch and index remain
+  unchanged; no production, reference source, historical roadmap, dependency
+  or CI file changed. No clean bootstrap or fresh full project rebuild claimed.
+
+Independent read-only design checks found no blocking mathematical findings.
+Root incorporated the Set-view elementwise-support clarification, precise
+Pitts attribution and strengthened hypothesis separation, then self-reviewed
+scope, placeholders and remaining proof obligations. PKG-01 remains **IN
+PROGRESS**, with production criteria open. Review the written specification
+before creating an implementation plan; review that plan and select an execution
+method before production work. All documentation and new probes remain uncommitted.
+
+### 2026-10-07 — PKG-01 storage-choice follow-up
+
+At the author's request, two independent agents investigated the direct record
+and predicate-facing SupportedMap wrapper. The
+[research follow-up](research/2026-10-07-pkg01-predicate-foundations.md#follow-up-direct-record-versus-supported-map-wrapper)
+records the symmetric adapter tradeoff and newly checked full wrapper action,
+nominality, support and higher-order consumers. Both stores have `rfl` conversion
+round trips and matching logical/map precomposition; no performance or
+computation winner is established. The investigators have different mild
+preferences, with no technical blocker in either candidate.
+
+Root directly compiled both final temporary probes, with seven/seventeen
+standard-only axiom reports and no diagnostics. Existing uncommitted work,
+production source, branch, HEAD and index are preserved; no implementation plan
+or production work began. The direct recommendation remains provisional and
+the 01a/01b/01c scope is unchanged. No scientific article claim changed, so this
+interface-comparison follow-up requires no new manuscript text.
+
+### 2026-10-08 — PKG-01 direct predicate representation selected
+
+The author chose **choice 1**, the direct `X → Prop` record with proof-only
+`FinitelySupportedPred` evidence. The specification, current research summaries
+and brief now record that decision as settled. Supported-map and subset views,
+F05 reuse and the full logical/descent/Some/Any scope are retained. The wrapper
+comparison remains historical design evidence.
+
+This is representation selection, not approval of the full written specification
+or an implementation plan. The next review remains the complete specification,
+including the proposed 01a/01b/01c units. No production implementation, planning,
+commit or branch change is authorized or performed by this update. Only
+documentation changed. Content/whitespace checks, 213 local Markdown targets
+and `git diff --check` pass. A hash comparison confirms exactly the six intended
+decision-record documents changed in this turn and all other initial files were
+preserved. HEAD, branch and index are unchanged. No new Lean or article
+compilation was needed or claimed.
+
+### 2026-10-08 — PKG-01 specification approved; implementation plan prepared
+
+The author approved the full written specification after its storage decision
+was incorporated. Direct proof-field SupportedPred, scoped И notation and the
+complete 01a/01b/01c scope are approved. The
+[implementation plan](superpowers/plans/2026-10-08-package-predicate-foundations.md)
+now assigns eight tasks: ordinary logical support; carrier/views/Boolean
+structure; bundled quantification; ordinary pullback/descent; supported descent;
+cofinite Some/Any; contexts/bundled fresh projection/boundaries; and integration.
+
+The plan fixes seven new module responsibilities, focused extensions to existing
+pullback-related foundations, public names/types, nine temporary public-import
+consumers, representative axiom checks, article reconciliation and preservation
+checks. Mathlib and current source were consulted for the Boolean transfer,
+setoid universal property, cofinite laws, import classification and audit policy.
+No production code, temporary consumer or manuscript content was changed while
+writing the plan. Existing scratch evidence is not reported as new implementation.
+
+Inline plan self-review checked every approved requirement against its owner
+task, type/name consistency, five additional review-focus cases and proportion.
+It clarified elementwise least-support formulas, removed redundant Equiv inverse
+aliases and fixed explicit ownership of compatibility connector lemmas. All
+implementation task boxes remain unchecked.
+
+Documentation verification passed: 226 local Markdown targets at the checkpoint,
+changed/new-file whitespace and `git diff --check`; a hash comparison confirmed
+exactly six existing documentation files changed plus the new plan, preserving
+all other initial files. HEAD remains `3c9d8dc`, branch `fasapa/nominal-package`,
+and the index is unchanged. No new Lean or article compilation is needed for
+this approval/planning-only change, and none is claimed.
+
+The plan awaits author review and an execution-method choice. Native execution
+with one fresh independent final review is recommended because the eight tasks
+share closely related interfaces; subagent-driven execution with per-task review
+remains available. Specification approval is recorded once and is not requested
+again. Production implementation, commits and branch operations have not begun.
+
+### 2026-10-08 — Native execution approved; fresh-context Task 1 handoff
+
+The author approved the implementation plan and explicitly selected native
+execution, with a fresh context for each phase/step. The handoff unit is one
+complete numbered task: execute all of that task's checklist, record its evidence
+and the next prompt, then stop before the next task. Task 1 covers ordinary
+logical support and quantification; it is the first part of phase 01a, whose
+remaining work belongs to Tasks 2–3. The independent final review remains Task 8.
+
+The plan/spec and current summaries record the approval and this execution
+boundary, so future contexts do not request the same approvals or restart the
+foundation/design investigations. Each handoff records actual source/status,
+checks and scratch evidence paths; temporary state must be verified rather than
+assumed to survive. No production implementation is performed while preparing
+the first prompt, and all implementation checkboxes remain open.
+
+Documentation checks passed: 227 local targets, changed-file whitespace and
+`git diff --check`. A hash comparison confirmed only the seven intended approval/
+handoff documents changed in this turn, preserving every other initial file.
+HEAD, branch and index are unchanged. No Lean or article rebuild was needed
+or claimed for this documentation-only handoff.
+
+
+### 2026-10-08 — Task 1 complete: ordinary logical support and quantification
+
+**Delivered uncommitted; phase 01a and PKG-01 remain open.** Tasks 2–3 are still
+required for 01a; the independent whole-change review remains assigned to Task 8.
+No Task 2 implementation was started. No mathematical contract changed.
+
+Evidence directory: `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+`initial-snapshot.json` records all 151 baseline file hashes, branch, HEAD, index
+hash and status; `initial.diff` preserves the starting tracked diff.
+`task-1-brief.md` and `progress.md` retain the task and execution ledger.
+
+Created `Package/Foundations/PredicateLogic.lean` and exported it from `Package`.
+Its 23 public declarations are `supportsPred_const`, `SupportsPred.not`,
+`supportsPred_not_iff`, `SupportsPred.and_same/or_same/imp_same/iff_same`,
+`SupportsPred.and/or/imp/iff`, `FinitelySupportedPred.const/not/and/or/imp/iff`,
+`SupportsPred.all/ex`, `FinitelySupportedPred.all/ex`, and `SupportsPred.iAll/iEx`.
+The common-bound and existential statements need no decidable atom equality;
+only displayed union bounds require it. Quantification preserves the joint bound
+without nominality, nonemptiness or infinitude; external indices range over an
+independent `Sort`. Restricted quantification accepts support of the combined
+body itself. No new generic support hierarchy, bundled predicate, notation,
+descent or fresh quantifier was introduced.
+
+`Fixtures.lean` first passed with the proved nonnominal FunctionObject carrier.
+`01Logic.lean` then failed on the planned missing public declarations (exit 1,
+`01Logic-red.log`), with no fixture failure. After implementation it passed,
+including joint ∀/∃, restricted implication/conjunction, separate guard bounds,
+uniform action-free Sort indices, empty carriers/indices and genuinely nonnominal
+quantified carriers. Independent universe parameters and all 23 exact signatures
+are checked; representative prints for `.all`, `.ex`, `.iAll` and negation
+reflection use only `propext`, `Classical.choice`, `Quot.sound`. The nonminimal
+`{0,1,2}` certificate for `n = 0 ∨ n = 1` is consumed to prove the disjunction
+at `π • 0`, rather than discarded.
+
+Verification actually run, all final exits 0:
+
+- `lake build Package.Foundations.PredicateLogic Package` — 980 jobs;
+  newly elaborated PredicateLogic and public root, cached dependencies
+  (`logic-build.log`). Baseline `lake build Package` passed with 979 cached jobs.
+- `lake build Package.Foundations.PredicateLogic Package +Package.Tests.AxiomAudit`
+  — 981 jobs; production artifacts cached from that build, audit freshly built
+  (`final-build.log`).
+- `lake env lean /tmp/nominal-package-pkg01-execution.WReW3a/01Logic.lean`
+  — fresh source elaboration, all consumers and signature/axiom prints pass
+  (`01Logic-final.log`).
+- `lake env lean Package/Tests/AxiomAudit.lean` — fresh source elaboration;
+  597 production declarations from 15 modules, no axioms beyond the three
+  standard foundations (`axiom-audit.log`).
+- `python3 Package/Scripts/check-imports.py` — all 16 production sources
+  (including the root) and the one audit source reached (`import-coverage.log`).
+- `lake build Nominal Instances Examples` — 1033 cached jobs; reference audit
+  output replayed, not a fresh reference audit (`reference-build.log`).
+- From `docs/article`, `latexmk -pdf -interaction=nonstopmode -halt-on-error
+  -outdir=/tmp/nominal-package-pkg01-execution.WReW3a/article-build main.tex`
+  — 37-page PDF; fresh external output directory. A new overfull line in the
+  predicate API paragraph was shortened and recompiled; the final TeX log has
+  no warnings or overfull/underfull boxes. Article changes clarify complement
+  reflection, weakest quantifier premises, combined restricted bodies and
+  independent uniform indices; task metadata stays outside the manuscript.
+- `git diff --check` plus changed/new-file whitespace and local Markdown target
+  checks pass. `validation-lean.json` and `validation-article.json` retain exact
+  commands, working directories and exit codes.
+
+Preservation check: `check-preservation.py` / `final-snapshot.json` confirm 142
+of 151 initial files byte-identical, exactly nine intentionally reconciled
+existing files, and only the new PredicateLogic source added. Those nine are
+the public root, Package README, predicate article section, active roadmap,
+plan, spec, current predicate research report, readiness summary and research
+index. Existing article entry/quotient work, all probes, other research files,
+reference source, historical roadmap, pinned dependencies, branch
+`fasapa/nominal-package`, HEAD `3c9d8dc527f7705b24c0308a2527e659ae933874` and
+index are unchanged. No commit, push, worktree, dependency or CI operation.
+README/spec/current summaries now distinguish this partial delivery from the
+remaining supported carrier, bundled logic, descent and cofinite work.
+
+The copyable Task 2 prompt is in the [plan execution record](superpowers/plans/2026-10-08-package-predicate-foundations.md#copyable-fresh-context-prompt-for-task-2)
+and `/tmp/nominal-package-pkg01-execution.WReW3a/Task2-handoff.txt`.
+
+### 2026-10-08 — Task 2 complete: direct predicate values and semantic views
+
+**Delivered uncommitted; phase 01a and PKG-01 remain open.** Task 3 is still
+required for 01a. No Task 3 implementation was started, and the independent
+whole-change review remains Task 8. No mathematical contract or hypothesis
+changed; there were no mathematical rulings or deferred findings in this task.
+
+Evidence remains `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+Earlier Task 1 evidence was present and preserved. Task 2's separate baseline is
+`task-2-initial-snapshot.json`, `task-2-initial.diff` and `task-2-baseline/`, covering
+152 existing files, branch, HEAD, status and index. `task-2-brief.md` and the
+appended `progress.md` retain the task and ledger. Execution follows the explicit
+user constraints: existing checkout, external evidence, no commits/worktree,
+native implementation and stop at the numbered-task boundary.
+
+Created `Package/Foundations/SupportedPredicate.lean` and exported it through
+`Package`. The direct record has only `toFun : X → Prop` and proof-only
+`supported : FinitelySupportedPred A toFun`. Delivered interfaces include:
+
+- `instFunLike`, `ext`, the `@[ext]`-generated `ext_iff`, `congr_apply`,
+  `ofFun/ofSupports/ofInvariant`, constructor application/coercion simp and
+  `ofFun_proof_irrel`; both `coe_ofFun` and `coe_ofFun_exists` handle the two
+  certificate forms without changing F05's reducibility.
+- `toMap/ofMap/mapEquiv`, `toObject`, `toSet/ofSet`, their computation, inverse
+  and action laws, including `toObject_eq` and `toSet_ofSet`.
+- `instMulAction` via `renamePred` and injective transfer through `toObject`,
+  `smul_apply/smul_apply_smul`, `supports_iff` and
+  `supports_iff_toMap/toObject/toSet`, and `instNominal`.
+- `toObject_finitelySupported`, `toSet_finitelySupported`,
+  `support_toMap/toObject/toSet`, retaining elementwise full-view certificates
+  and agreement with independently supplied evidence.
+- `supportedSets` as Mathlib's `BooleanSubalgebra`, `subsetEquiv`,
+  `mem_subsetEquiv`, the restricted image action with `val_smul_supportedSets`,
+  `subsetEquiv_smul`, subtype nominality, `support_subsetEquiv`, and the single
+  `instBooleanAlgebra` transferred using `Equiv.booleanAlgebra`.
+
+Basic construction, action, nominality and Boolean structure retain independent
+atom/carrier universes and require only the selected action on X. Least support
+adds Infinite A. No Prop action, competing bare-arrow/Set action, full-powerset
+nominality, chosen-support data, manual Boolean algebra or Task 3 operation
+layer was added. The pinned Mathlib revision was checked as
+`d13f23b723b8a846827a245b89c10fc7d3f11612` before using its transfer machinery.
+
+`02Fixtures.lean` first passed using only delivered foundations.
+`02Carrier.lean` then failed on missing SupportedPred names (exit 1;
+`02Carrier-red.log`, reaching Lean's 100-error limit). The completed consumer
+passes ordinary Prop application, Iff ext, rw/simp, higher-order application,
+named/literal certificates, enlarged bounds, both equivalence round trips,
+independent universes, two atom sorts (also on one carrier), view renaming,
+nominality without Nominal X, Boolean computation and least-support witness
+independence. A computable reconstruction keeps least-support choice inside
+its certificate. A fixed-atom predicate is proved noninvariant, and the larger
+`{0,1,2}` bound is consumed to prove its renamed proposition. Bare-arrow action
+is tested on an actually acted codomain; Set-image membership is tested both by
+inverse precomposition and by an explicit image witness.
+
+The consumer also guards the observed failures to infer a Prop action or
+Nominal Set Nat, and rejection by `ofSet` of a certificate for an independently
+selected Set action. These guards pass, including the standalone
+`02ActionBoundary.lean`. Additional higher-order map/Set constructor checks
+already passed using existing simp rules (`02Carrier-views-red.log` is exit 0);
+no extra coercion infrastructure was needed.
+
+Resolved diagnostics: the first build attempted a redundant manual `ext_iff`,
+which Mathlib's `@[ext]` had already generated, and omitted `(B := A)` from a
+partially applied general support-reflection theorem. The duplicate was removed
+and the atom carrier made explicit. A consumer's unnecessary `simpa` was changed
+to `simp at he`. Final production/consumer checks have no warnings or errors;
+guarded negative diagnostics are intentional and fully matched.
+
+Checks actually run in this context, all final exits 0:
+
+- `lake build Package.Foundations.SupportedPredicate Package` — 985 jobs;
+  SupportedPredicate and Package freshly elaborated with cached dependencies
+  (`task-2-build-2.log`). The earlier failed build is retained separately.
+- `lake build Package.Foundations.SupportedPredicate Package +Package.Tests.AxiomAudit`
+  — 986 jobs; production artifacts cached from the affected build, audit freshly
+  elaborated (`task-2-final-build.log`).
+- `lake env lean /tmp/nominal-package-pkg01-execution.WReW3a/02Carrier.lean`
+  — fresh consumer elaboration and representative signature/axiom prints
+  (`02Carrier-final.log`). `mapEquiv`, `subsetEquiv`, `supports_iff`,
+  `instNominal`, `support_toSet` and `instBooleanAlgebra` depend only on
+  `propext`, `Classical.choice`, `Quot.sound`.
+- `lake env lean /tmp/nominal-package-pkg01-execution.WReW3a/01Logic.lean`
+  — freshly rerun, source unchanged (`task-2-01Logic.log`). Earlier Task 1 logs
+  remain prior-context evidence.
+- `lake env lean Package/Tests/AxiomAudit.lean` — fresh direct audit of 703
+  production declarations from 16 defining modules, with only the three
+  standard foundations (`task-2-axiom-audit.log`).
+- `python3 Package/Scripts/check-imports.py` — all 17 production source modules
+  (including Package) and the one audit source reached (`task-2-import-coverage.log`).
+- `lake build Nominal Instances Examples` — 1033 cached jobs; reference audit
+  output replayed, not freshly elaborated (`task-2-reference-build.log`).
+- From `docs/article`, `latexmk -pdf -interaction=nonstopmode -halt-on-error
+  -outdir=/tmp/nominal-package-pkg01-execution.WReW3a/task-2-article-build main.tex`
+  — fresh external output directory, 38-page PDF, no warnings or overfull/underfull
+  boxes (`task-2-article.log`, `task-2-article-build/main.log`). The exposition now
+  explains direct proof-field storage, semantic views, support agreement and
+  the transferred Boolean structure; it contains no task/approval/evidence metadata.
+- `git diff --check`, staged diff check, changed/new-file whitespace, local
+  Markdown target checks, admission scan and task-boundary checks pass.
+  `task-2-validation-lean.json` and `task-2-validation-article.json` record
+  commands, working directories and exits.
+
+Preservation: `task-2-check-preservation.py`, `task-2-preservation.log` and
+`task-2-final-snapshot.json` confirm 143 of 152 baseline files byte-identical,
+exactly nine intentionally reconciled existing files, and only the new
+SupportedPredicate source added. The nine are the public root, Package README,
+predicate article section, active roadmap, plan, spec, current predicate research
+report, readiness summary and research index. `task-2-only.diff` isolates this
+context's changes from earlier work. Task 1's PredicateLogic, all research probes,
+existing article entry/quotient work, other research files, reference source,
+historical roadmap, pinned dependencies, branch `fasapa/nominal-package`, HEAD
+`3c9d8dc527f7705b24c0308a2527e659ae933874` and index are unchanged. No commit,
+push, worktree, dependency or CI operation was performed.
+
+Task 3 owns the additional bundled logical/quantified/collection operations and
+all their named computation, bound and action laws. The Boolean instance is
+already delivered and must be reused. Descent and fresh quantification remain
+later tasks. The copyable handoff is retained as `Task3-handoff.txt` in the
+external evidence directory and in the [plan execution record](superpowers/plans/2026-10-08-package-predicate-foundations.md#copyable-fresh-context-prompt-for-task-3).
+
+### 2026-10-08 — Task 3 complete: bundled logic and quantification; phase 01a complete
+
+**Delivered uncommitted. Tasks 1–3 and phase 01a are complete; PKG-01 remains
+IN PROGRESS for Tasks 4–8.** Task 4 is the first task of phase 01b and was not
+started. The independent whole-change review remains assigned to Task 8.
+No mathematical contract or hypothesis changed, and no finding was deferred.
+
+Evidence remains `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+All required earlier evidence was present and read, including `progress.md`,
+`task-2-brief.md`, `task-2-final-snapshot.json`, both Task 2 validation JSON files,
+and the `01Logic.lean` and `02Carrier.lean` consumers. Every file hash in the
+Task 2 final snapshot matched the actual checkout. Task 3 took a new baseline:
+`task-3-initial-snapshot.json`, `task-3-initial.diff`, `task-3-baseline/` (153
+files), and `task-3-brief.md`. Earlier evidence is retained; only the shared
+ledger is appended. Explicit user instructions continue to govern execution:
+native work in the existing checkout, external evidence, no commits/worktree,
+and stop at this numbered-task boundary.
+
+Created `Package/Foundations/SupportedPredicateLogic.lean` and exported it from
+`Package`. It reuses the single BooleanAlgebra delivered by Task 2 and F05's
+ordinary precomposition/section laws. Delivered interfaces in `SupportedPred`:
+
+- Boolean/order `*_apply` and `coe_*` simp laws for bot/top/inf/sup/complement,
+  implication and difference; `le_def`; derived `biimp` with both computation laws.
+- `precomp`, `precompMap`, individually certified `section`, jointly acted
+  `all`/`ex`, and `collectionUnion`/`collectionInter`, each with application and
+  coerced-function equations. `coe_section_exists` additionally handles literal
+  parameter certificates without changing foundational reducibility.
+- All planned Boolean/operator action laws, including order reflection,
+  simultaneous predicate/map and relation/parameter renaming, quantifier
+  reindexing and collection renaming.
+- `supports_compl_iff`, binary/precomposition/section union bounds,
+  `supports_all/ex/collectionUnion/collectionInter` retaining the very same
+  input bound; empty support of bot/top, exact `support_compl`, and all planned
+  `support_*_subset` laws. Difference and the supported-map adapter have the
+  corresponding bounds too. Ordinary precomposition uses the exact supplied
+  `hf.toObject.support`; a section uses `hy.support`.
+
+Collection operations construct supported guarded relations from jointly
+invariant evaluation, then use ordinary universal/existential quantification
+over the ambient supported-predicate carrier. This is neither an external
+arbitrary-family join nor an unrestricted CompleteLattice. No second Boolean
+algebra, curry hierarchy, Prop action, bare-arrow/Set action, or new general
+infrastructure was introduced. Basic operators preserve independent universes
+and require only selected actions. Infinite atoms occur only in least-support
+corollaries; decidable equality occurs only on displayed finite unions.
+Pinned Mathlib `d13f23b723b8a846827a245b89c10fc7d3f11612` and the existing
+Boolean transfer/computation sources were inspected before implementation.
+
+`03Fixtures.lean` first compiled using only existing source (exit 0).
+`03Quantifiers.lean` then failed on missing Task 3 names, before production
+edits (`03Quantifiers-red.log`; initial 100-error cap). A consumer typo applying
+`inf_bot_eq` without its argument was corrected, and the diagnostic run with
+`-DmaxErrors=1000` records all missing-interface failures in
+`03Quantifiers-red-2.log`. This diagnostic-only option changes error reporting,
+not proof checking. Final consumers use the requested direct Lean command.
+
+The passing consumer covers every planned name and printed signature, all
+Boolean computations including implication/difference/order, named/literal
+higher-order use, restricted quantification through separately bundled or only
+combined certified bodies, generic empty quantified carriers, a concrete empty
+carrier over finite Bool atoms, and genuinely non-nominal full function objects.
+The latter carrier is proved non-nominal using an unsupported constant under
+left multiplication, while its supported identity is fixed using only its
+individual certificate. Supplied relation/parameter and collection bounds
+prove actual renamed propositions. Both collection bounds are consumed in
+renamed union/intersection conclusions. Operator action equations are checked,
+including explicit Equivariant consumers. A singleton-supported zero predicate
+has least support `{0}`, whereas its intersection with bottom has empty support,
+so support loss is proved strict rather than merely asserted.
+
+Resolved diagnostics: Lean reserves the token `section`, so the declaration
+uses `«section»` while retaining the required public name. A higher-order
+`xs.map (p \ q)` can elaborate at the Pi arrow type; the `pp.all` probe
+`03SdiffInference.lean/.log` established this. Consumers now explicitly select
+`(p \ q : SupportedPred A X)` to exercise the bundled coercion. A literal section
+certificate then reproduced the semireducible-support simp issue already known
+from Task 2 (`03Quantifiers-green-2.log`); `coe_section_exists` resolves it locally.
+The concrete `Discrete Bool Empty` fixture supplies its own IsEmpty witness.
+The final log scan caught the proof-local `letI` style warning; replacing it with
+`let` and re-elaborating the consumer removed it (`03Quantifiers-final-warning.log`
+retains the original diagnostic). All final production/consumer output is free of warnings and errors; Task 2's
+intentional guarded diagnostics still match.
+
+Commands actually run here, all final exits 0:
+
+- `lake build Package.Foundations.SupportedPredicateLogic Package` — 986 jobs;
+  new module and public root freshly elaborated using cached dependencies
+  (`task-3-build-3.log`; earlier failed/successful iterations retained separately).
+- `lake build Package.Foundations.SupportedPredicateLogic Package +Package.Tests.AxiomAudit`
+  — 987 jobs; production artifacts cached from the affected build, audit freshly
+  elaborated (`task-3-final-build.log`).
+- `lake env lean /tmp/nominal-package-pkg01-execution.WReW3a/03Quantifiers.lean`
+  — fresh elaboration; all consumers, exact signatures and representative axiom
+  prints pass (`03Quantifiers-final.log`). `all_smul`, `section_smul`,
+  `supports_collectionUnion`, `support_compl` use only `propext`,
+  `Classical.choice`, `Quot.sound`.
+- `lake env lean /tmp/nominal-package-pkg01-execution.WReW3a/01Logic.lean` and
+  `lake env lean /tmp/nominal-package-pkg01-execution.WReW3a/02Carrier.lean`
+  — both freshly elaborated, sources unchanged (`task-3-01Logic.log`,
+  `task-3-02Carrier.log`). Earlier-context logs remain earlier evidence.
+- `lake env lean Package/Tests/AxiomAudit.lean` — fresh direct audit: 818
+  production declarations from 17 defining modules, with only the three standard
+  foundations (`task-3-axiom-audit.log`). No admissions or additional axioms.
+- `python3 Package/Scripts/check-imports.py` — all 18 production sources
+  (including Package) and the one audit source reached (`task-3-import-coverage.log`).
+- `lake build Nominal Instances Examples` — 1033 cached jobs; reference audit
+  output replayed, not freshly elaborated (`task-3-reference-build.log`).
+- From `docs/article`, `latexmk -pdf -interaction=nonstopmode -halt-on-error
+  -outdir=/tmp/nominal-package-pkg01-execution.WReW3a/task-3-article-build main.tex`
+  — fresh external output, 39-page PDF, no warnings or overfull/underfull boxes
+  (`task-3-article.log`, `task-3-article-build/main.log`). The manuscript explains
+  precomposition/sections, operator action and least bounds, empty quantification,
+  and the guarded collection construction, with no task or verification metadata.
+- `git diff --check`, staged diff check, changed/new-file whitespace and local
+  Markdown target checks, admission scan, phase/task-boundary and preservation
+  checks pass (`task-3-check-preservation.py`, `task-3-preservation.log`).
+
+`task-3-validation-lean.json` and `task-3-validation-article.json` record commands,
+working directories, durations and results. These are checks against cached
+Lean/Mathlib dependencies, not a clean dependency bootstrap. There were no
+unavailable required tools. No larger-client performance claim is made.
+
+Phase 01a acceptance now passes as a whole:
+
+| Criterion | Fresh evidence |
+| --- | --- |
+| Ordinary logical, joint/restricted/uniform support | Unchanged `01Logic.lean` rerun |
+| Direct ordinary use, all views, coherent action/nominality and support agreement | Unchanged `02Carrier.lean` rerun, including action-separation guards |
+| Single transferred Boolean structure and named logical/order laws | Both carrier and quantifier consumers; Task 2 source byte-identical |
+| Sections, whole-carrier quantification, supported collections, empty/non-nominal clients and support loss | `03Quantifiers.lean`, including renamed conclusions and simultaneous action equations |
+| Public root, imports, trusted proofs and reconciled exposition | Package build, fresh audit, coverage, signatures/axioms and external article build |
+
+Preservation: `task-3-check-preservation.py` / `task-3-final-snapshot.json`
+confirm 144 of 153 baseline files byte-identical, exactly nine intentional
+reconciliations and only the new SupportedPredicateLogic source added. The nine
+are Package.lean, Package README, predicate article, active roadmap, plan, spec,
+current predicate research report, readiness summary and research index.
+`task-3-only.diff` isolates these edits from existing uncommitted work. Earlier
+PredicateLogic/SupportedPredicate source, consumers/evidence, all research probes,
+existing article entry/quotient work, reference sources, historical roadmap,
+dependency pins, branch `fasapa/nominal-package`, HEAD
+`3c9d8dc527f7705b24c0308a2527e659ae933874`, and index are preserved. No commit,
+push, merge, worktree, dependency upgrade or CI operation occurred.
+
+Task 4 owns the general scalar/function/predicate pullback adapters and ordinary
+quotient-predicate correspondence. It must preserve the explicit canonical-action
+boundary and action-free ordinary descent. The complete fresh-context prompt is
+`Task4-handoff.txt` in the evidence directory and in the [plan execution record](superpowers/plans/2026-10-08-package-predicate-foundations.md#copyable-fresh-context-prompt-for-task-4).
+
+### 2026-10-08 — Task 4 delivered: ordinary pullback and quotient predicates
+
+**Complete, uncommitted. Phase 01b continues with Task 5 in this run.** The author
+explicitly changed this run to phase granularity; Task 6 is the stopping boundary.
+Task4-handoff.txt was a START prompt, not a delivery. At entry all 154 files
+matched the Task 3 final snapshot; no Task 4 production source or consumer existed.
+
+Extended ActionSupport, FunctionAction and PredicateSupport; created/exported
+PredicateDescent. The scalar parent requires only SMul. Full-object precomposition
+is action-free, injective for surjections, and equivariant under DivisionMonoid;
+ActionSupport.supports_map_iff reflects arbitrary sets. Ordinary predicate
+pullback preserves bounds using F05 and reflects them through the scalar parent.
+Elementwise least support agrees under surjectivity, with Infinite A only there.
+Ordinary compatibility, kernel/fiber adapters, Mathlib liftEquiv correspondence,
+computation, round trips, proof independence and obstruction require no action
+or support. All canonical support/renaming theorem types select the quotient action.
+
+External evidence: `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+`04Fixtures-green.log` passes existing foundations; `04Descent-red.log` records
+missing interfaces before production edits. Final `04Descent.lean` proves both
+support directions at arbitrary bounds, independent-universe SMul/DivisionMonoid
+signatures, ordinary unsupported descent and quotient induction, diagonal
+non-surjectivity failure, singleton-supported incompatible binder labels, and
+rejection/non-equivariance of an unrelated trivial equality-quotient action.
+
+Commands/results: `task-4-verified-validation.json` records exit 0 for
+`lake build Package +Package.Tests.AxiomAudit`, each of `04Descent.lean`,
+`01Logic.lean`, `02Carrier.lean`, `03Quantifiers.lean` via `lake env lean`,
+`lake env lean Package/Tests/AxiomAudit.lean`, `python3 Package/Scripts/check-imports.py`,
+`git diff --check`, and external latexmk. Affected-module build also passes
+(`task-4-build-4.log`, 987 jobs). Audit build: 988 jobs, dependencies cached;
+changed project modules were freshly built, and all consumers/direct audit freshly
+elaborated. Audit: 858 declarations / 18 defining modules, only the standard three
+axioms; scalar reflection is axiom-free. Coverage: 19 production sources plus audit.
+No clean dependency bootstrap is claimed.
+
+Resolved diagnostics: copied fixture lacked an explicit A binder under
+`autoImplicit false`; equivariance rewriting needed its explicit scalar/input;
+proof-local letI style and a class-valued fixture definition were corrected;
+the unrelated-action fixture needed its kernel equality exposed. No mathematical
+statement changed. Article line overflow was repaired by splitting a long Lean
+name into namespace and declaration; final external
+`latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=/tmp/nominal-package-pkg01-execution.WReW3a/task-4-article-final main.tex`
+from docs/article exits 0, 39 pages, no warnings or box diagnostics. Earlier logs
+remain available. No mathematical rulings or deferred findings.
+
+Article exposition now covers the nonempty diagonal counterexample, arbitrary-set
+DivisionMonoid reflection, ordinary unsupported quotient induction, canonical action
+selection and the distinction from object support. PKG-01 remains open; the
+supported correspondence is Task 5, cofinite theory Tasks 6–7, final review Task 8.
+
+### 2026-10-08 — Task 5 delivered: supported quotient correspondence; phase 01b complete
+
+**Tasks 4 and 5 and their combined phase 01b acceptance criteria pass.** All
+changes remain uncommitted. PKG-01 stays IN PROGRESS for Tasks 6–8. Task 6 has
+not started; the independent whole-change review remains assigned to Task 8.
+The author explicitly authorized Tasks 4–5 together in this run, superseding
+only that part of the earlier per-task context boundary. No mathematical ruling
+or deferred finding was needed.
+
+Created and exported `Package/Foundations/SupportedPredicateDescent.lean`;
+added the six action-free `Compatible.const/not/and/or/imp/iff` adapters to
+PredicateDescent. Task 4's declarations remain unchanged. Delivered:
+
+- `SupportedPred.pullback`, application/coercion computation, fixed-map action
+  compatibility, same-bound preservation, every-bound reflection under
+  surjectivity, and least-support equality with Infinite A.
+- `CompatiblePred A s`, `compatibleAction A s hs` via Mathlib SubMulAction,
+  `compatible_val_smul`, `supports_compatible_iff`, and explicit
+  `compatibleNominal`. No instance guesses invariance or a quotient action.
+- `descendSupported`, `supportedEquiv`, representative equations, both named
+  inverse equations and action laws in both directions. Quotient-dependent
+  types select the canonical action; action/support statements additionally
+  select the compatible-subtype action.
+- `supports_descendSupported_iff`, `supports_supportedEquiv_iff`,
+  `support_supportedEquiv` and `freshWith_supportedEquiv_iff`. Basic laws
+  require neither source nor quotient nominality. Infinite A occurs only in
+  least support/freshness; the context uses its individual certificate with
+  an independent universe, without Nominal on its carrier.
+- Pullback and descent preserve top, bottom, complement, inf, sup, implication
+  and biimplication through the existing Boolean structure. No second Boolean
+  algebra, dependent data descent, binders or fresh quantifier was introduced.
+
+Evidence remains `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+`05SupportedDescent-red.log` records the missing bundled/connector names before
+implementation; `05Fixtures.log` independently passes the existing label and
+non-nominal context fixtures. The final consumer proves computations, both
+inverses, both action directions and exact sufficient/least support, including
+freshness against a supported identity in a provably non-nominal function
+carrier. It rejects implicit action guessing and passing a predicate certified
+under an unrelated trivial quotient action to the canonical correspondence.
+The quotient forgetting a discrete Bool label accepts equality with a fixed
+atom at both labels, retains every supplied enlarged bound, computes after a
+moving swap, and has exact singleton least support over infinite atoms.
+The full public inventory has 79 new declarations across Tasks 4–5;
+`Phase01bSignatures.lean` checks each, and the consumer additionally prints
+explicit selected actions and representative axioms.
+
+The combined acceptance checks preserve Task 4's unsupported ordinary descent
+and quotient induction, scalar/DivisionMonoid generality and independent
+universes, non-surjective diagonal obstruction, supported incompatible binder
+observation and rejection of an unrelated quotient action. These tests are
+external public-import consumers with autoImplicit false; no persistent Package
+Examples layer was added.
+
+Actual final commands/results are in `phase-01b-final-validation.json`, all exit 0:
+
+- `lake build Package +Package.Tests.AxiomAudit` — 989 jobs, cached after
+  iterative affected builds. `lake build Package.Foundations.SupportedPredicateDescent Package`
+  freshly built the new module/root using cached dependencies (988 jobs,
+  `task-5-build-3.log`). No clean dependency bootstrap is claimed.
+- `lake env lean` on each of `04Descent.lean`, `05SupportedDescent.lean`,
+  `01Logic.lean`, `02Carrier.lean`, `03Quantifiers.lean`, and
+  `Phase01bSignatures.lean` in the evidence directory — fresh elaborations;
+  final logs have no errors or warnings. Phase 01a's three consumer sources are unchanged.
+- `lake env lean Package/Tests/AxiomAudit.lean` — fresh direct audit of 918
+  declarations in 19 defining modules, allowing only propext, Classical.choice
+  and Quot.sound. The cached build's audit output is distinguished from this run.
+- `python3 Package/Scripts/check-imports.py` — all 20 production source modules
+  (including the public root) and the separate audit are reached.
+- `lake build Nominal Instances Examples` — 1033 cached jobs; reference audit
+  output replayed, not a fresh reference audit.
+- From `docs/article`, `latexmk -pdf -interaction=nonstopmode -halt-on-error
+  -outdir=/tmp/nominal-package-pkg01-execution.WReW3a/phase-01b-final-article-build main.tex`
+  — fresh external output, 40-page PDF, no warnings, unresolved references or
+  overfull/underfull boxes.
+- `git diff --check` — clean; final preservation validation also checks staged
+  whitespace, changed-file whitespace and local Markdown targets.
+
+Resolved diagnostics are retained: an omitted implicit element binder in
+SubMulAction's closure field; a consumer biimplication needing explicit local
+quotient action; a consumer rewrite requiring its local let exposed. The first
+combined article build failed on an undefined support macro and line overflow;
+ordinary operator notation and shorter sentences resolved both. The final full
+validation is green; no diagnostics are suppressed and no hypotheses changed.
+
+The article now develops the supported equivariant correspondence, exact bounds,
+individual-context freshness, inherited logical operations and duplicate-label
+example. Current README, specification, plan, research summaries and active
+tracker describe the delivered interface. Historical records and prompts remain
+historical; Task4-handoff.txt is preserved as a start prompt, not reclassified
+as delivery. The manuscript contains no task or operational metadata.
+
+Preservation evidence: `phase-01b-initial-snapshot.json`, `phase-01b-baseline/`,
+`task-4-final-snapshot.json`, `phase-01b-final-snapshot.json`,
+`phase-01b-only.diff` and `phase-01b-preservation.log`. Of 154 starting repository
+files, 142 are byte-identical, twelve are intentional source/interface/status
+reconciliations, and the two descent modules are new. All 417 earlier evidence
+files are preserved (the shared ledger retains its exact original prefix).
+Phase 01a sources and consumers, all research probes, unrelated article/research
+work, the reference library, historical roadmap, dependency pins, branch, HEAD
+and index are unchanged. Branch remains fasapa/nominal-package; HEAD remains
+3c9d8dc527f7705b24c0308a2527e659ae933874; index SHA-256 remains
+462fdfad827bcfebf9cf0239d1c5d0917226206646acc3270bd8892ffcd3a8ba.
+No commits, branch/worktree changes, publication, dependency changes or CI edits.
+
+Next: Task 6 begins phase 01c. `Task6-handoff.txt` contains the copyable prompt,
+also retained in the plan below. Task 6 alone will not complete 01c; Task 7
+and final integration/independent review in Task 8 remain required for PKG-01.
+
+### 2026-10-08 — Task 6 delivered: ordinary cofinite truth and supplied-bound Some/Any
+
+**Complete, uncommitted. Phase 01c continues with Task 7 in this run.**
+The author authorized Tasks 6–7 together; Task 8 is the stopping boundary.
+Created/exported `Package/Foundations/FreshQuantifier.lean`, importing only
+PredicateLogic and Mathlib cofinite/finite filter theory. No SupportedPred dependency.
+
+Delivered `Freshly` and opt-in typed/untyped `И`; definition/finite-exception/Finset
+characterizations; pointwise/eventual congruence, monotonicity, conjunction, modus
+ponens, constants and witnesses; independent-universe equivalence reindexing;
+Sort-indexed one-way laws and finite universal interchange. Decision-based negation,
+disjunction (either operand), implication and both distinct Iff interfaces retain
+the plan's hypotheses. Some/Any uses supplied bounds, off-bound swap constancy,
+evaluation and arbitrary extra finite avoidance, with no public DecidableEq.
+Finite/cofinite classification, the infinite/coinfinite obstruction and supported
+Boolean specializations need infinitude only for self-dual negation. Joint fresh
+projection requires only the action on X. All three uniform-support interchange
+laws retain their distinct infinitude/nonempty-index premises.
+
+Evidence: `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+`06Fresh-red.log` records missing interfaces before production edits (the original
+run reached Lean's 100-error limit). `06Fresh.lean` now checks the full interface,
+finite Bool/Empty, Sort indices, no-Nominal projection, a supported antecedent
+with arbitrary consequent, consuming enlarged/avoiding bounds, and scoped nested/
+shadowed notation. A parser-based guarded unscoped check rejects the actual binder
+syntax. `06Scope-red.log`/`06Scope-green.log` retain its focused investigation.
+
+`task-6-final-validation.json` records all eleven commands at exit 0: Package plus
+audit build, all six external consumers, direct axiom audit, import coverage,
+diff check and external latexmk. Affected module/root freshly built with cached
+dependencies (`task-6-build-2.log`, 1015 jobs); full build freshly compiled audit
+(1016 jobs). Direct audit: 976 declarations / 20 defining modules, only the
+standard propext/Classical.choice/Quot.sound axioms. Coverage: 21 production
+sources plus audit. Consumers/direct audit freshly elaborated; no clean dependency
+bootstrap claimed. The final LaTeX engine log has no warnings or box diagnostics;
+initial cross-reference warnings in the multipass driver log resolved normally.
+
+Resolved diagnostics: the reserved name exists is escaped in its declaration;
+not_false no longer resolves recursively; reindexing exposes the Freshly definition
+to simp; a deprecated Set lemma was replaced. The deliberate shadowing test now
+uses both binders. Parser errors occur before #guard_msgs elaboration, so the
+unscoped syntax is parsed within run_elab and its failure is tightly guarded.
+No mathematical contract, public hypothesis or name changed. No rulings or
+deferred findings. The article now states classification, precise Boolean premises,
+finite/empty behavior, reindexing and all uniform-support alternatives.
+
+### 2026-10-08 — Task 7 delivered: contexts and bundled fresh projection; phase 01c complete
+
+**Tasks 6 and 7 and their combined phase 01c acceptance criteria pass.** All
+PKG-01 changes remain uncommitted. Tasks 1–7 and phases 01a–01c are delivered;
+PKG-01 remains IN PROGRESS pending Task 8: final integration, complete
+specification coverage and the independent whole-change review. Task 8 was
+not started and none of its checklist items was marked complete.
+
+Extended FreshQuantifier with the eight ordinary context forms:
+`freshly_section_iff_exists`, `_forall`, both `_avoiding` variants, and the
+four `freshly_invariant_section_iff_*` variants. The explicit relation and
+individual parameter bounds combine as S ∪ T. Displayed unions retain
+DecidableEq; invariant forms use hx.Fresh a and need neither DecidableEq nor
+Nominal X. All context Some/Any forms require Infinite A. They reuse F05
+sections, Task 6 avoidance and the existing elementwise freshness interface.
+`FinitelySupportedPred.freshly_iff_of_fresh` evaluates an ordinary predicate
+using its individually certified predicateObject, without bundling it.
+
+Created/exported SupportedPredicateFresh with `SupportedPred.fresh`,
+`fresh_apply`, `coe_fresh`, `fresh_smul`, `supports_fresh`,
+`support_fresh_subset` and `freshly_iff_of_fresh`. The operation stores only
+its ordinary Prop-valued body and a support proof. Application/coercion simplify,
+renaming commutes, and the same sufficient bound is retained without infinitude
+or nominality of the parameter carrier. Least-support/freshness conveniences
+add Infinite A. No new Fresh relation, support construction, global action,
+filter hierarchy, or persistent Package Examples layer was introduced.
+
+Evidence remains `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+`07Fixtures-red.log` is a successful fixture run (exit 0); the filename reflects
+its use in the RED-stage batch. It separately proves the nonnominal full-function
+carrier and supported identity using delivered foundations. The subsequent
+`07FreshPredicates-red.log` fails on missing context/bundled interfaces before
+production edits (maxErrors=1000 exposes all diagnostics). The green consumer
+obtains a relation fact at a fresh atom using only an individual certificate,
+and combines that fact with extra finite avoidance in the proved nonnominal
+identity carrier. It checks arbitrary-action fresh projection, finite Bool
+projection of bottom to top, higher-order coercions and generic signatures.
+
+`08Boundaries.lean` proves every requested obstruction through the public root:
+the infinite/coinfinite Bool-flag atom predicate; unsupported external union of
+supported singletons; failed fresh existential/universal interchange despite
+jointly invariant equality/disequality; finite nonempty Bool-index failure;
+finite-atom/empty-index failure; failures of stronger Boolean laws without
+decisions and of Iff with only one supported operand; an empty-supported,
+witnessed but noncofinite predicate on Discrete Nat Bool × Nat; a finitely
+supported global fresh-selector obstruction with no Infinite premise; and
+fixed-atom support without invariance. Ordinary classical fresh choice remains
+legal and is separately proved unsupported. All supplied/enlarged/avoiding
+positive consumers retain actual predicate facts in their conclusions.
+
+`phase-01c-public-names.json` inventories 58 public declarations (42 from Task 6,
+16 from Task 7). `Phase01cSignatures.lean` checks all of them; the three new
+consumers assign generic contracts and print representative axioms, including
+the selector obstruction and joint fresh projection. No public statement or
+hypothesis deviated from the approved plan. No mathematical rulings or deferred
+findings were introduced. This is the phase acceptance check, not Task 8's
+independent review of the whole PKG-01 change.
+
+Actual final commands/results are in `phase-01c-final-validation.json`, all
+fourteen commands exit 0:
+
+- `lake build Package +Package.Tests.AxiomAudit` — 1017 jobs. The final run
+  freshly compiled the audit with cached project/dependency artifacts.
+  Iterative affected-module/root builds freshly compiled the new code using
+  cached dependencies (`task-7-build-2.log`, 1016 jobs; FreshQuantifier context
+  additions built in `task-7-build-1.log`). No clean dependency bootstrap claimed.
+- `lake env lean` on each of `01Logic.lean`, `02Carrier.lean`,
+  `03Quantifiers.lean`, `04Descent.lean`, `05SupportedDescent.lean`,
+  `06Fresh.lean`, `07FreshPredicates.lean`, `08Boundaries.lean` and
+  `Phase01cSignatures.lean` in that evidence directory — fresh elaborations,
+  no errors/warnings/admission dependencies. The five earlier sources and logs
+  remain byte-identical; their new run logs have the phase-01c-final prefix.
+- `lake env lean Package/Tests/AxiomAudit.lean` — fresh direct audit of 995
+  declarations in 21 defining modules; only propext, Classical.choice and
+  Quot.sound. The representative prints and full traversal policy are unchanged;
+  Task 8 still owns extending the representative production prints.
+- `python3 Package/Scripts/check-imports.py` — all 22 production sources
+  (including the public root) and the separate audit reached. The ordinary
+  FreshQuantifier Package import closure separately contains no SupportedPred module.
+- `git diff --check` — clean; final preservation additionally checks the index,
+  whitespace in new untracked files and changed Markdown link targets.
+- From docs/article, `latexmk -pdf -interaction=nonstopmode -halt-on-error
+  -outdir=/tmp/nominal-package-pkg01-execution.WReW3a/phase-01c-final-article-build main.tex`
+  — fresh external output, 42-page PDF. Final engine log has no warnings,
+  unresolved references or overfull/underfull boxes. The 41-page Task 6 checkpoint
+  also had a clean final engine log. Initial multipass reference warnings resolved.
+
+Resolved Task 7 diagnostics remain in their original logs: the bundled action
+proof needed an explicit reindexed predicate and parenthesized inverse;
+Bool-flag consumers needed explicit atom-domain annotations (the atom argument
+of FinitelySupportedPred deliberately does not select the predicate domain);
+the fixed-atom contradiction needed Nat.one_ne_zero. Final proofs are complete
+and have only standard axioms. No diagnostic is suppressed.
+
+The article now states contextual Some/Any, individual predicate-object
+freshness, bundled projection and its bound, all distinct Boolean hypotheses,
+three uniform-support interchanges, finite/empty behavior, and the proved
+carrier/selector boundaries. Only its cofinite subsection changed in this phase;
+no operational metadata entered the manuscript. Current README, specification,
+plan, research summaries and active roadmap describe the actual delivery.
+
+Preservation is certified by `phase-01c-check-preservation.py`,
+`phase-01c-preservation.log`, `phase-01c-initial-snapshot.json`,
+`phase-01c-final-snapshot.json`, `phase-01c-baseline/` and `phase-01c-only.diff`.
+147 of 156 starting repository files are byte-identical; nine intentional public
+export/interface/article/status documents changed and two foundation modules
+are new. Every Task 1–5 production file and all research probes are unchanged.
+All 693 earlier evidence files are preserved, with the shared ledger's exact
+original prefix; the Task 6 code checkpoint is unchanged apart from Task 7's
+appended adapters. Reference library, historical roadmap, dependencies, staged
+index, branch and HEAD are unchanged. Branch: fasapa/nominal-package; HEAD:
+3c9d8dc527f7705b24c0308a2527e659ae933874; index SHA-256:
+462fdfad827bcfebf9cf0239d1c5d0917226206646acc3270bd8892ffcd3a8ba.
+No commits, worktrees, branch changes, pushes, merges, publication, dependency
+upgrades or CI edits. No reference rebuild or checker self-test was needed;
+the unchanged reference/checker sources and their prior evidence are preserved.
+
+`phase-01c-acceptance.md` maps the combined criteria to actual consumers.
+`Task8-handoff.txt` is the copyable fresh-context prompt, also retained below in
+the plan. Reuse Tasks 1–7 and complete Task 8 before claiming PKG-01 complete.
+
+### 2026-10-08 — Task 8 complete: public integration and independent final review
+
+**Task 8 and PKG-01 are complete, uncommitted. All three phases, whole-specification
+acceptance and the independent whole-change review pass.**
+Only Task 8 is authorized in this run. Tasks 1–7 are reused without production
+proof changes. Later PKG tasks remain outside this delivery.
+
+Evidence remains `/tmp/nominal-package-pkg01-execution.WReW3a/`.
+All earlier evidence was present. Every phase-01c final repository hash matched
+the current checkout at entry. `task-8-initial-snapshot.json`,
+`task-8-initial.diff` and `task-8-baseline/` preserve the 158 repository files,
+branch, HEAD, index and 926 earlier evidence files. The retained `progress.md`
+was appended; its original prefix is unchanged.
+
+Delivered integration:
+
+- `09PublicSignatures.lean` contains 65 public-import consuming examples with
+  autoImplicit false. Exact contracts check independent universes, simultaneous
+  atom sorts on one carrier, explicit selected/canonical quotient actions,
+  scalar-only and DivisionMonoid parents, empty/proved nonnominal carriers,
+  absent unnecessary Nominal/Infinite/Nonempty/DecidableEq premises, named and
+  literal evidence, certificate independence, computability and higher-order use.
+  Overloaded Boolean operations are explicitly typed as SupportedPred. Scoped
+  typed/untyped И is consumed outside the defining namespace. It passed first
+  elaboration against the existing implementation; no export or proof repair
+  was needed.
+- `Package/Tests/AxiomAudit.lean` adds 43 representative prints across every
+  predicate area. Module-origin traversal, standard-axiom whitelist, zero-count
+  rejection and simulated disallowed-name rejection tests remain byte-identical.
+  The negative-test strings are not active axioms. The inspection-only heartbeat
+  budget was preserved; no mathematical checking or diagnostic option was relaxed.
+- Package README now has complete ordinary-certificate, supported-value,
+  action-free/supported descent and supplied-bound Some/Any examples. All eight
+  Lean blocks, including the earlier function examples and a formerly schematic
+  quotient-action fragment, were extracted to `READMEExamples.lean` and compiled
+  together through Package with autoImplicit false. Names and hypothesis limits
+  agree with the public interfaces.
+- `task-8-acceptance.md` maps 46 whole-specification obligations to actual source
+  and consuming evidence across all phases. Both earlier signature inventories
+  are retained and rerun. All specified negative boundaries remain proved;
+  unsupported ordinary predicates, quotient induction motives and classical
+  choice remain legal.
+- The manuscript title/abstract, section guide and correspondence paragraphs
+  now include functions, supported predicate logic, quotient descent and
+  Some/Any. Its central predicate mathematics remains unchanged after checking
+  hypotheses and proofs against source. `task-8-literature-check.md` records
+  the pinned primary comparisons; no new external formalization build is claimed.
+  Operational metadata remains outside the manuscript.
+
+Commands actually run, all final exits 0, with exact argument arrays, working
+directories, elapsed times and full logs in `task-8-integrated-validation.json`
+(18 commands) and `task-8-initial-validation.json`:
+
+- `lake build Package +Package.Tests.AxiomAudit` — 1017 jobs. The first Task 8
+  run freshly compiled the changed audit using cached production/dependency
+  artifacts. The integrated run was cached. No fresh production rebuild or
+  clean dependency bootstrap is claimed.
+- `lake env lean` on each of `01Logic.lean`, `02Carrier.lean`,
+  `03Quantifiers.lean`, `04Descent.lean`, `05SupportedDescent.lean`,
+  `06Fresh.lean`, `07FreshPredicates.lean`, `08Boundaries.lean`,
+  `09PublicSignatures.lean`, `Phase01bSignatures.lean`,
+  `Phase01cSignatures.lean` and `READMEExamples.lean` in the evidence directory
+  — twelve fresh elaborations against cached imports. The original eight
+  consumer sources and earlier logs are unchanged.
+- `lake env lean Package/Tests/AxiomAudit.lean` — fresh traversal of 995
+  production declarations in 21 defining modules; only `propext`,
+  `Classical.choice`, `Quot.sound`.
+- `python3 Package/Scripts/check-imports.py` — all 22 production sources,
+  including the root, and the separate audit reached. Ordinary FreshQuantifier
+  and PredicateDescent import closures separately checked to exclude the
+  bundled predicate modules. No checker change or self-test was necessary.
+- `git diff --check` and `git diff --cached --check` — clean. Additional
+  checks include whitespace in untracked delivery files and local Markdown
+  target/fragment validation.
+- From `docs/article`, `latexmk -pdf -interaction=nonstopmode -halt-on-error
+  -outdir=/tmp/nominal-package-pkg01-execution.WReW3a/task-8-article main.tex`
+  — fresh external output directory, 42-page PDF. Final engine log has no
+  warnings, unresolved references or overfull/underfull boxes. Transient
+  first-pass cross-reference messages in the driver log resolved normally.
+
+No Lean consumer/audit errors or warnings remain. The sole failed Task 8 check
+was the new external preservation helper initially expecting the later snapshot
+schema in the earliest snapshot (`files` versus `hashes`). The original failure
+log is retained; inspecting the original keys identified the cause, and the
+schema adapter passed the complete preservation check. No source theorem or
+acceptance test was changed to conceal a failure.
+
+The pre-review preservation check passes: 145 of 158 repository files are
+byte-identical, with thirteen intentional integration/documentation/audit edits;
+no new repository files in Task 8. All 77 protected reference/probe/pin files
+match the earliest and latest snapshots, and all 926 earlier evidence files are
+preserved (ledger prefix checked separately). 321 local targets and 20 Markdown
+fragments pass. Earlier plan task contracts and all historical plan/roadmap
+execution records are unchanged. No production theorem file changed in Task 8.
+
+Independent whole-change review was performed once to `gpt-6-astra` with
+explicit `ultra` reasoning and a fresh context (`fork_turns: none`), read-only.
+`task-8-review-package.md` includes the approved authority, Review Focus verbatim,
+actual source/documentation, complete 33-file uncommitted diff/inventory,
+all consumers/logs, preservation scope and ledger rulings. This includes all
+seven untracked production modules; HEAD..HEAD is not used as the change range.
+The technical review gate passes with no Critical or Important findings and no
+correctness, missing acceptance, or hypothesis defect. The reviewer independently
+reran all nine consumers, README extracts, direct audit and import checker.
+Its one Minor finding, M1, was an obsolete active roadmap policy paragraph saying
+Tasks 6–8 remained and authorization stopped before Task 6. Source inspection
+confirmed it; the required final current-status reconciliation now identifies
+Tasks 1–8 as complete and the stopping point after Task 8. This is a documentation
+correction within the existing task, with no production fix or new test needed.
+Historical work-log entries remain unchanged. No minor finding is deferred.
+The full report/disposition is `task-8-independent-review.md`; all reviewer
+scope exclusions are explicitly ruled on in `task-8-rulings.md`.
+
+Workflow ruling: explicit current instructions override generic worktree,
+commit, evidence-deletion and branch-finishing helpers. The authorized checkout
+and external evidence are retained. The cost is the requested uncommitted,
+external evidence state; no mathematical scope or contract was changed.
+
+Branch remains `fasapa/nominal-package`; HEAD remains
+`3c9d8dc527f7705b24c0308a2527e659ae933874`; index SHA-256 remains
+`462fdfad827bcfebf9cf0239d1c5d0917226206646acc3270bd8892ffcd3a8ba`.
+Reference code, historical roadmap, research probes, pinned dependencies and
+CI remain unchanged. No commit, push, merge, publication, worktree or branch
+operation was performed. Larger-client elaboration performance and future
+binder/generator/case-study work remain outside this acceptance claim.
+
+Final status reconciliation covers the plan's seven Task 8 checklist steps, the
+active roadmap dashboard/policy/task contract, approved specification, current
+research index/investigation/readiness/brief and Package README. It preserves
+all earlier execution records and handoffs. Completion concerns only PKG-01;
+PKG-F06 and later PKG tasks retain their previous status.
+
+**Final closeout:** the same reviewer confirmed M1 resolved and the final completion
+status consistent, with no remaining discrepancy. Only status/evidence documentation
+changed after technical review; production, audit, manuscript and compiled consumer
+sources are unchanged. `python3 /tmp/nominal-package-pkg01-execution.WReW3a/task-8-check-preservation.py final`
+passes after reconciliation: 144 of 158 starting repository files byte-identical,
+fourteen intentional integration/docs/audit changes, no new repository files in
+Task 8, all 77 protected files and 926 earlier evidence files preserved, 322 local
+links and 20 fragments valid. The final snapshot and Task-8-only diff are
+`task-8-final-snapshot.json` and `task-8-final-only.diff`; full final inventory/diff
+also include every untracked PKG-01 source. Branch, HEAD and index remain unchanged.
+Task 8 and PKG-01 are complete, uncommitted. No later PKG task was started.

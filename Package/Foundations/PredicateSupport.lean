@@ -150,6 +150,52 @@ theorem FinitelySupportedPred.rename (hP : FinitelySupportedPred A P) (π : Perm
     rw [predicateObject_rename]
     exact ((finitelySupportedPred_iff A P).1 hP).smul π)
 
+/-- Equivariant pullback retains the same bound, without requiring surjectivity. -/
+theorem SupportsPred.pullback {P : Y → Prop} {q : X → Y}
+    (hP : SupportsPred S P) (hq : Equivariant A q) : SupportsPred S (P ∘ q) := by
+  classical
+  simpa only [Finset.union_empty] using hP.precomp ((supportsMap_empty_iff A q).2 hq)
+
+theorem FinitelySupportedPred.pullback {P : Y → Prop} {q : X → Y}
+    (hP : FinitelySupportedPred A P) (hq : Equivariant A q) :
+    FinitelySupportedPred A (P ∘ q) := by
+  obtain ⟨S, hS⟩ := hP
+  exact ⟨S, hS.pullback hq⟩
+
+/-- Surjectivity makes every supplied predicate bound detectable by pullback. -/
+theorem supportsPred_pullback_iff (q : X → Y) (hq : Equivariant A q)
+    (hsurj : Function.Surjective q) (S : Finset A) (P : Y → Prop) :
+    SupportsPred S (P ∘ q) ↔ SupportsPred S P :=
+  forall_congr' fun π => forall_congr' fun _ =>
+    ActionSupport.invariant_pullback_iff q hsurj π (hq π) P
+
+theorem finitelySupportedPred_pullback_iff (q : X → Y) (hq : Equivariant A q)
+    (hsurj : Function.Surjective q) (P : Y → Prop) :
+    FinitelySupportedPred A (P ∘ q) ↔ FinitelySupportedPred A P :=
+  exists_congr fun S => supportsPred_pullback_iff q hq hsurj S P
+
+theorem renamePred_pullback (q : X → Y) (hq : Equivariant A q)
+    (π : Perm A) (P : Y → Prop) : renamePred π P ∘ q = renamePred π (P ∘ q) := by
+  funext x
+  simp only [renamePred, Function.comp_apply, hq π⁻¹ x]
+
+/-- Exact least support concerns the individually certified predicate objects,
+not the ordinary arrows or the support of a representative. -/
+theorem FinitelySupportedPred.support_pullback [Infinite A] {P : Y → Prop}
+    (hP : FinitelySupportedPred A P) (q : X → Y) (hq : Equivariant A q)
+    (hsurj : Function.Surjective q) :
+    ((finitelySupportedPred_iff A (P ∘ q)).1 (hP.pullback hq)).support =
+      ((finitelySupportedPred_iff A P).1 hP).support := by
+  apply le_antisymm
+  · apply FinitelySupported.support_minimal
+    apply (supportsPred_iff _ _).1
+    apply (supportsPred_pullback_iff q hq hsurj _ P).2
+    exact (supportsPred_iff _ _).2 (FinitelySupported.supports_support _)
+  · apply FinitelySupported.support_minimal
+    apply (supportsPred_iff _ _).1
+    apply (supportsPred_pullback_iff q hq hsurj _ P).1
+    exact (supportsPred_iff _ _).2 (FinitelySupported.supports_support _)
+
 /-- Equality with a fixed value has exactly the sufficient bounds of that value. -/
 theorem supportsPred_eq_iff (S : Finset A) (x : X) :
     SupportsPred S (fun y => y = x) ↔ Supports S x := by

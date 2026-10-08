@@ -20,7 +20,10 @@ bundle-first use, rather than selecting that preference in advance.
 After this investigation the author approved its written specification, then
 approved the implementation plan for native execution. The five F05 modules now
 exist under Package/Foundations, with passing public consumers, full production
-axiom audit and matching article. Independent final review passed with no findings; delivery is uncommitted. See the
+axiom audit and matching article. Independent final review passed with no findings.
+The delivery is now committed at `3c9d8dc527f7705b24c0308a2527e659ae933874`.
+The [PKG-01 continuation](2026-10-07-pkg01-predicate-foundations.md) uses these
+delivered interfaces without reopening the hybrid. See the
 [implementation plan](../superpowers/plans/2026-10-07-package-function-space.md)
 and [active roadmap](../nominal-package-roadmap.md) for actual delivery evidence.
 The source inventory and scratch-status descriptions below retain the starting
@@ -306,6 +309,6 @@ from `docs/article`. Markdown local targets, changed/new file whitespace,
 The article records mathematics, not task IDs, review states or these commands.
 At the end of that investigation the specification awaited review. The author
 subsequently approved it and the implementation plan for native execution.
-Production implementation and independent final review are now complete; see
-the subsequent-delivery section above and the active roadmap. All changes remain
-uncommitted.
+Production implementation and independent final review are complete; see
+the subsequent-delivery section above and the active roadmap. The original
+uncommitted delivery was subsequently committed at `3c9d8dc`.

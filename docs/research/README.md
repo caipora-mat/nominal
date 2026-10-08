@@ -26,9 +26,30 @@ Integrated validation and the fresh independent final review pass with no
 findings; F04d and the reconciled PKG-F04 are delivered and committed. Evidence
 is tracked in the [active roadmap](../nominal-package-roadmap.md).
 F05 production interfaces, native implementation checks and independent final
-review are complete with no findings; the delivery is uncommitted. PKG-01 remains
-undelivered; object-support bounds and fiber intersections do not implement
-predicate pullback/support reflection.
+review are complete with no findings, committed at
+`3c9d8dc527f7705b24c0308a2527e659ae933874`. The new
+[PKG-01 investigation](2026-10-07-pkg01-predicate-foundations.md) starts from that
+clean checkout. Its [written specification](../superpowers/specs/2026-10-07-package-predicate-foundations-design.md)
+was approved on 2026-10-08; its [implementation plan](../superpowers/plans/2026-10-08-package-predicate-foundations.md)
+is approved for native execution. Task 8 and the independent whole-change
+review now pass; PKG-01 is complete, uncommitted. This run stops here. Tasks 1–3 deliver phase 01a in the working tree: ordinary predicate logic, direct
+supported predicates and views, Boolean algebra, bundled logical/quantified
+operations, individually certified sections and supported collections. The
+investigation compares all four predicate representations and supplies three
+review units covering logical calculus, pullback/descent and fresh quantification.
+The author selected scoped `И` notation alongside the named cofinite operation.
+On 2026-10-08 the author also selected choice 1, the direct predicate record
+with proof-only support, then approved the full written specification.
+Tasks 4–5 complete phase 01b: general pullback
+reflection, ordinary/supported descent, explicit compatible actions, exact support
+and individual-context freshness. Tasks 6–7 complete phase 01c: cofinite truth,
+scoped notation, supplied-bound Some/Any, contexts and bundled fresh projection,
+with precise logical/uniform-support laws and proved negative boundaries. Task 8
+verifies all phases together through public consumers, README extracts, audit,
+imports and the article. Independent review found no material issue; its one
+minor current-status inconsistency was corrected. Separate delivery and
+preservation evidence is recorded in the active roadmap and approved plan. Object-support
+bounds and fiber intersections remain distinct from predicate support reflection.
 The 2026-10-07 [F05 investigation](2026-10-07-function-space-foundations.md)
 reassesses the older direct-SPred proposal against completed F04, pinned Mathlib
 and Pitts. Its [written specification](../superpowers/specs/2026-10-07-package-function-space-design.md)
@@ -53,9 +74,10 @@ The freshness extension, article, integrated checks and independent final review
 are complete; a minor stale proof-description sentence was corrected.
 The generality preference is also recorded in AGENTS.md and decision R15.
 F04d adopts the surjective nominality part of that investigation and uses the
-existing Mathlib hom bundle for its scalar projection. The other proposed
-generalizations remain research; the supported-fiber theorem is separately
-approved and proved F04d work.
+existing Mathlib hom bundle for its scalar projection. F05 subsequently adopts
+scalar injective support reflection, same-group arbitrary-set support transport
+and the Equivariant/MulActionHom bridge. Remaining generalizations retain their
+research status; the supported-fiber theorem is separately approved F04d work.
 
 ## Architectural freedom
 
@@ -157,6 +179,9 @@ acceptance criteria guide architecture without prescribing the old implementatio
 | Document | Role |
 | --- | --- |
 | [Research brief](2026-10-05-nominal-package-brief.md) | User requirements and decisions; R11/R12 record architectural freedom and Package location |
+| [Current PKG-01 investigation](2026-10-07-pkg01-predicate-foundations.md) | Delivered F05/Mathlib inventory, four representation candidates, exact contracts and new Package-based probes |
+| [Approved PKG-01 written specification](../superpowers/specs/2026-10-07-package-predicate-foundations-design.md) | Full logical/descent/Some/Any scope and phase acceptance, approved 2026-10-08 |
+| [Approved PKG-01 native plan](../superpowers/plans/2026-10-08-package-predicate-foundations.md) | Eight tasks, exact public contracts and consuming checks; Tasks 1–8 and all phases complete uncommitted, with independent whole-change review |
 | [Architecture proposal](2026-10-05-package-architecture.md) | Alternatives, candidate design and unresolved mathematical obligations |
 | [Initial propositions note](2026-10-05-propositions-and-induction.md) | Earlier evidence and questions; historical limits are kept explicit |
 | [Predicate foundations](2026-10-05-predicate-foundations.md) | Detailed source/theorem comparison, predicate representations and checked probes |

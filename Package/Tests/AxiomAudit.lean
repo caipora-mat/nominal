@@ -134,6 +134,55 @@ run_cmd do
 #print axioms NominalPackage.SupportedMap.supports_uncurry_set_iff
 #print axioms NominalPackage.SupportedMap.support_curryWithSections
 
+-- Predicate logic, proof-field values, semantic views and the single Boolean transfer.
+#print axioms NominalPackage.SupportsPred.all
+#print axioms NominalPackage.SupportsPred.ex
+#print axioms NominalPackage.SupportsPred.iAll
+#print axioms NominalPackage.supportsPred_not_iff
+#print axioms NominalPackage.SupportedPred.ofFun
+#print axioms NominalPackage.SupportedPred.instMulAction
+#print axioms NominalPackage.SupportedPred.instNominal
+#print axioms NominalPackage.SupportedPred.mapEquiv
+#print axioms NominalPackage.SupportedPred.subsetEquiv
+#print axioms NominalPackage.SupportedPred.instBooleanAlgebra
+#print axioms NominalPackage.SupportedPred.supports_iff
+#print axioms NominalPackage.SupportedPred.support_toSet
+#print axioms NominalPackage.SupportedPred.section_smul
+#print axioms NominalPackage.SupportedPred.supports_collectionUnion
+#print axioms NominalPackage.SupportedPred.supports_collectionInter
+#print axioms NominalPackage.SupportedPred.support_compl
+
+-- Ordinary and supported descent retain their selected-action boundaries.
+#print axioms NominalPackage.ActionSupport.invariant_pullback_iff
+#print axioms NominalPackage.FunctionObject.supports_precomp_iff
+#print axioms NominalPackage.supportsPred_pullback_iff
+#print axioms NominalPackage.FinitelySupportedPred.support_pullback
+#print axioms NominalPackage.PredicateDescent.ordinaryEquiv
+#print axioms NominalPackage.PredicateDescent.supports_descend_iff
+#print axioms NominalPackage.PredicateDescent.cannot_descend
+#print axioms NominalPackage.PredicateDescent.compatibleAction
+#print axioms NominalPackage.PredicateDescent.compatibleNominal
+#print axioms NominalPackage.PredicateDescent.supportedEquiv
+#print axioms NominalPackage.PredicateDescent.supportedEquiv_smul
+#print axioms NominalPackage.PredicateDescent.support_supportedEquiv
+#print axioms NominalPackage.PredicateDescent.freshWith_supportedEquiv_iff
+
+-- Cofinite truth, supplied-bound Some/Any, classification and fresh projection.
+#print axioms NominalPackage.Freshly.reindex
+#print axioms NominalPackage.SupportsPred.freshly_iff_exists
+#print axioms NominalPackage.SupportsPred.freshly_iff_forall_avoiding
+#print axioms NominalPackage.finitelySupportedPred_atom_iff
+#print axioms NominalPackage.Freshly.imp_iff_of_decision
+#print axioms NominalPackage.Freshly.iff_iff_of_decisions
+#print axioms NominalPackage.Freshly.forall_iff_of_uniform_support
+#print axioms NominalPackage.Freshly.exists_iff_of_uniform_support
+#print axioms NominalPackage.Freshly.exists_iff_of_uniform_support_nonempty
+#print axioms NominalPackage.freshly_invariant_section_iff_exists_avoiding
+#print axioms NominalPackage.SupportsPred.fresh
+#print axioms NominalPackage.SupportedPred.fresh_smul
+#print axioms NominalPackage.SupportedPred.support_fresh_subset
+#print axioms NominalPackage.FinitelySupportedPred.freshly_iff_of_fresh
+
 set_option maxHeartbeats 0 in
 -- This budget applies only to the inspection traversal, not mathematical proofs.
 run_cmd do

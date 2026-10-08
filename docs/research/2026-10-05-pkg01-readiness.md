@@ -1,5 +1,28 @@
 # PKG-01 readiness and proposed predicate contracts
 
+**Current handoff, 2026-10-08:** F02–F05 are complete and committed, with F05
+at `3c9d8dc527f7705b24c0308a2527e659ae933874`. The
+[new PKG-01 investigation](2026-10-07-pkg01-predicate-foundations.md) verifies
+the actual inputs and reassesses all four predicate storage candidates. Its
+[written specification](../superpowers/specs/2026-10-07-package-predicate-foundations-design.md)
+was approved on 2026-10-08. The [implementation plan](../superpowers/plans/2026-10-08-package-predicate-foundations.md)
+is also approved for native execution. Tasks 1–7 and phases 01a–01c are
+complete in the working tree. Task 8 now also passes: public integration,
+whole-specification coverage and independent review. PKG-01 is complete,
+uncommitted; later tasks were not started. The author selected the newly
+compared direct predicate record as choice 1 before approving the specification.
+That decision is based on the post-F05 comparison,
+not the historical rationale below that general supported maps were unavailable.
+No foundation prerequisite is reopened. Ordinary logical support/quantification
+and direct supported predicates with views, action, support and Boolean algebra
+are delivered, together with bundled operator laws, quantifiers, individually
+certified sections and supported collections, plus general pullback reflection
+and ordinary/supported quotient correspondence with exact support and freshness.
+Cofinite truth, supplied-bound Some/Any, context adapters and bundled fresh
+projection are also delivered, with their proved boundaries. See the active
+roadmap for phase delivery, complete integration checks, cache conditions,
+preservation evidence and the independent review disposition.
+
 Date: 2026-10-05. **Research/design proposal for review, not an approved
 implementation plan.** Inspected checkout: `fasapa/nominal-package`, HEAD
 `76966b1f2e44f594517442b6572e33abaa9038e0`. The preceding research revision was
@@ -35,7 +58,7 @@ No branch switch, merge, commit, dependency change, production implementation,
 or CI change belongs to this session. The active tracker is the
 [package roadmap](../nominal-package-roadmap.md), not the historical roadmap.
 
-## Current status after F04d implementation
+## Status after F04d implementation (historical)
 
 **2026-10-07 reconciliation:** F04d is committed at
 `32f3dba551761881409bbc7453054e214e582269`, with a clean initial checkout for

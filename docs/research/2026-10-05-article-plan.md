@@ -19,7 +19,9 @@ The article now also covers least support, exact canonical support, symmetric
 support-disjointness freshness with its atom specialization, and finite combined
 avoidance. The quotient section now covers invariant monoid actions, canonical
 projections, support/nominality transfer, strict decrease, supported fibers and
-nonattainment; predicate contracts require their own results. Earlier
+nonattainment. The function and predicate sections now cover conjugation,
+supported values, logical support, ordinary/supported descent and cofinite
+Some/Any, including the distinct decision and uniform-bound hypotheses. Earlier
 delivery-state descriptions below are historical: F04a/F04b were subsequently
 committed at `68956dd`, F04c/general freshness at `9c1cb9a`, and F04d at
 `32f3dba`. The bounded
@@ -60,6 +62,14 @@ predicate logic and binder/recursion tooling remain outside that delivery. The
 article continues to exclude operational status and build evidence.
 
 ## Publication content policy
+
+The 2026-10-07 [predicate investigation](2026-10-07-pkg01-predicate-foundations.md)
+adds [predicates.tex](../article/sections/predicates.tex): Boolean closure versus
+external completeness, quantification by reindexing, ordinary descent versus
+predicate support reflection, and Some/Any from supplied bounds. It states the
+mathematics with proof arguments and precise hypotheses, without claiming the
+proposed public predicate carrier implemented. Storage alternatives and the
+review/verification records remain in the investigation and roadmap.
 
 The article is a selective research account of the system and its mathematics.
 Choose a coherent argument around central definitions, theorems and proof ideas,

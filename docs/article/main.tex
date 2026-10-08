@@ -21,9 +21,9 @@
 \theoremstyle{remark}
 \newtheorem{remark}[proposition]{Remark}
 
-\title{A Nominal Package for Lean:\\Permutation, Action and Support Foundations}
+\title{A Nominal Package for Lean:\\Actions, Support and Predicate Calculus}
 \author{}
-\date{5 October 2026}
+\date{8 October 2026}
 
 \begin{document}
 \maketitle
@@ -64,6 +64,18 @@ For an equivariant map over infinite atoms, an image with a supported preimage
 has support equal to the intersection of all supported preimages' supports.
 A quotient can strictly lose support,
 and no representative need attain the class's support.
+Full function objects carry conjugation, while supported functions and
+predicates retain ordinary application with proof-only support certificates.
+Supported predicates form a Boolean algebra. Whole-carrier quantification
+preserves joint support even on empty or non-nominal carriers; supported
+collections admit unions and intersections without arbitrary external
+completeness. Ordinary predicate descent requires only compatibility with
+the quotient relation. Equivariant surjections additionally reflect every
+predicate support bound. Cofinite truth is defined for arbitrary predicates;
+over infinite atoms, Some/Any evaluates a supported atom predicate outside
+any supplied finite bound. Decision and uniform-support hypotheses delimit
+its Boolean and quantifier laws, while unsupported predicates and ordinary
+classical choice remain available.
 Counterexamples distinguish actions on the same underlying carrier and show
 why action selection and infinitude assumptions are essential to nominal
 reasoning. The mathematical interface separates an element's finite dependence
@@ -76,6 +88,7 @@ on atoms from the representation of its carrier.
 \input{sections/freshness}
 \input{sections/quotients}
 \input{sections/functions}
+\input{sections/predicates}
 \input{sections/perspectives}
 
 \begin{thebibliography}{9}

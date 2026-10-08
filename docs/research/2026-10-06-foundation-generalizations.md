@@ -1,5 +1,14 @@
 # Natural generalizations of the Package foundation
 
+**2026-10-07 reconciliation:** F05, committed at `3c9d8dc`, now supplies the
+scalar injective-support theorem and arbitrary-set same-group transport in
+`Package/Foundations/ActionSupport.lean`, and the Equivariant/MulActionHom
+bridge in `FunctionSupport.lean`. Descriptions below of these as research-only
+refer to the earlier snapshot. Injective nominality transfer, equality-free
+Finset transport and the other unadopted proposals remain separate research.
+The [PKG-01 investigation](2026-10-07-pkg01-predicate-foundations.md) uses the
+delivered support adapters; it does not repeat their implementation.
+
 Date: 2026-10-06. Task context: **PKG-F01/PKG-F04**, after the initial F04c
 delivery. The author requested preference for mathematically natural general
 definitions and independent investigation of the current foundations. Three

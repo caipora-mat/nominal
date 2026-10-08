@@ -11,4 +11,11 @@ import Package.Foundations.ActionSupport
 import Package.Foundations.FunctionAction
 import Package.Foundations.FunctionSupport
 import Package.Foundations.PredicateSupport
+import Package.Foundations.PredicateLogic
 import Package.Foundations.SupportedFunction
+import Package.Foundations.SupportedPredicate
+import Package.Foundations.SupportedPredicateLogic
+import Package.Foundations.PredicateDescent
+import Package.Foundations.SupportedPredicateDescent
+import Package.Foundations.FreshQuantifier
+import Package.Foundations.SupportedPredicateFresh

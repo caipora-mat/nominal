@@ -1,5 +1,12 @@
 # Predicate foundations for the nominal package
 
+**2026-10-07 continuation:** the [post-F05 investigation](2026-10-07-pkg01-predicate-foundations.md)
+and [written PKG-01 specification](../superpowers/specs/2026-10-07-package-predicate-foundations-design.md)
+reassess storage against committed supported maps and pinned Mathlib. Their
+new probes use delivered Package foundations. The evidence and representation
+recommendations below retain their original historical scope; they do not
+override the new comparison or approve production implementation.
+
 Date: 2026-10-05. Historical research baseline: `fasapa/nominal-package`, commit
 `4279ba92efacd77b3b96e507631502272b489999`, with the pre-existing working tree
 preserved. This note develops R6/R9 of the [research brief](2026-10-05-nominal-package-brief.md)

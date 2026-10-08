@@ -1,0 +1,435 @@
+\section{Logical operations and fresh quantification}
+\label{sec:predicate-calculus}
+
+Finite support is a property of a predicate, not a condition for forming a
+proposition in Lean. This separation allows ordinary logical reasoning and
+quotient elimination to coexist with operations whose nominal interpretation
+requires a support certificate. The distinction is particularly useful for
+quantification: quantifying over a whole acted carrier and fixing one of its
+elements have different support requirements.
+
+\subsection{Supported predicates and their semantic views}
+
+The Lean carrier \texttt{SupportedPred A X} stores an ordinary predicate
+$P:X\to\mathrm{Prop}$ and a proof that some finite bound supports it.
+It stores no chosen bound. Application returns a proposition, and pointwise
+logical equivalence gives equality of predicate values by propositional
+extensionality. Proof irrelevance ensures that changing the certificate,
+including replacing a sufficient bound by a larger one, changes no value.
+The atom and carrier universes are independent; the record stays in the
+universe of $X$.
+
+Named conversions identify this carrier with supported maps into discrete
+truth values and with supported subsets of $X$. The full function-object view
+is \texttt{predicateObject}, and the satisfying-set view sends $P$ to
+$\{x\mid P(x)\}$. Inverse precomposition defines the predicate action;
+its laws follow by injective transfer from the function-object action.
+Both supported equivalences preserve the action, and the set view intertwines
+inverse precomposition with direct image. In particular,
+\[
+ (\pi\act P)(\pi\act x)\ \longleftrightarrow\ P(x).
+\]
+Every view preserves and reflects each sufficient finite support bound.
+Consequently the supported predicate carrier is nominal even when $X$ is
+merely a permutation set. None of these constructions needs infinite atoms
+or decidable atom equality.
+
+Over infinite atoms these support correspondences also identify least
+supports. For the full function object and the bare satisfying set, the
+equations use the individual support certificates induced by $P$; they do
+not assert that every predicate or subset is finitely supported. The maps
+remain explicit conversions, leaving one automatic coercion to ordinary
+$X\to\mathrm{Prop}$ and preserving the existing actions on bare functions
+and sets.
+
+\subsection{Boolean structure and the scope of quantification}
+
+Let $X$ carry an action of $\Perm(A)$, without assuming every element of
+$X$ finitely supported. Write $\mathcal P_{\mathrm{fs}}(X)$ for the
+finitely supported subsets under direct image, equivalently the predicates
+under inverse precomposition in \eqref{eq:predicate-action}.
+Complement preserves and reflects every supporting bound, using classical
+double negation for reflection. Each binary logical connective preserves a
+common bound for its operands; intersection and union in particular are
+supported by the union of separate bounds. Every constant truth value has
+empty support. Thus these subsets form a Boolean subalgebra of the ordinary
+powerset. Implication is complement followed by union; equivalence is the
+conjunction of the two implications. These bounds are sufficient, not generally
+least: intersecting any predicate with the empty set erases its dependence.
+
+This formulation separates a nominal closure argument from ordinary order
+theory. Mathlib's \texttt{BooleanSubalgebra} supplies the inherited Boolean
+algebra once closure is established. The equivalence \texttt{subsetEquiv}
+transfers that algebra to \texttt{SupportedPred} using
+\texttt{Equiv.booleanAlgebra}. Its order and operations compute as ordinary
+logic, while the supported-subset action is the restriction of the existing
+set image action. No independent proof of the Boolean algebra axioms is needed.
+Nor does this construction imply
+closure under every externally indexed union.
+
+The Lean operation \texttt{biimp} is derived from the two implications, and
+the application and coerced-function equations expose these operations as
+ordinary propositions. The action preserves every Boolean operation and
+preserves and reflects the inclusion order. Over infinite atoms, complement
+has exactly the original least support; the least support of a binary
+operation is contained in the union of the operand supports.
+
+For precomposition $P\circ f$, the ordinary map certificate for $f$ and the
+predicate certificate for $P$ give their union as a sufficient bound.
+The bundled operations \texttt{precomp} and \texttt{precompMap} express this
+for an ordinary certified map and a supported map respectively. Fixing a
+parameter $y$ of a jointly supported relation $R(y,x)$ likewise gives the
+union of a bound for $R$ and a bound for this particular $y$. The operation
+\texttt{section} accepts that individual certificate, even when the carrier
+of $y$ contains unsupported elements. Simultaneously renaming the relation
+and parameter renames its section. These constructions reuse the supported
+function calculus; they introduce no new currying requirement.
+
+\begin{proposition}[Quantification over an acted carrier]
+\label{prop:predicate-quantification}
+Let $X,Y$ be permutation sets. If a finite bound $S$ supports a relation
+$R\subseteq X\times Y$ under the joint action, then the same bound supports
+both predicates
+\[
+  x\longmapsto (\forall y\in Y)\,R(x,y),
+  \qquad
+  x\longmapsto (\exists y\in Y)\,R(x,y).
+\]
+Neither carrier need be nominal or nonempty, and the atom type need not be
+infinite.
+\end{proposition}
+
+\begin{proof}
+For a permutation $\pi$ fixing $S$, joint support gives
+$R(\pi\act x,\pi\act y)\leftrightarrow R(x,y)$.
+Reindex either quantifier by the bijection $y\mapsto\pi\act y$.
+The argument also applies to an empty carrier.
+\end{proof}
+
+Restricted quantification incorporates the domain condition into the relation:
+use $D(x,y)\Rightarrow R(x,y)$ for a universal quantifier and
+$D(x,y)\wedge R(x,y)$ for an existential one. Only support of this combined
+body is required; separate bounds for $D$ and $R$ are sufficient and combine
+by finite union. Another sufficient condition for an external
+family $(P_i)_{i\in I}$ is a single finite bound supporting every $P_i$;
+no action or inhabitance on the index is needed in that case. In Lean the
+index may be any \texttt{Sort}, in a universe independent of the atoms and
+the acted carriers. This uniform condition
+differs from joint support, which may rename the index, and from the weaker
+assertion that each section has some finite support of its own.
+
+In Lean, \texttt{SupportsPred.all} and \texttt{SupportsPred.ex} handle jointly
+acted relations; \texttt{SupportsPred.iAll} and \texttt{SupportsPred.iEx} handle
+uniform external families. Common-bound and existential finite-support laws
+need no decidable atom equality premise. Displayed unions of bounds retain
+that premise; existential proofs choose equality decisions locally.
+
+The bundled counterparts \texttt{SupportedPred.all} and
+\texttt{SupportedPred.ex} have precisely these ordinary quantified bodies.
+They commute with renaming and retain every supplied bound of the relation;
+over infinite atoms their least supports are therefore contained in the
+relation's least support. For an empty quantified carrier the universal
+result is the top predicate and the existential result is the bottom one.
+
+For an infinite, coinfinite atom set $U$, every singleton $\{a\}$ with
+$a\in U$ is supported, but their union $U$ is unsupported. There is not even
+a least supported upper bound in the inclusion order: any supported superset
+$V$ of $U$ is cofinite, and for $b\in V\setminus U$ the smaller set
+$V\setminus\{b\}$ is still a supported upper bound. Such a $b$ exists because
+$U$ is coinfinite. By contrast, a finitely supported
+\emph{collection} of supported subsets has a supported union and intersection:
+quantify over $\mathcal P_{\mathrm{fs}}(X)$ with the collection's membership
+predicate as a guard, using the joint action on membership and evaluation.
+Explicitly, for a supported collection $C$ these operations are
+\[
+ U_C(x)\ \longleftrightarrow\ (\exists P)\,(C(P)\wedge P(x)),
+ \qquad
+ I_C(x)\ \longleftrightarrow\ (\forall P)\,(C(P)\Rightarrow P(x)).
+\]
+If $\pi$ fixes a bound of $C$, then $C(\pi\act P)\leftrightarrow C(P)$,
+while evaluation satisfies $(\pi\act P)(\pi\act x)\leftrightarrow P(x)$.
+Thus both guarded relations have the same bound as $C$, and
+Proposition~\ref{prop:predicate-quantification} gives that bound for $U_C$
+and $I_C$. Reindexing the predicates also proves
+$U_{\pi\act C}=\pi\act U_C$ and $I_{\pi\act C}=\pi\act I_C$.
+The Lean operations \texttt{collectionUnion} and \texttt{collectionInter}
+use this construction. Their least-support inclusions over infinite atoms
+follow directly, without requiring $X$ nominal.
+For nominal $X$, these are the supported-family operations in Pitts' nominal powerset
+\cite[Section~2.5 and Example~11.1]{pitts2013}.
+
+\subsection{Ordinary descent and reflection of predicate support}
+\label{sec:predicate-descent}
+
+Let $\sim$ be any equivalence relation on $X$, and write $q:X\to X/{\sim}$.
+A raw predicate descends precisely when
+\[
+  x\sim y\quad\Longrightarrow\quad P(x)\leftrightarrow P(y).
+\]
+Consequently there is an ordinary correspondence
+\[
+ (X/{\sim}\to\mathrm{Prop})
+ \simeq
+ \{P:X\to\mathrm{Prop}\mid
+       \forall x,y,\ x\sim y\Rightarrow(P(x)\leftrightarrow P(y))\}.
+\]
+One direction is precomposition with $q$. In Lean, propositional
+extensionality turns compatibility into equality of truth values, permitting
+\texttt{Quotient.lift}; its representative equation proves one inverse law,
+and quotient induction proves the other. Mathlib's \texttt{Setoid.liftEquiv}
+already expresses this universal property for ordinary functions, so the
+predicate correspondence is its specialization through propositional
+extensionality. No permutation action or finite-support certificate is involved.
+
+\begin{proposition}[Support reflection by predicate pullback]
+\label{prop:predicate-pullback}
+Suppose $q:X\to Y$ is an equivariant surjection between permutation sets.
+For every ordinary predicate $P:Y\to\mathrm{Prop}$ and finite atom bound $S$,
+\[
+  S\text{ supports }P\circ q
+  \quad\Longleftrightarrow\quad
+  S\text{ supports }P.
+\]
+Neither carrier is required to be nominal.
+\end{proposition}
+
+\begin{proof}
+Preservation follows by substituting
+$q(\pi\act x)=\pi\act q(x)$ in the support equation for $P$.
+For reflection, write an arbitrary $y$ as $q(x)$ and make the same
+substitution in the equation for $P\circ q$.
+\end{proof}
+
+The reflection mechanism only needs a scalar operation, its preservation by
+$q$, and surjectivity; inversion and atom infinitude play no role. Without
+surjectivity, the pullback cannot detect predicate behavior away from the image.
+For a nonempty example take the diagonal $q:\mathbb N\to\mathbb N^2$ under
+finite permutations of $\mathbb N$, and
+$P(x,y)\equiv(x=0\wedge x\ne y)$. Its pullback is constantly false, but
+swapping $0$ and $1$ changes its value at $(0,2)$.
+
+The function-object version is equally general about bounds: if $G$ is a
+division monoid and $q:X\to Y$ is an equivariant surjection, precomposition
+embeds the full conjugation object $Y\to Z$ into $X\to Z$ equivariantly.
+Compatibility with conjugation uses the action equation for $q$ at $g^{-1}$,
+without cancellation. Injective action transfer therefore reflects every
+sufficient set of an acted bound carrier, including infinite sets. This does
+not extend least finite support minimality to arbitrary infinite bounds.
+
+For an invariant equivalence relation, the canonical quotient action makes
+the projection equivariant. Ordinary descent therefore preserves and reflects
+each sufficient support bound. On supported predicates it also preserves least
+support over infinite atoms. This differs from the support inclusion and fiber
+intersection for quotient \emph{objects} in Section~\ref{sec:equivariant-quotients}:
+it makes no assertion that a representative attains the support of its class.
+An alpha-incompatible predicate, such as one that distinguishes representative
+binder labels identified by the relation, fails the ordinary compatibility
+condition before support is considered. For dependent data-valued motives,
+transport coherence is a separate requirement; propositional extensionality
+does not discharge that requirement for arbitrary fibers.
+
+The Lean namespace \texttt{PredicateDescent} provides this correspondence
+as \texttt{ordinaryEquiv}. The theorem \texttt{descend\_mk} computes on
+representatives; both round trips are equalities of ordinary functions.
+All support and renaming
+statements select \texttt{QuotientAction.mulAction} explicitly. An unrelated
+action on the same quotient type is not covered. Unsupported predicates can
+still descend: among atoms $\mathbb N\times\mathrm{Bool}$, the true-flag
+predicate is infinite and coinfinite, yet it descends through a quotient
+forgetting an extra discrete label. Ordinary quotient induction can then
+extract a true-flag representative from a proof of that predicate.
+
+\subsection{The supported quotient correspondence}
+
+Let $\sim$ be invariant under the selected action on $X$ and give
+$X/{\sim}$ its canonical quotient action. Compatibility is stable under
+inverse precomposition: if $x\sim y$, then
+$\pi^{-1}\act x\sim\pi^{-1}\act y$, so a compatible $P$ gives
+$(\pi\act P)(x)\leftrightarrow(\pi\act P)(y)$.
+The compatible supported predicates therefore inherit a restricted action.
+The ordinary correspondence restricts to an equivariant equivalence
+\[
+ \mathcal P_{\mathrm{fs}}(X/{\sim})
+ \simeq
+ \{P\in\mathcal P_{\mathrm{fs}}(X)\mid P\text{ is compatible with }\sim\}.
+\]
+Both directions retain exactly the sufficient bounds, by
+Proposition~\ref{prop:predicate-pullback}. The restricted carrier has the
+same bounds as its underlying predicates and is nominal even when $X$ is
+not nominal. Neither this construction nor its representative equations
+requires infinite atoms.
+
+In Lean, \texttt{CompatiblePred} is this subtype of \texttt{SupportedPred}.
+The explicit constructor \texttt{compatibleAction} restricts the existing
+action using Mathlib's \texttt{SubMulAction}. Nominality is supplied by the
+explicit \texttt{compatibleNominal} certificate.
+The descent operation is \texttt{descendSupported}; the equivalence is
+\texttt{supportedEquiv}. Representative computation remains ordinary application:
+\[
+ \operatorname{descend}(P)([x])\ \longleftrightarrow\ P(x).
+\]
+Their inverse equations and action compatibility use the selected quotient
+and restricted actions. Top, bottom, complement, intersection, union,
+implication and logical equivalence are preserved, as follows by computation
+on representatives and quotient induction. These are laws of the existing
+Boolean operations on predicate values, with compatibility of the operands.
+
+Over infinite atoms, equality of all sufficient finite bounds gives equality
+of least supports. Thus a quotient predicate and its corresponding compatible
+predicate have the same freshness relation to any individually supported
+context $c$: disjointness with $\operatorname{supp}(c)$ is identical. The carrier containing
+$c$ need not be nominal.
+
+For example, quotient $A\times\Discrete_A(\mathrm{Bool})$ by equality of the first
+coordinate. For fixed $a\in A$, the predicate $P(b,\ell)\equiv b=a$ is
+compatible and supported by $\{a\}$. Every supplied finite
+$S\supseteq\{a\}$ remains a bound after descent, including strictly larger
+bounds. The descended predicate holds at both $[(a,\mathsf{true})]$ and
+$[(a,\mathsf{false})]$ and, over infinite atoms, has least support $\{a\}$.
+The extra labels affect neither predicate truth nor support.
+
+\subsection{Cofinite truth and the Some/Any principle}
+\label{sec:some-any}
+
+For any ordinary atom predicate $P$, define
+\[
+  \mathsf N a.\,P(a)
+  \quad\Longleftrightarrow\quad
+  \{a\in A\mid\neg P(a)\}\text{ is finite}.
+\]
+This is eventual truth in Mathlib's cofinite filter, and is Pitts'
+freshness quantifier \cite[Definition~3.8]{pitts2013}. Its definition needs
+neither support nor infinitude. Infinitude ensures that the filter is proper:
+an eventual property then has a witness. On a finite carrier every property
+is cofinite, including the constantly false predicate.
+
+The Lean operation is \texttt{Freshly}, with binder notation available in the
+opt-in scope \texttt{NominalPackage.FreshQuantifier}. Its finite-exception
+form says that there is a finite $S$ such that every $a\notin S$ satisfies
+$P$. No action is used in this equivalence. Cofinite truth is preserved and
+reflected by any equivalence of input types, even in different universes.
+
+\begin{proposition}[Some/Any for a supplied bound]
+\label{prop:some-any-bound}
+Assume $A$ is infinite and $S$ is any finite support of $P:A\to\mathrm{Prop}$
+for the canonical atom action. Then
+\[
+  \mathsf N a.\,P(a)
+  \quad\Longleftrightarrow\quad
+  \exists a\notin S,\ P(a)
+  \quad\Longleftrightarrow\quad
+  \forall a\notin S,\ P(a).
+\]
+In particular, if $a\notin S$, the fresh-quantified proposition is equivalent
+to $P(a)$.
+\end{proposition}
+
+\begin{proof}
+For $a,b\notin S$, the transposition $(a\ b)$ fixes $S$, so support
+gives $P(a)\leftrightarrow P(b)$. Thus one witness outside $S$ gives
+every such witness. The universal statement implies cofinite truth because
+all exceptions lie in $S$. Conversely, a cofinite truth set meets the
+complement of $S$, since their intersection is cofinite in an infinite set.
+\end{proof}
+
+This is the sufficient-bound form of Pitts' Lemma~3.7; his contextual
+Some/Any theorem follows by taking a supported section of a jointly
+equivariant relation \cite[Theorem~3.9]{pitts2013}.
+More generally, a relation bound and a bound for an individual parameter
+combine by union. No nominality of the whole parameter carrier is needed.
+Enlarging the bound with any finite avoidance set leaves the principle valid;
+the proof never computes an exact least support. Fresh quantification also
+preserves the support of a jointly supported relation, by reindexing the
+cofinite filter along the atom permutation. The ordinary theorem
+\texttt{SupportsPred.fresh} retains the supplied bound for
+$x\mapsto\mathsf N a.\,R(x,a)$ without atom infinitude or nominality of $X$.
+
+The bundled operation \texttt{SupportedPred.fresh} has this ordinary body
+and commutes with renaming. Every sufficient bound of $R$ supports its fresh
+projection; over infinite atoms this gives
+$\operatorname{supp}(R.\mathsf{fresh})\subseteq\operatorname{supp}(R)$.
+For an invariant relation and an individually supported $x$, the context form is
+\[
+ \mathsf N a.\,R(x,a)
+ \quad\longleftrightarrow\quad
+ \exists a\mathrel{\#}x,\ R(x,a)
+ \quad\longleftrightarrow\quad
+ \forall a\mathrel{\#}x,\ R(x,a).
+\]
+An arbitrary finite exclusion can be imposed in both quantified forms.
+Here the freshness premise uses the individual certificate's least support:
+Lean writes \texttt{hx.Fresh a}, without requiring the carrier of $x$ nominal.
+For example, the identity is supported in the full conjugation carrier of
+functions between permutation groups even though that carrier contains
+unsupported constant functions. It is therefore a valid parameter in this
+principle. Atom predicates similarly admit evaluation using freshness for
+their individually certified function objects, or for their bundled supported
+values. These are consequences of the existing support-disjointness relation.
+
+Under the canonical atom action, a predicate is finitely supported precisely
+when its truth set is finite or cofinite. This classification needs no
+infinitude: constancy outside a supplied bound gives one of the two cases,
+while a finite truth set supports its membership predicate and complementation
+preserves support. Consequently every supported atom predicate is eventually
+decided: $\mathsf N a.\,P(a)$ or $\mathsf N a.\,\neg P(a)$.
+
+The logical laws have different hypotheses. Monotonicity, conjunction and
+modus ponens are filter laws for arbitrary predicates. Self-dual negation
+requires both infinitude and eventual decision. Decision of either operand
+suffices for disjunction, and decision of the antecedent suffices for implication:
+\[
+ \mathsf N a.\,(P(a)\Rightarrow Q(a))
+ \quad\longleftrightarrow\quad
+ ((\mathsf N a.\,P(a))\Rightarrow(\mathsf N a.\,Q(a))).
+\]
+These latter two laws need no infinitude; the other operand may be arbitrary.
+For the analogous equivalence law, decision of both operands suffices.
+Alternatively an already cofinite operand suffices with an arbitrary other
+operand. A merely supported operand alone does not suffice. These refinements separate the filter
+argument from the nominal hypotheses sufficient to use it; Pitts states
+the Boolean laws for supported operands \cite[Proposition~3.10]{pitts2013}.
+
+The valid one-way quantifier laws are
+\[
+ (\mathsf N a.\,\forall i,\,P_i(a))\Rightarrow
+       (\forall i,\,\mathsf N a.\,P_i(a)),\qquad
+ (\exists i,\,\mathsf N a.\,P_i(a))\Rightarrow
+       (\mathsf N a.\,\exists i,\,P_i(a)).
+\]
+Finite indices give the converse universal law. For an arbitrary external
+index, a common finite support bound for all $P_i$ also gives that converse,
+without infinitude. The common bound gives the converse existential law if
+the atoms are infinite, or alternatively if the index is nonempty. In the
+infinite case, choose one atom outside the common bound and use Some/Any on
+every section; in the finite case all predicates are cofinite. The empty-index
+case explains the additional existential premise: over finite atoms cofinite
+falsehood holds, while an existential over an empty index fails. Lean permits
+these external indices in any \texttt{Sort}, with no action on them.
+
+Arbitrary quantifier interchange remains invalid even for jointly equivariant
+relations. The statement $\mathsf N a.\,\exists x,\ a=x$ holds, whereas
+$\exists x,\mathsf N a.\,a=x$ fails. Dually,
+$\forall x,\mathsf N a.\,a\ne x$ holds but
+$\mathsf N a.\,\forall x,\ a\ne x$ fails.
+Finite nonempty indices do not repair existential interchange: among atoms
+$\mathbb N\times\mathrm{Bool}$, the predicate $P(n,b)\equiv b=\mathsf{true}$
+and its complement have cofinite union, while neither is cofinite. Both are
+unsupported by the classification above. The same example refutes unrestricted
+self-dual negation, disjunction and implication. Pairing $P$ with the constantly
+false, supported predicate refutes the equivalence law with only one supported
+operand: both individual cofinite assertions are false, but their pointwise
+equivalence is not cofinite.
+
+Nor can atom Some/Any be transferred to every nominal carrier. On
+$\Discrete_{\mathbb N}(\mathrm{Bool})\times\mathbb N$, the predicate selecting
+the true discrete label has empty support and a witness, but has infinitely
+many exceptions. The semantic role of the canonical atom action is essential.
+
+Finally, finite fresh-name existence does not give a finitely supported global
+selector. Suppose $f:\mathcal P_{\mathrm{fin}}(A)\to A$ satisfies $f(S)\notin S$
+and has a finite map-support bound $T$. Since $T$ supports itself, it supports
+$a=f(T)$. Set $b=f(T\cup\{a\})$. Then $a,b\notin T$ and $a\ne b$, so their
+transposition fixes $T$ but moves $a$, contradicting its support. This argument
+needs no infinitude assumption: the proposed selector supplies the spare atom.
+Ordinary classical choice of a fresh atom on an infinite type remains legal;
+the obstruction concerns its finite support.

@@ -424,5 +424,76 @@ tree with integrated checks and a clean independent final review. The hybrid
 and sufficient-context-bound contracts are implemented; the two new proof
 predicates are reducible aliases to support ordinary simp with literal evidence.
 Final supported-predicate storage/logic, context-scanning automation, binders
-and recursion remain at their own tasks. Exact evidence and uncommitted status
-are recorded in the active roadmap and F05 implementation plan.
+and recursion remain at their own tasks. That delivery was subsequently committed
+at `3c9d8dc527f7705b24c0308a2527e659ae933874`; its original uncommitted
+verification state is recorded in the active roadmap and F05 implementation plan.
+
+## 2026-10-07 — Predicate foundations after delivered F05
+
+The author authorized architectural investigation, bounded probes, research
+notes and a reviewable specification for PKG-01, with no production implementation
+or commits. F02–F05 remain complete; their approved interfaces are inputs. The
+[investigation](2026-10-07-pkg01-predicate-foundations.md) compares a direct
+logical record, SupportedMap specialization, a predicate-facing map wrapper and
+supported subsets. The [written specification](../superpowers/specs/2026-10-07-package-predicate-foundations-design.md)
+recommends the direct proof-field record with proved function/subset views,
+Mathlib-derived Boolean structure, ordinary and supported descent, and cofinite
+Some/Any. The recommendation is for review, not an author-approved storage choice.
+
+The author selected opt-in scoped `И` notation alongside a named fresh-quantifier
+operation. The existing `Fresh` relation remains support disjointness. The
+proposed 01a/01b/01c review units preserve the full predicate acceptance scope;
+ordinary descent and cofinite results can be investigated independently of
+storage, and F06 is not a prerequisite. Written-spec approval must precede an
+implementation plan, whose review and execution-method selection precede
+production changes. The article gains only the mathematical exposition; design
+alternatives and operational records remain in research notes and the tracker.
+
+### 2026-10-08 — Direct predicate representation selected
+
+After the side-by-side comparison and two independent storage investigations,
+the author selected **choice 1**: an ordinary `X → Prop` field and proof-only
+`FinitelySupportedPred` evidence, with named supported-map and supported-subset
+views. This settles PKG-01 storage without changing the approved F05 hybrid or
+requiring all ordinary predicates to be supported. The full written specification
+and its proposed phase decomposition still require review before implementation
+planning. No production implementation or commit is authorized by this selection.
+
+### 2026-10-08 — Written specification approved; implementation plan prepared
+
+The author subsequently approved the full written PKG-01 specification, including
+its complete three-phase scope. The
+[implementation plan](../superpowers/plans/2026-10-08-package-predicate-foundations.md)
+organizes that scope into eight tasks with fixed public interfaces, meaningful
+positive/negative consumers, article work and integrated verification. It
+awaits review and an execution-method choice. Native execution with an independent
+final review is recommended; no method is inferred from specification approval.
+No production implementation, commit or branch change has begun.
+
+### 2026-10-08 — Native plan approved with fresh task contexts
+
+The author approved the implementation plan and selected native execution,
+requesting a fresh context for each phase/step. The handoff unit is one complete
+numbered task, including its implementation and verification checklist. Task 1
+is the first part of phase 01a; Tasks 2–3 finish that phase. Each task records
+evidence and prepares the next task's prompt, then stops before advancing.
+The final independent whole-change review remains in Task 8. No repeated
+specification or plan approval is required within the authorized scope.
+The current turn supplies Task 1's prompt and records the decision; it does not
+start production implementation or alter the no-commit/branch constraints.
+
+### 2026-10-08 — PKG-01 complete, uncommitted; stop after Task 8
+
+Tasks 1–7 and all three phases were delivered in earlier native runs. The author
+then authorized only Task 8 to integrate their complete specification, preserve
+the existing checkout/evidence and obtain one fresh independent whole-change
+review. Those criteria now pass: nine public consumers, eight compiled README
+Lean blocks, exact contracts, complete axiom/import checks and matching article.
+Independent review found no correctness or acceptance defect; one stale current
+roadmap paragraph was corrected. The [active roadmap](../nominal-package-roadmap.md)
+and [approved plan](../superpowers/plans/2026-10-08-package-predicate-foundations.md)
+record commands, cache conditions, preservation and review disposition.
+No production theorem changed during final integration. All delivery remains
+uncommitted on the same branch/HEAD/index. The run stops here; later PKG tasks,
+commits, pushes, merges, publication, worktrees, dependency upgrades and CI were
+not started or authorized by this completion.

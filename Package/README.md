@@ -1,6 +1,10 @@
 # Package foundation kernel
 
-This contains F02, both F03 slices, F04a–F04d, and F05 of the new nominal package. It uses the pinned
+This contains F02, both F03 slices, F04a–F04d, F05, and the complete PKG-01
+predicate foundation: supported values and logical calculus, pullback,
+quotient descent and fresh quantification. The integrated public consumers,
+audit and independent whole-change review pass; this delivery is uncommitted.
+It uses the pinned
 Lean/Mathlib 4.34.1 and imports Mathlib directly. The reference `Nominal/` and
 `Instances/` development remains separate.
 
@@ -235,9 +239,13 @@ Install the action explicitly. For `s : Setoid X` and
 `hs : SMulInvariant (Perm A) s`:
 
 ```lean
-letI : MulAction (Perm A) (Quotient s) := QuotientAction.mulAction s hs
--- When the selected source action has [Nominal A X]:
-letI : Nominal A (Quotient s) := QuotientAction.nominal A s hs
+section QuotientActionInputs
+variable {A X : Type*} [MulAction (Perm A) X] [Nominal A X]
+
+example (s : Setoid X) (hs : SMulInvariant (Perm A) s) :
+    letI := QuotientAction.mulAction s hs
+    Nominal A (Quotient s) := QuotientAction.nominal A s hs
+end QuotientActionInputs
 ```
 
 Neither import nor compatibility evidence alone installs an action or quotient
@@ -281,15 +289,16 @@ has singleton support. The quotient of atom pairs that forgets the second
 component has support `{a}` at the class of `(a,b)`, strictly smaller than
 `{a,b}` when the atoms differ. Surjective equivariant maps can lose support and
 increase freshness; they do not reflect supportedness of arbitrary representatives.
-Predicate pullback/support reflection is a separate later interface.
+Predicate pullback reflects every sufficient bound through an equivariant surjection;
+this separate predicate interface is described below.
 
 Persistent usage examples are reserved for future case studies. This increment
 contains the foundation modules and their audit, without a `Package/Examples`
 layer. F04a supplies the finite support calculus and F04b supplies nominality
 and least support. F04c supplies canonical instances and freshness; F04d supplies
 canonical equivariant quotients and their support characterization.
-Full predicate logic, Some/Any, predicate quotient descent, binders
-and recursion are later work. Function objects, supported maps and predicate
+Some/Any and predicate descent are described below; binders and recursion remain
+later work. Function objects, supported maps and predicate
 inputs are described below. Bare permutations retain left multiplication and
 ordinary functions retain their pointwise action; neither receives an automatic
 finite-supportedness or nominality claim.
@@ -381,8 +390,136 @@ Pointwise-scoped Set image action. Renaming, precomposition and fixed-parameter
 bounds have explicit and existential forms. Equality with a supported value
 has exactly its support. An unsupported predicate is still an ordinary Lean
 predicate and a legal motive; only support-sensitive uses require evidence.
-No supported-predicate logic bundle, Some/Any or predicate pullback/descent API
-is supplied by this input layer.
+`PredicateLogic` now adds constant truth, negation (including support reflection),
+conjunction, disjunction, implication and equivalence. `SupportsPred` connector
+methods ending in `_same` preserve a common bound; their separate-bound forms
+use a finite union. `FinitelySupportedPred` provides the existential corollaries
+without a decidable atom equality premise.
+
+`SupportsPred.all/ex` and `FinitelySupportedPred.all/ex` quantify a jointly acted
+relation `X × Y → Prop`, preserving its bound without nominality, nonemptiness
+or infinitude. Restricted quantification uses these on the combined implication
+or conjunction body. `SupportsPred.iAll/iEx` instead accept one common bound
+for a family indexed by any action-free `Sort`; individually supported sections
+alone do not supply that bound. Bundled quantifiers are described below;
+Some/Any and ordinary predicate descent are described below.
+
+An ordinary certificate can be consumed directly, without bundling the relation:
+
+```lean
+section OrdinaryPredicateInputs
+variable {A X Y : Type*} [MulAction (Perm A) X] [MulAction (Perm A) Y]
+
+example (S : Finset A) (R : X × Y → Prop) (hR : SupportsPred S R)
+    (π : Perm A) (hπ : ∀ a ∈ S, π a = a) (x : X)
+    (h : ∀ y, R (x,y)) : ∀ y, R (π • x,y) :=
+  (hR.all π hπ x).2 h
+end OrdinaryPredicateInputs
+```
+
+## Supported predicate values
+
+`SupportedPred A X` stores `toFun : X → Prop` and proof-only
+`FinitelySupportedPred A toFun`. Its single `FunLike` coercion returns ordinary
+Prop: use `p x`, pass p to higher-order functions, or rewrite propositions with
+Iff. `ext x` leaves an Iff goal; `ext_iff` and `congr_apply` connect predicate
+equality to pointwise equivalence. Changing a certificate or enlarging a bound
+leaves the predicate value unchanged.
+
+Use `SupportedPred.ofFun A P hP`, `.ofSupports A P S hS`, or `.ofInvariant A P hP`
+to supply the required evidence. Application and coerced-function simp lemmas
+handle named evidence and literal `⟨S,hS⟩` witnesses, including under `List.map`.
+The latter uses the explicit-existential lemma `coe_ofFun_exists`; the ordinary
+certificate definition retains its existing reducibility.
+
+```lean
+section SupportedPredicateInputs
+variable {A X : Type*} [MulAction (Perm A) X]
+
+example (P : X → Prop) (S : Finset A) (hS : SupportsPred S P) (xs : List X) :
+    xs.map (SupportedPred.ofFun A P ⟨S,hS⟩) = xs.map P := by simp
+
+example (p q : SupportedPred A X) (xs : List X) :
+    xs.map (p ⇨ q : SupportedPred A X) = xs.map (fun x => p x → q x) := by simp
+end SupportedPredicateInputs
+```
+
+| View or law | Public interface in `SupportedPred` |
+| --- | --- |
+| Supported discrete-truth map | `toMap`, `ofMap`, `mapEquiv A X`, `toMap_apply`, `toMap_ofMap`, `ofMap_toMap` |
+| Full discrete-truth object | `toObject`, `toObject_apply`, `toObject_eq`, `toObject_finitelySupported` |
+| Satisfying set | `toSet`, `mem_toSet`, `ofSet A U hU`, `ofSet_apply`, `toSet_ofSet`, `ofSet_toSet` |
+| Supported-subset subalgebra | `supportedSets A X`, `subsetEquiv A X`, `mem_subsetEquiv` |
+| Renaming | `smul_apply`, `smul_apply_smul`, `toMap_smul`, `toObject_smul`, `toSet_smul`, `subsetEquiv_smul` |
+| Sufficient bounds | `supports_iff S p`, `supports_iff_toMap`, `supports_iff_toObject`, `supports_iff_toSet` |
+| Least-support agreement | `support_toMap`, `support_toObject`, `support_toSet`, `support_subsetEquiv` |
+
+The action is inverse precomposition: `(π • p) x ↔ p (π⁻¹ • x)`, so
+`(π • p) (π • x) ↔ p x`. Its laws and support correspondence reuse the full
+function object. Both supported views are equivariant equivalences; their
+round trips simplify. The Set view uses Mathlib's existing Pointwise image
+action, and `ofSet` fixes that action in its certificate type. Open
+`Pointwise` when forming Set support evidence. Evidence for another chosen
+Set action is not interchangeable with this certificate.
+
+The carrier and both supported views are nominal with only the selected action
+on X. They need no `Nominal A X`, `Infinite A` or `DecidableEq A`, and
+`SupportedPred A X : Type v` keeps the universe of X independent of A.
+Under `Infinite A`, `support A p` agrees with the support of p's map and
+supported-subset views. The full-object and bare Set equations instead use
+`p.toObject_finitelySupported.support` and `p.toSet_finitelySupported.support`.
+The existing `FinitelySupported.support_eq` gives agreement with independently
+supplied evidence; no nominality of the full powerset is assumed.
+
+`supportedSets A X` is a Mathlib `BooleanSubalgebra (Set X)`, closed using the
+ordinary predicate support laws. Its restricted image action is transferred
+along the subtype inclusion. `instBooleanAlgebra` transfers the inherited
+algebra along `subsetEquiv`; order and operations compute pointwise as logical
+implication, False/True, ∧/∨/¬, implication and difference. No unrestricted
+complete lattice is supplied.
+
+## Supported logical operations
+
+`SupportedPredicateLogic` adds named computation, sufficient-bound and action
+laws for this same Boolean structure. `le_def p q` identifies order with
+`∀ x, p x → q x`; `biimp p q` is the conjunction of both implications.
+Every operation below has an `*_apply` Iff and a `coe_*` function equation
+registered for simp. In higher-order arguments, select an overloaded bundled
+operation explicitly, for example `xs.map (p \ q : SupportedPred A X)`;
+the expected arrow type can otherwise select the ordinary Pi operation.
+
+| Operation in `SupportedPred` | Application / sufficient bound |
+| --- | --- |
+| `⊥`, `⊤`, `p ⊓ q`, `p ⊔ q`, `pᶜ`, `p ⇨ q`, `p \ q`, `p.biimp q` | False, True, ∧, ∨, ¬, →, conjunction with negation, ↔; binary bounds combine by union |
+| `p.precomp f hf` | `p (f x)`; predicate bound ∪ ordinary map bound |
+| `p.precompMap f` | `p (f x)`; predicate bound ∪ supported map bound |
+| `R.section y hy` | `R (y,x)`; relation bound ∪ this parameter's bound |
+| `R.all`, `R.ex` | `∀ y, R (x,y)` / `∃ y, R (x,y)`; same joint-relation bound |
+| `C.collectionUnion`, `C.collectionInter` | `∃ p, C p ∧ p x` / `∀ p, C p → p x`; same collection bound |
+
+Sections require only `hy : FinitelySupported A y`. Named and literal parameter
+certificates simplify, with `coe_section_exists` covering the literal form.
+Neither section construction nor whole-carrier quantification assumes nominality
+of the parameter/quantified carrier. Quantification works on empty carriers and
+needs no atom infinitude. Restricted quantifiers use `(D ⇨ R).all` and
+`(D ⊓ R).ex`, or an ordinary combined body certified by `ofFun/ofSupports`.
+The latter needs no separate evidence for D or R.
+
+`smul_*` preserves the Boolean operations and `smul_le_smul_iff` preserves and
+reflects order. `precompMap_smul` renames both p and f; `section_smul` renames
+both R and y, transporting hy. `all_smul`, `ex_smul` and the two collection
+action laws commute with renaming. Collection bounds follow from jointly
+invariant evaluation and guarded ordinary quantification over the predicate
+carrier, without an external-family completeness claim.
+
+`supports_compl_iff S p` preserves and reflects the very same bound.
+The other `supports_*` laws give the bounds in the table. Over infinite atoms,
+`support_compl` is equality, `support_bot/top` are empty, and
+`support_*_subset` gives the corresponding inclusions. In particular the
+ordinary precomposition bound uses `hf.toObject.support` and the section bound
+uses `hy.support`; neither requires a nominal carrier for those certificates.
+Visible unions require decidable atom equality; same-bound results do not.
+Dependence can disappear: `p ⊓ ⊥ = ⊥` even when p has nonempty least support.
 
 ## Verification
 
@@ -424,3 +561,176 @@ latexmk -pdf -interaction=nonstopmode -halt-on-error -outdir=/tmp/nominal-packag
 Create that output directory if necessary. Keep generated manuscript files out
 of the source tree. Task status and evidence live in the
 [package roadmap](../docs/nominal-package-roadmap.md).
+
+## Predicate pullback and ordinary descent
+
+`SupportsPred.pullback hp hq` preserves the same supplied bound along an
+equivariant q; `supportsPred_pullback_iff q hq hsurj S P` also reflects it when
+q is surjective. `finitelySupportedPred_pullback_iff` reflects existence, and
+`FinitelySupportedPred.support_pullback` gives equality of the elementwise
+predicate-object supports with Infinite A. Neither carrier needs nominality.
+`renamePred_pullback` commutes with renaming. The general parents are
+`ActionSupport.invariant_pullback_iff` (SMul only) and
+`FunctionObject.supports_precomp_iff` (DivisionMonoid, arbitrary Set bounds).
+
+For any setoid s, `PredicateDescent.Compatible s p` means that related inputs
+satisfy logically equivalent propositions. `compatible_iff_le_ker` and
+`compatible_iff_factorsThrough` connect existing Mathlib vocabulary.
+`pullback`, `descend` and `ordinaryEquiv` use the ordinary quotient universal
+property without actions or support. `descend_mk` computes, both round trips
+simplify, and `descend_proof_irrel` makes proof independence explicit.
+`compatible_iff_exists_descend` characterizes existence; `cannot_descend`
+rejects an observation distinguishing related representatives even if supported.
+
+With an invariant relation, `supports_pullback_iff`, `supports_descend_iff`,
+`finitelySupported_descend_iff` and `descend_rename` explicitly select
+`QuotientAction.mulAction s hs`. They make no claim for another quotient action.
+Unsupported ordinary predicates and quotient induction remain legal.
+
+Ordinary descent needs only compatibility. The representative equation computes
+without any support or action assumption:
+
+```lean
+section OrdinaryDescentInputs
+variable {X : Type*}
+
+example (s : Setoid X) (p : X → Prop) (hp : PredicateDescent.Compatible s p) (x : X) :
+    PredicateDescent.descend s p hp (Quotient.mk s x) ↔ p x := by simp
+end OrdinaryDescentInputs
+```
+
+## Supported quotient correspondence
+
+`SupportedPred.pullback P q hq` has ordinary value `P (q x)`, commutes with
+renaming, and preserves every supplied bound. Its `supports_pullback_iff`
+and `support_pullback` reflect sufficient and least support when q is surjective;
+only the latter needs Infinite A. `pullback_top/bot/compl/inf/sup/himp/biimp`
+reuse the existing Boolean operations.
+
+In `PredicateDescent`, `CompatiblePred A s` is the subtype of compatible
+supported predicates. Explicitly install `compatibleAction A s hs` and, when
+using carrier support, `compatibleNominal A s hs`. The action is Mathlib's
+SubMulAction restriction, with `compatible_val_smul` and
+`supports_compatible_iff` relating it to the underlying predicate. No automatic
+instance guesses hs, and no Boolean instance is added to this subtype.
+
+`descendSupported A s hs p hp` and `supportedEquiv A s hs` select the canonical
+quotient action in their result types. To state a consumer involving actions,
+install both `QuotientAction.mulAction s hs` and `compatibleAction A s hs`.
+`descendSupported_mk`, `supportedEquiv_apply` and `supportedEquiv_symm_apply`
+compute on representatives. Both named inverse equations simplify; the two
+`supportedEquiv_*smul` laws commute with renaming in each direction.
+`supports_supportedEquiv_iff` preserves and reflects every bound, with the
+compatible predicate on the left. `supports_descendSupported_iff` is the direct
+descent form. Under Infinite A, `support_supportedEquiv` gives exact least
+support; `freshWith_supportedEquiv_iff` needs only an individual certificate
+for the context, even in a carrier containing unsupported elements.
+
+`Compatible.const/not/and/or/imp/iff` are action-free logical adapters.
+`descendSupported_top/bot/compl/inf/sup/himp/biimp` preserve the existing logical
+operations on compatible operands. Compatibility is separate from support:
+a supported binder-label observation can fail it. Neither source nor quotient
+needs carrier-wide nominality. These correspondences do not construct a
+representative of exact class support or a dependent data recursor.
+
+```lean
+section SupportedDescentInputs
+variable {A X : Type*} [MulAction (Perm A) X]
+
+example (s : Setoid X) (hs : SMulInvariant (Perm A) s)
+    (p : SupportedPred A X) (hp : PredicateDescent.Compatible s (fun x => p x))
+    (S : Finset A) :
+    letI := QuotientAction.mulAction s hs
+    Supports S (PredicateDescent.descendSupported A s hs p hp) ↔ Supports S p :=
+  PredicateDescent.supports_descendSupported_iff A s hs S p hp
+end SupportedDescentInputs
+```
+
+## Cofinite truth and Some/Any
+
+`Freshly p` is `∀ᶠ a in Filter.cofinite, p a` for any ordinary predicate.
+It requires no action, support or infinitude. Open scoped
+`NominalPackage.FreshQuantifier` for `И a, p a` and `И a : A, p a`;
+the existing `Fresh` relation still means support disjointness.
+`Freshly.iff_finite` characterizes the finite falsehood set, and
+`iff_exists_finset` gives a finite exclusion bound. `reindex e p` preserves
+and reflects cofinite truth along any equivalence, across independent universes.
+
+With `[Infinite A]` and `hp : SupportsPred S p` under the canonical atom action,
+`hp.freshly_iff_exists` and `hp.freshly_iff_forall` identify cofinite truth with
+some/every atom outside S. `hp.freshly_iff ha` evaluates at any `ha : a ∉ S`.
+`hp.freshly_iff_exists_avoiding T` and its `_forall_avoiding` counterpart add
+any finite exclusion T, retaining the resulting p fact. Use `hp.mono hST`
+for an enlarged supporting bound. These laws need no public DecidableEq and
+make no least-support choice. `hp.iff_of_notMem ha hb` needs no infinitude.
+
+```lean
+open scoped NominalPackage.FreshQuantifier
+
+section SuppliedBoundInputs
+variable {A : Type*} [Infinite A]
+
+example (p : A → Prop) (S T : Finset A) (hp : SupportsPred S p)
+    (h : И a, p a) : ∃ a, a ∉ S ∧ a ∉ T ∧ p a :=
+  (hp.freshly_iff_exists_avoiding T).1 h
+
+example (p : A → Prop) (S : Finset A) (hp : SupportsPred S p) (a : A) (ha : a ∉ S) :
+    (И b : A, p b) ↔ p a := hp.freshly_iff ha
+end SuppliedBoundInputs
+```
+
+The `Freshly` logical interfaces keep different premises:
+
+| Interface | Additional premise |
+| --- | --- |
+| `of_forall`, `mono`, `congr`, `congr_eventually`, `true`, `and_iff`, `mp` | None; arbitrary predicates |
+| `const_iff`, `not_false`, `exists` | Infinite A |
+| `not_iff_of_decision` | Infinite A and `Freshly p ∨ Freshly (fun a => ¬p a)` |
+| `or_iff_of_decision`, `or_iff_of_decision_right` | Decision of the indicated operand only |
+| `imp_iff_of_decision` | Decision of the antecedent only |
+| `iff_iff_of_decisions` | Both decisions |
+| `iff_iff_of_freshly_left` | Cofinite truth of the left operand, arbitrary right operand |
+
+`finitelySupportedPred_atom_iff p` identifies supported atom predicates with
+finite or cofinite truth sets, without infinitude. Thus
+`FinitelySupportedPred.freshly_or_not` supplies decision. Its
+`freshly_not_iff`, `freshly_or_iff`, `freshly_imp_iff`, and `freshly_iff_iff`
+specialize the preceding laws, with the same infinitude and operand distinctions.
+`not_finitelySupportedPred_of_infinite_coinfinite` rules out false certificates.
+Unsupported ordinary predicates remain legal; cofinite truth is not an ultrafilter.
+
+External indices may be any `Sort` and need no action. `Freshly.forall_of`
+and `of_exists` give the valid one-way laws. `forall_finite` gives universal
+interchange for a finite index. For `hp : ∀ i, SupportsPred S (p i)`,
+`forall_iff_of_uniform_support` gives full universal interchange with no
+infinitude. `exists_iff_of_uniform_support` adds Infinite A, while
+`exists_iff_of_uniform_support_nonempty` instead adds Nonempty I.
+Finite indices alone do not give existential interchange. On finite atoms
+every predicate, even False, is cofinite; an empty existential index still
+has no witness. Joint invariance alone does not give either converse.
+
+## Contexts and fresh projection
+
+`freshly_section_iff_exists hR hx` and `_forall` combine a relation bound S
+and an individual parameter bound T, excluding `S ∪ T`; displayed unions
+retain DecidableEq A. For a jointly invariant R and an individual certificate
+`hx : FinitelySupported A x`, `freshly_invariant_section_iff_exists hR hx`
+and `_forall` instead use `hx.Fresh a`. Both pairs have `_avoiding` versions
+with an additional finite exclusion. Context Some/Any needs Infinite A;
+the invariant forms require neither DecidableEq A nor Nominal A X.
+
+`SupportsPred.fresh` and `FinitelySupportedPred.fresh` retain the joint
+relation's bound/existence under `fun x => Freshly (fun a => R (x,a))`.
+They need neither Infinite A nor Nominal A X. `SupportedPred.fresh` bundles
+this body, with `fresh_apply`, `coe_fresh`, `fresh_smul` and `supports_fresh`.
+`support_fresh_subset` adds Infinite A for the least-support inclusion.
+Application and function-coercion equations simplify in higher-order uses.
+
+`SupportedPred.freshly_iff_of_fresh p ha` evaluates an atom predicate when
+`ha : Fresh A a p`. For ordinary p with certificate hp, use
+`hp.freshly_iff_of_fresh` with freshness for
+`(finitelySupportedPred_iff A p).1 hp`, the existing predicate-object certificate.
+These conveniences add Infinite A and make no nominality claim for the full
+predicate carrier. Atom Some/Any does not extend to arbitrary nominal carriers.
+Ordinary classical fresh-name choice is allowed, but no global selector avoiding
+every finite input set is finitely supported as a map.

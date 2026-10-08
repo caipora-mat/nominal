@@ -18,6 +18,19 @@ namespace NominalPackage.ActionSupport
 
 universe u v w z
 
+/-- Surjective substitution reflects invariance for a single scalar. No scalar
+laws or support structure are needed. -/
+theorem invariant_pullback_iff {M : Type u} {X : Type v} {Y : Type w}
+    [SMul M X] [SMul M Y] (q : X → Y) (hsurj : Function.Surjective q)
+    (m : M) (hq : ∀ x, q (m • x) = m • q x) (P : Y → Prop) :
+    (∀ x, P (q (m • x)) ↔ P (q x)) ↔ ∀ y, P (m • y) ↔ P y := by
+  constructor
+  · intro h y
+    obtain ⟨x, rfl⟩ := hsurj y
+    simpa only [hq] using h x
+  · intro h x
+    simpa only [hq] using h (q x)
+
 section Scalar
 variable {M : Type u} {B : Type v} {X : Type w} {Y : Type z}
 variable [SMul M B] [SMul M X] [SMul M Y]

@@ -53,6 +53,23 @@ def const (G : Type u) (X : Type v) (y : Y) : FunctionObject G X Y := ofFun G (F
 /-- Ordinary composition on full function objects. -/
 def comp (H : FunctionObject G Y Z) (F : FunctionObject G X Y) : FunctionObject G X Z :=
   ofFun G (H ∘ F)
+/-- Precomposition by an ordinary map, without a support or action premise. -/
+def precomp (F : FunctionObject G Y Z) (q : X → Y) : FunctionObject G X Z :=
+  F.comp (ofFun G q)
+
+@[simp] theorem precomp_apply (F : FunctionObject G Y Z) (q : X → Y) (x : X) :
+    F.precomp q x = F (q x) := rfl
+@[simp] theorem coe_precomp (F : FunctionObject G Y Z) (q : X → Y) :
+    (F.precomp q : X → Z) = F ∘ q := rfl
+
+/-- Precomposition through a surjection detects equality of full function objects. -/
+theorem precomp_injective (q : X → Y) (hsurj : Function.Surjective q) :
+    Function.Injective (fun F : FunctionObject G Y Z => F.precomp q) := by
+  intro F H h
+  ext y
+  obtain ⟨x, rfl⟩ := hsurj y
+  exact DFunLike.congr_fun h x
+
 /-- Pointwise pairing of two function objects. -/
 def pair (F : FunctionObject G X Y) (H : FunctionObject G X Z) : FunctionObject G X (Y × Z) :=
   ofFun G (fun x => (F x, H x))
@@ -138,6 +155,14 @@ instance : MulAction G (FunctionObject G X Y) where
 theorem smul_const (g : G) (y : Y) : g • const G X y = const G X (g • y) := rfl
 
 variable [MulAction G Z]
+/-- An equivariant precomposition map commutes with conjugation; cancellation
+is unnecessary, so a DivisionMonoid suffices. -/
+theorem precomp_smul (q : X → Y) (hq : ∀ (g : G) x, q (g • x) = g • q x)
+    (g : G) (F : FunctionObject G Y Z) :
+    (g • F).precomp q = g • F.precomp q := by
+  ext x
+  simp only [precomp_apply, smul_apply, hq]
+
 theorem smul_pair (g : G) (F : FunctionObject G X Y) (H : FunctionObject G X Z) :
     g • F.pair H = (g • F).pair (g • H) := rfl
 theorem curry_smul (g : G) (F : FunctionObject G (X × Y) Z) :
@@ -146,6 +171,14 @@ theorem uncurry_smul (g : G) (H : FunctionObject G X (FunctionObject G Y Z)) :
     (g • H).uncurry = g • H.uncurry := rfl
 
 variable {B : Type t} [SMul G B]
+/-- An equivariant surjection preserves and reflects every sufficient set for
+precomposition. These sets need not be finite or least supports. -/
+theorem supports_precomp_iff (q : X → Y) (hq : ∀ (g : G) x, q (g • x) = g • q x)
+    (hsurj : Function.Surjective q) (S : Set B) (F : FunctionObject G Y Z) :
+    MulAction.Supports G S (F.precomp q) ↔ MulAction.Supports G S F :=
+  ActionSupport.supports_map_iff (fun F => F.precomp q) (precomp_smul q hq)
+    (precomp_injective q hsurj) S F
+
 /-- Full curry preserves and reflects any sufficient bound. -/
 theorem supports_curry_iff (S : Set B) (F : FunctionObject G (X × Y) Z) :
     MulAction.Supports G S F.curry ↔ MulAction.Supports G S F :=
